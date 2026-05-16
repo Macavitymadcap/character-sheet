@@ -106,6 +106,22 @@ For documentation-only work, check:
 - Public wording uses British English.
 - New implementation guidance matches `ARCHITECTURE.md`.
 
+## Branch Protection
+
+`main` and the active epic branch should be protected. Protection requires pull requests, one approval, fresh approval after the latest push, resolved conversations, linear history, and no force pushes or branch deletions.
+
+When the CI workflow is not present on a protected branch yet, use the bootstrap configuration:
+
+```bash
+bun run protect:branches:bootstrap
+```
+
+After the CI workflow has landed on the protected branches, use the full configuration so GitHub also requires the `test` status check:
+
+```bash
+bun run protect:branches
+```
+
 ## British English
 
 Use British English throughout the project:
