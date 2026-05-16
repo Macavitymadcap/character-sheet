@@ -1,15 +1,32 @@
-import { describe, expect, test } from "bun:test";
+import { afterEach, describe, expect, test } from "bun:test";
 import { createApp } from "./app";
+import { createSqliteDatabase, type SqliteDatabaseRuntime } from "./db";
+
+let runtime: SqliteDatabaseRuntime | undefined;
+
+afterEach(() => {
+  runtime?.close();
+  runtime = undefined;
+});
+
+const createTestApp = (appName = "Test Character Sheet") => {
+  runtime = createSqliteDatabase({ path: ":memory:" });
+
+  return createApp({
+    appName,
+    ...runtime.repositories,
+  });
+};
 
 describe("createApp", () => {
   test("can be constructed with test dependencies", () => {
-    const app = createApp({ appName: "Test Character Sheet" });
+    const app = createTestApp();
 
     expect(app.fetch).toBeFunction();
   });
 
   test("serves a health check", async () => {
-    const app = createApp({ appName: "Test Character Sheet" });
+    const app = createTestApp();
     const response = await app.request("/healthz");
 
     expect(response.status).toBe(200);
@@ -17,7 +34,7 @@ describe("createApp", () => {
   });
 
   test("renders the home page as a full HTML document", async () => {
-    const app = createApp({ appName: "Character Sheet" });
+    const app = createTestApp("Character Sheet");
     const response = await app.request("/");
     const html = await response.text();
 

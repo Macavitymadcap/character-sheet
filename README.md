@@ -29,7 +29,7 @@ Deployment to Railway and migration from SQLite to Postgres are intentionally de
 - SQLite through Bun's SQLite APIs for local persistence.
 - Pa11y and screenshots for accessibility and visual review once the UI exists.
 
-The app follows the `pace-calculator` template: runtime setup stays separate from `createApp()`, components own semantic markup, and HTMX attributes make browser interaction visible in HTML. As persistence lands, repositories should hide database details from routes and components.
+The app follows the `pace-calculator` template: runtime setup stays separate from `createApp()`, repositories hide database details from routes and components, components own semantic markup, and HTMX attributes make browser interaction visible in HTML.
 
 ## Local Setup
 
@@ -48,12 +48,12 @@ Current environment variables:
 | --- | --- | --- |
 | `PORT` | `3000` | HTTP port used by Bun. |
 | `HOST` | `0.0.0.0` | HTTP host used by Bun. |
+| `DB_PATH` | `character-sheet.sqlite3` | SQLite database file path. |
 
 Environment variables planned for later MVP tickets:
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
-| `DB_PATH` | `character-sheet.sqlite3` | SQLite database file path. |
 | `SESSION_SECRET` | local development secret | Secret used for signed session cookies. |
 
 SQLite database files and sidecar files should remain ignored by Git.
@@ -63,7 +63,9 @@ SQLite database files and sidecar files should remain ignored by Git.
 Current scaffold scripts:
 
 ```bash
+bun run db:bootstrap
 bun run dev
+bun run seed
 bun run test
 bun run test:a11y
 bun run test:watch
@@ -80,7 +82,6 @@ bun run protect:branches
 Planned later scripts:
 
 ```bash
-bun run seed
 bun run import:rules
 ```
 
