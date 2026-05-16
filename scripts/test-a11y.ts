@@ -4,8 +4,6 @@ import { createApp } from "../src/app";
 import { AuthService, PasswordService, SessionService } from "../src/auth";
 import { createSqliteDatabase } from "../src/db";
 
-const port = Number(Bun.env.A11Y_PORT ?? 3999);
-const baseUrl = `http://127.0.0.1:${port}`;
 const databaseRuntime = createSqliteDatabase({ path: ":memory:" });
 const passwordService = new PasswordService();
 const sessionService = new SessionService({
@@ -21,11 +19,8 @@ const app = createApp({
   sessionService,
   ...databaseRuntime.repositories,
 });
-const server = Bun.serve({
-  fetch: app.fetch,
-  hostname: "127.0.0.1",
-  port,
-});
+const server = startServer();
+const baseUrl = `http://127.0.0.1:${server.port}`;
 
 try {
   await waitForHttp(`${baseUrl}/healthz`);
@@ -85,4 +80,45 @@ async function waitForHttp(url: string, attempts = 40, delayMs = 250) {
   }
 
   throw new Error(`Timed out waiting for ${url}`);
+}
+
+function startServer() {
+  const requestedPort = getRequestedPort();
+  const ports = requestedPort
+    ? [requestedPort]
+    : Array.from({ length: 50 }, (_, index) => 3999 + index);
+
+  for (const port of ports) {
+    try {
+      return Bun.serve({
+        fetch: app.fetch,
+        hostname: "127.0.0.1",
+        port,
+      });
+    } catch (error) {
+      if (requestedPort || !isAddressInUse(error)) throw error;
+    }
+  }
+
+  throw new Error("Could not find an available local port for Pa11y.");
+}
+
+function getRequestedPort() {
+  if (!Bun.env.A11Y_PORT) return undefined;
+
+  const port = Number(Bun.env.A11Y_PORT);
+  if (!Number.isInteger(port) || port < 0) {
+    throw new Error(`A11Y_PORT must be a non-negative integer, received: ${Bun.env.A11Y_PORT}`);
+  }
+
+  return port;
+}
+
+function isAddressInUse(error: unknown) {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    error.code === "EADDRINUSE"
+  );
 }

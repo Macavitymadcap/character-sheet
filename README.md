@@ -73,9 +73,12 @@ bun run test
 bun run test:a11y
 bun run test:watch
 bun run typecheck
+bun run verify
 ```
 
-`bun run test:a11y` starts an in-memory app and runs Pa11y against `/login`, authenticated `/`, and authenticated `/admin`.
+`bun run verify` runs typecheck, component and route tests, and accessibility checks in sequence.
+
+`bun run test:a11y` starts an in-memory app on an available local port and runs Pa11y against `/login`, authenticated `/`, and authenticated `/admin`.
 
 Repository maintenance scripts:
 
