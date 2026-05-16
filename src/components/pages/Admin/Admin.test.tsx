@@ -12,8 +12,13 @@ describe("AdminPage", () => {
     expect(html).toContain("<title>Character Sheet</title>");
     expect(html).toContain("Admin");
     expect(html).toContain("Site Admin");
+    expect(html).toContain('<section class="panel" data-width="default" aria-labelledby="admin-heading">');
+    expect(html).toContain('<form class="form-stack" action="/admin/invites" method="post">');
     expect(html).toContain('action="/admin/invites"');
     expect(html).toContain('name="email"');
     expect(html).toContain('name="role"');
+    expect(html).toContain(
+      '<button class="button" data-variant="primary" type="submit">Create invite</button>',
+    );
   });
 });

@@ -1,3 +1,6 @@
+import { Button } from "../../atoms/Button";
+import { Panel } from "../../atoms/Panel";
+import { FormField } from "../../molecules/FormField";
 import { Layout } from "../../templates/Layout";
 
 interface LoginPageProps {
@@ -9,33 +12,35 @@ export const LoginPage = ({ appName, error }: LoginPageProps) => {
   return (
     <Layout title={appName}>
       <main class="auth-shell">
-        <section class="auth-panel" aria-labelledby="login-heading">
-          <h1 id="login-heading">Sign in</h1>
+        <Panel labelledBy="login-heading" width="narrow">
+          <h1 id="login-heading" class="panel-heading">
+            Sign in
+          </h1>
           {error ? (
             <p class="form-error" role="alert">
               {error}
             </p>
           ) : null}
-          <form class="auth-form" action="/login" method="post">
-            <div class="form-field">
-              <label for="email">Email</label>
-              <input id="email" name="email" type="email" autocomplete="username" required />
-            </div>
-            <div class="form-field">
-              <label for="password">Password</label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autocomplete="current-password"
-                required
-              />
-            </div>
-            <button class="submit-button" type="submit">
-              Sign in
-            </button>
+          <form class="form-stack" action="/login" method="post">
+            <FormField
+              autocomplete="username"
+              id="email"
+              label="Email"
+              name="email"
+              required
+              type="email"
+            />
+            <FormField
+              autocomplete="current-password"
+              id="password"
+              label="Password"
+              name="password"
+              required
+              type="password"
+            />
+            <Button type="submit">Sign in</Button>
           </form>
-        </section>
+        </Panel>
       </main>
     </Layout>
   );

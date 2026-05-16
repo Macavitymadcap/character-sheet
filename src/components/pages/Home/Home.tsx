@@ -1,4 +1,6 @@
 import { Badge } from "../../atoms/Badge";
+import { Button } from "../../atoms/Button";
+import { LabelledOutput } from "../../atoms/LabelledOutput";
 import { Layout } from "../../templates/Layout";
 
 interface HomePageProps {
@@ -30,9 +32,9 @@ export const HomePage = ({ appName, user }: HomePageProps) => {
             <a href="/admin">Admin</a>
             {user ? (
               <form action="/logout" method="post">
-                <button class="logout-button" type="submit">
+                <Button type="submit" variant="ghost">
                   Sign out
-                </button>
+                </Button>
               </form>
             ) : null}
           </nav>
@@ -61,10 +63,7 @@ export const HomePage = ({ appName, user }: HomePageProps) => {
 
               <div class="stat-grid" aria-label="Combat summary">
                 {keyStats.map((stat) => (
-                  <div class="stat-card">
-                    <span class="stat-label">{stat.label}</span>
-                    <strong class="stat-value">{stat.value}</strong>
-                  </div>
+                  <LabelledOutput label={stat.label} value={stat.value} />
                 ))}
               </div>
             </div>

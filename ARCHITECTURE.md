@@ -246,8 +246,8 @@ The seed data must support Lynott as described in `docs/characters/Lynott-Magulb
 
 Components are grouped by rendered responsibility:
 
-- Atoms: primitive controls and outputs such as `Button`, `IconButton`, `LabelledOutput`, `Tab`, and `Badge`.
-- Molecules: small compositions such as resource steppers, ability rows, note editors, and condition chips.
+- Atoms: primitive controls and outputs such as `Button`, `IconButton`, `LabelledOutput`, `Panel`, `Tab`, and `Badge`.
+- Molecules: small compositions such as `FormField`, resource steppers, ability rows, note editors, and condition chips.
 - Organisms: feature regions such as `SheetHeader`, `SheetTabs`, `SpellcastingPanel`, `ActionsPanel`, and `AdminUserTable`.
 - Pages: full route compositions such as `HomePage`, `LoginPage`, `SheetPage`, and `AdminPage`.
 - Templates: document shell, shared scripts, style injection, and layout slots.
