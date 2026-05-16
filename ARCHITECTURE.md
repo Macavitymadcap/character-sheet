@@ -41,17 +41,22 @@ src/
 └── test/                       # shared app and repository harnesses
 ```
 
-`src/index.ts` owns process setup. In the scaffold, that means host and port environment variables plus the Bun `fetch` export. As persistence lands, this file should also own the SQLite filename, repository construction, and other runtime wiring.
+`src/index.ts` owns process setup: host and port environment variables, the SQLite filename, repository construction, seed/bootstrap wiring, and the Bun `fetch` export.
 
-The `sheet-0002` scaffold starts with the smallest runtime dependency needed to prove the app boots:
+The `sheet-0003` runtime dependency boundary includes the app name and repository contracts:
 
 ```ts
 export interface AppDependencies {
   appName: string;
+  authRepository: AuthRepository;
+  campaignRepository: CampaignRepository;
+  characterRepository: CharacterRepository;
+  notesRepository: NotesRepository;
+  rulesRepository: RulesRepository;
 }
 ```
 
-Later MVP tickets should extend `AppDependencies` with repositories and services rather than moving runtime setup into route modules. The mature dependency shape is expected to include the persistence and session boundaries:
+Later MVP tickets should extend `AppDependencies` with services rather than moving runtime setup into route modules. The mature dependency shape is expected to add session and role-guard boundaries:
 
 ```ts
 export interface AppDependencies {
@@ -68,7 +73,7 @@ export const createApp = (dependencies: AppDependencies) => {
 };
 ```
 
-Tests should use the same `createApp()` route tree. The scaffold tests pass a minimal dependency object; once repositories land, route tests should use in-memory SQLite repositories through that same dependency boundary.
+Tests should use the same `createApp()` route tree. Route and repository tests should use in-memory SQLite repositories through that same dependency boundary.
 
 ## Request Flow
 
@@ -181,7 +186,7 @@ flowchart TD
 
 ## Data Model
 
-The database stores structured data for rules and sheet state. Markdown files in `docs/rules` are useful source material, but runtime reads should use SQLite read models.
+The database stores structured data for rules and sheet state. Markdown files in `docs/rules` are useful source material, but runtime reads should use SQLite read models. `bootstrapDatabase()` creates the MVP schema idempotently, `seedDatabase()` inserts local seed data, and repository interfaces keep route-facing contracts independent of SQLite.
 
 ```mermaid
 erDiagram

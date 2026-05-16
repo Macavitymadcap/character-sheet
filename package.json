@@ -3,9 +3,11 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "db:bootstrap": "bun scripts/db-bootstrap.ts",
     "dev": "bun run --hot src/index.ts",
     "protect:branches": "bun scripts/configure-branch-protection.ts",
     "protect:branches:bootstrap": "bun scripts/configure-branch-protection.ts --bootstrap",
+    "seed": "bun scripts/db-bootstrap.ts",
     "start": "bun src/index.ts",
     "test": "bun test",
     "test:a11y": "bun scripts/test-a11y.ts",

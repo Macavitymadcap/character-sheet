@@ -1,13 +1,21 @@
 import { Hono } from "hono";
 import { HomePage } from "./components/pages/Home";
+import type {
+  AuthRepository,
+  CampaignRepository,
+  CharacterRepository,
+  NotesRepository,
+  RulesRepository,
+} from "./db";
 
 export interface AppDependencies {
   appName: string;
+  authRepository: AuthRepository;
+  campaignRepository: CampaignRepository;
+  characterRepository: CharacterRepository;
+  notesRepository: NotesRepository;
+  rulesRepository: RulesRepository;
 }
-
-export const createRuntimeDependencies = (): AppDependencies => ({
-  appName: "Character Sheet",
-});
 
 export const createApp = (dependencies: AppDependencies) => {
   const app = new Hono();
