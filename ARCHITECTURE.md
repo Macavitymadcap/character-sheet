@@ -1,685 +1,315 @@
-# D&D Character Sheet Web App - Architecture
+# Architecture
 
-## Project Overview
+Character Sheet is a local-first D&D 5e sheet app built with Hono, HTMX, Bun, TypeScript, JSX, and SQLite.
 
-A static web application for displaying and managing D&D 5e character sheets, initially built for Lynott Magulbisson (Level 4 Artificer/Artillerist). The app will be hosted on GitHub Pages and use localStorage for persistent state management.
+The first MVP supports Lynott Magulbisson, one Game Master, and one admin. It is intentionally designed as a server-rendered application, not a static markdown viewer: the database stores both durable character state and structured rules data, routes own mutation and permission checks, JSX components own semantic markup, and HTMX owns focused fragment swaps.
 
-### Core Principles
+Deployment to Railway and a Postgres migration are out of scope for `sheet-0001`. The MVP should run locally with SQLite and keep the architecture compatible with a later database adapter.
 
-- **Static hosting**: No backend required, everything runs client-side
-- **Separation of concerns**: Mutable state (HP, spell slots) separate from immutable rules (class features, spells)
-- **Markdown for content**: All rules and character data stored as readable markdown files
-- **Scalable architecture**: Built for one character, designed to support multiple characters later
+## Goals
 
-## Tech Stack
+- Keep runtime setup separate from app construction.
+- Use SQLite as the local source of truth for users, sheets, notes, mutable state, and structured rules data.
+- Seed enough D&D 2014 rules data to support Lynott without importing the whole rules corpus.
+- Normalise official 2014 material to the most recent 2014 reprint when sources overlap.
+- Use British English in user-facing copy, code naming, and CSS custom properties.
+- Enforce role-based access for player, Game Master, and admin flows.
+- Render full pages and HTMX fragments from the same component tree.
+- Keep persistence behind repository and service interfaces so a later Postgres epic does not rewrite route code.
+- Use a TDD approach for repositories, services, routes, components, HTMX contracts, accessibility, and screenshots.
 
-### Frontend
-- **TypeScript** (transpiled via Bun)
-- **HTML/CSS/JavaScript** (vanilla, no framework initially)
-- **HTMX** for routing and simple interactivity
-- **Marked.js** or **Markdown-it** for markdown parsing
+## Core Shape
 
-### Build & Deploy
-- **Bun** as runtime and build tool
-- **GitHub Pages** for hosting
-- **localStorage** for persistent mutable state
+The app follows the `pace-calculator` template:
 
-### Why No Framework?
-A character sheet is relatively simple (5-10 "pages": stats, spells, equipment, backstory, rules). Vanilla JS + HTMX handles this without framework overhead. React remains an option if complexity grows (drag-and-drop spell prep, complex conditional rendering, etc.).
-
-## Directory Structure
-
-```
-lynott-character-sheet/
-├── src/                            # Application code
-│   ├── main.ts                     # App entry point
-│   ├── router.ts                   # HTMX routing logic
-│   ├── state/
-│   │   ├── character-state.ts      # localStorage wrapper for mutable state
-│   │   └── character-loader.ts     # Loads character.json + markdown
-│   ├── components/
-│   │   ├── stat-block.ts           # Ability scores, saves, skills
-│   │   ├── hp-tracker.ts           # HP/hit dice management
-│   │   ├── spell-tracker.ts        # Spell slots + prepared spells
-│   │   ├── infusion-display.ts     # Active infusions
-│   │   └── markdown-renderer.ts    # Parses and renders markdown
-│   └── types/
-│       ├── character.ts            # Character interface
-│       └── state.ts                # CharacterState interface
-│
-├── public/                         # Built output for GitHub Pages
-│   ├── index.html
-│   ├── styles.css
-│   ├── bundle.js
-│   └── markdown/                   # Copied from /markdown during build
-│
-├── markdown/
-│   ├── characters/
-│   │   └── lynott-magulbisson/
-│   │       ├── character.json      # Character sheet data (immutable)
-│   │       ├── profile.md          # Backstory, personality
-│   │       ├── npcs.md             # Story NPCs
-│   │       ├── identities.md       # False identities
-│   │       └── notes.md            # Session notes
-│   │
-│   └── rules/                      # Shared rules library
-│       ├── classes/
-│       │   └── artificer/
-│       │       ├── artificer.md    # Core class features
-│       │       ├── subclasses/
-│       │       │   ├── artillerist.md
-│       │       │   ├── alchemist.md
-│       │       │   └── armorer.md
-│       │       └── infusions/
-│       │           ├── _infusion-index.json
-│       │           ├── enhanced-defense.md
-│       │           └── repeating-shot.md
-│       │
-│       ├── species/
-│       │   └── hobgoblin.md
-│       │
-│       ├── backgrounds/
-│       │   ├── special-ops.md
-│       │   └── acolyte.md
-│       │
-│       ├── spells/
-│       │   ├── _spell-index.json
-│       │   ├── level-0/
-│       │   │   ├── mending.md
-│       │   │   └── prestidigitation.md
-│       │   ├── level-1/
-│       │   │   ├── cure-wounds.md
-│       │   │   └── shield.md
-│       │   └── level-2/
-│       │       ├── scorching-ray.md
-│       │       └── shatter.md
-│       │
-│       └── equipment/
-│           ├── armor/
-│           └── weapons/
-│
-├── package.json
-├── tsconfig.json
-├── bunfig.toml
-└── README.md
+```text
+src/
+├── index.ts                    # Bun runtime entrypoint
+├── app.tsx                     # Hono app factory
+├── auth/                       # password, sessions, role guards
+├── characters/                 # character read models, validation, services
+├── rules/                      # rules import, normalisation, and read models
+├── notes/                      # player and Game Master notes
+├── db/                         # schema, repository contracts, SQLite implementation
+├── components/                 # server-rendered JSX components
+│   ├── atoms/
+│   ├── molecules/
+│   ├── organisms/
+│   ├── pages/
+│   ├── templates/
+│   └── styles.ts
+└── test/                       # shared app and repository harnesses
 ```
 
-## Data Structures
+`src/index.ts` owns process setup: environment variables, SQLite filename, repository construction, and the Bun `fetch` export.
 
-### Character Definition (`character.json`)
+`src/app.tsx` owns application composition:
 
-Immutable character data that references rules content:
-
-```json
-{
-  "id": "lynott-magulbisson",
-  "name": "Lynott Magulbisson",
-  "level": 4,
-  "classes": [
-    {
-      "name": "artificer",
-      "level": 4,
-      "subclass": "artillerist",
-      "hitDice": { "total": 4, "type": "d8" }
-    }
-  ],
-  "species": "hobgoblin",
-  "background": "special-ops",
-  
-  "abilityScores": {
-    "str": 8, "dex": 16, "con": 13,
-    "int": 18, "wis": 12, "cha": 10
-  },
-  
-  "proficiencies": {
-    "armor": ["light", "medium", "shields"],
-    "weapons": ["simple", "firearms"],
-    "tools": ["thieves-tools", "tinkers-tools", "smiths-tools", "woodcarvers-tools"],
-    "saves": ["con", "int"],
-    "skills": ["stealth", "deception", "investigation", "perception"]
-  },
-  
-  "knownSpells": {
-    "cantrips": ["mending", "prestidigitation"],
-    "level1": ["cure-wounds", "shield", "thunderwave", "faerie-fire"],
-    "level2": ["scorching-ray", "shatter"]
-  },
-  
-  "knownInfusions": [
-    "enhanced-defense",
-    "repeating-shot",
-    "bag-of-holding",
-    "cap-of-water-breathing"
-  ],
-  
-  "equipment": {
-    "armor": {
-      "worn": "breastplate",
-      "infusion": "enhanced-defense"
-    },
-    "weapons": [
-      {
-        "name": "revolver",
-        "infusion": "repeating-shot"
-      }
-    ]
-  }
+```ts
+export interface AppDependencies {
+  authRepository: AuthRepository;
+  characterRepository: CharacterRepository;
+  rulesRepository: RulesRepository;
+  notesRepository: NotesRepository;
+  sessionService: SessionService;
 }
-```
 
-### Mutable State (localStorage)
-
-Runtime state that changes during play:
-
-```typescript
-interface CharacterState {
-  characterId: string;  // "lynott-magulbisson"
-  
-  // Combat stats
-  hp: { current: 31, max: 31, temp: 0 },
-  hitDice: { current: 4, max: 4 },
-  
-  // Spell slots
-  spellSlots: {
-    level1: { current: 4, max: 4 },
-    level2: { current: 2, max: 2 }
-  },
-  
-  // Prepared spells (subset of known)
-  preparedSpells: [
-    "cure-wounds",
-    "shield", 
-    "thunderwave",
-    "scorching-ray",
-    "shatter",
-    "faerie-fire"
-  ],
-  
-  // Active infusions (subset of known, max 2 at level 4)
-  activeInfusions: [
-    { infusion: "enhanced-defense", item: "breastplate" },
-    { infusion: "repeating-shot", item: "revolver" }
-  ],
-  
-  // Per-rest resources
-  feyGift: { current: 2, max: 2 },
-  fortuneFromMany: { current: 2, max: 2 },
-  
-  // Temporary conditions
-  conditions: [],
-  
-  // Session notes
-  notes: {
-    session: "Just arrived in Rovnost...",
-    combat: "Eldritch cannon placement ideas..."
-  }
-}
-```
-
-**Storage:** `localStorage.setItem("character-state:lynott-magulbisson", JSON.stringify(state))`
-
-### Spell Index (`_spell-index.json`)
-
-Metadata for filtering/searching without loading all markdown files:
-
-```json
-{
-  "level-0": [
-    {
-      "id": "acid-splash",
-      "name": "Acid Splash",
-      "school": "conjuration",
-      "level": 0,
-      "classes": ["artificer", "sorcerer", "wizard"],
-      "ritual": false,
-      "concentration": false
-    },
-    {
-      "id": "mending",
-      "name": "Mending",
-      "school": "transmutation",
-      "level": 0,
-      "classes": ["artificer", "bard", "cleric", "druid", "sorcerer", "wizard"],
-      "ritual": false,
-      "concentration": false
-    }
-  ],
-  "level-1": [
-    {
-      "id": "cure-wounds",
-      "name": "Cure Wounds",
-      "school": "evocation",
-      "level": 1,
-      "classes": ["artificer", "bard", "cleric", "druid", "paladin", "ranger"],
-      "ritual": false,
-      "concentration": false
-    }
-  ]
-}
-```
-
-### Infusion Index (`_infusion-index.json`)
-
-Similar structure for infusions:
-
-```json
-{
-  "infusions": [
-    {
-      "id": "enhanced-defense",
-      "name": "Enhanced Defense",
-      "item": "A suit of armor or a shield",
-      "prerequisite": null,
-      "requiresAttunement": false
-    },
-    {
-      "id": "repeating-shot",
-      "name": "Repeating Shot",
-      "item": "A simple or martial weapon with the ammunition property",
-      "prerequisite": null,
-      "requiresAttunement": true
-    },
-    {
-      "id": "arcane-propulsion-armor",
-      "name": "Arcane Propulsion Armor",
-      "item": "A suit of armor",
-      "prerequisite": "Level 14+",
-      "requiresAttunement": true
-    }
-  ]
-}
-```
-
-## Markdown Structure Standards
-
-### Header Hierarchy
-
-**Consistent pattern across all rules documents:**
-
-```markdown
-# [Document Title]        ← H1: The thing itself (spell name, class name, etc.)
-
-## [Major Section]        ← H2: Major divisions (Class Features, Racial Traits, etc.)
-
-### [Feature/Ability]     ← H3: Individual mechanics/features
-
-#### [Subsection/Table]   ← H4: Details, tables, special cases
-```
-
-### Class Files
-
-**Example: `artificer.md`**
-
-```markdown
-# Artificer (TCE)
-
-[Flavor text]
-
-## The Artificer
-
-| Level | Proficiency Bonus | Features | Infusions Known | ... |
-|-------|-------------------|----------|-----------------|-----|
-| 1st | +2 | [Magical Tinkering](#magical-tinkering), [Spellcasting](#spellcasting) | — | ... |
-
-## Creating an Artificer
-
-### Quick Build
-### Hit Points
-### Proficiencies
-### Starting Equipment
-
-## Class Features
-
-### Magical Tinkering
-*1st-level artificer feature*
-
-You've learned how to invest...
-
-### Spellcasting
-*1st-level artificer feature*
-
-You've studied the workings...
-
-#### Preparing and Casting Spells
-#### Spellcasting Ability
-```
-
-### Subclass Files
-
-**Example: `artillerist.md`**
-
-```markdown
-# Artillerist
-
-An Artillerist specializes in using magic...
-
-## Artillerist Features
-
-### Tool Proficiency
-*3rd-level Artillerist feature*
-
-When you adopt this specialization...
-
-### Artillerist Spells
-*3rd-level Artillerist feature*
-
-Starting at 3rd level, you always have certain spells prepared...
-
-#### Artillerist Spells Table
-| Artificer Level | Spell |
-|-----------------|-------|
-| 3rd | *shield*, *thunderwave* |
-
-### Eldritch Cannon
-*3rd-level Artillerist feature*
-
-At 3rd level, you learn how to create...
-
-#### Eldritch Cannons
-| Cannon | Activation |
-|--------|------------|
-| Flamethrower | The cannon exhales... |
-```
-
-### Species Files
-
-**Example: `hobgoblin.md`**
-
-```markdown
-# Hobgoblin
-
-**Ability Scores**: Choose one of: (a) Choose any +2; choose any other +1  
-**Creature Type**: Humanoid  
-**Size**: Medium  
-**Speed**: 30 feet
-
-## Racial Traits
-
-### Creature Type
-You are a Humanoid. You are also considered a goblinoid...
-
-### Darkvision
-You can see in dim light within 60 feet...
-
-### Fey Ancestry
-You have advantage on saving throws...
-
-### Fey Gift
-You can use this trait to take the Help action...
-
-Starting at 3rd level, choose one of the options below:
-
-- **Hospitality.** You and the creature you help each gain...
-- **Passage.** You and the creature you help each increase...
-- **Spite.** Until the start of your next turn...
-
-### Fortune from the Many
-If you miss with an attack roll...
-
-### Languages
-You can speak, read, and write Common...
-```
-
-### Background Files
-
-**Example: `special-ops.md`**
-
-```markdown
-# Special Operations
-
-**Skill Proficiencies:** Stealth, Deception  
-**Tool Proficiencies:** One type of gaming set (Three Dragon Ante), vehicles (land)  
-**Equipment:** An insignia of rank (kept hidden), a set of traveler's clothes...
-
-## Background Features
-
-### Special Ops
-Your special forces training and knowledge...
-```
-
-*Note: Suggested Characteristics tables are optional per background*
-
-### Spell Files
-
-**Example: `cure-wounds.md`**
-
-```markdown
-# Cure Wounds
-
-*1st-level evocation*
-
-**Casting Time:** 1 action  
-**Range:** Touch  
-**Components:** V, S  
-**Duration:** Instantaneous
-
-A creature you touch regains hit points equal to 1d8 + your spellcasting modifier. This spell has no effect on undead or constructs.
-
-## At Higher Levels
-
-When you cast this spell using a spell slot of 2nd level or higher, the healing increases by 1d8 for each slot level above 1st.
-```
-
-**Key points:**
-- H1 for spell name (standalone document)
-- Italicized level/school on second line
-- Bold stats (Casting Time, Range, etc.)
-- H2 for "At Higher Levels" (if applicable)
-- No "Classes" field (that's in `_spell-index.json`)
-
-### Infusion Files
-
-**Example: `enhanced-defense.md`**
-
-```markdown
-# Enhanced Defense
-
-*Item: A suit of armor or a shield*
-
-A creature gains a +1 bonus to Armor Class while wearing (armor) or wielding (shield) the infused item.
-
-The bonus increases to +2 when you reach 10th level in this class.
-```
-
-**For infusions with statblocks (e.g., `homunculus-servant.md`):**
-
-```markdown
-# Homunculus Servant
-
-*Item: A gem or crystal worth at least 100 gp*
-
-You learn intricate methods for magically creating a special homunculus...
-
-[infusion description]
-
----
-
-## Homunculus Servant Statblock
-
-*Tiny Construct*
-
-**AC** 13 (natural armor)  
-**Hit Points** 1 + your Intelligence modifier + your artificer level
-
-[full statblock]
-```
-
-## Linking Strategy
-
-### Within-Document Links
-
-Use standard markdown anchors:
-
-```markdown
-| 1st | +2 | [Magical Tinkering](#magical-tinkering), [Spellcasting](#spellcasting) |
-```
-
-Renders as:
-```html
-<a href="#magical-tinkering">Magical Tinkering</a>
-<!-- Links to -->
-<h3 id="magical-tinkering">Magical Tinkering</h3>
-```
-
-### Cross-Document Links in Rules Files
-
-Use relative paths (works in GitHub preview):
-
-```markdown
-Choose the type of specialist you are:
-- [Artillerist](subclasses/artillerist.md)
-- [Alchemist](subclasses/alchemist.md)
-```
-
-### Character-Specific Links
-
-Use custom anchor syntax that the app resolves:
-
-```markdown
-## Active Infusions
-- [Enhanced Defense](#infusion:enhanced-defense)
-- [Repeating Shot](#infusion:repeating-shot)
-
-## Prepared Spells
-- [Cure Wounds](#spell:cure-wounds)
-- [Shield](#spell:shield)
-```
-
-**App intercepts and resolves:**
-
-```typescript
-renderer.link = (href, title, text) => {
-  if (href.startsWith('#infusion:')) {
-    const infusionId = href.replace('#infusion:', '');
-    href = `/markdown/rules/classes/artificer/infusions/${infusionId}.md`;
-  } else if (href.startsWith('#spell:')) {
-    const spellId = href.replace('#spell:', '');
-    const level = getSpellLevel(spellId); // From spell index
-    href = `/markdown/rules/spells/level-${level}/${spellId}.md`;
-  }
-  
-  // HTMX-ify for SPA navigation
-  return `<a href="${href}" hx-get="${href}" hx-target="#content" hx-push-url="true">${text}</a>`;
+export const createApp = (dependencies: AppDependencies) => {
+  const app = new Hono();
+  return app;
 };
 ```
 
-## Content Loading Strategy
+Tests should use the same `createApp()` route tree with in-memory SQLite repositories.
 
-### Initial Load
-1. Load `character.json` for immutable character data
-2. Load `localStorage` for mutable state
-3. Load character profile markdown (backstory, etc.)
+## Request Flow
 
-### Dynamic Rule Loading
-Load rules markdown on-demand based on character data:
+Initial page requests return a complete document:
 
-```typescript
-// Load class rules
-const artificerCore = await loadMarkdown('/rules/classes/artificer/artificer.md');
-const artillerist = await loadMarkdown('/rules/classes/artificer/subclasses/artillerist.md');
+```mermaid
+sequenceDiagram
+    participant Browser
+    participant App as Hono App
+    participant Auth as Session Service
+    participant Repo as Character Repository
+    participant Page as Sheet Page
 
-// Load species
-const hobgoblin = await loadMarkdown('/rules/species/hobgoblin.md');
-
-// Load only known spells
-const spells = await Promise.all(
-  character.knownSpells.level1.map(spellId => 
-    loadMarkdown(`/rules/spells/level-1/${spellId}.md`)
-  )
-);
-
-// Load only known infusions
-const infusions = await Promise.all(
-  character.knownInfusions.map(infusionId =>
-    loadMarkdown(`/rules/classes/artificer/infusions/${infusionId}.md`)
-  )
-);
+    Browser->>App: GET /sheet/lynott-magulbisson
+    App->>Auth: readSession(cookie)
+    Auth-->>App: player session
+    App->>Repo: getSheet("lynott-magulbisson", user)
+    Repo-->>App: sheet read model
+    App->>Page: <SheetPage sheet={sheet} />
+    Page-->>App: full HTML document
+    App-->>Browser: text/html
 ```
 
-### Index Usage
+HTMX interactions return the smallest meaningful fragment:
 
-Load indices for browsing/filtering:
+```mermaid
+sequenceDiagram
+    participant Browser
+    participant HTMX
+    participant App as Hono App
+    participant Guard as Role Guard
+    participant Repo as Character Repository
+    participant View as JSX Fragment
 
-```typescript
-// Spell picker: "What 2nd-level spells can I learn?"
-const spellIndex = await fetch('/markdown/rules/spells/_spell-index.json').then(r => r.json());
-const level2Artificer = spellIndex['level-2'].filter(s => s.classes.includes('artificer'));
-
-// Display list, load individual .md files on click
+    Browser->>HTMX: Click spend spell slot
+    HTMX->>App: PATCH /sheet/lynott-magulbisson/resources/spell-slot-1
+    App->>Guard: requireSheetWrite(session, sheetId)
+    Guard-->>App: allowed
+    App->>Repo: spendResource(sheetId, resourceId)
+    App->>Repo: getSheetHeader(sheetId)
+    App->>View: <SheetHeader sheet={sheetHeader} />
+    View-->>App: header fragment
+    App-->>HTMX: text/html
+    HTMX-->>Browser: Swap #sheet-header
 ```
 
-## Migration Path
+Routes that are triggered by HTMX should not return a full page unless the interaction needs a navigation-level response.
 
-### Phase 1: Single Character (Current)
-- Hardcode Lynott's data in the app
-- Focus on UI/UX and markdown rendering
-- localStorage for mutable state
-- Manual markdown file organization
+## Pages And Navigation
 
-### Phase 2: Character JSON (Before Character #2)
-- Extract Lynott's data into `character.json`
-- Refactor app to dynamically load rules based on JSON
-- Test with Lynott, ensure feature parity
+The MVP page set:
 
-### Phase 3: Multi-Character Support (Future)
-- Character selection UI
-- Per-character localStorage keys
-- Shared rules library across characters
+- `/` home page with the signed-in user's default action.
+- `/login` login form.
+- `/logout` logout route and confirmation state.
+- `/sheet/:characterId` character sheet page.
+- `/admin` admin page for users, invites, password resets, and basic reads.
 
-### Phase 4: Character Builder (Optional)
-- UI to create new characters
-- Pick class/species/background
-- Select spells/infusions from indices
-- Generate `character.json` from form data
+The site header is sticky and contains:
 
-## Design Decisions Summary
+- app name
+- current user and role
+- navigation menu
+- login or logout action
 
-### ✅ Decisions Made
+The sheet page has a second sticky header containing labelled outputs and actions:
 
-1. **GitHub Pages + localStorage**: Valid for single-user character sheet, no backend needed
-2. **Vanilla TS + HTMX**: Appropriate for this scope, React only if needed later
-3. **Level-based spell directories**: `/level-0/`, `/level-1/`, etc.
-4. **Class-scoped infusions**: `/classes/artificer/infusions/` (not root-level)
-5. **H3 for features**: Consistent header hierarchy across all rule types
-6. **Index files for metadata**: `_spell-index.json`, `_infusion-index.json` separate from markdown
-7. **Embedded statblocks**: Keep Homunculus statblock in `homunculus-servant.md`
-8. **Relative paths in rules**: Standard markdown links work in GitHub
-9. **Custom anchors in character files**: `#spell:cure-wounds` resolved by app
+- character name, species, class, and level
+- armour class
+- hit points and temporary hit points
+- initiative
+- conditions
+- inspiration
+- rest actions
+- settings action
 
-### 🤔 Future Considerations
+Sheet content is arranged as scrollable tabs:
 
-- **Cross-device sync**: Would require backend (Firebase, Supabase) if needed
-- **Collaborative editing**: Not in scope for single-user sheet
-- **PDF export**: Could add later with print CSS or PDF library
-- **Dice rolling**: Could integrate dice notation parser + RNG
+- core: abilities, saves, senses, speed, and defence
+- skills, proficiencies, and training
+- actions
+- spellcasting
+- features and traits
+- equipment
+- background
+- notes
 
-## Build Process
+Each tab should be independently renderable as a full section and as an HTMX fragment.
+
+## Roles And Permissions
+
+The MVP has no more than ten users. It starts with three seeded users:
+
+| Role | Initial user | Permissions |
+| --- | --- | --- |
+| Player | Lynott player | Manage their own character sheet and player notes. |
+| Game Master | Campaign GM | Manage all character sheets, campaign/session data, and Game Master notes. |
+| Admin | Site admin | Manage users, invites, password resets, and basic administrative reads. |
+
+Permission checks should live in shared guards, not scattered through components. Components may hide unavailable controls, but routes must enforce access.
+
+```mermaid
+flowchart TD
+    A["Request with session cookie"] --> B{"Authenticated?"}
+    B -- "No" --> C["Redirect to /login"]
+    B -- "Yes" --> D{"Role and resource allowed?"}
+    D -- "No" --> E["403 response or read-only view"]
+    D -- "Yes" --> F["Run route handler"]
+```
+
+## Data Model
+
+The database stores structured data for rules and sheet state. Markdown files in `docs/rules` are useful source material, but runtime reads should use SQLite read models.
+
+```mermaid
+erDiagram
+    users ||--o{ sessions : owns
+    users ||--o{ invites : creates
+    users ||--o{ password_reset_tokens : creates
+    users ||--o{ characters : owns
+    campaigns ||--o{ campaign_members : has
+    users ||--o{ campaign_members : joins
+    campaigns ||--o{ campaign_sessions : records
+    characters ||--o{ character_classes : has
+    characters ||--o{ character_abilities : has
+    characters ||--o{ character_resources : tracks
+    characters ||--o{ character_notes : owns
+    characters ||--o{ character_rule_links : references
+    rules_sources ||--o{ rules_entities : provides
+    rules_entities ||--o{ rule_mechanics : describes
+    rules_entities ||--o{ character_rule_links : selected_by
+```
+
+### Core Tables
+
+| Table | Purpose |
+| --- | --- |
+| `users` | Login identity, display name, role, password hash, and status. |
+| `sessions` | Signed session records with expiry and user agent metadata. |
+| `invites` | Admin or Game Master invite tokens for local account creation. |
+| `password_reset_tokens` | Admin-triggered local password reset tokens. |
+| `campaigns` | Campaign records owned by a Game Master. |
+| `campaign_members` | User membership and role within a campaign. |
+| `campaign_sessions` | Game Master session records and campaign notes. |
+| `characters` | Character identity, owner, campaign, species, background, level, and summary stats. |
+| `character_classes` | Class and subclass levels, hit dice, and spellcasting ability. |
+| `character_abilities` | Ability scores, modifiers, saving throw proficiency, and derived save values. |
+| `character_skills` | Skill ability, proficiency level, expertise, and derived values. |
+| `character_resources` | Mutable resources such as hit points, hit dice, spell slots, inspiration, trait uses, and conditions. |
+| `character_equipment` | Inventory, equipped items, attunement, and active item modifiers. |
+| `character_notes` | Player-visible and Game Master-only notes. |
+| `rules_sources` | Source metadata such as Tasha's Cauldron of Everything and source precedence. |
+| `rules_entities` | Spells, class features, species traits, backgrounds, equipment, infusions, and conditions. |
+| `rule_mechanics` | Structured mechanics such as uses, dice notation, DCs, ranges, durations, conditions, and scaling. |
+| `character_rule_links` | Character selections and granted rules, such as prepared spells and known infusions. |
+
+### Rules Data
+
+Rules import starts local-first:
+
+1. Read existing local markdown or JSON exports.
+2. Parse metadata and text into structured rule entities.
+3. Normalise spellings to British English.
+4. Resolve source precedence for official 2014 rules and reprints.
+5. Seed only the entities Lynott needs for the MVP.
+6. Keep enough source metadata to audit where each imported rule came from.
+
+The importer should be written behind a service boundary so live 5e.tools fetching can be added without changing route code.
+
+## Lynott MVP Coverage
+
+The seed data must support Lynott as described in `docs/characters/Lynott-Magulbisson.md`:
+
+- Level 4 hobgoblin Artillerist Artificer.
+- Ability scores, saving throws, skills, senses, speed, armour class, hit points, and initiative.
+- Artificer class features through level 4 and Artillerist features through level 4.
+- Hobgoblin traits including Fey Gift and Fortune from the Many.
+- Known and prepared spells needed by the sheet, including artificer and Artillerist spells.
+- Known and active infusions, including Enhanced Defence and Repeating Shot.
+- Equipment, false identities, background, NPCs, and notes.
+
+## Component Model
+
+Components are grouped by rendered responsibility:
+
+- Atoms: primitive controls and outputs such as `Button`, `IconButton`, `LabelledOutput`, `Tab`, and `Badge`.
+- Molecules: small compositions such as resource steppers, ability rows, note editors, and condition chips.
+- Organisms: feature regions such as `SheetHeader`, `SheetTabs`, `SpellcastingPanel`, `ActionsPanel`, and `AdminUserTable`.
+- Pages: full route compositions such as `HomePage`, `LoginPage`, `SheetPage`, and `AdminPage`.
+- Templates: document shell, shared scripts, style injection, and layout slots.
+
+Each component directory should colocate component code, styles, tests, and exports:
+
+```text
+components/organisms/SheetHeader/
+├── SheetHeader.tsx
+├── SheetHeader.styles.ts
+├── SheetHeader.test.tsx
+└── index.ts
+```
+
+The UI should be dense enough for repeated use at the table. Avoid marketing-style hero layouts, oversized decorative cards, and explanatory in-app copy. Controls should use appropriate form elements, labelled outputs, icons where useful, and stable dimensions so resource updates do not shift the page.
+
+## Testing Strategy
+
+Development should be tests first where practical:
+
+- Database tests create in-memory SQLite repositories and assert schema constraints, seed behaviour, and read models.
+- Service tests cover password hashing, session handling, rule normalisation, source precedence, resource mutation, and permission decisions.
+- Route tests call `app.request()` and assert status codes, redirects, session cookies, role enforcement, validation failures, full pages, and HTMX fragments.
+- Component tests render JSX to strings and assert semantic HTML, labels, headings, ARIA, HTMX attributes, and empty states.
+- Accessibility tests run Pa11y against key pages once a runnable app exists.
+- Screenshot tests capture the sheet in light and dark states for user-facing UI changes.
+
+The minimum verification before a source-code ticket is complete:
 
 ```bash
-# Development
-bun run dev        # Watch mode, live reload
-
-# Production build
-bun build src/main.ts --outdir public
-cp -r markdown public/
-
-# Deploy to GitHub Pages
-git add public/
-git commit -m "Deploy character sheet"
-git push origin main
+bun run typecheck
+bun run test
+bun run test:a11y
 ```
 
-## Next Steps
+## Pipeline
 
-1. **Set up project**: Initialize Bun project, TypeScript config
-2. **Create type definitions**: `Character`, `CharacterState` interfaces
-3. **Build markdown renderer**: Parse and display markdown with custom link resolution
-4. **Implement state management**: localStorage wrapper with save/load
-5. **Create UI components**: HP tracker, spell slots, infusion display
-6. **Add HTMX routing**: Load different sections on-demand
-7. **Style with CSS**: Design tokens, responsive layout
-8. **Test with Lynott**: Verify all features work with real character data
+The repository should use an epic integration branch between ticket work and `main`. Ticket branches are created from the active epic branch and squash-merged back into it. When all tickets are accepted, the epic branch is opened as the pull request to `main`.
 
----
+```mermaid
+flowchart LR
+    A["main"] --> B["Epic branch"]
+    B --> C["Ticket branch"]
+    C --> D["Ticket PR"]
+    D --> E["Checks and review"]
+    E --> F["Squash merge into epic"]
+    F --> G{"More tickets?"}
+    G -- "Yes" --> C
+    G -- "No" --> H["Epic PR"]
+    H --> I["Checks and review"]
+    I --> J["Merge epic to main"]
+```
 
-*Last updated: 2025-05-10*
+Release automation can be added after the MVP scaffold exists. Railway and Postgres deployment remain a later epic.
+
+## Design Decisions
+
+- Hono + HTMX + SQLite replaces the older GitHub Pages/localStorage plan.
+- SQLite is the MVP source of truth for both mutable sheet state and structured rules data.
+- Existing markdown remains useful as source material and human-readable reference, but runtime features should read structured tables.
+- Local password auth is in scope now; external identity providers are not.
+- Admin invite and password reset flows are local workflows without email delivery in this epic.
+- Live 5e.tools fetching is deferred behind an importer boundary; local imports come first.
+- British English is required across copy, docs, code naming, and CSS variables.
+- The first implementation sequence is documentation and tickets, then source code through accepted tickets.
