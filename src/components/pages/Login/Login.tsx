@@ -23,7 +23,7 @@ export const LoginPage = ({ appName, error }: LoginPageProps) => {
           ) : null}
           <form class="form-stack" action="/login" method="post">
             <FormField
-              autocomplete="username"
+              autocomplete="email"
               id="email"
               label="Email"
               name="email"

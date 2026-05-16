@@ -19,6 +19,8 @@
   },
   "devDependencies": {
     "@types/bun": "latest",
+    "pa11y": "^9.1.1",
+    "puppeteer": "^25.0.2",
     "typescript": "^5"
   }
 }

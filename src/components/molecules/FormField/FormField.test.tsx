@@ -7,7 +7,7 @@ describe("FormField", () => {
   test("renders a labelled input", () => {
     const html = render(
       <FormField
-        autocomplete="username"
+        autocomplete="email"
         id="email"
         label="Email"
         name="email"
@@ -18,7 +18,7 @@ describe("FormField", () => {
 
     expect(html).toContain('<label for="email">Email</label>');
     expect(html).toContain(
-      '<input id="email" name="email" type="email" autocomplete="username" required=""/>',
+      '<input id="email" name="email" type="email" autocomplete="email" required=""/>',
     );
   });
 

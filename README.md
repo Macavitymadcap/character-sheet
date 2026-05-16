@@ -75,6 +75,8 @@ bun run test:watch
 bun run typecheck
 ```
 
+`bun run test:a11y` starts an in-memory app and runs Pa11y against `/login`, authenticated `/`, and authenticated `/admin`.
+
 Repository maintenance scripts:
 
 ```bash
