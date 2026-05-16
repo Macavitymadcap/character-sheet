@@ -1,6 +1,6 @@
-# Character Sheet MVP Planning Prompt
+# Epic sheet-0001 
 
-Plan out an epic to implement an mvp for the character sheet app. Use the pace-calculator as a template for the architecture. For now we will focus on getting it running locally with sql lite. Deployment to railway and use of postgres will come in the next epic.   
+Plan out an epic to implement an mvp for the character sheet app. You are currently in the root of pace-calculator, which you can use as a template for the character sheet app which is located at ../character-sheet relative to pace-calculator. For now we will focus on getting it running locally with sql lite. Deployment to railway and use of postgres will come in the next epic.   
 
 ## Roles
 
@@ -67,3 +67,5 @@ We will work in this flow:
 3. Depending on the verdict:
   - ok: update any effected documentation if needed, then move onto the next document
   - not ok: repeat 1 - 2 until accepted.
+
+  epics and tickets use the same numbering system, e.g., sheet-0001. As we start with epic 0001, each ticket planned and accepted can increment from there. use this pattern when we move to other epics.
