@@ -9,10 +9,13 @@ describe("LoginPage", () => {
 
     expect(html).toContain("<title>Character Sheet</title>");
     expect(html).toContain("Sign in");
+    expect(html).toContain('<section class="panel" data-width="narrow" aria-labelledby="login-heading">');
+    expect(html).toContain('<form class="form-stack" action="/login" method="post">');
     expect(html).toContain('method="post"');
     expect(html).toContain('action="/login"');
     expect(html).toContain('name="email"');
     expect(html).toContain('name="password"');
+    expect(html).toContain('<button class="button" data-variant="primary" type="submit">Sign in</button>');
   });
 
   test("renders authentication errors", () => {
