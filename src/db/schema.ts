@@ -116,6 +116,41 @@ CREATE TABLE IF NOT EXISTS character_skills (
   PRIMARY KEY (character_id, skill)
 );
 
+CREATE TABLE IF NOT EXISTS character_senses (
+  id TEXT PRIMARY KEY,
+  character_id TEXT NOT NULL REFERENCES characters(id) ON DELETE CASCADE,
+  label TEXT NOT NULL,
+  value TEXT NOT NULL,
+  sort_order INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS character_armour_class_sources (
+  id TEXT PRIMARY KEY,
+  character_id TEXT NOT NULL REFERENCES characters(id) ON DELETE CASCADE,
+  label TEXT NOT NULL,
+  value INTEGER NOT NULL,
+  notes TEXT NOT NULL DEFAULT '',
+  sort_order INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS character_defences (
+  id TEXT PRIMARY KEY,
+  character_id TEXT NOT NULL REFERENCES characters(id) ON DELETE CASCADE,
+  defence_type TEXT NOT NULL CHECK (defence_type IN ('armour', 'condition_immunity', 'immunity', 'resistance')),
+  label TEXT NOT NULL,
+  detail TEXT NOT NULL DEFAULT '',
+  sort_order INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS character_proficiencies (
+  id TEXT PRIMARY KEY,
+  character_id TEXT NOT NULL REFERENCES characters(id) ON DELETE CASCADE,
+  category TEXT NOT NULL CHECK (category IN ('armour', 'language', 'tool', 'training', 'weapon')),
+  name TEXT NOT NULL,
+  detail TEXT NOT NULL DEFAULT '',
+  sort_order INTEGER NOT NULL DEFAULT 0
+);
+
 CREATE TABLE IF NOT EXISTS character_resources (
   id TEXT PRIMARY KEY,
   character_id TEXT NOT NULL REFERENCES characters(id) ON DELETE CASCADE,

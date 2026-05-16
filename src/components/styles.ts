@@ -4,9 +4,11 @@ import { labelledOutputStyles } from "./atoms/LabelledOutput/LabelledOutput.styl
 import { panelStyles } from "./atoms/Panel/Panel.styles";
 import { formFieldStyles } from "./molecules/FormField/FormField.styles";
 import { siteHeaderStyles } from "./molecules/SiteHeader/SiteHeader.styles";
+import { coreTabStyles } from "./organisms/CoreTab/CoreTab.styles";
 import { sheetHeaderStyles } from "./organisms/SheetHeader/SheetHeader.styles";
 import { sheetTabPanelStyles } from "./organisms/SheetTabPanel/SheetTabPanel.styles";
 import { sheetTabsStyles } from "./organisms/SheetTabs/SheetTabs.styles";
+import { skillsTrainingTabStyles } from "./organisms/SkillsTrainingTab/SkillsTrainingTab.styles";
 import { adminStyles } from "./pages/Admin/Admin.styles";
 import { homeStyles } from "./pages/Home/Home.styles";
 import { loginStyles } from "./pages/Login/Login.styles";
@@ -21,9 +23,11 @@ export const appStyles = [
   panelStyles,
   formFieldStyles,
   siteHeaderStyles,
+  coreTabStyles,
   sheetHeaderStyles,
   sheetTabsStyles,
   sheetTabPanelStyles,
+  skillsTrainingTabStyles,
   homeStyles,
   loginStyles,
   adminStyles,

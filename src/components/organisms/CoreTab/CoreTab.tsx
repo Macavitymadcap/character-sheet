@@ -1,0 +1,94 @@
+import type { CharacterAbility, CharacterSheetReadModel } from "../../../db";
+import { formatModifier } from "../../../characters/calculations";
+
+interface CoreTabProps {
+  sheet: CharacterSheetReadModel;
+}
+
+export const CoreTab = ({ sheet }: CoreTabProps) => {
+  return (
+    <div class="core-tab">
+      <section class="sheet-data-section" aria-labelledby="abilities-heading">
+        <h3 id="abilities-heading">Abilities and saves</h3>
+        <div class="table-scroll">
+          <table class="sheet-table">
+            <thead>
+              <tr>
+                <th scope="col">Ability</th>
+                <th scope="col">Score</th>
+                <th scope="col">Modifier</th>
+                <th scope="col">Save</th>
+                <th scope="col">Training</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sheet.abilities.map((ability) => (
+                <tr>
+                  <th scope="row">{formatAbility(ability.ability)}</th>
+                  <td>{ability.score}</td>
+                  <td>{formatModifier(ability.modifier)}</td>
+                  <td>{formatModifier(ability.saveModifier)}</td>
+                  <td>{ability.saveProficient ? "Proficient" : "Untrained"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="sheet-data-section" aria-labelledby="senses-speed-heading">
+        <h3 id="senses-speed-heading">Senses and speed</h3>
+        <dl class="sheet-description-grid">
+          <div>
+            <dt>Speed</dt>
+            <dd>{sheet.speedFeet} ft</dd>
+          </div>
+          {sheet.senses.map((sense) => (
+            <div>
+              <dt>{sense.label}</dt>
+              <dd>{sense.value}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
+
+      <section class="sheet-data-section" aria-labelledby="armour-heading">
+        <h3 id="armour-heading">Armour and defence</h3>
+        <dl class="sheet-description-grid">
+          <div>
+            <dt>Armour class</dt>
+            <dd>{sheet.armourClass}</dd>
+          </div>
+          {sheet.armourClassBreakdown.map((source) => (
+            <div>
+              <dt>{source.label}</dt>
+              <dd>
+                {formatModifier(source.value)}
+                {source.notes ? <span>{source.notes}</span> : null}
+              </dd>
+            </div>
+          ))}
+          {sheet.defences.map((defence) => (
+            <div>
+              <dt>{defence.label}</dt>
+              <dd>{defence.detail}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
+    </div>
+  );
+};
+
+function formatAbility(ability: CharacterAbility["ability"]) {
+  const labels: Record<CharacterAbility["ability"], string> = {
+    charisma: "Charisma",
+    constitution: "Constitution",
+    dexterity: "Dexterity",
+    intelligence: "Intelligence",
+    strength: "Strength",
+    wisdom: "Wisdom",
+  };
+
+  return labels[ability];
+}

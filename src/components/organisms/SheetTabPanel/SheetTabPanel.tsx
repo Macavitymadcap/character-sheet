@@ -1,5 +1,7 @@
 import type { CharacterResource, CharacterSheetReadModel } from "../../../db";
 import { LabelledOutput } from "../../atoms/LabelledOutput";
+import { CoreTab } from "../CoreTab";
+import { SkillsTrainingTab } from "../SkillsTrainingTab";
 import { getSheetTab, type SheetTabId } from "../SheetTabs";
 
 interface SheetTabPanelProps {
@@ -23,11 +25,7 @@ export const SheetTabPanel = ({ resources, sheet, tabId }: SheetTabPanelProps) =
         <h2>{tab.label}</h2>
         <p>{tab.description}</p>
       </div>
-      <div class="tab-placeholder-grid">
-        {getPlaceholderOutputs(tab.id, sheet, resources).map((output) => (
-          <LabelledOutput label={output.label} value={output.value} />
-        ))}
-      </div>
+      {renderTabContent(tab.id, sheet, resources)}
     </section>
   );
 };
@@ -80,4 +78,21 @@ function getPlaceholderOutputs(
   };
 
   return outputs[tabId];
+}
+
+function renderTabContent(
+  tabId: SheetTabId,
+  sheet: CharacterSheetReadModel,
+  resources: CharacterResource[],
+) {
+  if (tabId === "core") return <CoreTab sheet={sheet} />;
+  if (tabId === "skills") return <SkillsTrainingTab sheet={sheet} />;
+
+  return (
+    <div class="tab-placeholder-grid">
+      {getPlaceholderOutputs(tabId, sheet, resources).map((output) => (
+        <LabelledOutput label={output.label} value={output.value} />
+      ))}
+    </div>
+  );
 }

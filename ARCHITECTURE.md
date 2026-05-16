@@ -187,6 +187,10 @@ erDiagram
     campaigns ||--o{ campaign_sessions : records
     characters ||--o{ character_classes : has
     characters ||--o{ character_abilities : has
+    characters ||--o{ character_senses : has
+    characters ||--o{ character_armour_class_sources : explains
+    characters ||--o{ character_defences : tracks
+    characters ||--o{ character_proficiencies : has
     characters ||--o{ character_resources : tracks
     characters ||--o{ character_notes : owns
     characters ||--o{ character_rule_links : references
@@ -210,6 +214,10 @@ erDiagram
 | `character_classes` | Class and subclass levels, hit dice, and spellcasting ability. |
 | `character_abilities` | Ability scores, modifiers, saving throw proficiency, and derived save values. |
 | `character_skills` | Skill ability, proficiency level, expertise, and derived values. |
+| `character_senses` | Senses and passive scores used by the core sheet tab. |
+| `character_armour_class_sources` | Armour class breakdown rows such as armour base, Dexterity bonus, and infusions. |
+| `character_defences` | Resistances, immunities, condition immunities, and armour notes for the defence block. |
+| `character_proficiencies` | Armour, weapon, tool, language, and training entries for the skills tab. |
 | `character_resources` | Mutable resources such as hit points, hit dice, spell slots, inspiration, trait uses, and conditions. |
 | `character_equipment` | Inventory, equipped items, attunement, and active item modifiers. |
 | `character_notes` | Player-visible and Game Master-only notes. |

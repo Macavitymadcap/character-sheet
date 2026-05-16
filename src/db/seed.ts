@@ -2,10 +2,14 @@ import type { Database } from "bun:sqlite";
 import { PasswordService } from "../auth/password";
 
 type AbilitySeed = [string, number, number, number, number];
+type ArmourClassSourceSeed = [string, string, number, string, number];
+type DefenceSeed = [string, string, string, string, number];
 type EquipmentSeed = [string, string, string, number, number, string];
 type NoteSeed = [string, string, string, string, string];
+type ProficiencySeed = [string, string, string, string, number];
 type ResourceSeed = [string, string, string, string, number, number, number];
 type RuleLinkSeed = [string, string, string, number, number, number];
+type SenseSeed = [string, string, string, number];
 type SourceSeed = [string, string, string, string, number];
 type StringSeed = string[];
 
@@ -43,10 +47,86 @@ const abilities: AbilitySeed[] = [
 ];
 
 const skills: Array<[string, string, number, number]> = [
+  ["acrobatics", "dexterity", 0, 3],
+  ["animal handling", "wisdom", 0, 1],
+  ["arcana", "intelligence", 0, 4],
+  ["athletics", "strength", 0, -1],
   ["stealth", "dexterity", 1, 5],
   ["deception", "charisma", 1, 2],
+  ["history", "intelligence", 0, 4],
+  ["insight", "wisdom", 0, 1],
+  ["intimidation", "charisma", 0, 0],
   ["investigation", "intelligence", 1, 6],
+  ["medicine", "wisdom", 0, 1],
+  ["nature", "intelligence", 0, 4],
   ["perception", "wisdom", 1, 3],
+  ["performance", "charisma", 0, 0],
+  ["persuasion", "charisma", 0, 0],
+  ["religion", "intelligence", 0, 4],
+  ["sleight of hand", "dexterity", 0, 3],
+  ["survival", "wisdom", 0, 1],
+];
+
+const senses: SenseSeed[] = [
+  ["sense_lynott_darkvision", "Darkvision", "60 ft", 10],
+  ["sense_lynott_passive_perception", "Passive perception", "13", 20],
+  ["sense_lynott_passive_investigation", "Passive investigation", "16", 30],
+];
+
+const armourClassSources: ArmourClassSourceSeed[] = [
+  ["ac_lynott_breastplate", "Breastplate", 14, "Medium armour base AC.", 10],
+  ["ac_lynott_dexterity", "Dexterity bonus", 2, "Breastplate maximum Dexterity bonus.", 20],
+  ["ac_lynott_enhanced_defence", "Enhanced Defence", 1, "Active armour infusion.", 30],
+];
+
+const defences: DefenceSeed[] = [
+  ["defence_lynott_armour", "armour", "Armour", "Breastplate with Enhanced Defence infusion.", 10],
+  ["defence_lynott_resistances", "resistance", "Resistances", "None currently recorded.", 20],
+  ["defence_lynott_immunities", "immunity", "Immunities", "None currently recorded.", 30],
+  [
+    "defence_lynott_condition_immunities",
+    "condition_immunity",
+    "Condition immunities",
+    "None currently recorded.",
+    40,
+  ],
+];
+
+const proficiencies: ProficiencySeed[] = [
+  ["proficiency_lynott_light_armour", "armour", "Light armour", "Artificer training.", 10],
+  ["proficiency_lynott_medium_armour", "armour", "Medium armour", "Artificer training.", 20],
+  ["proficiency_lynott_shields", "armour", "Shields", "Artificer training.", 30],
+  ["proficiency_lynott_simple_weapons", "weapon", "Simple weapons", "Artificer training.", 40],
+  ["proficiency_lynott_firearms", "weapon", "Firearms", "1st Astrilian Artificers training.", 50],
+  ["proficiency_lynott_thieves_tools", "tool", "Thieves' tools", "Expertise from Artificer.", 60],
+  ["proficiency_lynott_tinkers_tools", "tool", "Tinker's tools", "Expertise from Artificer.", 70],
+  ["proficiency_lynott_smiths_tools", "tool", "Smith's tools", "Expertise from Artificer.", 80],
+  ["proficiency_lynott_woodcarvers_tools", "tool", "Woodcarver's tools", "Expertise from Artificer.", 90],
+  ["proficiency_lynott_three_dragon_ante", "tool", "Three Dragon Ante", "Gaming set.", 100],
+  ["proficiency_lynott_vehicles_land", "tool", "Vehicles (land)", "Background training.", 110],
+  ["proficiency_lynott_common", "language", "Common", "Known language.", 120],
+  ["proficiency_lynott_goblin", "language", "Goblin", "Known language.", 130],
+  [
+    "proficiency_lynott_background_language",
+    "language",
+    "Additional background language",
+    "To be determined by campaign setting.",
+    140,
+  ],
+  [
+    "training_lynott_infiltration",
+    "training",
+    "Covert operations",
+    "Infiltration, intelligence gathering, sabotage, and threat assessment.",
+    150,
+  ],
+  [
+    "training_lynott_magitech",
+    "training",
+    "Magitech weapons programme",
+    "Experimental firearm maintenance and field use.",
+    160,
+  ],
 ];
 
 const resources: ResourceSeed[] = [
@@ -195,6 +275,34 @@ export const seedDatabase = (database: Database) => {
     database.run(
       "insert or ignore into character_skills (character_id, skill, ability, proficiency_level, modifier) values (?, ?, ?, ?, ?)",
       ["character_lynott_magulbisson", ...skill],
+    );
+  }
+
+  for (const sense of senses) {
+    database.run(
+      "insert or ignore into character_senses (id, character_id, label, value, sort_order) values (?, ?, ?, ?, ?)",
+      [sense[0], "character_lynott_magulbisson", ...sense.slice(1)],
+    );
+  }
+
+  for (const source of armourClassSources) {
+    database.run(
+      "insert or ignore into character_armour_class_sources (id, character_id, label, value, notes, sort_order) values (?, ?, ?, ?, ?, ?)",
+      [source[0], "character_lynott_magulbisson", ...source.slice(1)],
+    );
+  }
+
+  for (const defence of defences) {
+    database.run(
+      "insert or ignore into character_defences (id, character_id, defence_type, label, detail, sort_order) values (?, ?, ?, ?, ?, ?)",
+      [defence[0], "character_lynott_magulbisson", ...defence.slice(1)],
+    );
+  }
+
+  for (const proficiency of proficiencies) {
+    database.run(
+      "insert or ignore into character_proficiencies (id, character_id, category, name, detail, sort_order) values (?, ?, ?, ?, ?, ?)",
+      [proficiency[0], "character_lynott_magulbisson", ...proficiency.slice(1)],
     );
   }
 

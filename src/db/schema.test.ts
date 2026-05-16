@@ -30,11 +30,15 @@ describe("bootstrapDatabase", () => {
       "campaign_sessions",
       "campaigns",
       "character_abilities",
+      "character_armour_class_sources",
       "character_classes",
+      "character_defences",
       "character_equipment",
       "character_notes",
+      "character_proficiencies",
       "character_resources",
       "character_rule_links",
+      "character_senses",
       "character_skills",
       "characters",
       "invites",
@@ -115,6 +119,12 @@ describe("bootstrapDatabase", () => {
       database.run(
         "insert into character_resources (id, character_id, resource_key, resource_type, label, current_value, max_value) values (?, ?, ?, ?, ?, ?, ?)",
         ["resource_1", "character_2", "hp", "hit_points", "Hit points", -1, 31],
+      ),
+    ).toThrow();
+    expect(() =>
+      database.run(
+        "insert into character_proficiencies (id, character_id, category, name) values (?, ?, ?, ?)",
+        ["proficiency_1", "character_2", "colour", "Blue"],
       ),
     ).toThrow();
   });

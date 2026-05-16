@@ -7,6 +7,7 @@ const render = (node: unknown): string => String(node);
 const sheet: CharacterSheetReadModel = {
   abilities: [],
   armourClass: 17,
+  armourClassBreakdown: [],
   background: "Special Operations",
   classes: [
     {
@@ -17,6 +18,7 @@ const sheet: CharacterSheetReadModel = {
       subclassName: "Artillerist",
     },
   ],
+  defences: [],
   hitPoints: {
     current: 31,
     max: 31,
@@ -26,7 +28,9 @@ const sheet: CharacterSheetReadModel = {
   initiative: 3,
   level: 4,
   name: "Lynott Magulbisson",
+  proficiencies: [],
   proficiencyBonus: 2,
+  senses: [],
   skills: [{ ability: "dexterity", modifier: 5, proficiencyLevel: 1, skill: "stealth" }],
   slug: "lynott-magulbisson",
   species: "Hobgoblin",
