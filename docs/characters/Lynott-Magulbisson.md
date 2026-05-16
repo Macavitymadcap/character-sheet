@@ -81,61 +81,6 @@ I don't know who I am anymore when I'm not wearing someone else's face. The real
 
 ---
 
-
----
-
-## Racial Traits (Hobgoblin)
-
-### Darkvision
-You can see in dim light within 60 feet as if it were bright light, and in darkness as if it were dim light.
-
-### Fey Ancestry
-You have advantage on saving throws against being charmed, and magic can't put you to sleep.
-
-### Fey Gift
-You can use a bonus action to give yourself one of the following benefits (proficiency bonus uses per long rest):
-- **Helpful:** Take the Help action as a bonus action
-- **Hospitality:** Give an ally within 5 feet temporary hit points equal to 1d6 plus your proficiency bonus
-- **Passage:** Magically teleport up to 30 feet to an unoccupied space you can see
-
-### Fortune from the Many
-When you make an attack roll, ability check, or saving throw and an ally you can see is within 30 feet, you can add 1d4 to the roll. You can use this a number of times equal to your proficiency bonus per long rest.
-
----
-
-## Class Features
-
-### Magical Tinkering
-You can touch a Tiny nonmagical object and imbue it with one of the following effects: light, recorded message, odor, or nonmagical sensory effect. You can have a number of objects enchanted equal to your Intelligence modifier (4 objects).
-
-### Spellcasting
-**Spell Slots:** 1st level: 4 slots
-
-**Prepared Spells:** 6 (INT mod 4 + half level 2)
-
-### Infuse Item
-You can imbue mundane items with magic. You know 4 infusions and can have 2 active at a time. Infusions require a long rest to change.
-
-### The Right Tool for the Job
-Over the course of a short rest, you can magically create one set of artisan's tools in an unoccupied space within 5 feet of you.
-
-### Tool Expertise
-Your proficiency bonus is doubled for any ability check you make that uses your proficiency with a tool.
-
----
-
-## Artillerist Subclass Features
-
-### Eldritch Cannon
-You can use an action to magically create a Small or Tiny cannon in an unoccupied space within 5 feet. Once created, you can't create another until you finish a long rest or expend a spell slot. The cannon lasts for 1 hour, until destroyed (AC 18, HP equal to 5× your artificer level = 20 HP), or until you dismiss it.
-
-As a bonus action on your turn, you can command the cannon to activate one of its effects:
-- **Flamethrower:** 15-foot cone, DEX save DC 14, 2d8 fire damage (half on success)
-- **Force Ballista:** Ranged spell attack +6, range 120 ft., 2d8 force damage, push target 5 feet
-- **Protector:** Allies within 10 feet (including you) gain 1d8+4 temporary hit points
-
----
-
 ## Spells
 
 ### Cantrips
@@ -184,7 +129,7 @@ As a bonus action on your turn, you can command the cannon to activate one of it
 - Breastplate (AC 14 + DEX mod, max +3) with Enhanced Defense infusion (+1) = **AC 17**
 
 ### Weapons
-- **Revolver (Repeating Shot infusion):** +7 to hit, 1d10+4 piercing, range 30/90, magical
+- **PIstol (Repeating Shot infusion):** +7 to hit, 1d10+4 piercing, range 30/90, magical
 - **Eldritch Cannon:** See class features
 
 ### Tools
