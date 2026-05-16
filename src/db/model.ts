@@ -17,9 +17,46 @@ export interface AuthUser {
   status: UserStatus;
 }
 
+export interface AuthUserWithPassword extends AuthUser {
+  passwordHash: string;
+}
+
+export interface StoredSession {
+  expiresAt: Date;
+  id: string;
+  userId: string;
+}
+
+export interface LocalInvite {
+  acceptedAt: Date | null;
+  createdByUserId: string;
+  email: string;
+  expiresAt: Date;
+  id: string;
+  role: UserRole;
+  tokenHash: string;
+}
+
+export interface PasswordResetToken {
+  createdByUserId: string;
+  expiresAt: Date;
+  id: string;
+  tokenHash: string;
+  usedAt: Date | null;
+  userId: string;
+}
+
 export interface AuthRepository {
+  createInvite(invite: LocalInvite): LocalInvite;
+  createPasswordResetToken(token: PasswordResetToken): PasswordResetToken;
+  createSession(session: StoredSession): StoredSession;
+  deleteSession(sessionId: string): void;
   findUserByEmail(email: string): AuthUser | null;
   findUserById(id: string): AuthUser | null;
+  findInviteByTokenHash(tokenHash: string): LocalInvite | null;
+  findPasswordResetTokenByTokenHash(tokenHash: string): PasswordResetToken | null;
+  findSessionById(id: string): StoredSession | null;
+  findUserWithPasswordByEmail(email: string): AuthUserWithPassword | null;
   listUsers(): AuthUser[];
 }
 
@@ -88,8 +125,15 @@ export interface CharacterSheetReadModel {
 }
 
 export interface CharacterRepository {
+  getAccessContext(characterId: string): CharacterAccessContext | null;
   getSheetBySlug(slug: string): CharacterSheetReadModel | null;
   listResources(characterId: string): CharacterResource[];
+}
+
+export interface CharacterAccessContext {
+  campaignId: string;
+  id: string;
+  ownerUserId: string;
 }
 
 export interface CharacterSkill {

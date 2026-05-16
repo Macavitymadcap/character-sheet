@@ -49,18 +49,21 @@ Current environment variables:
 | `PORT` | `3000` | HTTP port used by Bun. |
 | `HOST` | `0.0.0.0` | HTTP host used by Bun. |
 | `DB_PATH` | `character-sheet.sqlite3` | SQLite database file path. |
-
-Environment variables planned for later MVP tickets:
-
-| Variable | Default | Purpose |
-| --- | --- | --- |
 | `SESSION_SECRET` | local development secret | Secret used for signed session cookies. |
 
 SQLite database files and sidecar files should remain ignored by Git.
 
+Local seed users are available for development:
+
+| Role | Email | Password |
+| --- | --- | --- |
+| Player | `lynott.player@example.local` | `password123` |
+| Game Master | `gm@example.local` | `password123` |
+| Admin | `admin@example.local` | `password123` |
+
 ## Scripts
 
-Current scaffold scripts:
+Current scripts:
 
 ```bash
 bun run db:bootstrap
@@ -70,7 +73,12 @@ bun run test
 bun run test:a11y
 bun run test:watch
 bun run typecheck
+bun run verify
 ```
+
+`bun run verify` runs typecheck, component and route tests, and accessibility checks in sequence.
+
+`bun run test:a11y` starts an in-memory app on an available local port and runs Pa11y against `/login`, authenticated `/`, and authenticated `/admin`.
 
 Repository maintenance scripts:
 

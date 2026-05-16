@@ -1,4 +1,5 @@
 import type { Database } from "bun:sqlite";
+import { PasswordService } from "../auth/password";
 
 type AbilitySeed = [string, number, number, number, number];
 type EquipmentSeed = [string, string, string, number, number, string];
@@ -14,10 +15,22 @@ const users = [
     "lynott.player@example.local",
     "Lynott Player",
     "player",
-    "local-dev-password-hash",
+    new PasswordService().hashPassword("password123", "seed-user-lynott-player"),
   ],
-  ["user_game_master", "gm@example.local", "Campaign GM", "game_master", "local-dev-password-hash"],
-  ["user_site_admin", "admin@example.local", "Site Admin", "admin", "local-dev-password-hash"],
+  [
+    "user_game_master",
+    "gm@example.local",
+    "Campaign GM",
+    "game_master",
+    new PasswordService().hashPassword("password123", "seed-user-game-master"),
+  ],
+  [
+    "user_site_admin",
+    "admin@example.local",
+    "Site Admin",
+    "admin",
+    new PasswordService().hashPassword("password123", "seed-user-site-admin"),
+  ],
 ];
 
 const abilities: AbilitySeed[] = [
@@ -109,7 +122,14 @@ export const seedDatabase = (database: Database) => {
 
   for (const user of users) {
     database.run(
-      "insert or ignore into users (id, email, display_name, role, password_hash) values (?, ?, ?, ?, ?)",
+      `insert into users (id, email, display_name, role, password_hash)
+       values (?, ?, ?, ?, ?)
+       on conflict(id) do update set
+         email = excluded.email,
+         display_name = excluded.display_name,
+         role = excluded.role,
+         password_hash = excluded.password_hash,
+         status = 'active'`,
       user,
     );
   }

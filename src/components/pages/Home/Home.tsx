@@ -1,8 +1,14 @@
 import { Badge } from "../../atoms/Badge";
+import { Button } from "../../atoms/Button";
+import { LabelledOutput } from "../../atoms/LabelledOutput";
 import { Layout } from "../../templates/Layout";
 
 interface HomePageProps {
   appName: string;
+  user?: {
+    displayName: string;
+    role: string;
+  };
 }
 
 const keyStats = [
@@ -12,7 +18,7 @@ const keyStats = [
   { label: "Speed", value: "30 ft" },
 ];
 
-export const HomePage = ({ appName }: HomePageProps) => {
+export const HomePage = ({ appName, user }: HomePageProps) => {
   return (
     <Layout title={appName}>
       <div class="shell">
@@ -24,10 +30,22 @@ export const HomePage = ({ appName }: HomePageProps) => {
             </a>
             <a href="/rules">Rules</a>
             <a href="/admin">Admin</a>
+            {user ? (
+              <form action="/logout" method="post">
+                <Button type="submit" variant="ghost">
+                  Sign out
+                </Button>
+              </form>
+            ) : null}
           </nav>
         </header>
 
         <main class="home-main">
+          {user ? (
+            <p class="account-summary">
+              {user.displayName} · {user.role}
+            </p>
+          ) : null}
           <section class="dashboard-panel" aria-labelledby="character-heading">
             <div class="character-summary">
               <div class="character-heading">
@@ -45,10 +63,7 @@ export const HomePage = ({ appName }: HomePageProps) => {
 
               <div class="stat-grid" aria-label="Combat summary">
                 {keyStats.map((stat) => (
-                  <div class="stat-card">
-                    <span class="stat-label">{stat.label}</span>
-                    <strong class="stat-value">{stat.value}</strong>
-                  </div>
+                  <LabelledOutput label={stat.label} value={stat.value} />
                 ))}
               </div>
             </div>
