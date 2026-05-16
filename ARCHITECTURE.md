@@ -20,7 +20,7 @@ Deployment to Railway and a Postgres migration are out of scope for `sheet-0001`
 
 ## Core Shape
 
-The app follows the `pace-calculator` template:
+The app follows the `pace-calculator` template. The full MVP source tree is expected to grow towards this shape as tickets land:
 
 ```text
 src/
@@ -41,9 +41,17 @@ src/
 └── test/                       # shared app and repository harnesses
 ```
 
-`src/index.ts` owns process setup: environment variables, SQLite filename, repository construction, and the Bun `fetch` export.
+`src/index.ts` owns process setup. In the scaffold, that means host and port environment variables plus the Bun `fetch` export. As persistence lands, this file should also own the SQLite filename, repository construction, and other runtime wiring.
 
-`src/app.tsx` owns application composition:
+The `sheet-0002` scaffold starts with the smallest runtime dependency needed to prove the app boots:
+
+```ts
+export interface AppDependencies {
+  appName: string;
+}
+```
+
+Later MVP tickets should extend `AppDependencies` with repositories and services rather than moving runtime setup into route modules. The mature dependency shape is expected to include the persistence and session boundaries:
 
 ```ts
 export interface AppDependencies {
@@ -60,7 +68,7 @@ export const createApp = (dependencies: AppDependencies) => {
 };
 ```
 
-Tests should use the same `createApp()` route tree with in-memory SQLite repositories.
+Tests should use the same `createApp()` route tree. The scaffold tests pass a minimal dependency object; once repositories land, route tests should use in-memory SQLite repositories through that same dependency boundary.
 
 ## Request Flow
 

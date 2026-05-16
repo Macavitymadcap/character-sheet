@@ -29,11 +29,11 @@ Deployment to Railway and migration from SQLite to Postgres are intentionally de
 - SQLite through Bun's SQLite APIs for local persistence.
 - Pa11y and screenshots for accessibility and visual review once the UI exists.
 
-The app follows the `pace-calculator` template: runtime setup stays separate from `createApp()`, repositories hide persistence details, components own semantic markup, and HTMX attributes make browser interaction visible in HTML.
+The app follows the `pace-calculator` template: runtime setup stays separate from `createApp()`, components own semantic markup, and HTMX attributes make browser interaction visible in HTML. As persistence lands, repositories should hide database details from routes and components.
 
-## Planned Local Setup
+## Local Setup
 
-The first scaffold ticket will add the runtime files and scripts. The intended command shape is:
+Install dependencies and start the local development server:
 
 ```bash
 bun install
@@ -42,26 +42,46 @@ bun run dev
 
 The development server should default to `http://localhost:3000`.
 
-Environment variables planned for the MVP:
+Current environment variables:
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
 | `PORT` | `3000` | HTTP port used by Bun. |
+| `HOST` | `0.0.0.0` | HTTP host used by Bun. |
+
+Environment variables planned for later MVP tickets:
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
 | `DB_PATH` | `character-sheet.sqlite3` | SQLite database file path. |
 | `SESSION_SECRET` | local development secret | Secret used for signed session cookies. |
 
 SQLite database files and sidecar files should remain ignored by Git.
 
-## Planned Scripts
+## Scripts
+
+Current scaffold scripts:
 
 ```bash
 bun run dev
-bun run seed
-bun run import:rules
 bun run test
 bun run test:a11y
 bun run test:watch
 bun run typecheck
+```
+
+Repository maintenance scripts:
+
+```bash
+bun run protect:branches:bootstrap
+bun run protect:branches
+```
+
+Planned later scripts:
+
+```bash
+bun run seed
+bun run import:rules
 ```
 
 `import:rules` is planned as a local-first importer. It should read local markdown or JSON exports, transform American English spellings to British English where needed, and seed structured database tables. Direct fetching from 5e.tools can be added after the local importer boundary is stable.
