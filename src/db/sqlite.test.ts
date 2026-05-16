@@ -114,10 +114,74 @@ describe("SQLite repositories", () => {
       },
     ]);
     expect(sheet?.skills).toEqual([
+      { ability: "dexterity", modifier: 3, proficiencyLevel: 0, skill: "acrobatics" },
+      { ability: "wisdom", modifier: 1, proficiencyLevel: 0, skill: "animal handling" },
+      { ability: "intelligence", modifier: 4, proficiencyLevel: 0, skill: "arcana" },
+      { ability: "strength", modifier: -1, proficiencyLevel: 0, skill: "athletics" },
       { ability: "charisma", modifier: 2, proficiencyLevel: 1, skill: "deception" },
+      { ability: "intelligence", modifier: 4, proficiencyLevel: 0, skill: "history" },
+      { ability: "wisdom", modifier: 1, proficiencyLevel: 0, skill: "insight" },
+      { ability: "charisma", modifier: 0, proficiencyLevel: 0, skill: "intimidation" },
       { ability: "intelligence", modifier: 6, proficiencyLevel: 1, skill: "investigation" },
+      { ability: "wisdom", modifier: 1, proficiencyLevel: 0, skill: "medicine" },
+      { ability: "intelligence", modifier: 4, proficiencyLevel: 0, skill: "nature" },
       { ability: "wisdom", modifier: 3, proficiencyLevel: 1, skill: "perception" },
+      { ability: "charisma", modifier: 0, proficiencyLevel: 0, skill: "performance" },
+      { ability: "charisma", modifier: 0, proficiencyLevel: 0, skill: "persuasion" },
+      { ability: "intelligence", modifier: 4, proficiencyLevel: 0, skill: "religion" },
+      { ability: "dexterity", modifier: 3, proficiencyLevel: 0, skill: "sleight of hand" },
       { ability: "dexterity", modifier: 5, proficiencyLevel: 1, skill: "stealth" },
+      { ability: "wisdom", modifier: 1, proficiencyLevel: 0, skill: "survival" },
+    ]);
+    expect(sheet?.senses).toEqual([
+      { label: "Darkvision", value: "60 ft" },
+      { label: "Passive perception", value: "13" },
+      { label: "Passive investigation", value: "16" },
+    ]);
+    expect(sheet?.armourClassBreakdown).toEqual([
+      { label: "Breastplate", notes: "Medium armour base AC.", value: 14 },
+      { label: "Dexterity bonus", notes: "Breastplate maximum Dexterity bonus.", value: 2 },
+      { label: "Enhanced Defence", notes: "Active armour infusion.", value: 1 },
+    ]);
+    expect(sheet?.defences).toEqual([
+      { detail: "Breastplate with Enhanced Defence infusion.", label: "Armour", type: "armour" },
+      { detail: "None currently recorded.", label: "Resistances", type: "resistance" },
+      { detail: "None currently recorded.", label: "Immunities", type: "immunity" },
+      {
+        detail: "None currently recorded.",
+        label: "Condition immunities",
+        type: "condition_immunity",
+      },
+    ]);
+    expect(sheet?.proficiencies).toEqual([
+      { category: "armour", detail: "Artificer training.", name: "Light armour" },
+      { category: "armour", detail: "Artificer training.", name: "Medium armour" },
+      { category: "armour", detail: "Artificer training.", name: "Shields" },
+      { category: "weapon", detail: "Artificer training.", name: "Simple weapons" },
+      { category: "weapon", detail: "1st Astrilian Artificers training.", name: "Firearms" },
+      { category: "tool", detail: "Expertise from Artificer.", name: "Thieves' tools" },
+      { category: "tool", detail: "Expertise from Artificer.", name: "Tinker's tools" },
+      { category: "tool", detail: "Expertise from Artificer.", name: "Smith's tools" },
+      { category: "tool", detail: "Expertise from Artificer.", name: "Woodcarver's tools" },
+      { category: "tool", detail: "Gaming set.", name: "Three Dragon Ante" },
+      { category: "tool", detail: "Background training.", name: "Vehicles (land)" },
+      { category: "language", detail: "Known language.", name: "Common" },
+      { category: "language", detail: "Known language.", name: "Goblin" },
+      {
+        category: "language",
+        detail: "To be determined by campaign setting.",
+        name: "Additional background language",
+      },
+      {
+        category: "training",
+        detail: "Infiltration, intelligence gathering, sabotage, and threat assessment.",
+        name: "Covert operations",
+      },
+      {
+        category: "training",
+        detail: "Experimental firearm maintenance and field use.",
+        name: "Magitech weapons programme",
+      },
     ]);
   });
 

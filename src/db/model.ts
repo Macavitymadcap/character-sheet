@@ -103,11 +103,36 @@ export interface CharacterResource {
   type: string;
 }
 
+export interface ArmourClassSource {
+  label: string;
+  notes: string;
+  value: number;
+}
+
+export interface CharacterDefence {
+  detail: string;
+  label: string;
+  type: "armour" | "condition_immunity" | "immunity" | "resistance";
+}
+
+export interface CharacterProficiency {
+  category: "armour" | "language" | "tool" | "training" | "weapon";
+  detail: string;
+  name: string;
+}
+
+export interface CharacterSense {
+  label: string;
+  value: string;
+}
+
 export interface CharacterSheetReadModel {
   abilities: CharacterAbility[];
+  armourClassBreakdown: ArmourClassSource[];
   armourClass: number;
   background: string;
   classes: CharacterClassSummary[];
+  defences: CharacterDefence[];
   hitPoints: {
     current: number;
     max: number;
@@ -117,7 +142,9 @@ export interface CharacterSheetReadModel {
   initiative: number;
   level: number;
   name: string;
+  proficiencies: CharacterProficiency[];
   proficiencyBonus: number;
+  senses: CharacterSense[];
   skills: CharacterSkill[];
   slug: string;
   species: string;

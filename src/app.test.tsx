@@ -79,6 +79,9 @@ describe("createApp", () => {
     expect(html).toContain("Armour class");
     expect(html).toContain("17");
     expect(html).toContain("Short / long");
+    expect(html).toContain("Abilities and saves");
+    expect(html).toContain("Darkvision");
+    expect(html).toContain("Breastplate");
   });
 
   test("redirects unauthenticated sheet page requests", async () => {
@@ -103,6 +106,30 @@ describe("createApp", () => {
     expect(html).toContain('<section id="sheet-tab-panel" class="sheet-tab-panel"');
     expect(html).toContain('data-tab-id="spellcasting"');
     expect(html).toContain("<h2>Spellcasting</h2>");
+  });
+
+  test("serves database-backed core and skills tab fragments", async () => {
+    const { app, sessionService } = createTestApp("Character Sheet");
+    const session = sessionService.createSession("user_lynott_player");
+    const core = await app.request("/sheet/character_lynott_magulbisson/tabs/core", {
+      headers: { cookie: session.cookie },
+    });
+    const skills = await app.request("/sheet/character_lynott_magulbisson/tabs/skills", {
+      headers: { cookie: session.cookie },
+    });
+    const coreHtml = await core.text();
+    const skillsHtml = await skills.text();
+
+    expect(core.status).toBe(200);
+    expect(coreHtml).toContain("Abilities and saves");
+    expect(coreHtml).toContain("Constitution");
+    expect(coreHtml).toContain("Darkvision");
+    expect(coreHtml).toContain("Enhanced Defence");
+    expect(skills.status).toBe(200);
+    expect(skillsHtml).toContain("Skills");
+    expect(skillsHtml).toContain("Stealth");
+    expect(skillsHtml).toContain("Thieves&#39; tools");
+    expect(skillsHtml).toContain("Covert operations");
   });
 
   test("rejects unauthenticated, unknown, and invalid sheet tab requests", async () => {

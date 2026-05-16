@@ -1,6 +1,7 @@
 import { Database } from "bun:sqlite";
 import type {
   AbilityName,
+  ArmourClassSource,
   AuthRepository,
   AuthUser,
   AuthUserWithPassword,
@@ -10,9 +11,12 @@ import type {
   CharacterAccessContext,
   CharacterAbility,
   CharacterNote,
+  CharacterDefence,
+  CharacterProficiency,
   CharacterRepository,
   CharacterResource,
   CharacterRuleLink,
+  CharacterSense,
   CharacterSheetReadModel,
   CharacterSkill,
   LocalInvite,
@@ -102,6 +106,29 @@ interface CharacterSkillRow {
   modifier: number;
   proficiency_level: number;
   skill: string;
+}
+
+interface ArmourClassSourceRow {
+  label: string;
+  notes: string;
+  value: number;
+}
+
+interface CharacterDefenceRow {
+  defence_type: CharacterDefence["type"];
+  detail: string;
+  label: string;
+}
+
+interface CharacterProficiencyRow {
+  category: CharacterProficiency["category"];
+  detail: string;
+  name: string;
+}
+
+interface CharacterSenseRow {
+  label: string;
+  value: string;
 }
 
 interface CharacterResourceRow {
@@ -381,6 +408,7 @@ class SqliteCharacterRepository implements CharacterRepository {
 
     return {
       abilities: this.listAbilities(character.id),
+      armourClassBreakdown: this.listArmourClassBreakdown(character.id),
       armourClass: character.armour_class,
       background: character.background,
       classes: this.database
@@ -398,6 +426,7 @@ class SqliteCharacterRepository implements CharacterRepository {
           spellcastingAbility: row.spellcasting_ability,
           subclassName: row.subclass_name,
         })),
+      defences: this.listDefences(character.id),
       hitPoints: {
         current: character.hit_point_current,
         max: character.hit_point_max,
@@ -407,7 +436,9 @@ class SqliteCharacterRepository implements CharacterRepository {
       initiative: character.initiative,
       level: character.level,
       name: character.name,
+      proficiencies: this.listProficiencies(character.id),
       proficiencyBonus: character.proficiency_bonus,
+      senses: this.listSenses(character.id),
       skills: this.listSkills(character.id),
       slug: character.slug,
       species: character.species,
@@ -473,6 +504,69 @@ class SqliteCharacterRepository implements CharacterRepository {
         modifier: row.modifier,
         proficiencyLevel: row.proficiency_level,
         skill: row.skill,
+      }));
+  }
+
+  private listArmourClassBreakdown(characterId: string): ArmourClassSource[] {
+    return this.database
+      .query<ArmourClassSourceRow, [string]>(
+        `select label, value, notes
+         from character_armour_class_sources
+         where character_id = ?
+         order by sort_order, label`,
+      )
+      .all(characterId)
+      .map((row) => ({
+        label: row.label,
+        notes: row.notes,
+        value: row.value,
+      }));
+  }
+
+  private listDefences(characterId: string): CharacterDefence[] {
+    return this.database
+      .query<CharacterDefenceRow, [string]>(
+        `select defence_type, label, detail
+         from character_defences
+         where character_id = ?
+         order by sort_order, label`,
+      )
+      .all(characterId)
+      .map((row) => ({
+        detail: row.detail,
+        label: row.label,
+        type: row.defence_type,
+      }));
+  }
+
+  private listProficiencies(characterId: string): CharacterProficiency[] {
+    return this.database
+      .query<CharacterProficiencyRow, [string]>(
+        `select category, name, detail
+         from character_proficiencies
+         where character_id = ?
+         order by sort_order, name`,
+      )
+      .all(characterId)
+      .map((row) => ({
+        category: row.category,
+        detail: row.detail,
+        name: row.name,
+      }));
+  }
+
+  private listSenses(characterId: string): CharacterSense[] {
+    return this.database
+      .query<CharacterSenseRow, [string]>(
+        `select label, value
+         from character_senses
+         where character_id = ?
+         order by sort_order, label`,
+      )
+      .all(characterId)
+      .map((row) => ({
+        label: row.label,
+        value: row.value,
       }));
   }
 }
