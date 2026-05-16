@@ -29,6 +29,7 @@ try {
 
   await runPa11y("login", `${baseUrl}/login`);
   await runPa11y("home", `${baseUrl}/`, playerCookie);
+  await runPa11y("sheet", `${baseUrl}/sheet/character_lynott_magulbisson`, playerCookie);
   await runPa11y("admin", `${baseUrl}/admin`, adminCookie);
 } finally {
   server.stop(true);

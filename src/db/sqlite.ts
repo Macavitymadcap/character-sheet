@@ -358,15 +358,24 @@ class SqliteCharacterRepository implements CharacterRepository {
       : null;
   }
 
+  getSheetById(id: string): CharacterSheetReadModel | null {
+    return this.getSheetBy("id", id);
+  }
+
   getSheetBySlug(slug: string): CharacterSheetReadModel | null {
+    return this.getSheetBy("slug", slug);
+  }
+
+  private getSheetBy(field: "id" | "slug", value: string): CharacterSheetReadModel | null {
+    const whereColumn = field === "id" ? "id" : "slug";
     const character = this.database
       .query<CharacterRow, [string]>(
         `select id, slug, name, species, background, level, proficiency_bonus, armour_class,
           initiative, speed_ft, hit_point_max, hit_point_current, temporary_hit_points
          from characters
-         where slug = ?`,
+         where ${whereColumn} = ?`,
       )
-      .get(slug);
+      .get(value);
 
     if (!character) return null;
 

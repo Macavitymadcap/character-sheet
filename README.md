@@ -42,6 +42,10 @@ bun run dev
 
 The development server should default to `http://localhost:3000`.
 
+After signing in as the seeded player, Lynott's sheet is available at
+`/sheet/character_lynott_magulbisson`. The sheet tab fragments are served from
+`/sheet/character_lynott_magulbisson/tabs/:tabId` for HTMX swaps.
+
 Current environment variables:
 
 | Variable | Default | Purpose |
@@ -78,7 +82,7 @@ bun run verify
 
 `bun run verify` runs typecheck, component and route tests, and accessibility checks in sequence.
 
-`bun run test:a11y` starts an in-memory app on an available local port and runs Pa11y against `/login`, authenticated `/`, and authenticated `/admin`.
+`bun run test:a11y` starts an in-memory app on an available local port and runs Pa11y against `/login`, authenticated `/`, authenticated `/sheet/character_lynott_magulbisson`, and authenticated `/admin`.
 
 Repository maintenance scripts:
 

@@ -10,7 +10,6 @@ export const homeStyles = /* css */ `
   width: 100%;
 }
 
-.site-header,
 .dashboard-panel,
 .action-bar {
   background: var(--surface-colour);
@@ -19,52 +18,10 @@ export const homeStyles = /* css */ `
   box-shadow: 0 1rem 2.5rem rgb(15 23 42 / 0.08);
 }
 
-.site-header {
-  align-items: center;
-  display: flex;
-  gap: 1rem;
-  justify-content: space-between;
-  min-height: 4rem;
-  padding: 0.85rem 1rem;
-  position: sticky;
-  top: var(--page-gutter);
-  z-index: 2;
-}
-
-.site-title {
-  color: var(--heading-colour);
-  font-size: clamp(1.35rem, 1rem + 1vw, 1.9rem);
-  line-height: 1.1;
-  margin: 0;
-}
-
-.site-nav {
-  align-items: center;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  justify-content: flex-end;
-}
-
-.site-nav a {
-  border: 1px solid transparent;
-  border-radius: 0.375rem;
-  color: var(--muted-text-colour);
-  font-weight: 700;
-  padding: 0.45rem 0.6rem;
-  text-decoration: none;
-}
-
 .account-summary {
   color: var(--muted-text-colour);
   font-weight: 700;
   margin: 0;
-}
-
-.site-nav a[aria-current="page"] {
-  background: var(--nav-active-background-colour);
-  border-color: var(--nav-active-border-colour);
-  color: var(--nav-active-text-colour);
 }
 
 .home-main {
@@ -100,7 +57,7 @@ export const homeStyles = /* css */ `
 
 .character-name {
   color: var(--heading-colour);
-  font-size: clamp(1.75rem, 1.35rem + 1vw, 2.35rem);
+  font-size: 2rem;
   line-height: 1.05;
   margin: 0;
 }
@@ -186,14 +143,12 @@ export const homeStyles = /* css */ `
     padding: 0.75rem;
   }
 
-  .site-header,
   .dashboard-panel,
   .character-heading {
     align-items: stretch;
     flex-direction: column;
   }
 
-  .site-nav,
   .badge-row {
     justify-content: flex-start;
   }
