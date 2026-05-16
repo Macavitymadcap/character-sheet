@@ -3,9 +3,14 @@ import { badgeStyles } from "./atoms/Badge/Badge.styles";
 import { labelledOutputStyles } from "./atoms/LabelledOutput/LabelledOutput.styles";
 import { panelStyles } from "./atoms/Panel/Panel.styles";
 import { formFieldStyles } from "./molecules/FormField/FormField.styles";
+import { siteHeaderStyles } from "./molecules/SiteHeader/SiteHeader.styles";
+import { sheetHeaderStyles } from "./organisms/SheetHeader/SheetHeader.styles";
+import { sheetTabPanelStyles } from "./organisms/SheetTabPanel/SheetTabPanel.styles";
+import { sheetTabsStyles } from "./organisms/SheetTabs/SheetTabs.styles";
 import { adminStyles } from "./pages/Admin/Admin.styles";
 import { homeStyles } from "./pages/Home/Home.styles";
 import { loginStyles } from "./pages/Login/Login.styles";
+import { sheetStyles } from "./pages/Sheet/Sheet.styles";
 import { layoutStyles } from "./templates/Layout/Layout.styles";
 
 export const appStyles = [
@@ -15,7 +20,12 @@ export const appStyles = [
   labelledOutputStyles,
   panelStyles,
   formFieldStyles,
+  siteHeaderStyles,
+  sheetHeaderStyles,
+  sheetTabsStyles,
+  sheetTabPanelStyles,
   homeStyles,
   loginStyles,
   adminStyles,
+  sheetStyles,
 ].join("\n");

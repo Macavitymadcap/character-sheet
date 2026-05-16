@@ -72,10 +72,10 @@ sequenceDiagram
     participant Repo as Character Repository
     participant Page as Sheet Page
 
-    Browser->>App: GET /sheet/lynott-magulbisson
+    Browser->>App: GET /sheet/character_lynott_magulbisson
     App->>Auth: readSession(cookie)
     Auth-->>App: player session
-    App->>Repo: getSheet("lynott-magulbisson", user)
+    App->>Repo: getSheetById("character_lynott_magulbisson")
     Repo-->>App: sheet read model
     App->>Page: <SheetPage sheet={sheet} />
     Page-->>App: full HTML document
@@ -94,7 +94,7 @@ sequenceDiagram
     participant View as JSX Fragment
 
     Browser->>HTMX: Click spend spell slot
-    HTMX->>App: PATCH /sheet/lynott-magulbisson/resources/spell-slot-1
+    HTMX->>App: PATCH /sheet/character_lynott_magulbisson/resources/spell-slot-1
     App->>Guard: requireSheetWrite(session, sheetId)
     Guard-->>App: allowed
     App->>Repo: spendResource(sheetId, resourceId)
@@ -113,8 +113,9 @@ The MVP page set:
 
 - `/` home page with the signed-in user's default action.
 - `/login` login form.
-- `/logout` logout route and confirmation state.
+- `POST /logout` logout route that clears the session and redirects to `/login`.
 - `/sheet/:characterId` character sheet page.
+- `/sheet/:characterId/tabs/:tabId` sheet tab fragment route for HTMX swaps.
 - `/admin` admin page for users, invites, password resets, and basic reads.
 
 The site header is sticky and contains:
@@ -264,6 +265,8 @@ components/organisms/SheetHeader/
 
 The UI should be dense enough for repeated use at the table. Avoid marketing-style hero layouts, oversized decorative cards, and explanatory in-app copy. Controls should use appropriate form elements, labelled outputs, icons where useful, and stable dimensions so resource updates do not shift the page.
 
+The current sheet shell follows that split: `SheetPage` composes route-level data, while `SiteHeader`, `SheetHeader`, `SheetTabs`, and `SheetTabPanel` are reusable component directories with colocated tests and styles.
+
 ## Testing Strategy
 
 Development should be tests first where practical:
@@ -282,6 +285,8 @@ bun run typecheck
 bun run test
 bun run test:a11y
 ```
+
+The accessibility script currently checks `/login`, authenticated `/`, authenticated `/sheet/character_lynott_magulbisson`, and authenticated `/admin`.
 
 ## Pipeline
 

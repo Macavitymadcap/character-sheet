@@ -1,20 +1,21 @@
 import { Badge } from "../../atoms/Badge";
-import { Button } from "../../atoms/Button";
 import { LabelledOutput } from "../../atoms/LabelledOutput";
+import { SiteHeader } from "../../molecules/SiteHeader";
 import { Layout } from "../../templates/Layout";
+import type { AuthUser } from "../../../db";
 
 interface HomePageProps {
   appName: string;
   user?: {
     displayName: string;
-    role: string;
+    role: AuthUser["role"];
   };
 }
 
 const keyStats = [
-  { label: "Armour class", value: "18" },
-  { label: "Hit points", value: "35" },
-  { label: "Initiative", value: "+2" },
+  { label: "Armour class", value: "17" },
+  { label: "Hit points", value: "31" },
+  { label: "Initiative", value: "+3" },
   { label: "Speed", value: "30 ft" },
 ];
 
@@ -22,23 +23,7 @@ export const HomePage = ({ appName, user }: HomePageProps) => {
   return (
     <Layout title={appName}>
       <div class="shell">
-        <header class="site-header">
-          <h1 class="site-title">{appName}</h1>
-          <nav class="site-nav" aria-label="Primary">
-            <a href="/" aria-current="page">
-              Sheet
-            </a>
-            <a href="/rules">Rules</a>
-            <a href="/admin">Admin</a>
-            {user ? (
-              <form action="/logout" method="post">
-                <Button type="submit" variant="ghost">
-                  Sign out
-                </Button>
-              </form>
-            ) : null}
-          </nav>
-        </header>
+        <SiteHeader appName={appName} currentSection="sheet" user={user} />
 
         <main class="home-main">
           {user ? (
@@ -91,8 +76,8 @@ export const HomePage = ({ appName, user }: HomePageProps) => {
 
           <div class="action-bar">
             <strong>Runtime scaffold online</strong>
-            <a class="action-link" href="/healthz">
-              Health check
+            <a class="action-link" href="/sheet/character_lynott_magulbisson">
+              Open sheet
             </a>
           </div>
         </main>

@@ -126,6 +126,7 @@ export interface CharacterSheetReadModel {
 
 export interface CharacterRepository {
   getAccessContext(characterId: string): CharacterAccessContext | null;
+  getSheetById(id: string): CharacterSheetReadModel | null;
   getSheetBySlug(slug: string): CharacterSheetReadModel | null;
   listResources(characterId: string): CharacterResource[];
 }

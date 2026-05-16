@@ -3,6 +3,9 @@ import { AuthService, requireRole, requireSheetAccess, SessionService } from "./
 import { AdminPage } from "./components/pages/Admin";
 import { HomePage } from "./components/pages/Home";
 import { LoginPage } from "./components/pages/Login";
+import { SheetPage } from "./components/pages/Sheet";
+import { SheetTabPanel } from "./components/organisms/SheetTabPanel";
+import { isSheetTabId } from "./components/organisms/SheetTabs";
 import type {
   AuthRepository,
   CampaignRepository,
@@ -169,6 +172,60 @@ export const createApp = (dependencies: AppDependencies) => {
       id: reset.id,
       userId: reset.userId,
     });
+  });
+
+  app.get("/sheet/:characterId", (context) => {
+    const session = readSession(context.req.header("cookie"));
+    const characterId = context.req.param("characterId");
+    const guard = requireSheetAccess({
+      characterId,
+      characterRepository: dependencies.characterRepository,
+      permission: "read",
+      session,
+    });
+    const guarded = guardResponse(context, guard);
+    if (guarded) return guarded;
+    if (!session) return context.redirect("/login", 303);
+
+    const sheet = dependencies.characterRepository.getSheetById(characterId);
+    if (!sheet) return context.text("Not found", 404);
+
+    return context.html(
+      <SheetPage
+        activeTab="core"
+        appName={dependencies.appName}
+        resources={dependencies.characterRepository.listResources(characterId)}
+        sheet={sheet}
+        user={session.user}
+      />,
+    );
+  });
+
+  app.get("/sheet/:characterId/tabs/:tabId", (context) => {
+    const session = readSession(context.req.header("cookie"));
+    const characterId = context.req.param("characterId");
+    const guard = requireSheetAccess({
+      characterId,
+      characterRepository: dependencies.characterRepository,
+      permission: "read",
+      session,
+    });
+    const guarded = guardResponse(context, guard);
+    if (guarded) return guarded;
+
+    const tabId = context.req.param("tabId");
+    if (!isSheetTabId(tabId)) return context.text("Not found", 404);
+
+    const sheet = dependencies.characterRepository.getSheetById(characterId);
+    if (!sheet) return context.text("Not found", 404);
+
+    return context.html(
+      <SheetTabPanel
+        resources={dependencies.characterRepository.listResources(characterId)}
+        sheet={sheet}
+        tabId={tabId}
+      />,
+    );
   });
 
   app.patch("/sheet/:characterId/resources/:resourceId", (context) => {
