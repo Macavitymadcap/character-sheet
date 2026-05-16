@@ -3,6 +3,10 @@ import { Layout } from "../../templates/Layout";
 
 interface HomePageProps {
   appName: string;
+  user?: {
+    displayName: string;
+    role: string;
+  };
 }
 
 const keyStats = [
@@ -12,7 +16,7 @@ const keyStats = [
   { label: "Speed", value: "30 ft" },
 ];
 
-export const HomePage = ({ appName }: HomePageProps) => {
+export const HomePage = ({ appName, user }: HomePageProps) => {
   return (
     <Layout title={appName}>
       <div class="shell">
@@ -24,10 +28,22 @@ export const HomePage = ({ appName }: HomePageProps) => {
             </a>
             <a href="/rules">Rules</a>
             <a href="/admin">Admin</a>
+            {user ? (
+              <form action="/logout" method="post">
+                <button class="logout-button" type="submit">
+                  Sign out
+                </button>
+              </form>
+            ) : null}
           </nav>
         </header>
 
         <main class="home-main">
+          {user ? (
+            <p class="account-summary">
+              {user.displayName} · {user.role}
+            </p>
+          ) : null}
           <section class="dashboard-panel" aria-labelledby="character-heading">
             <div class="character-summary">
               <div class="character-heading">

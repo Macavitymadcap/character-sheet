@@ -41,36 +41,21 @@ src/
 └── test/                       # shared app and repository harnesses
 ```
 
-`src/index.ts` owns process setup: host and port environment variables, the SQLite filename, repository construction, seed/bootstrap wiring, and the Bun `fetch` export.
+`src/index.ts` owns process setup: host and port environment variables, the SQLite filename, repository construction, auth/session service construction, seed/bootstrap wiring, and the Bun `fetch` export.
 
-The `sheet-0003` runtime dependency boundary includes the app name and repository contracts:
+The runtime dependency boundary includes the app name, service contracts, and repository contracts:
 
 ```ts
 export interface AppDependencies {
   appName: string;
   authRepository: AuthRepository;
+  authService: AuthService;
   campaignRepository: CampaignRepository;
   characterRepository: CharacterRepository;
   notesRepository: NotesRepository;
   rulesRepository: RulesRepository;
-}
-```
-
-Later MVP tickets should extend `AppDependencies` with services rather than moving runtime setup into route modules. The mature dependency shape is expected to add session and role-guard boundaries:
-
-```ts
-export interface AppDependencies {
-  authRepository: AuthRepository;
-  characterRepository: CharacterRepository;
-  rulesRepository: RulesRepository;
-  notesRepository: NotesRepository;
   sessionService: SessionService;
 }
-
-export const createApp = (dependencies: AppDependencies) => {
-  const app = new Hono();
-  return app;
-};
 ```
 
 Tests should use the same `createApp()` route tree. Route and repository tests should use in-memory SQLite repositories through that same dependency boundary.
@@ -174,6 +159,8 @@ The MVP has no more than ten users. It starts with three seeded users:
 | Admin | Site admin | Manage users, invites, password resets, and basic administrative reads. |
 
 Permission checks should live in shared guards, not scattered through components. Components may hide unavailable controls, but routes must enforce access.
+
+Local authentication uses PBKDF2 password hashes, SQLite-backed sessions, and HTTP-only signed cookies. Seeded development users share the local-only password documented in `README.md`; production-grade password rotation and external identity providers remain out of scope for this MVP.
 
 ```mermaid
 flowchart TD

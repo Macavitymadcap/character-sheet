@@ -55,6 +55,23 @@ export const homeStyles = /* css */ `
   text-decoration: none;
 }
 
+.logout-button {
+  background: transparent;
+  border: 1px solid var(--border-colour);
+  border-radius: 0.375rem;
+  color: var(--muted-text-colour);
+  cursor: pointer;
+  font-weight: 700;
+  min-height: 2.25rem;
+  padding: 0.45rem 0.6rem;
+}
+
+.account-summary {
+  color: var(--muted-text-colour);
+  font-weight: 700;
+  margin: 0;
+}
+
 .site-nav a[aria-current="page"] {
   background: var(--nav-active-background-colour);
   border-color: var(--nav-active-border-colour);

@@ -3,9 +3,11 @@ import type {
   AbilityName,
   AuthRepository,
   AuthUser,
+  AuthUserWithPassword,
   CampaignMember,
   CampaignRepository,
   CampaignSummary,
+  CharacterAccessContext,
   CharacterAbility,
   CharacterNote,
   CharacterRepository,
@@ -13,8 +15,11 @@ import type {
   CharacterRuleLink,
   CharacterSheetReadModel,
   CharacterSkill,
+  LocalInvite,
   NotesRepository,
+  PasswordResetToken,
   RulesRepository,
+  StoredSession,
   UserRole,
 } from "./model";
 import { bootstrapDatabase } from "./schema";
@@ -24,8 +29,34 @@ interface UserRow {
   display_name: string;
   email: string;
   id: string;
+  password_hash?: string;
   role: UserRole;
   status: AuthUser["status"];
+}
+
+interface StoredSessionRow {
+  expires_at: string;
+  id: string;
+  user_id: string;
+}
+
+interface LocalInviteRow {
+  accepted_at: string | null;
+  created_by_user_id: string;
+  email: string;
+  expires_at: string;
+  id: string;
+  role: UserRole;
+  token_hash: string;
+}
+
+interface PasswordResetTokenRow {
+  created_by_user_id: string;
+  expires_at: string;
+  id: string;
+  token_hash: string;
+  used_at: string | null;
+  user_id: string;
 }
 
 interface CharacterRow {
@@ -42,6 +73,12 @@ interface CharacterRow {
   species: string;
   speed_ft: number;
   temporary_hit_points: number;
+}
+
+interface CharacterAccessRow {
+  campaign_id: string;
+  id: string;
+  owner_user_id: string;
 }
 
 interface CharacterClassRow {
@@ -152,6 +189,53 @@ export const createSqliteRepositories = (database: Database): SqliteRepositories
 class SqliteAuthRepository implements AuthRepository {
   constructor(private readonly database: Database) {}
 
+  createInvite(invite: LocalInvite): LocalInvite {
+    this.database.run(
+      "insert into invites (id, email, role, token_hash, created_by_user_id, expires_at, accepted_at) values (?, ?, ?, ?, ?, ?, ?)",
+      [
+        invite.id,
+        invite.email,
+        invite.role,
+        invite.tokenHash,
+        invite.createdByUserId,
+        toSqlDate(invite.expiresAt),
+        invite.acceptedAt ? toSqlDate(invite.acceptedAt) : null,
+      ],
+    );
+
+    return invite;
+  }
+
+  createPasswordResetToken(token: PasswordResetToken): PasswordResetToken {
+    this.database.run(
+      "insert into password_reset_tokens (id, user_id, token_hash, created_by_user_id, expires_at, used_at) values (?, ?, ?, ?, ?, ?)",
+      [
+        token.id,
+        token.userId,
+        token.tokenHash,
+        token.createdByUserId,
+        toSqlDate(token.expiresAt),
+        token.usedAt ? toSqlDate(token.usedAt) : null,
+      ],
+    );
+
+    return token;
+  }
+
+  createSession(session: StoredSession): StoredSession {
+    this.database.run("insert into sessions (id, user_id, expires_at) values (?, ?, ?)", [
+      session.id,
+      session.userId,
+      toSqlDate(session.expiresAt),
+    ]);
+
+    return session;
+  }
+
+  deleteSession(sessionId: string): void {
+    this.database.run("delete from sessions where id = ?", [sessionId]);
+  }
+
   findUserByEmail(email: string): AuthUser | null {
     const row = this.database
       .query<UserRow, [string]>(
@@ -162,12 +246,80 @@ class SqliteAuthRepository implements AuthRepository {
     return row ? toAuthUser(row) : null;
   }
 
+  findInviteByTokenHash(tokenHash: string): LocalInvite | null {
+    const row = this.database
+      .query<LocalInviteRow, [string]>(
+        "select id, email, role, token_hash, created_by_user_id, expires_at, accepted_at from invites where token_hash = ?",
+      )
+      .get(tokenHash);
+
+    return row
+      ? {
+          acceptedAt: row.accepted_at ? new Date(row.accepted_at) : null,
+          createdByUserId: row.created_by_user_id,
+          email: row.email,
+          expiresAt: new Date(row.expires_at),
+          id: row.id,
+          role: row.role,
+          tokenHash: row.token_hash,
+        }
+      : null;
+  }
+
+  findPasswordResetTokenByTokenHash(tokenHash: string): PasswordResetToken | null {
+    const row = this.database
+      .query<PasswordResetTokenRow, [string]>(
+        "select id, user_id, token_hash, created_by_user_id, expires_at, used_at from password_reset_tokens where token_hash = ?",
+      )
+      .get(tokenHash);
+
+    return row
+      ? {
+          createdByUserId: row.created_by_user_id,
+          expiresAt: new Date(row.expires_at),
+          id: row.id,
+          tokenHash: row.token_hash,
+          usedAt: row.used_at ? new Date(row.used_at) : null,
+          userId: row.user_id,
+        }
+      : null;
+  }
+
+  findSessionById(id: string): StoredSession | null {
+    const row = this.database
+      .query<StoredSessionRow, [string]>("select id, user_id, expires_at from sessions where id = ?")
+      .get(id);
+
+    return row
+      ? {
+          expiresAt: new Date(row.expires_at),
+          id: row.id,
+          userId: row.user_id,
+        }
+      : null;
+  }
+
   findUserById(id: string): AuthUser | null {
     const row = this.database
       .query<UserRow, [string]>("select id, email, display_name, role, status from users where id = ?")
       .get(id);
 
     return row ? toAuthUser(row) : null;
+  }
+
+  findUserWithPasswordByEmail(email: string): AuthUserWithPassword | null {
+    const row = this.database
+      .query<UserRow, [string]>(
+        "select id, email, display_name, role, status, password_hash from users where email = ?",
+      )
+      .get(email);
+
+    return row && row.password_hash
+      ? {
+          ...toAuthUser(row),
+          passwordHash: row.password_hash,
+        }
+      : null;
   }
 
   listUsers(): AuthUser[] {
@@ -189,6 +341,22 @@ class SqliteAuthRepository implements AuthRepository {
 
 class SqliteCharacterRepository implements CharacterRepository {
   constructor(private readonly database: Database) {}
+
+  getAccessContext(characterId: string): CharacterAccessContext | null {
+    const row = this.database
+      .query<CharacterAccessRow, [string]>(
+        "select id, owner_user_id, campaign_id from characters where id = ?",
+      )
+      .get(characterId);
+
+    return row
+      ? {
+          campaignId: row.campaign_id,
+          id: row.id,
+          ownerUserId: row.owner_user_id,
+        }
+      : null;
+  }
 
   getSheetBySlug(slug: string): CharacterSheetReadModel | null {
     const character = this.database
@@ -395,4 +563,8 @@ function toAuthUser(row: UserRow): AuthUser {
     role: row.role,
     status: row.status,
   };
+}
+
+function toSqlDate(date: Date) {
+  return date.toISOString();
 }
