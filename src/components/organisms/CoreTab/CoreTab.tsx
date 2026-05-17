@@ -1,6 +1,7 @@
 import type { CharacterAbility, CharacterSheetReadModel } from "../../../db";
 import { formatModifier } from "../../../characters/calculations";
 import { Icon } from "../../atoms/Icon";
+import { DiceRoller } from "../../molecules/DiceRoller";
 
 interface CoreTabProps {
   sheet: CharacterSheetReadModel;
@@ -20,6 +21,7 @@ export const CoreTab = ({ sheet }: CoreTabProps) => {
                 <th scope="col">Mod</th>
                 <th scope="col">Save</th>
                 <th scope="col">Prof</th>
+                <th scope="col">Roll</th>
               </tr>
             </thead>
             <tbody>
@@ -30,6 +32,14 @@ export const CoreTab = ({ sheet }: CoreTabProps) => {
                   <td>{formatModifier(ability.modifier)}</td>
                   <td>{formatModifier(ability.saveModifier)}</td>
                   <td class="proficiency-icon-cell">{renderSaveProficiencyIcon(ability.saveProficient)}</td>
+                  <td>
+                    <DiceRoller
+                      characterSlug={sheet.slug}
+                      defaultModifier={ability.modifier}
+                      id={`ability-${ability.ability}`}
+                      label={formatAbility(ability.ability)}
+                    />
+                  </td>
                 </tr>
               ))}
             </tbody>

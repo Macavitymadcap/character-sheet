@@ -80,7 +80,12 @@ describe("SheetHeader", () => {
     expect(html).toContain('hx-patch="/sheet/lynott/resources/resource_lynott_hit_points"');
     expect(html).toContain('hx-patch="/sheet/lynott/resources/resource_lynott_temporary_hit_points"');
     expect(html).toContain("<dt>Conditions</dt>");
-    expect(html).toContain("<dd>None</dd>");
+    expect(html).toContain('<span class="condition-control">');
+    expect(html).toContain('aria-label="Manage conditions"');
+    expect(html).toContain('popovertarget="condition-popover-lynott"');
+    expect(html).toContain('popover="auto"');
+    expect(html).toContain("No active conditions.");
+    expect(html).toContain('hx-post="/sheet/lynott/conditions"');
     expect(html).toContain('id="inspiration-toggle"');
     expect(html).toContain('data-variant="inspiration"');
     expect(html).toContain('hx-trigger="change delay:250ms"');
@@ -110,7 +115,9 @@ describe("SheetHeader", () => {
     );
 
     expect(html).toContain("22 / 31 + 5 temporary");
-    expect(html).toContain("<dd>Poisoned</dd>");
+    expect(html).toContain('<span class="condition-chip">Poisoned</span>');
+    expect(html).toContain('aria-label="Remove Poisoned"');
+    expect(html).toContain('hx-patch="/sheet/lynott/resources/condition_poisoned"');
     expect(html).toContain('aria-checked="true"');
     expect(html).toContain('checked=""');
   });

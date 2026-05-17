@@ -184,11 +184,17 @@ export interface CharacterRepository {
   listBackgroundEntries(characterId: string): CharacterBackgroundEntry[];
   listEquipment(characterId: string): CharacterEquipment[];
   listResources(characterId: string): CharacterResource[];
+  updateEquipmentItem(
+    characterId: string,
+    equipmentId: string,
+    patch: { equipped?: boolean; quantity?: number },
+  ): CharacterEquipment | null;
   updateResourceCurrent(
     characterId: string,
     resourceId: string,
     current: number,
   ): CharacterResource | null;
+  upsertConditionResource(characterId: string, label: string): CharacterResource;
 }
 
 export interface CharacterAccessContext {

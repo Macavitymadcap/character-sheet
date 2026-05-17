@@ -251,28 +251,40 @@ describe("SQLite repositories", () => {
 
   test("reads equipment for Lynott", () => {
     runtime = createSqliteDatabase({ path: ":memory:" });
-    const equipment = runtime.repositories.characterRepository.listEquipment(
+    const characters = runtime.repositories.characterRepository;
+    const equipment = characters.listEquipment("character_lynott_magulbisson");
+    const updatedCoinPurse = characters.updateEquipmentItem(
       "character_lynott_magulbisson",
+      "equipment_lynott_coin_purse",
+      { quantity: 12 },
     );
 
-    expect(equipment).toEqual([
-      {
-        category: "armour",
-        equipped: true,
-        id: "equipment_lynott_breastplate",
-        name: "Breastplate with Enhanced Defence infusion",
-        notes: "AC 14 plus Dexterity modifier, improved by the active infusion.",
-        quantity: 1,
-      },
-      {
-        category: "weapon",
-        equipped: true,
-        id: "equipment_lynott_pistol",
-        name: "Pistol with Repeating Shot infusion",
-        notes: "Range 30/90 ft., 1d10+4 magical piercing damage.",
-        quantity: 1,
-      },
-    ]);
+    expect(equipment).toContainEqual({
+      category: "money",
+      equipped: false,
+      id: "equipment_lynott_coin_purse",
+      name: "Coin purse",
+      notes: "Starting gold to be determined.",
+      quantity: 0,
+    });
+    expect(equipment).toContainEqual({
+      category: "armour",
+      equipped: true,
+      id: "equipment_lynott_breastplate",
+      name: "Breastplate with Enhanced Defence infusion",
+      notes: "AC 14 plus Dexterity modifier, improved by the active infusion.",
+      quantity: 1,
+    });
+    expect(equipment).toContainEqual({
+      category: "weapon",
+      equipped: true,
+      id: "equipment_lynott_pistol",
+      name: "Pistol with Repeating Shot infusion",
+      notes: "Range 30/90 ft., 1d10+4 magical piercing damage.",
+      quantity: 1,
+    });
+    expect(equipment).toHaveLength(13);
+    expect(updatedCoinPurse?.quantity).toBe(12);
   });
 
   test("reads Lynott's structured background entries", () => {
@@ -293,8 +305,11 @@ describe("SQLite repositories", () => {
       id: "background_lynott_npc_kora",
       title: "Sergeant Kora Steelheart",
     });
+    expect(
+      entries.find((entry) => entry.id === "background_lynott_backstory_artificers")?.body,
+    ).toContain("We operated in the shadows");
     expect(entries.map((entry) => entry.category)).toContain("rank");
-    expect(entries).toHaveLength(20);
+    expect(entries).toHaveLength(23);
   });
 
   test("updates resources and mirrors hit point fields on the sheet summary", () => {
@@ -322,6 +337,25 @@ describe("SQLite repositories", () => {
     expect(temporaryHitPoints?.current).toBe(6);
     expect(inspiration?.current).toBe(1);
     expect(sheet?.hitPoints).toEqual({ current: 31, max: 31, temporary: 6 });
+  });
+
+  test("adds and reactivates custom condition resources", () => {
+    runtime = createSqliteDatabase({ path: ":memory:" });
+    const characters = runtime.repositories.characterRepository;
+
+    const first = characters.upsertConditionResource("character_lynott_magulbisson", "Frightened");
+    characters.updateResourceCurrent("character_lynott_magulbisson", first.id, 0);
+    const second = characters.upsertConditionResource("character_lynott_magulbisson", "Frightened");
+
+    expect(first).toMatchObject({
+      current: 1,
+      key: "condition_frightened",
+      label: "Frightened",
+      max: 1,
+      type: "condition",
+    });
+    expect(second.id).toBe(first.id);
+    expect(second.current).toBe(1);
   });
 
   test("filters note visibility by viewer role", () => {

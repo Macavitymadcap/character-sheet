@@ -7,7 +7,9 @@ Implement the action-facing sheet tabs: actions, spellcasting, features and trai
 ## Implementation
 
 - Add read models for attacks, actions, bonus actions, reactions, spells, spell slots, class features, species traits, infusions, equipment, and conditions.
-- Add mutation routes for spending/restoring resources such as hit points, temporary hit points, hit dice, spell slots, inspiration, Fey Gift, Fortune from the Many, and conditions. Current hit points, temporary hit points, and inspiration are controlled from the compact sheet header.
+- Add mutation routes for spending/restoring resources such as hit points, temporary hit points, hit dice, spell slots, inspiration, Fey Gift, Fortune from the Many, and conditions. Current hit points, temporary hit points, conditions, and inspiration are controlled from the compact sheet header.
+- Add compact d20 popovers for abilities, skills, tools, and weapon attacks, including advantage/disadvantage and extra modifiers.
+- Add equipment controls for carried/equipped state and quantities, including the coin purse.
 - Add short-rest and long-rest services that reset the correct resources for the MVP.
 - Render spellcasting and rules text from structured rules data with source metadata.
 
@@ -44,5 +46,7 @@ sequenceDiagram
 
 - Lynott's action, spellcasting, feature, trait, and equipment tabs render from SQLite.
 - Resource controls persist changes and update relevant fragments.
+- Dice roll and condition popovers are reusable, tested components or component patterns.
+- Equipment quantity/equipped controls persist changes and update the active tab fragment.
 - Rest actions reset only the resources documented for the MVP.
 - Routes reject unauthorised or invalid mutations.

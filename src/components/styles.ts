@@ -3,7 +3,9 @@ import { badgeStyles } from "./atoms/Badge/Badge.styles";
 import { iconStyles } from "./atoms/Icon/Icon.styles";
 import { panelStyles } from "./atoms/Panel/Panel.styles";
 import { switchStyles } from "./atoms/Switch/Switch.styles";
+import { accordionStyles } from "./molecules/Accordion/Accordion.styles";
 import { compactListStyles } from "./molecules/CompactList/CompactList.styles";
+import { diceRollerStyles } from "./molecules/DiceRoller/DiceRoller.styles";
 import { formFieldStyles } from "./molecules/FormField/FormField.styles";
 import { labelledOutputStyles } from "./molecules/LabelledOutput/LabelledOutput.styles";
 import { popoverMenuStyles } from "./molecules/PopoverMenu/PopoverMenu.styles";
@@ -22,9 +24,11 @@ import { layoutStyles } from "./templates/Layout/Layout.styles";
 
 export const appStyles = [
   layoutStyles,
+  accordionStyles,
   badgeStyles,
   buttonStyles,
   compactListStyles,
+  diceRollerStyles,
   iconStyles,
   labelledOutputStyles,
   popoverMenuStyles,

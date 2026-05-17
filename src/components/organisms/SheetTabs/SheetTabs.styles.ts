@@ -69,10 +69,4 @@ export const sheetTabsStyles = /* css */ `
   border-color: var(--nav-active-border-colour);
   color: var(--nav-active-text-colour);
 }
-
-@media (min-width: 980px) {
-  .sheet-tabs {
-    justify-content: space-between;
-  }
-}
 `;

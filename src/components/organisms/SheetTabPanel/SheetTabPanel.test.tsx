@@ -176,12 +176,15 @@ describe("SheetTabPanel", () => {
     expect(actions).toContain('hx-target="#sheet-tab-workspace"');
     expect(actions).toContain("Pistol with Repeating Shot infusion");
     expect(spellcasting).toContain("Mage Hand");
+    expect(spellcasting).toContain("Spell attack");
+    expect(spellcasting).toContain('<details class="accordion-item" name="spell-list">');
     expect(spellcasting).toContain("1st-level spell slots");
     expect(spellcasting).toContain('hx-patch="/sheet/lynott/resources/resource_lynott_spell_slots_1"');
     expect(spellcasting).toContain('hx-target="#sheet-tab-panel"');
     expect(spellcasting).toContain('name="tabId" value="spellcasting"');
     expect(spellcasting).toContain('aria-label="Spend one 1st-level spell slots"');
     expect(features).toContain("Repeating Shot");
+    expect(features).toContain('<details class="accordion-item" name="feature-list">');
     expect(equipmentTab).toContain("Range 30/90 ft.");
     expect(backgroundTab).toContain("Jonas Blarendon");
     expect(backgroundTab).toContain("Sergeant Kora Steelheart");

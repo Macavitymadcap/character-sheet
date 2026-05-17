@@ -35,10 +35,11 @@ describe("SheetTabs", () => {
     expect(isSheetTabId("unknown")).toBeFalse();
   });
 
-  test("keeps tab buttons compact while spacing the strip on wide screens", () => {
+  test("keeps every tab button compact in the scrollable strip", () => {
     expect(sheetTabsStyles).toContain("display: flex;");
     expect(sheetTabsStyles).toContain("flex: 0 0 auto;");
-    expect(sheetTabsStyles).toContain("justify-content: space-between;");
+    expect(sheetTabsStyles).toContain("overflow-x: auto;");
+    expect(sheetTabsStyles).not.toContain("justify-content: space-between;");
     expect(sheetTabsStyles).not.toContain("repeat(8");
     expect(sheetTabsStyles).not.toContain("grid-template-columns");
   });

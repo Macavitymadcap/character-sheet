@@ -16,23 +16,28 @@ export const skillsTrainingTabStyles = /* css */ `
 
 .skills-table th:first-child,
 .skills-table td:first-child {
-  width: 42%;
+  width: 34%;
 }
 
 .skills-table th:nth-child(2),
 .skills-table td:nth-child(2) {
-  width: 30%;
+  width: 26%;
 }
 
 .skills-table th:nth-child(3),
 .skills-table td:nth-child(3) {
-  width: 14%;
+  width: 13%;
+}
+
+.skills-table th:nth-child(4),
+.skills-table td:nth-child(4) {
+  text-align: center;
+  width: 12%;
 }
 
 .skills-table th:last-child,
 .skills-table td:last-child {
-  text-align: center;
-  width: 14%;
+  width: 15%;
 }
 
 .proficiency-grid {

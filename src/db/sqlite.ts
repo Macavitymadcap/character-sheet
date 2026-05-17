@@ -482,17 +482,17 @@ class SqliteCharacterRepository implements CharacterRepository {
         `select id, name, category, quantity, equipped, notes
          from character_equipment
          where character_id = ?
-         order by equipped desc, category, name`,
+         order by
+           case
+             when category = 'money' then 0
+             when equipped = 1 then 1
+             else 2
+           end,
+           category,
+           name`,
       )
       .all(characterId)
-      .map((row) => ({
-        category: row.category,
-        equipped: row.equipped === 1,
-        id: row.id,
-        name: row.name,
-        notes: row.notes,
-        quantity: row.quantity,
-      }));
+      .map(toCharacterEquipment);
   }
 
   listBackgroundEntries(characterId: string): CharacterBackgroundEntry[] {
@@ -543,6 +543,46 @@ class SqliteCharacterRepository implements CharacterRepository {
     return this.getResource(characterId, resourceId);
   }
 
+  updateEquipmentItem(
+    characterId: string,
+    equipmentId: string,
+    patch: { equipped?: boolean; quantity?: number },
+  ): CharacterEquipment | null {
+    const equipment = this.getEquipment(characterId, equipmentId);
+    if (!equipment) return null;
+
+    const nextQuantity =
+      patch.quantity === undefined ? equipment.quantity : Math.max(0, patch.quantity);
+    const nextEquipped = patch.equipped === undefined ? equipment.equipped : patch.equipped;
+
+    this.database.run(
+      "update character_equipment set quantity = ?, equipped = ? where character_id = ? and id = ?",
+      [nextQuantity, nextEquipped ? 1 : 0, characterId, equipmentId],
+    );
+
+    return this.getEquipment(characterId, equipmentId);
+  }
+
+  upsertConditionResource(characterId: string, label: string): CharacterResource {
+    const conditionLabel = label.trim();
+    const conditionSlug = slugify(conditionLabel);
+    const id = `condition_${characterId}_${conditionSlug}`;
+    const key = `condition_${conditionSlug}`;
+
+    this.database.run(
+      `insert into character_resources (id, character_id, resource_key, resource_type, label, current_value, max_value, sort_order)
+       values (?, ?, ?, 'condition', ?, 1, 1, 500)
+       on conflict(character_id, resource_key) do update set
+         label = excluded.label,
+         current_value = 1,
+         max_value = 1,
+         sort_order = excluded.sort_order`,
+      [id, characterId, key, conditionLabel],
+    );
+
+    return this.getResourceByKey(characterId, key)!;
+  }
+
   private getResource(characterId: string, resourceId: string): CharacterResource | null {
     const row = this.database
       .query<CharacterResourceRow, [string, string]>(
@@ -553,6 +593,30 @@ class SqliteCharacterRepository implements CharacterRepository {
       .get(characterId, resourceId);
 
     return row ? toCharacterResource(row) : null;
+  }
+
+  private getResourceByKey(characterId: string, resourceKey: string): CharacterResource | null {
+    const row = this.database
+      .query<CharacterResourceRow, [string, string]>(
+        `select id, resource_key, resource_type, label, current_value, max_value
+         from character_resources
+         where character_id = ? and resource_key = ?`,
+      )
+      .get(characterId, resourceKey);
+
+    return row ? toCharacterResource(row) : null;
+  }
+
+  private getEquipment(characterId: string, equipmentId: string): CharacterEquipment | null {
+    const row = this.database
+      .query<CharacterEquipmentRow, [string, string]>(
+        `select id, name, category, quantity, equipped, notes
+         from character_equipment
+         where character_id = ? and id = ?`,
+      )
+      .get(characterId, equipmentId);
+
+    return row ? toCharacterEquipment(row) : null;
   }
 
   private listAbilities(characterId: string): CharacterAbility[] {
@@ -769,11 +833,32 @@ function toCharacterResource(row: CharacterResourceRow): CharacterResource {
   };
 }
 
+function toCharacterEquipment(row: CharacterEquipmentRow): CharacterEquipment {
+  return {
+    category: row.category,
+    equipped: row.equipped === 1,
+    id: row.id,
+    name: row.name,
+    notes: row.notes,
+    quantity: row.quantity,
+  };
+}
+
 function clampResourceCurrent(resource: CharacterResource, current: number) {
   const wholeCurrent = Math.trunc(current);
   const lowerBounded = Math.max(0, wholeCurrent);
 
   return resource.max === null ? lowerBounded : Math.min(lowerBounded, resource.max);
+}
+
+function slugify(value: string) {
+  const slug = value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+
+  return slug || "custom";
 }
 
 function toSqlDate(date: Date) {

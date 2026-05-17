@@ -1,6 +1,7 @@
 import type { CharacterProficiency, CharacterSheetReadModel } from "../../../db";
 import { formatModifier } from "../../../characters/calculations";
 import { Icon } from "../../atoms/Icon";
+import { DiceRoller } from "../../molecules/DiceRoller";
 
 interface SkillsTrainingTabProps {
   sheet: CharacterSheetReadModel;
@@ -29,6 +30,7 @@ export const SkillsTrainingTab = ({ sheet }: SkillsTrainingTabProps) => {
                 <th scope="col">Ability</th>
                 <th scope="col">Mod</th>
                 <th scope="col">Prof</th>
+                <th scope="col">Roll</th>
               </tr>
             </thead>
             <tbody>
@@ -38,6 +40,14 @@ export const SkillsTrainingTab = ({ sheet }: SkillsTrainingTabProps) => {
                   <td>{formatAbility(skill.ability)}</td>
                   <td>{formatModifier(skill.modifier)}</td>
                   <td class="proficiency-icon-cell">{renderProficiencyIcon(skill.proficiencyLevel)}</td>
+                  <td>
+                    <DiceRoller
+                      characterSlug={sheet.slug}
+                      defaultModifier={skill.modifier}
+                      id={`skill-${slugify(skill.skill)}`}
+                      label={formatSkill(skill.skill)}
+                    />
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -57,6 +67,15 @@ export const SkillsTrainingTab = ({ sheet }: SkillsTrainingTabProps) => {
                   .map((proficiency) => (
                     <li>
                       <strong>{proficiency.name}</strong>
+                      {group.category === "tool" ? (
+                        <DiceRoller
+                          abilityOptions={abilityOptions(sheet)}
+                          characterSlug={sheet.slug}
+                          id={`tool-${slugify(proficiency.name)}`}
+                          label={proficiency.name}
+                          proficiencyBonus={sheet.proficiencyBonus}
+                        />
+                      ) : null}
                       {proficiency.detail ? <span>{proficiency.detail}</span> : null}
                     </li>
                   ))}
@@ -85,4 +104,21 @@ function renderProficiencyIcon(level: number) {
   if (level === 1) return <Icon name="check_circle" label="Proficient" tone="success" />;
 
   return <Icon name="radio_button_unchecked" label="Untrained" tone="muted" />;
+}
+
+function abilityOptions(sheet: CharacterSheetReadModel) {
+  return [
+    { label: "None", value: 0 },
+    ...sheet.abilities.map((ability) => ({
+      label: formatAbility(ability.ability),
+      value: ability.modifier,
+    })),
+  ];
+}
+
+function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }
