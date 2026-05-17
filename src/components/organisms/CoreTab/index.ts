@@ -1,0 +1,1 @@
+export { CoreTab } from "./CoreTab";

@@ -1,0 +1,46 @@
+# dependencies
+node_modules
+
+# output
+out
+dist
+*.tgz
+
+# local SQLite databases
+*.sqlite
+*.sqlite3
+*.sqlite-shm
+*.sqlite-wal
+*.sqlite3-shm
+*.sqlite3-wal
+*.db
+*.db-shm
+*.db-wal
+
+# code coverage
+coverage
+*.lcov
+
+# logs
+logs
+*.log
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# dotenv environment variable files
+.env
+.env.development.local
+.env.test.local
+.env.production.local
+.env.local
+
+# local caches
+.cache
+.eslintcache
+*.tsbuildinfo
+
+# generated review artefacts
+docs/pr-screenshots/**
+
+# editor and operating system files
+.idea
+.DS_Store

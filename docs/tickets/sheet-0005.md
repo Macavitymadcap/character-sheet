@@ -6,9 +6,9 @@ Build the reusable app shell, sticky site header, sticky sheet header, tab navig
 
 ## Implementation
 
-- Add site layout with app name, navigation menu, current user state, login, and logout.
+- Add site layout with app name, navigation menu, current user identity and role, login, and logout.
 - Add sheet page route and `SheetPage` composition.
-- Add sticky `SheetHeader` with labelled outputs for name, species, level, armour class, hit points, initiative, conditions, inspiration, rest, and settings.
+- Add sticky `SheetHeader` with a compact identity line, armour class, hit point controls, initiative, speed, conditions, and inspiration.
 - Add tab navigation for the eight MVP sheet tabs.
 - Add placeholder tab fragments that can be filled by later tickets.
 
@@ -25,7 +25,7 @@ flowchart TD
 
 - `GET /sheet/:characterId` returns the full sheet page.
 - `GET /sheet/:characterId/tabs/:tabId` returns an HTMX tab fragment.
-- `SheetHeader` receives a sheet summary read model from the character repository.
+- `SheetHeader` receives a sheet summary read model and resources from the character repository.
 
 ## Tests First
 

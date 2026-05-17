@@ -39,7 +39,7 @@ The sheet page should have a sticky header containing labelled outputs and butto
 
 Beneath the header should be the following tabs, which should be scrollable on the y axis:
   - core (abilities, saves, senses, speed & defence)
-- skills, proficiencies & training
+- skills, proficiencies, languages & tools
 - actions
 - spellcasting
 - features and traits

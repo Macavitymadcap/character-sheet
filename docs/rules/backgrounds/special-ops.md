@@ -2,9 +2,9 @@
 
 **Skill Proficiencies:** Stealth, Deception
 
-**Tool Proficiencies:** One type of gaming set (Three Dragon Ante), vehicles (land)
+**Tool Proficiencies:** Disguise kit, forgery kit
 
-**Equipment:** An insignia of rank (kept hidden), a set of traveler's clothes, a set of common clothes for blending in, a gaming set, and a pouch containing 10 gp
+**Equipment:** An insignia of rank (kept hidden), a set of traveler's clothes, a set of common clothes for blending in, a disguise kit, a forgery kit, and a pouch containing 10 gp
 
 ### Background Features
 

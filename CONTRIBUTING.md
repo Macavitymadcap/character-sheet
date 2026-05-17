@@ -91,12 +91,20 @@ docs(sheet): add mvp data model
 For source-code tickets, run:
 
 ```bash
+bun run verify
+```
+
+For narrower local debugging, the verification command is composed of:
+
+```bash
 bun run typecheck
 bun run test
 bun run test:a11y
+bun run smoke:mvp
+bun run screenshots:sheet
 ```
 
-For user-facing UI work, also capture screenshots once the screenshot script exists.
+For user-facing UI work, review the light and dark screenshots generated in `docs/pr-screenshots/`.
 
 For documentation-only work, check:
 
@@ -105,6 +113,22 @@ For documentation-only work, check:
 - Diagrams render as Mermaid.
 - Public wording uses British English.
 - New implementation guidance matches `ARCHITECTURE.md`.
+
+## Branch Protection
+
+`main` and the active epic branch should be protected. Protection requires pull requests, one approval, fresh approval after the latest push, resolved conversations, linear history, and no force pushes or branch deletions.
+
+When the CI workflow is not present on a protected branch yet, use the bootstrap configuration:
+
+```bash
+bun run protect:branches:bootstrap
+```
+
+After the CI workflow has landed on the protected branches, use the full configuration so GitHub also requires the `test` status check:
+
+```bash
+bun run protect:branches
+```
 
 ## British English
 
