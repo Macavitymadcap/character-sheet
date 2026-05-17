@@ -9,7 +9,7 @@ Complete the MVP acceptance pass with accessibility coverage, visual screenshots
 - Add or complete Pa11y coverage for home, login, sheet, tab fragments where practical, and admin pages.
 - Add screenshot capture for Lynott's sheet in light and dark mode.
 - Add final README, architecture, and contribution updates reflecting implemented scripts and commands.
-- Add an MVP smoke workflow covering seed, login, sheet navigation, resource mutation, notes, admin reads, and logout.
+- Add an MVP smoke workflow covering seed, login, sheet navigation, resource mutation, seeded note editing, role pages, and logout.
 - Fix visual, accessibility, and documentation issues discovered by verification.
 
 ```mermaid
@@ -29,7 +29,7 @@ flowchart TD
 - Write smoke tests for the MVP workflow before filling any missing behaviour.
 - Write accessibility script expectations before fixing violations.
 - Write screenshot script assertions for output paths and required view states.
-- Write documentation checks for known local commands and key markdown links.
+- Review documentation for known local commands, key markdown links, and accurate delivered/deferred scope.
 
 ## Acceptance Criteria
 
@@ -43,7 +43,7 @@ flowchart TD
 
 ## Implementation Notes
 
-- `bun run smoke:mvp` should exercise seeded player, Game Master, and admin flows against an in-memory app.
+- `bun run smoke:mvp` should exercise seeded player, Game Master, and admin role pages against an in-memory app.
 - `bun run screenshots:sheet` should capture Lynott's sheet in light and dark mode to ignored local review artefacts.
 - `bun run verify` should run typecheck, tests, accessibility, smoke, and screenshots so the MVP acceptance pass is one command.
-- Note saving is part of the final smoke path because player and Game Master notes are mutable sheet state, not static copy.
+- Seeded note saving is part of the final smoke path because those notes are mutable sheet state, not static copy.

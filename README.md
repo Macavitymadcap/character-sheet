@@ -11,14 +11,14 @@ For the architecture and data model, see [ARCHITECTURE.md](./ARCHITECTURE.md). F
 - Local SQLite persistence with enough data to support Lynott, a Game Master, and an admin.
 - Password-based local authentication with seeded users, sessions, admin invites, and admin-triggered password reset tokens.
 - Role-based access:
-  - Player users can create, read, update, and delete their own sheet data.
-  - Game Masters can manage all character sheets and campaign/session notes.
-  - Admins can manage invites, password resets, and basic administrative reads.
+  - The seeded player can read Lynott's sheet and update table-use state such as hit points, resources, conditions, equipment, rolls, rests, and their existing player note.
+  - The seeded Game Master can read and update Lynott's sheet state and existing player/Game Master notes, and can view the seeded campaign shell.
+  - The seeded admin can access the admin shell, create local invite tokens, and use the local password-reset token endpoint when a target user id is known.
 - A mobile-first sheet page with sticky site and character headers, compact combat/resource controls, dark mode, and tabbed sheet sections.
 - Structured D&D 2014 rules data seeded from local sources, normalised to the most recent 2014 official reprint where a rule appears in multiple books.
 - British English in product copy, docs, code naming, and CSS custom properties.
 
-Deployment to Railway and migration from SQLite to Postgres are intentionally deferred to a later epic.
+The MVP is intentionally a seeded local sheet, not a full group-management app. Character creation/deletion, campaign session management, note creation beyond seeded notes, admin user/read tables, richer rule-mechanics rendering, Railway deployment, and migration from SQLite to Postgres are deferred to later epics.
 
 ## Stack
 
@@ -99,7 +99,7 @@ bun run verify
 
 `bun run test:a11y` starts an in-memory app on an available local port and runs Pa11y against public `/`, `/login`, authenticated `/sheet/lynott`, authenticated `/logout`, authenticated `/campaigns/rovnost-shadows`, and authenticated `/admin`.
 
-`bun run smoke:mvp` starts an in-memory app and walks the seeded local workflow: login as Lynott, open the sheet, mutate hit points, save a player note, render every sheet tab fragment, logout, verify the protected sheet redirects, then login as Game Master and admin to check their role pages.
+`bun run smoke:mvp` starts an in-memory app and walks the seeded local workflow: login as Lynott, open the sheet, mutate hit points, save a seeded player note, render every sheet tab fragment, logout, verify the protected sheet redirects, then login as Game Master and admin to check their role pages.
 
 `bun run screenshots:sheet` captures Lynott's sheet in light and dark mode. Screenshots are written to `docs/pr-screenshots/` by default, which is ignored by Git. Set `SCREENSHOT_DIR` to write them elsewhere.
 

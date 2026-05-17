@@ -2,7 +2,7 @@
 
 Character Sheet is a local-first D&D 5e sheet app built with Hono, HTMX, Bun, TypeScript, JSX, and SQLite.
 
-The first MVP supports Lynott Magulbisson, one Game Master, and one admin. It is intentionally designed as a server-rendered application, not a static markdown viewer: the database stores both durable character state and structured rules data, routes own mutation and permission checks, JSX components own semantic markup, and HTMX owns focused fragment swaps.
+The first MVP supports a seeded local workflow for Lynott Magulbisson, one Game Master, and one admin. It is intentionally designed as a server-rendered application, not a static markdown viewer: the database stores both durable character state and structured rules data, routes own mutation and permission checks, JSX components own semantic markup, and HTMX owns focused fragment swaps.
 
 Deployment to Railway and a Postgres migration are out of scope for `sheet-0001`. The MVP should run locally with SQLite and keep the architecture compatible with a later database adapter.
 
@@ -115,11 +115,11 @@ The MVP page set:
 - `/login` login form using the shared site shell.
 - `/logout` sign-out confirmation page using the shared site shell.
 - `POST /logout` logout route that clears the session and redirects to `/`.
-- `/campaigns/:campaignSlug` Game Master campaign page.
+- `/campaigns/:campaignSlug` read-only Game Master campaign shell for the seeded campaign.
 - `/sheet/:characterId` character sheet page.
 - `/sheet/:characterId/tabs/:tabId` sheet tab panel fragment route for HTMX swaps.
-- `PATCH /sheet/:characterId/notes/:noteId` note save route that returns the notes tab panel.
-- `/admin` admin page for users, invites, password resets, and basic reads.
+- `PATCH /sheet/:characterId/notes/:noteId` seeded note save route that returns the notes tab panel.
+- `/admin` admin shell with local invite creation.
 
 The site header is sticky and contains:
 
@@ -160,9 +160,9 @@ The MVP has no more than ten users. It starts with three seeded users:
 
 | Role | Initial user | Permissions |
 | --- | --- | --- |
-| Player | Lynott player | Manage their own character sheet and player notes. |
-| Game Master | Campaign GM | Manage all character sheets, campaign/session data, and Game Master notes. |
-| Admin | Site admin | Manage users, invites, password resets, and basic administrative reads. |
+| Player | Lynott player | Read Lynott's sheet and update table-use state such as resources, conditions, equipment, rests, rolls, and their existing player note. |
+| Game Master | Campaign GM | Read and update Lynott's sheet state and existing player/Game Master notes, plus view the seeded campaign shell. |
+| Admin | Site admin | Access the admin shell, create local invite tokens, and use local password-reset token routes by known user id. |
 
 Permission checks should live in shared guards, not scattered through components. Components may hide unavailable controls, but routes must enforce access.
 
@@ -216,7 +216,7 @@ erDiagram
 | `password_reset_tokens` | Admin-triggered local password reset tokens. |
 | `campaigns` | Campaign records owned by a Game Master. |
 | `campaign_members` | User membership and role within a campaign. |
-| `campaign_sessions` | Game Master session records and campaign notes. |
+| `campaign_sessions` | Schema foundation for later Game Master session records and campaign notes. |
 | `characters` | Character identity, owner, campaign, species, background, level, and summary stats. |
 | `character_classes` | Class and subclass levels, hit dice, and spellcasting ability. |
 | `character_abilities` | Ability scores, modifiers, saving throw proficiency, and derived save values. |
@@ -233,6 +233,8 @@ erDiagram
 | `rules_entities` | Spells, class features, species traits, backgrounds, equipment, infusions, and conditions. |
 | `rule_mechanics` | Structured mechanics such as uses, dice notation, DCs, ranges, durations, conditions, and scaling. |
 | `character_rule_links` | Character selections and granted rules, such as prepared spells and known infusions. |
+
+Some schema tables intentionally land before their full management UI. `sheet-0001` uses that foundation for seeded local data and targeted sheet mutations; full character CRUD, campaign session CRUD, note creation, admin read tables, and richer rules text rendering are follow-up work.
 
 ### Rules Data
 
@@ -331,5 +333,6 @@ Release automation can be added after the MVP scaffold exists. Railway and Postg
 - Local password auth is in scope now; external identity providers are not.
 - Admin invite and password reset flows are local workflows without email delivery in this epic.
 - Live 5e.tools fetching is deferred behind the importer boundary; local imports are available through `bun run import:rules`.
+- Full group character management, campaign/session records, note creation, admin read tables, and deployment are deferred to later epics.
 - British English is required across copy, docs, code naming, and CSS variables.
 - The first implementation sequence is documentation and tickets, then source code through accepted tickets.
