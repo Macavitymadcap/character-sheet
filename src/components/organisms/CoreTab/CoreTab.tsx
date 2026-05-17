@@ -58,21 +58,15 @@ export const CoreTab = ({ sheet }: CoreTabProps) => {
         <dl class="sheet-description-grid armour-defence-grid">
           <div class="armour-summary-card">
             <dt>Armour</dt>
-            <dd class="inline-value-list">
-              <span>
-                <strong>AC {sheet.armourClass}</strong>
+            <dd class="armour-summary">
+              <span class="armour-class-shield" aria-label={`Armour class ${sheet.armourClass}`}>
+                <span>AC</span>
+                <strong>{sheet.armourClass}</strong>
               </span>
-              {sheet.armourClassBreakdown.map((source) => (
-                <span>
-                  <strong>{source.label}</strong> {formatModifier(source.value)}
-                  {source.notes ? ` · ${source.notes}` : ""}
-                </span>
-              ))}
-              {sheet.defences
-                .filter((defence) => defence.type === "armour")
-                .map((defence) => (
-                  <span>{defence.detail}</span>
-                ))}
+              <span class="armour-summary-line">
+                <strong>{formatArmourName(sheet)}</strong>
+                <span>({formatArmourCalculation(sheet)})</span>
+              </span>
             </dd>
           </div>
           {sheet.defences
@@ -99,6 +93,23 @@ function renderSaveProficiencyIcon(isProficient: boolean) {
 
 function formatDefenceDetail(detail: string) {
   return detail === "None currently recorded." ? "None" : detail;
+}
+
+function formatArmourName(sheet: CharacterSheetReadModel) {
+  return sheet.armourClassBreakdown[0]?.label ?? "Armour";
+}
+
+function formatArmourCalculation(sheet: CharacterSheetReadModel) {
+  const terms = sheet.armourClassBreakdown.map((source, index) => {
+    if (index === 0) return String(source.value);
+    if (source.value < 0) return `- ${Math.abs(source.value)}`;
+
+    return `+ ${source.value}`;
+  });
+
+  if (terms.length === 0) return String(sheet.armourClass);
+
+  return `${terms.join(" ")} = ${sheet.armourClass}`;
 }
 
 function formatAbility(ability: CharacterAbility["ability"]) {

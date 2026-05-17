@@ -206,7 +206,8 @@ describe("createApp", () => {
     expect(coreHtml).toContain("Abilities and saves");
     expect(coreHtml).toContain("Constitution");
     expect(coreHtml).toContain("Darkvision");
-    expect(coreHtml).toContain("Enhanced Defence");
+    expect(coreHtml).toContain("Breastplate");
+    expect(coreHtml).toContain("(14 + 2 + 1 = 17)");
     expect(skills.status).toBe(200);
     expect(skillsHtml).toContain("Skills");
     expect(skillsHtml).toContain("Stealth");

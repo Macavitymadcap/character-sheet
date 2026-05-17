@@ -48,9 +48,10 @@ describe("CoreTab", () => {
     expect(html).toContain("<dt>Darkvision</dt>");
     expect(html).toContain("<dd>60 ft</dd>");
     expect(html).toContain("<dt>Armour</dt>");
-    expect(html).toContain("<strong>AC 17</strong>");
-    expect(html).toContain("<strong>Enhanced Defence</strong> +1");
-    expect(html).toContain("Active armour infusion.");
+    expect(html).toContain('class="armour-class-shield" aria-label="Armour class 17"');
+    expect(html).toContain("<strong>17</strong>");
+    expect(html).toContain("<strong>Breastplate</strong>");
+    expect(html).toContain("(14 + 2 + 1 = 17)");
     expect(html).toContain("<dt>Resistances</dt>");
   });
 });

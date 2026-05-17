@@ -118,21 +118,59 @@ export const coreTabStyles = /* css */ `
   grid-column: 1 / -1;
 }
 
-.inline-value-list {
+.sheet-description-grid .armour-summary {
+  align-items: center;
+  display: flex;
+  gap: 0.75rem;
+}
+
+.armour-class-shield {
+  align-items: center;
+  aspect-ratio: 0.86;
+  background: var(--surface-colour);
+  border: 2px solid var(--border-colour);
+  border-radius: 42% 42% 50% 50% / 28% 28% 64% 64%;
+  box-shadow: inset 0 -0.35rem 0.8rem rgb(15 23 42 / 0.08);
+  color: var(--heading-colour);
+  display: grid;
+  flex: 0 0 auto;
+  gap: 0;
+  justify-items: center;
+  line-height: 1;
+  padding-block: 0.4rem 0.55rem;
+  width: 3.45rem;
+}
+
+.sheet-description-grid .armour-class-shield span {
+  color: var(--muted-text-colour);
+  font-size: 0.65rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.sheet-description-grid .armour-class-shield strong {
+  font-size: 1.35rem;
+}
+
+.sheet-description-grid .armour-summary-line {
   align-items: baseline;
+  color: var(--muted-text-colour);
   display: flex;
   flex-wrap: wrap;
-  gap: 0.25rem 0.75rem;
+  gap: 0.2rem 0.45rem;
+  font-size: 0.92rem;
+  font-weight: 800;
 }
 
-.inline-value-list span {
-  color: var(--muted-text-colour);
-  font-size: 0.86rem;
-  font-weight: 700;
+.sheet-description-grid .armour-summary-line span {
+  color: inherit;
+  font-size: inherit;
+  font-weight: inherit;
 }
 
-.inline-value-list strong {
+.sheet-description-grid .armour-summary-line strong {
   color: var(--heading-colour);
+  font-size: 1rem;
 }
 
 @media (max-width: 760px) {

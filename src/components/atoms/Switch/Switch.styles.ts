@@ -111,11 +111,11 @@ export const switchStyles = /* css */ `
 }
 
 .switch[data-variant="inspiration"] {
-  --switch-track-gradient: linear-gradient(110deg, #164e63 0%, #0891b2 34%, #f59e0b 68%, #fff7ed 100%);
-  --switch-track-overlay: linear-gradient(110deg, #0f172a, #0e7490, #fb923c, #fff7ed);
-  --switch-thumb-gradient: linear-gradient(135deg, #cffafe 0%, #67e8f9 35%, #fed7aa 72%, #ffffff 100%);
-  --switch-icon-dark: #fff7ed;
-  --switch-icon-light: #a5f3fc;
+  --switch-track-gradient: linear-gradient(110deg, #1f2937 0%, #334155 32%, #15803d 68%, #86efac 100%);
+  --switch-track-overlay: linear-gradient(110deg, #0f172a, #334155, #16a34a, #bbf7d0);
+  --switch-thumb-gradient: linear-gradient(135deg, #f8fafc 0%, #d1fae5 35%, #86efac 72%, #ffffff 100%);
+  --switch-icon-dark: #064e3b;
+  --switch-icon-light: #cbd5e1;
 }
 
 .switch-input:checked + .switch-track,
