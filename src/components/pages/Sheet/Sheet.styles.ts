@@ -5,6 +5,6 @@ export const sheetStyles = /* css */ `
 
 .sheet-main {
   display: grid;
-  gap: 1rem;
+  gap: 0;
 }
 `;

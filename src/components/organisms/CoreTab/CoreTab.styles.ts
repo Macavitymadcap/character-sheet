@@ -25,6 +25,27 @@ export const coreTabStyles = /* css */ `
   width: 100%;
 }
 
+.ability-table {
+  min-width: 0;
+  table-layout: fixed;
+}
+
+.ability-table th:first-child,
+.ability-table td:first-child {
+  width: 32%;
+}
+
+.ability-table th:nth-child(2),
+.ability-table td:nth-child(2),
+.ability-table th:nth-child(3),
+.ability-table td:nth-child(3),
+.ability-table th:nth-child(4),
+.ability-table td:nth-child(4),
+.ability-table th:last-child,
+.ability-table td:last-child {
+  width: 17%;
+}
+
 .sheet-table th,
 .sheet-table td {
   border-bottom: 1px solid var(--border-colour);
@@ -37,6 +58,11 @@ export const coreTabStyles = /* css */ `
   color: var(--muted-text-colour);
   font-size: 0.82rem;
   text-transform: uppercase;
+}
+
+.ability-table th,
+.ability-table td {
+  padding-inline: 0.25rem;
 }
 
 .sheet-description-grid {

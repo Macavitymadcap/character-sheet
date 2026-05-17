@@ -22,12 +22,26 @@ export const layoutStyles = /* css */ `
   --warning-colour: #b45309;
   --theme-duration: 220ms;
   --theme-easing: ease;
+  --site-header-height: 2.85rem;
+  --sheet-sticky-top: var(--site-header-height);
   --theme-transition: var(--theme-duration) var(--theme-easing);
   --theme-text-transition: 0ms linear;
   color-scheme: light;
   color: var(--heading-colour);
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+@media (min-width: 820px) {
+  :root {
+    --site-header-height: 3.15rem;
+  }
+}
+
+@media (max-width: 760px) {
+  :root {
+    --page-gutter: 0.75rem;
+  }
 }
 
 :root[data-theme="dark"] {

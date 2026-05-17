@@ -1,8 +1,22 @@
 export const sheetTabsStyles = /* css */ `
 .sheet-tab-workspace {
   display: grid;
-  gap: 1rem;
+  gap: 0.5rem;
   min-width: 0;
+}
+
+.sheet-sticky-stack {
+  background: var(--background-colour);
+  display: grid;
+  gap: 0.5rem;
+  margin-inline: calc(var(--page-gutter) * -1);
+  padding-block-end: 0.5rem;
+  padding-block-start: 0.5rem;
+  padding-inline: var(--page-gutter);
+  position: sticky;
+  top: var(--sheet-sticky-top);
+  transition: background-color var(--theme-transition);
+  z-index: 4;
 }
 
 .sheet-tabs {
@@ -19,7 +33,7 @@ export const sheetTabsStyles = /* css */ `
   min-width: 0;
   overflow-x: auto;
   overflow-y: hidden;
-  padding: 0.35rem;
+  padding: 0.25rem;
   transition:
     background-color var(--theme-transition),
     border-color var(--theme-transition),
@@ -36,7 +50,7 @@ export const sheetTabsStyles = /* css */ `
   justify-content: center;
   min-height: 2.2rem;
   min-width: 0;
-  padding: 0.45rem 0.55rem;
+  padding: 0.35rem 0.5rem;
   text-decoration: none;
   white-space: nowrap;
 }

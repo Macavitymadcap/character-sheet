@@ -7,12 +7,10 @@ export const sheetHeaderStyles = /* css */ `
   display: grid;
   gap: 0.55rem;
   padding: 0.55rem;
-  position: static;
   transition:
     background-color var(--theme-transition),
     border-color var(--theme-transition),
     box-shadow var(--theme-transition);
-  z-index: 4;
 }
 
 .sheet-title-block {
@@ -192,8 +190,6 @@ export const sheetHeaderStyles = /* css */ `
   .sheet-header {
     gap: 0.55rem;
     padding: 0.7rem;
-    position: sticky;
-    top: 4.5rem;
   }
 
   .sheet-heading {

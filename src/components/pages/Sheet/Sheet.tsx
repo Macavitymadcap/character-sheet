@@ -19,8 +19,12 @@ export const SheetPage = ({ activeTab, appName, resources, sheet, user }: SheetP
       <div class="shell sheet-shell">
         <SiteHeader appName={appName} currentSection="sheet" user={user} />
         <main class="sheet-main" aria-labelledby="sheet-heading">
-          <SheetHeader resources={resources} sheet={sheet} />
-          <SheetTabWorkspace activeTab={activeTab} resources={resources} sheet={sheet} />
+          <SheetTabWorkspace
+            activeTab={activeTab}
+            header={<SheetHeader resources={resources} sheet={sheet} />}
+            resources={resources}
+            sheet={sheet}
+          />
         </main>
       </div>
     </Layout>

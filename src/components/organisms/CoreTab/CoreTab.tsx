@@ -12,12 +12,12 @@ export const CoreTab = ({ sheet }: CoreTabProps) => {
       <section class="sheet-data-section" aria-labelledby="abilities-heading">
         <h3 id="abilities-heading">Abilities and saves</h3>
         <div class="table-scroll">
-          <table class="sheet-table">
+          <table class="sheet-table ability-table">
             <thead>
               <tr>
                 <th scope="col">Ability</th>
                 <th scope="col">Score</th>
-                <th scope="col">Modifier</th>
+                <th scope="col">Mod</th>
                 <th scope="col">Save</th>
                 <th scope="col">Prof</th>
               </tr>

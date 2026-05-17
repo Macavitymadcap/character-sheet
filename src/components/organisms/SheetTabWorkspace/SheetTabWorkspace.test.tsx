@@ -30,6 +30,7 @@ describe("SheetTabWorkspace", () => {
     const html = render(<SheetTabWorkspace activeTab="skills" resources={[]} sheet={sheet} />);
 
     expect(html).toContain('<div id="sheet-tab-workspace" class="sheet-tab-workspace">');
+    expect(html).toContain('class="sheet-sticky-stack"');
     expect(html).toContain('id="sheet-tabs"');
     expect(html).toContain('id="sheet-tab-panel"');
     expect(html).toContain('id="sheet-tab-skills"');

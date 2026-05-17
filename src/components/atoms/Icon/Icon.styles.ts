@@ -1,12 +1,16 @@
 export const iconStyles = /* css */ `
 .icon {
   display: inline-grid;
-  font-size: 1.1rem;
-  line-height: 1;
-  overflow: hidden;
+  height: 1.1rem;
   place-items: center;
   vertical-align: middle;
   width: 1.1rem;
+}
+
+.icon svg {
+  display: block;
+  height: 100%;
+  width: 100%;
 }
 
 .icon-muted {

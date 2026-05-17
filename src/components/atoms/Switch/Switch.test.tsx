@@ -12,8 +12,9 @@ describe("Switch", () => {
     expect(html).toContain('aria-label="Colour mode"');
     expect(html).toContain('aria-checked="false"');
     expect(html).toContain('data-theme-toggle=""');
-    expect(html).toContain("☀");
-    expect(html).toContain("◐");
+    expect(html).toContain('data-icon="sun"');
+    expect(html).toContain('data-icon="moon"');
+    expect(html).toContain("<svg");
   });
 
   test("renders checked state for dark mode", () => {
@@ -41,8 +42,8 @@ describe("Switch", () => {
     );
 
     expect(html).toContain('data-variant="inspiration"');
-    expect(html).toContain("○");
-    expect(html).toContain("✦");
+    expect(html).toContain('data-icon="circle"');
+    expect(html).toContain('data-icon="sparkles"');
     expect(html).toContain("--switch-track-gradient: linear-gradient(110deg, #0f766e, #f59e0b);");
     expect(html).toContain('hx-patch="/sheet/character/resources/inspiration"');
     expect(html).toContain('hx-target="#sheet-header"');

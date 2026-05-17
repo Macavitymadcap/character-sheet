@@ -4,12 +4,12 @@ export const siteHeaderStyles = /* css */ `
   background: var(--surface-colour);
   border: 1px solid var(--border-colour);
   border-radius: 0.5rem;
-  box-shadow: 0 1rem 2.5rem var(--shadow-colour);
+  box-shadow: 0 0.75rem 1.75rem var(--shadow-colour);
   display: grid;
-  gap: 0.6rem;
-  grid-template-columns: minmax(0, 1fr) auto;
-  min-height: 3.5rem;
-  padding: 0.6rem;
+  gap: 0.35rem;
+  grid-template-columns: minmax(0, auto) minmax(0, 1fr) auto;
+  min-height: 2.85rem;
+  padding: 0.35rem;
   position: sticky;
   top: 0;
   transition:
@@ -27,7 +27,7 @@ export const siteHeaderStyles = /* css */ `
 
 .site-title {
   display: block;
-  font-size: 1.1rem;
+  font-size: 1rem;
   line-height: 1.1;
 }
 
@@ -35,9 +35,9 @@ export const siteHeaderStyles = /* css */ `
   align-items: center;
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
-  grid-column: 1 / -1;
-  justify-content: flex-start;
+  gap: 0.25rem;
+  justify-content: center;
+  min-width: 0;
 }
 
 .site-nav a,
@@ -46,8 +46,8 @@ export const siteHeaderStyles = /* css */ `
   border-radius: 0.375rem;
   color: var(--muted-text-colour);
   font-weight: 700;
-  min-height: 2.25rem;
-  padding: 0.5rem 0.6rem;
+  min-height: 2rem;
+  padding: 0.35rem 0.45rem;
   text-decoration: none;
 }
 
@@ -61,7 +61,7 @@ export const siteHeaderStyles = /* css */ `
 .site-actions {
   align-items: center;
   display: flex;
-  gap: 0.5rem;
+  gap: 0.35rem;
   justify-content: flex-end;
 }
 
@@ -78,11 +78,11 @@ export const siteHeaderStyles = /* css */ `
 
 @media (min-width: 560px) {
   .site-header {
-    padding: 0.75rem;
+    padding: 0.45rem 0.55rem;
   }
 
   .site-title {
-    font-size: 1.25rem;
+    font-size: 1.1rem;
   }
 
   .site-user {
@@ -92,13 +92,13 @@ export const siteHeaderStyles = /* css */ `
 
 @media (min-width: 820px) {
   .site-header {
-    grid-template-columns: minmax(12rem, 1fr) auto minmax(13rem, 1fr);
-    min-height: 4rem;
-    padding: 0.85rem 1rem;
+    grid-template-columns: minmax(10rem, 1fr) auto minmax(11rem, 1fr);
+    min-height: 3.15rem;
+    padding: 0.45rem 0.7rem;
   }
 
   .site-title {
-    font-size: 1.45rem;
+    font-size: 1.2rem;
   }
 
   .site-nav {

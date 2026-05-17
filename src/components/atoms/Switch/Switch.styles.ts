@@ -89,14 +89,17 @@ export const switchStyles = /* css */ `
 
 .switch-icon {
   display: grid;
-  font-size: 1.25rem;
-  line-height: 1;
-  overflow: hidden;
+  height: 1.5rem;
   place-items: center;
   position: relative;
   transition: color var(--theme-text-transition);
-  width: 1.25rem;
+  width: 1.5rem;
   z-index: 1;
+}
+
+.switch-icon .icon {
+  height: 1.05rem;
+  width: 1.05rem;
 }
 
 .switch-icon-off {

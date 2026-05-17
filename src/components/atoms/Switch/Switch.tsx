@@ -1,3 +1,5 @@
+import { Icon } from "../Icon";
+
 interface SwitchProps {
   checked?: boolean;
   dataThemeToggle?: boolean;
@@ -26,8 +28,8 @@ export const Switch = ({
   hxVals,
   id,
   label,
-  offIcon = "light_mode",
-  onIcon = "dark_mode",
+  offIcon = "sun",
+  onIcon = "moon",
   thumbGradient,
   trackGradient,
   trackOverlay,
@@ -54,24 +56,17 @@ export const Switch = ({
         hx-vals={hxVals}
       />
       <span class="switch-track" aria-hidden="true">
-        <span class="switch-icon switch-icon-off">{formatSwitchIcon(offIcon)}</span>
-        <span class="switch-icon switch-icon-on">{formatSwitchIcon(onIcon)}</span>
+        <span class="switch-icon switch-icon-off">
+          <Icon name={offIcon} />
+        </span>
+        <span class="switch-icon switch-icon-on">
+          <Icon name={onIcon} />
+        </span>
         <span class="switch-thumb"></span>
       </span>
     </label>
   );
 };
-
-function formatSwitchIcon(name: string) {
-  const icons: Record<string, string> = {
-    auto_awesome: "✦",
-    dark_mode: "◐",
-    light_mode: "☀",
-    radio_button_unchecked: "○",
-  };
-
-  return icons[name] ?? name;
-}
 
 function formatSwitchStyle({
   thumbGradient,

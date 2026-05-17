@@ -84,8 +84,8 @@ describe("SheetHeader", () => {
     expect(html).toContain('id="inspiration-toggle"');
     expect(html).toContain('data-variant="inspiration"');
     expect(html).toContain('hx-trigger="change delay:250ms"');
-    expect(html).toContain("○");
-    expect(html).toContain("✦");
+    expect(html).toContain('data-icon="circle"');
+    expect(html).toContain('data-icon="sparkles"');
     expect(html).not.toContain("<dt>Settings</dt>");
   });
 
