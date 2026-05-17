@@ -52,6 +52,12 @@ export const compactListStyles = /* css */ `
   font-weight: 700;
 }
 
+.compact-list-controls {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.25rem;
+}
+
 @media (max-width: 520px) {
   .compact-list-row {
     grid-template-columns: 1fr;

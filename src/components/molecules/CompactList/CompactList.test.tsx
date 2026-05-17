@@ -9,7 +9,11 @@ describe("CompactList", () => {
       <CompactList
         items={[
           { label: "Weapon", meta: "Equipped", value: "Pistol" },
-          { label: "Slots", value: "3 / 3" },
+          {
+            controls: <button type="button">Spend</button>,
+            label: "Slots",
+            value: "3 / 3",
+          },
         ]}
       />,
     );
@@ -20,5 +24,7 @@ describe("CompactList", () => {
     expect(html).toContain("<span>Equipped</span>");
     expect(html).toContain("<dt>Slots</dt>");
     expect(html).toContain("<strong>3 / 3</strong>");
+    expect(html).toContain('<span class="compact-list-controls">');
+    expect(html).toContain('<button type="button">Spend</button>');
   });
 });

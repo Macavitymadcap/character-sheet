@@ -87,7 +87,7 @@ const ActionsTab = ({ data }: { data: TabContentData }) => {
       {renderCompactSection(
         "action-resources-heading",
         "Action resources",
-        actionResources.map(resourceToItem),
+        actionResources.map((resource) => resourceToItem(resource, data.sheet.slug, "actions")),
       )}
       {renderCompactSection("readied-actions-heading", "Readied actions", weaponItems)}
     </div>
@@ -111,7 +111,7 @@ const SpellcastingTab = ({ data }: { data: TabContentData }) => {
             : "None",
         },
         { label: "Proficiency", value: formatModifier(data.sheet.proficiencyBonus) },
-        ...spellSlots.map(resourceToItem),
+        ...spellSlots.map((resource) => resourceToItem(resource, data.sheet.slug, "spellcasting")),
       ])}
       {renderCompactSection(
         "prepared-spells-heading",
@@ -211,11 +211,41 @@ function renderCompactSection(id: string, heading: string, items: CompactListIte
   );
 }
 
-function resourceToItem(resource: CharacterResource): CompactListItem {
+function resourceToItem(
+  resource: CharacterResource,
+  characterSlug?: string,
+  tabId?: SheetTabId,
+): CompactListItem {
   return {
+    controls: characterSlug && tabId ? renderResourceControls(resource, characterSlug, tabId) : undefined,
     label: resource.label,
     value: resource.max === null ? String(resource.current) : `${resource.current} / ${resource.max}`,
   };
+}
+
+function renderResourceControls(resource: CharacterResource, characterSlug: string, tabId: SheetTabId) {
+  const target = `/sheet/${characterSlug}/resources/${resource.id}`;
+  const canSpend = resource.current > 0;
+  const canRestore = resource.max === null || resource.current < resource.max;
+
+  return (
+    <span class="tab-resource-controls" role="group" aria-label={`${resource.label} controls`}>
+      <form hx-patch={target} hx-target="#sheet-tab-panel" hx-swap="outerHTML">
+        <input type="hidden" name="tabId" value={tabId} />
+        <input type="hidden" name="delta" value="-1" />
+        <button type="submit" aria-label={`Spend one ${resource.label}`} disabled={!canSpend}>
+          −
+        </button>
+      </form>
+      <form hx-patch={target} hx-target="#sheet-tab-panel" hx-swap="outerHTML">
+        <input type="hidden" name="tabId" value={tabId} />
+        <input type="hidden" name="delta" value="1" />
+        <button type="submit" aria-label={`Restore one ${resource.label}`} disabled={!canRestore}>
+          +
+        </button>
+      </form>
+    </span>
+  );
 }
 
 function equipmentToItem(item: CharacterEquipment): CompactListItem {

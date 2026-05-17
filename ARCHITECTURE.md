@@ -149,7 +149,7 @@ Sheet content is arranged as scrollable tabs:
 - background
 - notes
 
-Each tab panel should be independently renderable, and tab navigation swaps the shared tab workspace so the tab strip active state and displayed panel stay in sync.
+Each tab panel should be independently renderable, and tab navigation swaps the shared tab workspace so the tab strip active state and displayed panel stay in sync. Resource controls inside tab panels use the same route as the header controls, but request the active tab fragment back so tab-local resources can update without moving the sticky sheet chrome.
 
 ## Roles And Permissions
 

@@ -1,4 +1,5 @@
 export interface CompactListItem {
+  controls?: unknown;
   label: string;
   meta?: string;
   value: string;
@@ -17,6 +18,7 @@ export const CompactList = ({ items }: CompactListProps) => {
           <dd>
             <strong>{item.value}</strong>
             {item.meta ? <span>{item.meta}</span> : null}
+            {item.controls ? <span class="compact-list-controls">{item.controls}</span> : null}
           </dd>
         </div>
       ))}

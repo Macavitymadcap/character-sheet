@@ -304,6 +304,8 @@ export const createApp = (dependencies: AppDependencies) => {
     const body = await context.req.parseBody();
     const current = parseFormNumber(body.current);
     const delta = parseFormNumber(body.delta);
+    const tabId = parseSheetTabId(body.tabId);
+    if (body.tabId !== undefined && !tabId) return context.text("Invalid tab", 400);
     if (current === null && delta === null) return context.text("Invalid resource update", 400);
 
     const nextCurrent = current ?? resource.current + Number(delta);
@@ -317,9 +319,24 @@ export const createApp = (dependencies: AppDependencies) => {
     const updatedSheet = dependencies.characterRepository.getSheetById(sheet.id);
     if (!updatedSheet) return context.text("Not found", 404);
 
+    const updatedResources = dependencies.characterRepository.listResources(sheet.id);
+
+    if (tabId) {
+      return context.html(
+        <SheetTabPanel
+          equipment={dependencies.characterRepository.listEquipment(sheet.id)}
+          notes={dependencies.notesRepository.listNotesForCharacter(sheet.id, session.user.role)}
+          resources={updatedResources}
+          ruleLinks={dependencies.rulesRepository.listRuleLinksForCharacter(sheet.id)}
+          sheet={updatedSheet}
+          tabId={tabId}
+        />,
+      );
+    }
+
     return context.html(
       <SheetHeader
-        resources={dependencies.characterRepository.listResources(sheet.id)}
+        resources={updatedResources}
         sheet={updatedSheet}
       />,
     );
@@ -337,4 +354,10 @@ function parseFormNumber(value: unknown) {
 
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : null;
+}
+
+function parseSheetTabId(value: unknown) {
+  if (typeof value !== "string" || value.trim() === "") return null;
+
+  return isSheetTabId(value) ? value : null;
 }

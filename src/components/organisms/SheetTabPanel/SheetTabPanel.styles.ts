@@ -60,6 +60,34 @@ export const sheetTabPanelStyles = /* css */ `
   margin: 0;
 }
 
+.tab-resource-controls,
+.tab-resource-controls form {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.25rem;
+  margin: 0;
+}
+
+.tab-resource-controls button {
+  align-items: center;
+  background: var(--action-background-colour);
+  border: 1px solid var(--action-border-colour);
+  border-radius: 0.35rem;
+  color: var(--action-text-colour);
+  cursor: pointer;
+  display: inline-flex;
+  font-weight: 900;
+  height: 1.75rem;
+  justify-content: center;
+  line-height: 1;
+  width: 1.75rem;
+}
+
+.tab-resource-controls button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
 @media (max-width: 760px) {
   .tab-compact-grid {
     grid-template-columns: 1fr;

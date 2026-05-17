@@ -189,6 +189,43 @@ describe("createApp", () => {
     expect(sheetHtml).toContain('aria-checked="true"');
   });
 
+  test("updates tab resources through HTMX panel fragments", async () => {
+    const { app, sessionService } = createTestApp("Character Sheet");
+    const session = sessionService.createSession("user_lynott_player");
+    const cookie = session.cookie;
+
+    const spendSlot = await app.request(
+      "/sheet/lynott/resources/resource_lynott_spell_slots_1",
+      {
+        body: new URLSearchParams({ delta: "-1", tabId: "spellcasting" }),
+        headers: { cookie, "Content-Type": "application/x-www-form-urlencoded" },
+        method: "PATCH",
+      },
+    );
+    const spendSlotHtml = await spendSlot.text();
+    const spellcasting = await app.request("/sheet/lynott/tabs/spellcasting", {
+      headers: { cookie },
+    });
+    const spellcastingHtml = await spellcasting.text();
+    const invalidTab = await app.request(
+      "/sheet/lynott/resources/resource_lynott_spell_slots_1",
+      {
+        body: new URLSearchParams({ delta: "-1", tabId: "unknown" }),
+        headers: { cookie, "Content-Type": "application/x-www-form-urlencoded" },
+        method: "PATCH",
+      },
+    );
+
+    expect(spendSlot.status).toBe(200);
+    expect(spendSlotHtml).toContain('<section id="sheet-tab-panel" class="sheet-tab-panel"');
+    expect(spendSlotHtml).toContain('data-tab-id="spellcasting"');
+    expect(spendSlotHtml).not.toContain('id="sheet-header"');
+    expect(spendSlotHtml).toContain("2 / 3");
+    expect(spellcasting.status).toBe(200);
+    expect(spellcastingHtml).toContain("2 / 3");
+    expect(invalidTab.status).toBe(400);
+  });
+
   test("renders the Game Master campaign page", async () => {
     const { app, sessionService } = createTestApp("Character Sheet");
     const session = sessionService.createSession("user_game_master");
