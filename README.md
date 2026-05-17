@@ -82,6 +82,7 @@ Current scripts:
 ```bash
 bun run db:bootstrap
 bun run dev
+bun run import:rules
 bun run seed
 bun run test
 bun run test:a11y
@@ -94,6 +95,12 @@ bun run verify
 
 `bun run test:a11y` starts an in-memory app on an available local port and runs Pa11y against public `/`, `/login`, authenticated `/sheet/lynott`, authenticated `/campaigns/rovnost-shadows`, and authenticated `/admin`.
 
+`bun run import:rules` imports local markdown or JSON rule files from `docs/rules` by default into the configured SQLite database. Pass a path to import one file or directory:
+
+```bash
+bun run import:rules -- docs/rules/spells/level-1/cure-wounds.md
+```
+
 Repository maintenance scripts:
 
 ```bash
@@ -101,13 +108,7 @@ bun run protect:branches:bootstrap
 bun run protect:branches
 ```
 
-Planned later scripts:
-
-```bash
-bun run import:rules
-```
-
-`import:rules` is planned as a local-first importer. It should read local markdown or JSON exports, transform American English spellings to British English where needed, and seed structured database tables. Direct fetching from 5e.tools can be added after the local importer boundary is stable.
+`import:rules` is intentionally local-first. It reads local markdown or JSON exports, transforms American English spellings to British English where safe, and seeds structured database tables. Direct fetching from 5e.tools can be added after the local importer boundary is stable.
 
 ## TDD Approach
 

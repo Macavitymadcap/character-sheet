@@ -25,7 +25,13 @@ export type {
   NotesRepository,
   PasswordResetToken,
   RulesRepository,
+  RulesSeedRepository,
+  RuleEntitySeedInput,
+  RuleEntityType,
+  RuleMechanicSeedInput,
+  RulesSourceSeedInput,
   StoredSession,
+  UpsertedRuleEntity,
   UserRole,
   UserStatus,
 } from "./model";

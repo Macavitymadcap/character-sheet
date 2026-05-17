@@ -30,7 +30,7 @@ flowchart LR
 
 ## Tests First
 
-- Write parser fixture tests for representative spell, class feature, species trait, background, infusion, and equipment files.
+- Write parser fixture tests for representative spell, class feature, species trait, background, infusion, equipment, and condition files.
 - Write normalisation tests for common American-to-British spellings used in the imported data.
 - Write precedence tests for Artificer and other reprinted 2014 rules.
 - Write idempotency tests proving repeated imports do not duplicate entities.
