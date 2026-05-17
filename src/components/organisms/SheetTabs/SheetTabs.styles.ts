@@ -1,14 +1,18 @@
 export const sheetTabsStyles = /* css */ `
 .sheet-tab-workspace {
+  align-items: start;
   display: grid;
   gap: 0.5rem;
+  grid-auto-rows: max-content;
   min-width: 0;
 }
 
 .sheet-sticky-stack {
+  align-items: start;
   background: var(--background-colour);
   display: grid;
   gap: 0.5rem;
+  grid-auto-rows: max-content;
   margin-inline: calc(var(--page-gutter) * -1);
   padding-block-end: 0.5rem;
   padding-block-start: 0.5rem;

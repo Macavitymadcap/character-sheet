@@ -36,8 +36,10 @@ describe("SheetTabs", () => {
   });
 
   test("keeps every tab button compact in the scrollable strip", () => {
+    expect(sheetTabsStyles).toContain("align-items: start;");
     expect(sheetTabsStyles).toContain("display: flex;");
     expect(sheetTabsStyles).toContain("flex: 0 0 auto;");
+    expect(sheetTabsStyles).toContain("grid-auto-rows: max-content;");
     expect(sheetTabsStyles).toContain("inline-size: max-content;");
     expect(sheetTabsStyles).toContain("justify-content: flex-start;");
     expect(sheetTabsStyles).toContain("overflow-x: auto;");
