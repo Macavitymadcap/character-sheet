@@ -1,13 +1,44 @@
 export const skillsTrainingTabStyles = /* css */ `
 .skills-training-tab {
   display: grid;
-  gap: 1rem;
+  gap: 0.75rem;
+}
+
+.skills-table {
+  min-width: 0;
+  table-layout: fixed;
+}
+
+.skills-table th,
+.skills-table td {
+  padding-inline: 0.25rem;
+}
+
+.skills-table th:first-child,
+.skills-table td:first-child {
+  width: 42%;
+}
+
+.skills-table th:nth-child(2),
+.skills-table td:nth-child(2) {
+  width: 30%;
+}
+
+.skills-table th:nth-child(3),
+.skills-table td:nth-child(3) {
+  width: 14%;
+}
+
+.skills-table th:last-child,
+.skills-table td:last-child {
+  text-align: center;
+  width: 14%;
 }
 
 .proficiency-grid {
   display: grid;
-  gap: 0.75rem;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .proficiency-group {
@@ -15,31 +46,36 @@ export const skillsTrainingTabStyles = /* css */ `
   border: 1px solid var(--border-colour);
   border-radius: 0.375rem;
   display: grid;
-  gap: 0.5rem;
-  padding: 0.75rem;
+  gap: 0.4rem;
+  padding: 0.55rem;
 }
 
 .proficiency-group h4 {
-  font-size: 0.95rem;
+  color: var(--muted-text-colour);
+  font-size: 0.78rem;
   margin: 0;
+  text-transform: uppercase;
 }
 
 .proficiency-group ul {
-  display: grid;
-  gap: 0.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.65rem;
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
 .proficiency-group li {
-  display: grid;
-  gap: 0.15rem;
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 0.35rem;
 }
 
 .proficiency-group span {
   color: var(--muted-text-colour);
-  font-size: 0.88rem;
+  font-size: 0.8rem;
   font-weight: 700;
 }
 

@@ -2,10 +2,10 @@ import { sheetTabs, type SheetTabId } from "./SheetTabs.config";
 
 interface SheetTabsProps {
   activeTab: SheetTabId;
-  characterId: string;
+  characterSlug: string;
 }
 
-export const SheetTabs = ({ activeTab, characterId }: SheetTabsProps) => {
+export const SheetTabs = ({ activeTab, characterSlug }: SheetTabsProps) => {
   return (
     <nav id="sheet-tabs" class="sheet-tabs" aria-label="Sheet tabs" role="tablist">
       {sheetTabs.map((tab) => (
@@ -14,9 +14,10 @@ export const SheetTabs = ({ activeTab, characterId }: SheetTabsProps) => {
           aria-controls="sheet-tab-panel"
           aria-selected={tab.id === activeTab ? "true" : "false"}
           class="sheet-tab"
+          data-tab-id={tab.id}
           data-state={tab.id === activeTab ? "active" : "idle"}
-          href={`/sheet/${characterId}/tabs/${tab.id}`}
-          hx-get={`/sheet/${characterId}/tabs/${tab.id}`}
+          href={`/sheet/${characterSlug}/tabs/${tab.id}`}
+          hx-get={`/sheet/${characterSlug}/tabs/${tab.id}`}
           hx-swap="outerHTML"
           hx-target="#sheet-tab-panel"
           role="tab"

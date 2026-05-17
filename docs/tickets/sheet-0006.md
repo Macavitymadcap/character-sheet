@@ -2,13 +2,13 @@
 
 ## Summary
 
-Implement the core sheet tabs for abilities, saving throws, senses, speed, defence, skills, proficiencies, and training.
+Implement the core sheet tabs for abilities, saving throws, senses, speed, defence, skills, and proficiencies.
 
 ## Implementation
 
-- Add read models for abilities, saves, senses, movement, armour class breakdown, defences, skills, proficiencies, tools, languages, and training.
+- Add read models for abilities, saves, senses, movement, armour class breakdown, defences, skills, proficiencies, tools, and languages.
 - Render the `core` tab with ability scores, modifiers, saving throws, senses, speed, armour, and defence.
-- Render the `skills, proficiencies, and training` tab with skills, tool proficiencies, weapon proficiencies, armour proficiencies, languages, and training notes.
+- Render the `skills and proficiencies` tab with skills, tool proficiencies, weapon proficiencies, armour proficiencies, and languages.
 - Keep calculations server-side and covered by tests.
 
 ```mermaid

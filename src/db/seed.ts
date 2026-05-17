@@ -7,7 +7,7 @@ type DefenceSeed = [string, string, string, string, number];
 type EquipmentSeed = [string, string, string, number, number, string];
 type NoteSeed = [string, string, string, string, string];
 type ProficiencySeed = [string, string, string, string, number];
-type ResourceSeed = [string, string, string, string, number, number, number];
+type ResourceSeed = [string, string, string, string, number, number | null, number];
 type RuleLinkSeed = [string, string, string, number, number, number];
 type SenseSeed = [string, string, string, number];
 type SourceSeed = [string, string, string, string, number];
@@ -97,13 +97,13 @@ const proficiencies: ProficiencySeed[] = [
   ["proficiency_lynott_medium_armour", "armour", "Medium armour", "Artificer training.", 20],
   ["proficiency_lynott_shields", "armour", "Shields", "Artificer training.", 30],
   ["proficiency_lynott_simple_weapons", "weapon", "Simple weapons", "Artificer training.", 40],
-  ["proficiency_lynott_firearms", "weapon", "Firearms", "1st Astrilian Artificers training.", 50],
-  ["proficiency_lynott_thieves_tools", "tool", "Thieves' tools", "Expertise from Artificer.", 60],
-  ["proficiency_lynott_tinkers_tools", "tool", "Tinker's tools", "Expertise from Artificer.", 70],
-  ["proficiency_lynott_smiths_tools", "tool", "Smith's tools", "Expertise from Artificer.", 80],
-  ["proficiency_lynott_woodcarvers_tools", "tool", "Woodcarver's tools", "Expertise from Artificer.", 90],
-  ["proficiency_lynott_three_dragon_ante", "tool", "Three Dragon Ante", "Gaming set.", 100],
-  ["proficiency_lynott_vehicles_land", "tool", "Vehicles (land)", "Background training.", 110],
+  ["proficiency_lynott_firearms", "weapon", "Firearms", "Artificer training and campaign exposure.", 50],
+  ["proficiency_lynott_thieves_tools", "tool", "Thieves' tools", "Artificer training.", 60],
+  ["proficiency_lynott_tinkers_tools", "tool", "Tinker's tools", "Artificer training.", 70],
+  ["proficiency_lynott_smiths_tools", "tool", "Smith's tools", "Artificer artisan tool choice.", 80],
+  ["proficiency_lynott_woodcarvers_tools", "tool", "Woodcarver's tools", "Artillerist specialist training.", 90],
+  ["proficiency_lynott_disguise_kit", "tool", "Disguise kit", "Special Operations background.", 100],
+  ["proficiency_lynott_forgery_kit", "tool", "Forgery kit", "Special Operations background.", 110],
   ["proficiency_lynott_common", "language", "Common", "Known language.", 120],
   ["proficiency_lynott_goblin", "language", "Goblin", "Known language.", 130],
   [
@@ -113,20 +113,13 @@ const proficiencies: ProficiencySeed[] = [
     "To be determined by campaign setting.",
     140,
   ],
-  [
-    "training_lynott_infiltration",
-    "training",
-    "Covert operations",
-    "Infiltration, intelligence gathering, sabotage, and threat assessment.",
-    150,
-  ],
-  [
-    "training_lynott_magitech",
-    "training",
-    "Magitech weapons programme",
-    "Experimental firearm maintenance and field use.",
-    160,
-  ],
+];
+
+const staleProficiencyIds = [
+  "proficiency_lynott_three_dragon_ante",
+  "proficiency_lynott_vehicles_land",
+  "training_lynott_infiltration",
+  "training_lynott_magitech",
 ];
 
 const resources: ResourceSeed[] = [
@@ -137,9 +130,10 @@ const resources: ResourceSeed[] = [
     "temporary_hit_points",
     "Temporary hit points",
     0,
-    0,
+    null,
     20,
   ],
+  ["resource_lynott_inspiration", "inspiration", "inspiration", "Inspiration", 0, 1, 25],
   ["resource_lynott_hit_dice", "hit_dice_d8", "hit_dice", "Hit dice d8", 4, 4, 30],
   ["resource_lynott_spell_slots_1", "spell_slots_1", "spell_slot", "1st-level spell slots", 3, 3, 40],
 ];
@@ -230,10 +224,25 @@ export const seedDatabase = (database: Database) => {
   }
 
   database.run(
-    "insert or ignore into characters (id, slug, owner_user_id, campaign_id, name, species, background, alignment, level, proficiency_bonus, armour_class, initiative, speed_ft, hit_point_max, hit_point_current, temporary_hit_points) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    `insert into characters (id, slug, owner_user_id, campaign_id, name, species, background, alignment, level, proficiency_bonus, armour_class, initiative, speed_ft, hit_point_max, hit_point_current, temporary_hit_points)
+     values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+     on conflict(id) do update set
+       slug = excluded.slug,
+       owner_user_id = excluded.owner_user_id,
+       campaign_id = excluded.campaign_id,
+       name = excluded.name,
+       species = excluded.species,
+       background = excluded.background,
+       alignment = excluded.alignment,
+       level = excluded.level,
+       proficiency_bonus = excluded.proficiency_bonus,
+       armour_class = excluded.armour_class,
+       initiative = excluded.initiative,
+       speed_ft = excluded.speed_ft,
+       hit_point_max = excluded.hit_point_max`,
     [
       "character_lynott_magulbisson",
-      "lynott-magulbisson",
+      "lynott",
       "user_lynott_player",
       "campaign_rovnost_shadows",
       "Lynott Magulbisson",
@@ -299,16 +308,36 @@ export const seedDatabase = (database: Database) => {
     );
   }
 
+  database.run(
+    `delete from character_proficiencies
+     where character_id = ?
+       and id in (${staleProficiencyIds.map(() => "?").join(", ")})`,
+    ["character_lynott_magulbisson", ...staleProficiencyIds],
+  );
+
   for (const proficiency of proficiencies) {
     database.run(
-      "insert or ignore into character_proficiencies (id, character_id, category, name, detail, sort_order) values (?, ?, ?, ?, ?, ?)",
+      `insert into character_proficiencies (id, character_id, category, name, detail, sort_order)
+       values (?, ?, ?, ?, ?, ?)
+       on conflict(id) do update set
+         category = excluded.category,
+         name = excluded.name,
+         detail = excluded.detail,
+         sort_order = excluded.sort_order`,
       [proficiency[0], "character_lynott_magulbisson", ...proficiency.slice(1)],
     );
   }
 
   for (const resource of resources) {
     database.run(
-      "insert or ignore into character_resources (id, character_id, resource_key, resource_type, label, current_value, max_value, sort_order) values (?, ?, ?, ?, ?, ?, ?, ?)",
+      `insert into character_resources (id, character_id, resource_key, resource_type, label, current_value, max_value, sort_order)
+       values (?, ?, ?, ?, ?, ?, ?, ?)
+       on conflict(id) do update set
+         resource_key = excluded.resource_key,
+         resource_type = excluded.resource_type,
+         label = excluded.label,
+         max_value = excluded.max_value,
+         sort_order = excluded.sort_order`,
       [resource[0], "character_lynott_magulbisson", ...resource.slice(1)],
     );
   }

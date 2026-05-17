@@ -116,7 +116,7 @@ export interface CharacterDefence {
 }
 
 export interface CharacterProficiency {
-  category: "armour" | "language" | "tool" | "training" | "weapon";
+  category: "armour" | "language" | "tool" | "weapon";
   detail: string;
   name: string;
 }
@@ -156,6 +156,11 @@ export interface CharacterRepository {
   getSheetById(id: string): CharacterSheetReadModel | null;
   getSheetBySlug(slug: string): CharacterSheetReadModel | null;
   listResources(characterId: string): CharacterResource[];
+  updateResourceCurrent(
+    characterId: string,
+    resourceId: string,
+    current: number,
+  ): CharacterResource | null;
 }
 
 export interface CharacterAccessContext {

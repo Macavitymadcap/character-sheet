@@ -30,7 +30,7 @@ const sheet: CharacterSheetReadModel = {
     { label: "Passive perception", value: "13" },
   ],
   skills: [],
-  slug: "lynott-magulbisson",
+  slug: "lynott",
   species: "Hobgoblin",
   speedFeet: 30,
 };
@@ -42,15 +42,16 @@ describe("CoreTab", () => {
     expect(html).toContain('<h3 id="abilities-heading">Abilities and saves</h3>');
     expect(html).toContain("<th scope=\"row\">Strength</th>");
     expect(html).toContain("<td>-1</td>");
-    expect(html).toContain("<td>Proficient</td>");
+    expect(html).toContain('aria-label="Proficient"');
     expect(html).toContain("<dt>Speed</dt>");
     expect(html).toContain("<dd>30 ft</dd>");
     expect(html).toContain("<dt>Darkvision</dt>");
     expect(html).toContain("<dd>60 ft</dd>");
-    expect(html).toContain("<dt>Armour class</dt>");
-    expect(html).toContain("<dd>17</dd>");
-    expect(html).toContain("<dt>Enhanced Defence</dt>");
-    expect(html).toContain("Active armour infusion.");
+    expect(html).toContain("<dt>Armour</dt>");
+    expect(html).toContain('class="armour-class-shield" aria-label="Armour class 17"');
+    expect(html).toContain("<strong>17</strong>");
+    expect(html).toContain("<strong>Breastplate</strong>");
+    expect(html).toContain("(14 + 2 + 1 = 17)");
     expect(html).toContain("<dt>Resistances</dt>");
   });
 });

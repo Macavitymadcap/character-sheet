@@ -18,14 +18,10 @@ const sheet: CharacterSheetReadModel = {
   name: "Lynott Magulbisson",
   proficiencies: [
     { category: "tool", detail: "Expertise from Artificer.", name: "Thieves' tools" },
+    { category: "tool", detail: "Special Operations background.", name: "Forgery kit" },
     { category: "armour", detail: "Artificer training.", name: "Medium armour" },
-    { category: "weapon", detail: "1st Astrilian Artificers training.", name: "Firearms" },
+    { category: "weapon", detail: "Artificer training and campaign exposure.", name: "Firearms" },
     { category: "language", detail: "Known language.", name: "Goblin" },
-    {
-      category: "training",
-      detail: "Infiltration, intelligence gathering, sabotage, and threat assessment.",
-      name: "Covert operations",
-    },
   ],
   proficiencyBonus: 2,
   senses: [],
@@ -33,7 +29,7 @@ const sheet: CharacterSheetReadModel = {
     { ability: "dexterity", modifier: 5, proficiencyLevel: 1, skill: "stealth" },
     { ability: "intelligence", modifier: 4, proficiencyLevel: 0, skill: "arcana" },
   ],
-  slug: "lynott-magulbisson",
+  slug: "lynott",
   species: "Hobgoblin",
   speedFeet: 30,
 };
@@ -45,13 +41,16 @@ describe("SkillsTrainingTab", () => {
     expect(html).toContain('<h3 id="skills-heading">Skills</h3>');
     expect(html).toContain("<th scope=\"row\">Stealth</th>");
     expect(html).toContain("<td>+5</td>");
-    expect(html).toContain("<td>Proficient</td>");
+    expect(html).toContain('aria-label="Proficient"');
+    expect(html).toContain('data-icon="check-circle"');
     expect(html).toContain("<th scope=\"row\">Arcana</th>");
-    expect(html).toContain("<td>Untrained</td>");
+    expect(html).toContain('aria-label="Untrained"');
     expect(html).toContain("<h4 id=\"proficiency-tool\">Tools</h4>");
     expect(html).toContain("<strong>Thieves&#39; tools</strong>");
+    expect(html).toContain("<strong>Forgery kit</strong>");
     expect(html).toContain("<h4 id=\"proficiency-armour\">Armour</h4>");
     expect(html).toContain("<strong>Medium armour</strong>");
-    expect(html).toContain("<strong>Covert operations</strong>");
+    expect(html).not.toContain("Covert operations");
+    expect(html).not.toContain("Training</h4>");
   });
 });

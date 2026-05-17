@@ -5,7 +5,7 @@ export const sheetTabs = [
     label: "Core",
   },
   {
-    description: "Skills, proficiencies, languages, tools, and training.",
+    description: "Skills, proficiencies, languages, and tools.",
     id: "skills",
     label: "Skills",
   },

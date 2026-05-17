@@ -133,21 +133,21 @@ I don't know who I am anymore when I'm not wearing someone else's face. The real
 - **Eldritch Cannon:** See class features
 
 ### Tools
-- Thieves' tools (expertise: +4)
-- Tinker's tools (expertise: +4)
-- Smith's tools (expertise: +4)
-- Woodcarver's tools (expertise: +4)
-- Three Dragon Ante (gaming set)
-- Vehicles (land)
+- Thieves' tools (Artificer)
+- Tinker's tools (Artificer)
+- Smith's tools (Artificer artisan choice)
+- Woodcarver's tools (Artillerist)
+- Disguise kit
+- Forgery kit
 
 ### Other Gear
 - Insignia of rank (hidden, wrapped and stashed)
 - Traveler's clothes (Jonas Blarendon identity)
 - Common clothes (for blending in)
-- Three Dragon Ante set
 - Dungeoneer's pack (includes bedroll, mess kit, tinderbox, 10 torches, 10 days rations, waterskin, 50ft rope)
 - Component pouch (bits of wire, tools for artificer casting)
 - Disguise kit
+- Forgery kit
 - Dark cloak/hood for moving unseen
 - Maintenance tools for weapons (covered by tinker's tools)
 

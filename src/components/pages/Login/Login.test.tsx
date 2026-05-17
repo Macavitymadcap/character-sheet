@@ -8,6 +8,8 @@ describe("LoginPage", () => {
     const html = render(<LoginPage appName="Character Sheet" />);
 
     expect(html).toContain("<title>Character Sheet</title>");
+    expect(html).toContain('<header id="site-header" class="site-header">');
+    expect(html).toContain('id="theme-toggle"');
     expect(html).toContain("Sign in");
     expect(html).toContain('<section class="panel" data-width="narrow" aria-labelledby="login-heading">');
     expect(html).toContain('<form class="form-stack" action="/login" method="post">');

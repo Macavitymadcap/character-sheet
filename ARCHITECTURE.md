@@ -111,30 +111,32 @@ Routes that are triggered by HTMX should not return a full page unless the inter
 
 The MVP page set:
 
-- `/` home page with the signed-in user's default action.
-- `/login` login form.
-- `POST /logout` logout route that clears the session and redirects to `/login`.
+- `/` base home page for visitors and signed-in users; signed-in users get a role-aware continue link.
+- `/login` login form using the shared site shell.
+- `/logout` sign-out confirmation page using the shared site shell.
+- `POST /logout` logout route that clears the session and redirects to `/`.
+- `/campaigns/:campaignSlug` Game Master campaign page.
 - `/sheet/:characterId` character sheet page.
-- `/sheet/:characterId/tabs/:tabId` sheet tab fragment route for HTMX swaps.
+- `/sheet/:characterId/tabs/:tabId` sheet tab workspace fragment route for HTMX swaps.
 - `/admin` admin page for users, invites, password resets, and basic reads.
 
 The site header is sticky and contains:
 
 - app name
-- current user and role
-- navigation menu
+- role-specific navigation menu
+- colour mode toggle
+- compact current user and role when signed in
 - login or logout action
 
-The sheet page has a second sticky header containing labelled outputs and actions:
+The sheet page has a second sticky header containing compact mobile-first identity and state:
 
-- character name, species, class, and level
+- character name, species, class, and level as a concise identity line
 - armour class
-- hit points and temporary hit points
+- hit points and temporary hit points, editable through a compact popover
 - initiative
+- speed
 - conditions
-- inspiration
-- rest actions
-- settings action
+- inspiration, editable through a resource-backed switch
 
 Sheet content is arranged as scrollable tabs:
 
@@ -147,7 +149,7 @@ Sheet content is arranged as scrollable tabs:
 - background
 - notes
 
-Each tab should be independently renderable as a full section and as an HTMX fragment.
+Each tab panel should be independently renderable, and tab navigation swaps the shared tab workspace so the tab strip active state and displayed panel stay in sync.
 
 ## Roles And Permissions
 
@@ -255,8 +257,8 @@ The seed data must support Lynott as described in `docs/characters/Lynott-Magulb
 
 Components are grouped by rendered responsibility:
 
-- Atoms: primitive controls and outputs such as `Button`, `IconButton`, `LabelledOutput`, `Panel`, `Tab`, and `Badge`.
-- Molecules: small compositions such as `FormField`, resource steppers, ability rows, note editors, and condition chips.
+- Atoms: primitive controls and outputs such as `Button`, `IconButton`, `Panel`, `Switch`, `Tab`, and `Badge`.
+- Molecules: small compositions such as `FormField`, `LabelledOutput`, resource steppers, ability rows, note editors, and condition chips.
 - Organisms: feature regions such as `SheetHeader`, `SheetTabs`, `SpellcastingPanel`, `ActionsPanel`, and `AdminUserTable`.
 - Pages: full route compositions such as `HomePage`, `LoginPage`, `SheetPage`, and `AdminPage`.
 - Templates: document shell, shared scripts, style injection, and layout slots.
@@ -294,7 +296,7 @@ bun run test
 bun run test:a11y
 ```
 
-The accessibility script currently checks `/login`, authenticated `/`, authenticated `/sheet/character_lynott_magulbisson`, and authenticated `/admin`.
+The accessibility script currently checks public `/`, `/login`, authenticated `/sheet/character_lynott_magulbisson`, authenticated `/campaigns/rovnost-shadows`, and authenticated `/admin`.
 
 ## Pipeline
 

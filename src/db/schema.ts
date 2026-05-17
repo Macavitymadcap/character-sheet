@@ -145,7 +145,7 @@ CREATE TABLE IF NOT EXISTS character_defences (
 CREATE TABLE IF NOT EXISTS character_proficiencies (
   id TEXT PRIMARY KEY,
   character_id TEXT NOT NULL REFERENCES characters(id) ON DELETE CASCADE,
-  category TEXT NOT NULL CHECK (category IN ('armour', 'language', 'tool', 'training', 'weapon')),
+  category TEXT NOT NULL CHECK (category IN ('armour', 'language', 'tool', 'weapon')),
   name TEXT NOT NULL,
   detail TEXT NOT NULL DEFAULT '',
   sort_order INTEGER NOT NULL DEFAULT 0

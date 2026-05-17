@@ -1,11 +1,11 @@
 export const adminStyles = /* css */ `
+.admin-page-shell {
+  max-width: 58rem;
+}
+
 .admin-shell {
   display: grid;
   gap: 1rem;
-  margin-inline: auto;
-  max-width: 64rem;
-  min-height: 100dvh;
-  padding: var(--page-gutter);
 }
 
 .admin-shell h2 {

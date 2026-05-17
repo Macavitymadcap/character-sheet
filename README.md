@@ -14,7 +14,7 @@ For the architecture and data model, see [ARCHITECTURE.md](./ARCHITECTURE.md). F
   - Player users can create, read, update, and delete their own sheet data.
   - Game Masters can manage all character sheets and campaign/session notes.
   - Admins can manage invites, password resets, and basic administrative reads.
-- A sheet page with sticky site and character headers, labelled combat/state outputs, and tabbed sheet sections.
+- A mobile-first sheet page with sticky site and character headers, compact combat/resource controls, dark mode, and tabbed sheet sections.
 - Structured D&D 2014 rules data seeded from local sources, normalised to the most recent 2014 official reprint where a rule appears in multiple books.
 - British English in product copy, docs, code naming, and CSS custom properties.
 
@@ -40,11 +40,19 @@ bun install
 bun run dev
 ```
 
-The development server should default to `http://localhost:3000`.
+The development server should default to `http://localhost:3000`. The root page is public, keeps the shared header for signed-in users, and links to sign in or continue to the user's role workspace. The login route still sends users to their default role home after successful sign in:
+
+| Role | Default route |
+| --- | --- |
+| Player | `/sheet/lynott` |
+| Game Master | `/campaigns/rovnost-shadows` |
+| Admin | `/admin` |
 
 After signing in as the seeded player, Lynott's sheet is available at
-`/sheet/character_lynott_magulbisson`. The sheet tab fragments are served from
-`/sheet/character_lynott_magulbisson/tabs/:tabId` for HTMX swaps.
+`/sheet/lynott`. The sheet tab fragments are served from
+`/sheet/lynott/tabs/:tabId` for HTMX swaps. Those swaps target only the active panel, so the sticky tab strip keeps its scroll position while the active tab state stays aligned with the displayed content.
+
+The sheet header includes HTMX-backed hit point controls for current and temporary HP, plus an inspiration switch. These mutate `character_resources`, refresh the compact header fragment, and keep the character summary hit point fields in sync.
 
 Current environment variables:
 
@@ -82,7 +90,7 @@ bun run verify
 
 `bun run verify` runs typecheck, component and route tests, and accessibility checks in sequence.
 
-`bun run test:a11y` starts an in-memory app on an available local port and runs Pa11y against `/login`, authenticated `/`, authenticated `/sheet/character_lynott_magulbisson`, and authenticated `/admin`.
+`bun run test:a11y` starts an in-memory app on an available local port and runs Pa11y against public `/`, `/login`, authenticated `/sheet/lynott`, authenticated `/campaigns/rovnost-shadows`, and authenticated `/admin`.
 
 Repository maintenance scripts:
 

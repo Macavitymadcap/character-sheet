@@ -4,48 +4,40 @@ import { HomePage } from "./Home";
 const render = (node: unknown): string => String(node);
 
 describe("HomePage", () => {
-  test("renders the app shell, navigation, and Lynott summary", () => {
+  test("renders the public base page and shared header", () => {
     const html = render(<HomePage appName="Character Sheet" />);
 
     expect(html).toContain('<title>Character Sheet</title>');
     expect(html).toContain('<header id="site-header" class="site-header">');
     expect(html).toContain('<span class="site-title">Character Sheet</span>');
-    expect(html).toContain('<nav class="site-nav" aria-label="Primary">');
-    expect(html).toContain('<a href="/sheet/character_lynott_magulbisson" aria-current="page">Sheet</a>');
-    expect(html).toContain('<a href="/rules">Rules</a>');
-    expect(html).toContain('<a href="/admin">Admin</a>');
-    expect(html).toContain('<h2 id="character-heading" class="character-name">Lynott Magulbisson</h2>');
-    expect(html).toContain("Level 4 hobgoblin Artillerist Artificer");
-    expect(html).toContain('<div class="badge-row" aria-label="Character state">');
-    expect(html).toContain('<span class="badge" data-tone="accent">Ready</span>');
-    expect(html).toContain('<span class="badge" data-tone="warning">Local SQLite</span>');
+    expect(html).toContain('<a class="popover-menu-item" href="/login" role="menuitem">Sign in</a>');
+    expect(html).toContain('<h1 id="home-heading">Character Sheet</h1>');
+    expect(html).toContain("Rovnost Shadows");
+    expect(html).toContain('<a class="action-link" href="/login">Sign in</a>');
   });
 
-  test("renders stable labelled outputs for the current scaffold", () => {
+  test("drops the scaffold sheet summary and status chips", () => {
     const html = render(<HomePage appName="Character Sheet" />);
 
-    expect(html).toContain('<div class="stat-grid" aria-label="Combat summary">');
-    expect(html).toContain('<span class="labelled-output-label">Armour class</span>');
-    expect(html).toContain('<strong class="labelled-output-value">17</strong>');
-    expect(html).toContain('<span class="labelled-output-label">Hit points</span>');
-    expect(html).toContain('<strong class="labelled-output-value">31</strong>');
-    expect(html).toContain('<span class="labelled-output-label">Initiative</span>');
-    expect(html).toContain('<strong class="labelled-output-value">+3</strong>');
-    expect(html).toContain('<span class="labelled-output-label">Speed</span>');
-    expect(html).toContain('<strong class="labelled-output-value">30 ft</strong>');
+    expect(html).not.toContain("Runtime scaffold online");
+    expect(html).not.toContain("Local SQLite");
+    expect(html).not.toContain('<span class="badge"');
+    expect(html).not.toContain('<div class="stat-grid"');
   });
 
-  test("keeps the sheet sections and health action discoverable", () => {
-    const html = render(<HomePage appName="Character Sheet" />);
+  test("links signed-in users to their role destination", () => {
+    const player = render(
+      <HomePage appName="Character Sheet" user={{ displayName: "Lynott Player", role: "player" }} />,
+    );
+    const gm = render(
+      <HomePage appName="Character Sheet" user={{ displayName: "Game Master", role: "game_master" }} />,
+    );
+    const admin = render(
+      <HomePage appName="Character Sheet" user={{ displayName: "Admin", role: "admin" }} />,
+    );
 
-    expect(html).toContain('<section aria-labelledby="sheet-sections-heading">');
-    expect(html).toContain('<h3 id="sheet-sections-heading" class="section-heading">Sheet sections</h3>');
-    expect(html).toContain("<dt>Core</dt>");
-    expect(html).toContain("<dd>Abilities, saves, senses, speed, and defence</dd>");
-    expect(html).toContain("<dt>Actions</dt>");
-    expect(html).toContain("<dd>Weapons, spells, features, and rest actions</dd>");
-    expect(html).toContain("<dt>Notes</dt>");
-    expect(html).toContain("<dd>Player notes and Game Master records</dd>");
-    expect(html).toContain('<a class="action-link" href="/sheet/character_lynott_magulbisson">Open sheet</a>');
+    expect(player).toContain('<a class="action-link" href="/sheet/lynott">Continue</a>');
+    expect(gm).toContain('<a class="action-link" href="/campaigns/rovnost-shadows">Continue</a>');
+    expect(admin).toContain('<a class="action-link" href="/admin">Continue</a>');
   });
 });

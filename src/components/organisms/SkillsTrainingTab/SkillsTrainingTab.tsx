@@ -1,5 +1,6 @@
 import type { CharacterProficiency, CharacterSheetReadModel } from "../../../db";
 import { formatModifier } from "../../../characters/calculations";
+import { Icon } from "../../atoms/Icon";
 
 interface SkillsTrainingTabProps {
   sheet: CharacterSheetReadModel;
@@ -13,7 +14,6 @@ const proficiencyGroups: Array<{
   { category: "armour", heading: "Armour" },
   { category: "weapon", heading: "Weapons" },
   { category: "language", heading: "Languages" },
-  { category: "training", heading: "Training" },
 ];
 
 export const SkillsTrainingTab = ({ sheet }: SkillsTrainingTabProps) => {
@@ -22,13 +22,13 @@ export const SkillsTrainingTab = ({ sheet }: SkillsTrainingTabProps) => {
       <section class="sheet-data-section" aria-labelledby="skills-heading">
         <h3 id="skills-heading">Skills</h3>
         <div class="table-scroll">
-          <table class="sheet-table">
+          <table class="sheet-table skills-table">
             <thead>
               <tr>
                 <th scope="col">Skill</th>
                 <th scope="col">Ability</th>
-                <th scope="col">Modifier</th>
-                <th scope="col">Training</th>
+                <th scope="col">Mod</th>
+                <th scope="col">Prof</th>
               </tr>
             </thead>
             <tbody>
@@ -37,7 +37,7 @@ export const SkillsTrainingTab = ({ sheet }: SkillsTrainingTabProps) => {
                   <th scope="row">{formatSkill(skill.skill)}</th>
                   <td>{formatAbility(skill.ability)}</td>
                   <td>{formatModifier(skill.modifier)}</td>
-                  <td>{formatProficiencyLevel(skill.proficiencyLevel)}</td>
+                  <td class="proficiency-icon-cell">{renderProficiencyIcon(skill.proficiencyLevel)}</td>
                 </tr>
               ))}
             </tbody>
@@ -46,7 +46,7 @@ export const SkillsTrainingTab = ({ sheet }: SkillsTrainingTabProps) => {
       </section>
 
       <section class="sheet-data-section" aria-labelledby="proficiencies-heading">
-        <h3 id="proficiencies-heading">Proficiencies and training</h3>
+        <h3 id="proficiencies-heading">Proficiencies</h3>
         <div class="proficiency-grid">
           {proficiencyGroups.map((group) => (
             <section class="proficiency-group" aria-labelledby={`proficiency-${group.category}`}>
@@ -80,9 +80,9 @@ function formatSkill(skill: string) {
   return formatAbility(skill);
 }
 
-function formatProficiencyLevel(level: number) {
-  if (level === 2) return "Expertise";
-  if (level === 1) return "Proficient";
+function renderProficiencyIcon(level: number) {
+  if (level === 2) return <Icon name="workspace_premium" label="Expertise" tone="warning" />;
+  if (level === 1) return <Icon name="check_circle" label="Proficient" tone="success" />;
 
-  return "Untrained";
+  return <Icon name="radio_button_unchecked" label="Untrained" tone="muted" />;
 }

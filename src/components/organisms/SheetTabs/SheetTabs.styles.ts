@@ -1,29 +1,86 @@
 export const sheetTabsStyles = /* css */ `
+.sheet-tab-workspace {
+  display: grid;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.sheet-sticky-stack {
+  background: var(--background-colour);
+  display: grid;
+  gap: 0.5rem;
+  margin-inline: calc(var(--page-gutter) * -1);
+  padding-block-end: 0.5rem;
+  padding-block-start: 0.5rem;
+  padding-inline: var(--page-gutter);
+  position: sticky;
+  top: var(--sheet-sticky-top);
+  transition: background-color var(--theme-transition);
+  z-index: 4;
+}
+
 .sheet-tabs {
+  align-items: center;
   background: var(--surface-colour);
   border: 1px solid var(--border-colour);
   border-radius: 0.5rem;
-  box-shadow: 0 1rem 2.5rem rgb(15 23 42 / 0.06);
-  display: flex;
-  gap: 0.5rem;
+  box-shadow: 0 1rem 2.5rem var(--shadow-colour);
+  display: grid;
+  gap: 0.25rem;
+  grid-auto-columns: max-content;
+  grid-auto-flow: column;
+  max-width: 100%;
+  min-width: 0;
   overflow-x: auto;
-  padding: 0.65rem;
+  overflow-y: hidden;
+  padding: 0.25rem;
+  transition:
+    background-color var(--theme-transition),
+    border-color var(--theme-transition),
+    box-shadow var(--theme-transition);
 }
 
 .sheet-tab {
+  align-items: center;
   border: 1px solid transparent;
   border-radius: 0.375rem;
   color: var(--muted-text-colour);
-  flex: 0 0 auto;
+  display: inline-flex;
   font-weight: 800;
-  min-height: 2.5rem;
-  padding: 0.6rem 0.75rem;
+  justify-content: center;
+  min-height: 2.2rem;
+  min-width: 0;
+  padding: 0.35rem 0.5rem;
   text-decoration: none;
+  transition:
+    background-color var(--theme-transition),
+    border-color var(--theme-transition),
+    color var(--theme-text-transition);
+  white-space: nowrap;
+}
+
+.sheet-tab:hover {
+  background: var(--stat-background-colour);
+  border-color: var(--border-colour);
+  color: var(--heading-colour);
 }
 
 .sheet-tab[data-state="active"] {
   background: var(--nav-active-background-colour);
   border-color: var(--nav-active-border-colour);
   color: var(--nav-active-text-colour);
+}
+
+@media (min-width: 980px) {
+  .sheet-tabs {
+    grid-auto-flow: initial;
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    overflow-x: visible;
+  }
+
+  .sheet-tab {
+    white-space: normal;
+    width: 100%;
+  }
 }
 `;

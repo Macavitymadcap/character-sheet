@@ -3,11 +3,15 @@ export const sheetTabPanelStyles = /* css */ `
   background: var(--surface-colour);
   border: 1px solid var(--border-colour);
   border-radius: 0.5rem;
-  box-shadow: 0 1rem 2.5rem rgb(15 23 42 / 0.06);
+  box-shadow: 0 1rem 2.5rem var(--shadow-colour);
   display: grid;
-  gap: 1rem;
+  gap: 0.75rem;
   min-height: 18rem;
-  padding: 1rem;
+  padding: 0.75rem;
+  transition:
+    background-color var(--theme-transition),
+    border-color var(--theme-transition),
+    box-shadow var(--theme-transition);
 }
 
 .tab-panel-heading {
@@ -30,7 +34,7 @@ export const sheetTabPanelStyles = /* css */ `
 .tab-placeholder-grid {
   align-content: start;
   display: grid;
-  gap: 0.75rem;
+  gap: 0.5rem;
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 

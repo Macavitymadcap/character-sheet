@@ -1,5 +1,5 @@
 import type { CharacterResource, CharacterSheetReadModel } from "../../../db";
-import { LabelledOutput } from "../../atoms/LabelledOutput";
+import { Switch } from "../../atoms/Switch";
 
 interface SheetHeaderProps {
   resources: CharacterResource[];
@@ -7,6 +7,19 @@ interface SheetHeaderProps {
 }
 
 export const SheetHeader = ({ resources, sheet }: SheetHeaderProps) => {
+  const hitPoints = findResource(resources, "hit_points");
+  const temporaryHitPoints = findResource(resources, "temporary_hit_points");
+  const inspiration = findResource(resources, "inspiration");
+  const hitPointTarget = hitPoints
+    ? `/sheet/${sheet.slug}/resources/${hitPoints.id}`
+    : undefined;
+  const temporaryHitPointTarget = temporaryHitPoints
+    ? `/sheet/${sheet.slug}/resources/${temporaryHitPoints.id}`
+    : undefined;
+  const inspirationTarget = inspiration
+    ? `/sheet/${sheet.slug}/resources/${inspiration.id}`
+    : undefined;
+
   return (
     <section id="sheet-header" class="sheet-header" aria-labelledby="sheet-heading">
       <div class="sheet-title-block">
@@ -14,25 +27,109 @@ export const SheetHeader = ({ resources, sheet }: SheetHeaderProps) => {
           {sheet.name}
         </h1>
         <p class="sheet-subtitle">
-          {sheet.species} {formatClassSummary(sheet)}
+          {sheet.species} · Level {sheet.level} {formatClassSummary(sheet)}
         </p>
       </div>
-      <div class="sheet-header-grid" aria-label="Sheet summary">
-        <LabelledOutput label="Name" value={sheet.name} />
-        <LabelledOutput label="Species" value={sheet.species} />
-        <LabelledOutput label="Class" value={formatClassSummary(sheet)} />
-        <LabelledOutput label="Level" value={String(sheet.level)} />
-        <LabelledOutput label="Armour class" value={String(sheet.armourClass)} />
-        <LabelledOutput label="Hit points" value={formatHitPoints(sheet)} />
-        <LabelledOutput label="Initiative" value={formatModifier(sheet.initiative)} />
-        <LabelledOutput label="Conditions" value={formatConditions(resources)} />
-        <LabelledOutput label="Inspiration" value={formatInspiration(resources)} />
-        <LabelledOutput label="Rest" value="Short / long" />
-        <LabelledOutput label="Settings" value="Local" />
-      </div>
+      <dl class="sheet-header-grid" aria-label="Sheet summary">
+        <div class="sheet-metric">
+          <dt>AC</dt>
+          <dd>{sheet.armourClass}</dd>
+        </div>
+        <div class="sheet-metric">
+          <dt>HP</dt>
+          <dd>
+            <details class="hp-control">
+              <summary class="metric-value-button" aria-label="Manage hit points">
+                {formatHitPoints(sheet)}
+              </summary>
+              <div class="metric-popover" role="group" aria-label="Hit point controls">
+                <p class="metric-popover-heading">Hit points</p>
+                {hitPointTarget ? (
+                  <div class="metric-stepper" role="group" aria-label="Current hit points">
+                    <form hx-patch={hitPointTarget} hx-target="#sheet-header" hx-swap="outerHTML">
+                      <input type="hidden" name="delta" value="-1" />
+                      <button type="submit" aria-label="Subtract 1 hit point">
+                        <span aria-hidden="true">−</span>
+                      </button>
+                    </form>
+                    <span>
+                      {sheet.hitPoints.current} / {sheet.hitPoints.max}
+                    </span>
+                    <form hx-patch={hitPointTarget} hx-target="#sheet-header" hx-swap="outerHTML">
+                      <input type="hidden" name="delta" value="1" />
+                      <button type="submit" aria-label="Add 1 hit point">
+                        <span aria-hidden="true">+</span>
+                      </button>
+                    </form>
+                  </div>
+                ) : null}
+                {temporaryHitPointTarget ? (
+                  <form
+                    class="metric-popover-form"
+                    hx-patch={temporaryHitPointTarget}
+                    hx-target="#sheet-header"
+                    hx-swap="outerHTML"
+                  >
+                    <label for="temporary-hit-points-input">Temp HP</label>
+                    <input
+                      id="temporary-hit-points-input"
+                      inputmode="numeric"
+                      min="0"
+                      name="current"
+                      type="number"
+                      value={sheet.hitPoints.temporary}
+                  />
+                  <button type="submit" aria-label="Set temporary hit points">
+                    <span aria-hidden="true">✓</span>
+                  </button>
+                </form>
+                ) : null}
+              </div>
+            </details>
+          </dd>
+        </div>
+        <div class="sheet-metric">
+          <dt>Init</dt>
+          <dd>{formatModifier(sheet.initiative)}</dd>
+        </div>
+        <div class="sheet-metric">
+          <dt>Speed</dt>
+          <dd>{sheet.speedFeet} ft</dd>
+        </div>
+        <div class="sheet-metric sheet-metric-wide">
+          <dt>Conditions</dt>
+          <dd>{formatConditions(resources)}</dd>
+        </div>
+        <div class="sheet-metric">
+          <dt>Insp</dt>
+          <dd>
+            {inspirationTarget ? (
+              <Switch
+                id="inspiration-toggle"
+                label="Inspiration"
+                checked={isInspired(resources)}
+                offIcon="radio_button_unchecked"
+                onIcon="auto_awesome"
+                variant="inspiration"
+                hxPatch={inspirationTarget}
+                hxTarget="#sheet-header"
+                hxTrigger="change delay:250ms"
+                hxSwap="outerHTML"
+                hxVals="js:{current: event.target.checked ? 1 : 0}"
+              />
+            ) : (
+              "No"
+            )}
+          </dd>
+        </div>
+      </dl>
     </section>
   );
 };
+
+function findResource(resources: CharacterResource[], key: string) {
+  return resources.find((resource) => resource.key === key);
+}
 
 function formatClassSummary(sheet: CharacterSheetReadModel) {
   const classes = sheet.classes.map((characterClass) =>
@@ -65,9 +162,8 @@ function formatConditions(resources: CharacterResource[]) {
     : "None";
 }
 
-function formatInspiration(resources: CharacterResource[]) {
+function isInspired(resources: CharacterResource[]) {
   const inspiration = resources.find((resource) => resource.key === "inspiration");
-  if (!inspiration) return "No";
 
-  return inspiration.current > 0 ? "Yes" : "No";
+  return Boolean(inspiration && inspiration.current > 0);
 }

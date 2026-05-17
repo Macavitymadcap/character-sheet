@@ -41,7 +41,7 @@ describe("SQLite repositories", () => {
 
   test("reads Lynott's seeded sheet summary", () => {
     runtime = createSqliteDatabase({ path: ":memory:" });
-    const sheet = runtime.repositories.characterRepository.getSheetBySlug("lynott-magulbisson");
+    const sheet = runtime.repositories.characterRepository.getSheetBySlug("lynott");
     const sheetById = runtime.repositories.characterRepository.getSheetById(
       "character_lynott_magulbisson",
     );
@@ -55,11 +55,11 @@ describe("SQLite repositories", () => {
       level: 4,
       name: "Lynott Magulbisson",
       proficiencyBonus: 2,
-      slug: "lynott-magulbisson",
+      slug: "lynott",
       species: "Hobgoblin",
       speedFeet: 30,
     });
-    expect(sheetById?.slug).toBe("lynott-magulbisson");
+    expect(sheetById?.slug).toBe("lynott");
     expect(sheet?.classes).toEqual([
       {
         className: "Artificer",
@@ -158,29 +158,19 @@ describe("SQLite repositories", () => {
       { category: "armour", detail: "Artificer training.", name: "Medium armour" },
       { category: "armour", detail: "Artificer training.", name: "Shields" },
       { category: "weapon", detail: "Artificer training.", name: "Simple weapons" },
-      { category: "weapon", detail: "1st Astrilian Artificers training.", name: "Firearms" },
-      { category: "tool", detail: "Expertise from Artificer.", name: "Thieves' tools" },
-      { category: "tool", detail: "Expertise from Artificer.", name: "Tinker's tools" },
-      { category: "tool", detail: "Expertise from Artificer.", name: "Smith's tools" },
-      { category: "tool", detail: "Expertise from Artificer.", name: "Woodcarver's tools" },
-      { category: "tool", detail: "Gaming set.", name: "Three Dragon Ante" },
-      { category: "tool", detail: "Background training.", name: "Vehicles (land)" },
+      { category: "weapon", detail: "Artificer training and campaign exposure.", name: "Firearms" },
+      { category: "tool", detail: "Artificer training.", name: "Thieves' tools" },
+      { category: "tool", detail: "Artificer training.", name: "Tinker's tools" },
+      { category: "tool", detail: "Artificer artisan tool choice.", name: "Smith's tools" },
+      { category: "tool", detail: "Artillerist specialist training.", name: "Woodcarver's tools" },
+      { category: "tool", detail: "Special Operations background.", name: "Disguise kit" },
+      { category: "tool", detail: "Special Operations background.", name: "Forgery kit" },
       { category: "language", detail: "Known language.", name: "Common" },
       { category: "language", detail: "Known language.", name: "Goblin" },
       {
         category: "language",
         detail: "To be determined by campaign setting.",
         name: "Additional background language",
-      },
-      {
-        category: "training",
-        detail: "Infiltration, intelligence gathering, sabotage, and threat assessment.",
-        name: "Covert operations",
-      },
-      {
-        category: "training",
-        detail: "Experimental firearm maintenance and field use.",
-        name: "Magitech weapons programme",
       },
     ]);
   });
@@ -205,8 +195,16 @@ describe("SQLite repositories", () => {
         id: "resource_lynott_temporary_hit_points",
         key: "temporary_hit_points",
         label: "Temporary hit points",
-        max: 0,
+        max: null,
         type: "temporary_hit_points",
+      },
+      {
+        current: 0,
+        id: "resource_lynott_inspiration",
+        key: "inspiration",
+        label: "Inspiration",
+        max: 1,
+        type: "inspiration",
       },
       {
         current: 4,
@@ -225,6 +223,33 @@ describe("SQLite repositories", () => {
         type: "spell_slot",
       },
     ]);
+  });
+
+  test("updates resources and mirrors hit point fields on the sheet summary", () => {
+    runtime = createSqliteDatabase({ path: ":memory:" });
+    const characters = runtime.repositories.characterRepository;
+
+    const hitPoints = characters.updateResourceCurrent(
+      "character_lynott_magulbisson",
+      "resource_lynott_hit_points",
+      40,
+    );
+    const temporaryHitPoints = characters.updateResourceCurrent(
+      "character_lynott_magulbisson",
+      "resource_lynott_temporary_hit_points",
+      6,
+    );
+    const inspiration = characters.updateResourceCurrent(
+      "character_lynott_magulbisson",
+      "resource_lynott_inspiration",
+      2,
+    );
+    const sheet = characters.getSheetById("character_lynott_magulbisson");
+
+    expect(hitPoints?.current).toBe(31);
+    expect(temporaryHitPoints?.current).toBe(6);
+    expect(inspiration?.current).toBe(1);
+    expect(sheet?.hitPoints).toEqual({ current: 31, max: 31, temporary: 6 });
   });
 
   test("filters note visibility by viewer role", () => {
