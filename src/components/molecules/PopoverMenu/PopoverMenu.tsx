@@ -1,9 +1,11 @@
 import { Icon } from "../../atoms/Icon";
 
 interface PopoverMenuItem {
+  action?: string;
   current?: boolean;
   href: string;
   label: string;
+  method?: "get" | "post";
 }
 
 interface PopoverMenuProps {
@@ -30,16 +32,29 @@ export const PopoverMenu = ({ id, items, label }: PopoverMenuProps) => {
         <Icon name="menu" />
       </button>
       <div id={panelId} class="popover-menu-panel" popover="auto" role="menu">
-        {items.map((item) => (
-          <a
-            class="popover-menu-item"
-            href={item.href}
-            role="menuitem"
-            aria-current={item.current ? "page" : undefined}
-          >
-            {item.label}
-          </a>
-        ))}
+        {items.map((item) =>
+          item.method === "post" ? (
+            <form class="popover-menu-form" action={item.action ?? item.href} method="post" role="none">
+              <button
+                class="popover-menu-item"
+                type="submit"
+                role="menuitem"
+                aria-current={item.current ? "page" : undefined}
+              >
+                {item.label}
+              </button>
+            </form>
+          ) : (
+            <a
+              class="popover-menu-item"
+              href={item.href}
+              role="menuitem"
+              aria-current={item.current ? "page" : undefined}
+            >
+              {item.label}
+            </a>
+          ),
+        )}
       </div>
     </div>
   );

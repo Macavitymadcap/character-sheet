@@ -25,7 +25,12 @@ describe("SiteHeader", () => {
     expect(html).toContain('data-theme-toggle=""');
     expect(html).toContain("Lynott Player");
     expect(html).toContain("Player");
-    expect(html).toContain('<a class="popover-menu-item" href="/logout" role="menuitem">Sign out</a>');
+    expect(html).toContain(
+      '<form class="popover-menu-form" action="/logout" method="post" role="none">',
+    );
+    expect(html).toContain(
+      '<button class="popover-menu-item" type="submit" role="menuitem">Sign out</button>',
+    );
   });
 
   test("renders a sign-in link for visitors", () => {

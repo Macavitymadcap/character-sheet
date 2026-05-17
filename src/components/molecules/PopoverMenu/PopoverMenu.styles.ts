@@ -52,17 +52,26 @@ export const popoverMenuStyles = /* css */ `
   gap: 0.2rem;
 }
 
+.popover-menu-form {
+  margin: 0;
+}
+
 .popover-menu-item {
+  background: transparent;
   border: 1px solid transparent;
   border-radius: 0.375rem;
   color: var(--heading-colour);
+  cursor: pointer;
+  display: block;
   font-weight: 800;
   padding: 0.5rem 0.6rem;
+  text-align: left;
   text-decoration: none;
   transition:
     background-color var(--theme-transition),
     border-color var(--theme-transition),
     color var(--theme-text-transition);
+  width: 100%;
 }
 
 .popover-menu-item:hover,

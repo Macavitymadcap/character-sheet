@@ -12,6 +12,7 @@ describe("PopoverMenu", () => {
         items={[
           { href: "/", label: "Home" },
           { current: true, href: "/sheet/lynott", label: "Sheet" },
+          { action: "/logout", href: "/logout", label: "Sign out", method: "post" },
         ]}
       />,
     );
@@ -23,6 +24,12 @@ describe("PopoverMenu", () => {
     expect(html).toContain('<a class="popover-menu-item" href="/" role="menuitem">Home</a>');
     expect(html).toContain(
       '<a class="popover-menu-item" href="/sheet/lynott" role="menuitem" aria-current="page">Sheet</a>',
+    );
+    expect(html).toContain(
+      '<form class="popover-menu-form" action="/logout" method="post" role="none">',
+    );
+    expect(html).toContain(
+      '<button class="popover-menu-item" type="submit" role="menuitem">Sign out</button>',
     );
   });
 });

@@ -35,7 +35,13 @@ export const SiteHeader = ({ appName, currentSection, user }: SiteHeaderProps) =
 };
 
 function getMenuLinks(user: SiteHeaderProps["user"], currentSection: SiteSection) {
-  const links: Array<{ current?: boolean; href: string; label: string }> = [
+  const links: Array<{
+    action?: string;
+    current?: boolean;
+    href: string;
+    label: string;
+    method?: "get" | "post";
+  }> = [
     { current: currentSection === "home", href: "/", label: "Home" },
   ];
 
@@ -61,7 +67,13 @@ function getMenuLinks(user: SiteHeaderProps["user"], currentSection: SiteSection
     links.push({ current: currentSection === "sheet", href: "/sheet/lynott", label: "Sheet" });
   }
 
-  links.push({ current: currentSection === "logout", href: "/logout", label: "Sign out" });
+  links.push({
+    action: "/logout",
+    current: currentSection === "logout",
+    href: "/logout",
+    label: "Sign out",
+    method: "post",
+  });
 
   return links;
 }
