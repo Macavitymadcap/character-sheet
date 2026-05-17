@@ -117,7 +117,8 @@ The MVP page set:
 - `POST /logout` logout route that clears the session and redirects to `/`.
 - `/campaigns/:campaignSlug` Game Master campaign page.
 - `/sheet/:characterId` character sheet page.
-- `/sheet/:characterId/tabs/:tabId` sheet tab workspace fragment route for HTMX swaps.
+- `/sheet/:characterId/tabs/:tabId` sheet tab panel fragment route for HTMX swaps.
+- `PATCH /sheet/:characterId/notes/:noteId` note save route that returns the notes tab panel.
 - `/admin` admin page for users, invites, password resets, and basic reads.
 
 The site header is sticky and contains:
@@ -149,7 +150,9 @@ Sheet content is arranged as scrollable tabs:
 - background
 - notes
 
-Each tab panel should be independently renderable, and tab navigation swaps the shared tab workspace so the tab strip active state and displayed panel stay in sync. Resource controls inside tab panels use the same route as the header controls, but request the active tab fragment back so tab-local resources can update without moving the sticky sheet chrome. Rest actions that can affect both header and tab resources return the full sheet tab workspace fragment.
+Each tab panel should be independently renderable, and tab navigation swaps only the active panel so the tab strip stays mounted and keeps its scroll position. Resource controls inside tab panels use the same route as the header controls, but request the active tab fragment back so tab-local resources can update without moving the sticky sheet chrome. Rest actions that can affect both header and tab resources return the full sheet tab workspace fragment.
+
+The current tab navigation swaps only `#sheet-tab-panel`; the sticky `SheetHeader` and `SheetTabs` remain in place and client-side sync updates `aria-selected` after the panel settles. Rest actions still return the whole `#sheet-tab-workspace` because they can affect both the sheet header and tab-local resources.
 
 ## Roles And Permissions
 
@@ -290,16 +293,15 @@ Development should be tests first where practical:
 - Component tests render JSX to strings and assert semantic HTML, labels, headings, ARIA, HTMX attributes, and empty states.
 - Accessibility tests run Pa11y against key pages once a runnable app exists.
 - Screenshot tests capture the sheet in light and dark states for user-facing UI changes.
+- MVP smoke tests exercise seeded login, sheet navigation, resource mutation, note saving, role pages, and logout.
 
 The minimum verification before a source-code ticket is complete:
 
 ```bash
-bun run typecheck
-bun run test
-bun run test:a11y
+bun run verify
 ```
 
-The accessibility script currently checks public `/`, `/login`, authenticated `/sheet/character_lynott_magulbisson`, authenticated `/campaigns/rovnost-shadows`, and authenticated `/admin`.
+The accessibility script currently checks public `/`, `/login`, authenticated `/sheet/lynott`, authenticated `/logout`, authenticated `/campaigns/rovnost-shadows`, and authenticated `/admin`. The MVP smoke script renders every sheet tab fragment directly. The screenshot script captures Lynott's sheet in light and dark mode to `docs/pr-screenshots/` by default.
 
 ## Pipeline
 

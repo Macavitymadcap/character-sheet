@@ -91,12 +91,20 @@ docs(sheet): add mvp data model
 For source-code tickets, run:
 
 ```bash
+bun run verify
+```
+
+For narrower local debugging, the verification command is composed of:
+
+```bash
 bun run typecheck
 bun run test
 bun run test:a11y
+bun run smoke:mvp
+bun run screenshots:sheet
 ```
 
-For user-facing UI work, also capture screenshots once the screenshot script exists.
+For user-facing UI work, review the light and dark screenshots generated in `docs/pr-screenshots/`.
 
 For documentation-only work, check:
 

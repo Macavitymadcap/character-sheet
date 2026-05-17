@@ -40,7 +40,8 @@ describe("CoreTab", () => {
     const html = render(<CoreTab sheet={sheet} />);
 
     expect(html).toContain('<h3 id="abilities-heading">Abilities and saves</h3>');
-    expect(html).toContain("<th scope=\"row\">Strength</th>");
+    expect(html).toContain('<span class="ability-full">Strength</span>');
+    expect(html).toContain('<abbr class="ability-short" title="Constitution">CON</abbr>');
     expect(html).toContain("<td>-1</td>");
     expect(html).toContain('aria-label="Roll Strength"');
     expect(html).toContain('hx-post="/sheet/lynott/rolls"');

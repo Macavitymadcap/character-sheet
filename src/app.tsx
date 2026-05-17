@@ -401,6 +401,50 @@ export const createApp = (dependencies: AppDependencies) => {
     );
   });
 
+  app.patch("/sheet/:characterRef/notes/:noteId", async (context) => {
+    const session = readSession(context.req.header("cookie"));
+    if (!session) return context.redirect("/login", 303);
+
+    const sheet = getSheetByRef(context.req.param("characterRef"));
+    if (!sheet) return context.text("Not found", 404);
+
+    const guard = requireSheetAccess({
+      characterId: sheet.id,
+      characterRepository: dependencies.characterRepository,
+      permission: "write",
+      session,
+    });
+    const guarded = guardResponse(context, guard);
+    if (guarded) return guarded;
+
+    const body = await context.req.parseBody();
+    const noteBody = parseFormString(body.body);
+    if (noteBody === null) return context.text("Invalid note", 400);
+
+    const note = dependencies.notesRepository.updateNoteBody(
+      sheet.id,
+      context.req.param("noteId"),
+      session.user.role,
+      noteBody,
+    );
+    if (!note) return context.text("Not found", 404);
+
+    const updatedSheet = dependencies.characterRepository.getSheetById(sheet.id);
+    if (!updatedSheet) return context.text("Not found", 404);
+
+    return context.html(
+      <SheetTabPanel
+        backgroundEntries={dependencies.characterRepository.listBackgroundEntries(sheet.id)}
+        equipment={dependencies.characterRepository.listEquipment(sheet.id)}
+        notes={dependencies.notesRepository.listNotesForCharacter(sheet.id, session.user.role)}
+        resources={dependencies.characterRepository.listResources(sheet.id)}
+        ruleLinks={dependencies.rulesRepository.listRuleLinksForCharacter(sheet.id)}
+        sheet={updatedSheet}
+        tabId="notes"
+      />,
+    );
+  });
+
   app.post("/sheet/:characterRef/conditions", async (context) => {
     const session = readSession(context.req.header("cookie"));
     if (!session) return context.redirect("/login", 303);
@@ -557,6 +601,10 @@ function parseFormText(value: unknown) {
   const trimmed = value.trim();
 
   return trimmed.length > 0 ? trimmed : null;
+}
+
+function parseFormString(value: unknown) {
+  return typeof value === "string" ? value.trim() : null;
 }
 
 function parseSheetTabId(value: unknown) {
