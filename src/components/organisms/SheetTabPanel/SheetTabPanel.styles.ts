@@ -88,6 +88,33 @@ export const sheetTabPanelStyles = /* css */ `
   opacity: 0.45;
 }
 
+.tab-rest-controls,
+.tab-rest-controls form {
+  align-items: center;
+  display: flex;
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.tab-rest-controls {
+  flex-wrap: wrap;
+}
+
+.tab-rest-controls button {
+  background: var(--action-background-colour);
+  border: 1px solid var(--action-border-colour);
+  border-radius: 0.45rem;
+  color: var(--action-text-colour);
+  cursor: pointer;
+  font-weight: 800;
+  min-height: 2.25rem;
+  padding: 0.45rem 0.75rem;
+}
+
+.tab-rest-controls button:hover {
+  border-color: var(--focus-border-colour);
+}
+
 @media (max-width: 760px) {
   .tab-compact-grid {
     grid-template-columns: 1fr;

@@ -226,6 +226,73 @@ describe("createApp", () => {
     expect(invalidTab.status).toBe(400);
   });
 
+  test("applies long rests and refreshes the full sheet workspace", async () => {
+    const { app, sessionService } = createTestApp("Character Sheet");
+    const session = sessionService.createSession("user_lynott_player");
+    const cookie = session.cookie;
+    const formHeaders = { cookie, "Content-Type": "application/x-www-form-urlencoded" };
+
+    await app.request("/sheet/lynott/resources/resource_lynott_hit_points", {
+      body: new URLSearchParams({ current: "12" }),
+      headers: formHeaders,
+      method: "PATCH",
+    });
+    await app.request("/sheet/lynott/resources/resource_lynott_temporary_hit_points", {
+      body: new URLSearchParams({ current: "5" }),
+      headers: formHeaders,
+      method: "PATCH",
+    });
+    await app.request("/sheet/lynott/resources/resource_lynott_hit_dice", {
+      body: new URLSearchParams({ current: "1" }),
+      headers: formHeaders,
+      method: "PATCH",
+    });
+    await app.request("/sheet/lynott/resources/resource_lynott_spell_slots_1", {
+      body: new URLSearchParams({ current: "0" }),
+      headers: formHeaders,
+      method: "PATCH",
+    });
+    await app.request("/sheet/lynott/resources/resource_lynott_fey_gift", {
+      body: new URLSearchParams({ current: "0" }),
+      headers: formHeaders,
+      method: "PATCH",
+    });
+
+    const longRest = await app.request("/sheet/lynott/rests/long", {
+      body: new URLSearchParams({ tabId: "actions" }),
+      headers: formHeaders,
+      method: "POST",
+    });
+    const html = await longRest.text();
+    const spellcasting = await app.request("/sheet/lynott/tabs/spellcasting", {
+      headers: { cookie },
+    });
+    const spellcastingHtml = await spellcasting.text();
+    const invalidRest = await app.request("/sheet/lynott/rests/watch", {
+      body: new URLSearchParams({ tabId: "actions" }),
+      headers: formHeaders,
+      method: "POST",
+    });
+    const invalidTab = await app.request("/sheet/lynott/rests/long", {
+      body: new URLSearchParams({ tabId: "unknown" }),
+      headers: formHeaders,
+      method: "POST",
+    });
+
+    expect(longRest.status).toBe(200);
+    expect(html).toContain('id="sheet-tab-workspace"');
+    expect(html).toContain('id="sheet-header"');
+    expect(html).toContain('data-tab-id="actions"');
+    expect(html).toContain("31 / 31");
+    expect(html).toContain("Hit dice d8");
+    expect(html).toContain("3 / 4");
+    expect(html).toContain("Fey Gift");
+    expect(html).toContain("2 / 2");
+    expect(spellcastingHtml).toContain("3 / 3");
+    expect(invalidRest.status).toBe(400);
+    expect(invalidTab.status).toBe(400);
+  });
+
   test("renders the Game Master campaign page", async () => {
     const { app, sessionService } = createTestApp("Character Sheet");
     const session = sessionService.createSession("user_game_master");

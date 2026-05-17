@@ -136,6 +136,17 @@ const resources: ResourceSeed[] = [
   ["resource_lynott_inspiration", "inspiration", "inspiration", "Inspiration", 0, 1, 25],
   ["resource_lynott_hit_dice", "hit_dice_d8", "hit_dice", "Hit dice d8", 4, 4, 30],
   ["resource_lynott_spell_slots_1", "spell_slots_1", "spell_slot", "1st-level spell slots", 3, 3, 40],
+  ["resource_lynott_fey_gift", "fey_gift", "feature_use", "Fey Gift", 2, 2, 50],
+  [
+    "resource_lynott_fortune_from_the_many",
+    "fortune_from_the_many",
+    "feature_use",
+    "Fortune from the Many",
+    2,
+    2,
+    60,
+  ],
+  ["resource_lynott_eldritch_cannon", "eldritch_cannon", "feature_use", "Eldritch Cannon", 1, 1, 70],
 ];
 
 const equipment: EquipmentSeed[] = [
@@ -176,19 +187,67 @@ const notes: NoteSeed[] = [
 
 const sources: SourceSeed[] = [
   ["rules_source_phb", "players-handbook", "Player's Handbook", "PHB", 10],
+  ["rules_source_xgte", "xanathars-guide-to-everything", "Xanathar's Guide to Everything", "XGtE", 15],
   ["rules_source_tcoe", "tashas-cauldron-of-everything", "Tasha's Cauldron of Everything", "TCoE", 20],
+  [
+    "rules_source_mpmotm",
+    "mordenkainen-presents-monsters-of-the-multiverse",
+    "Mordenkainen Presents: Monsters of the Multiverse",
+    "MPMotM",
+    30,
+  ],
 ];
 
 const rulesEntities: StringSeed[] = [
   ["rule_enhanced_defence", "rules_source_tcoe", "enhanced-defence", "infusion", "Enhanced Defence"],
   ["rule_repeating_shot", "rules_source_tcoe", "repeating-shot", "infusion", "Repeating Shot"],
+  ["rule_magical_tinkering", "rules_source_tcoe", "magical-tinkering", "class_feature", "Magical Tinkering"],
+  ["rule_spellcasting", "rules_source_tcoe", "spellcasting", "class_feature", "Spellcasting"],
+  ["rule_infuse_item", "rules_source_tcoe", "infuse-item", "class_feature", "Infuse Item"],
+  [
+    "rule_the_right_tool_for_the_job",
+    "rules_source_tcoe",
+    "the-right-tool-for-the-job",
+    "class_feature",
+    "The Right Tool for the Job",
+  ],
+  ["rule_eldritch_cannon", "rules_source_tcoe", "eldritch-cannon", "subclass_feature", "Eldritch Cannon"],
+  ["rule_fey_gift", "rules_source_mpmotm", "fey-gift", "species_trait", "Fey Gift"],
+  [
+    "rule_fortune_from_the_many",
+    "rules_source_mpmotm",
+    "fortune-from-the-many",
+    "species_trait",
+    "Fortune from the Many",
+  ],
   ["rule_mage_hand", "rules_source_phb", "mage-hand", "spell", "Mage Hand"],
+  ["rule_mending", "rules_source_phb", "mending", "spell", "Mending"],
+  ["rule_disguise_self", "rules_source_phb", "disguise-self", "spell", "Disguise Self"],
+  ["rule_cure_wounds", "rules_source_phb", "cure-wounds", "spell", "Cure Wounds"],
+  ["rule_grease", "rules_source_phb", "grease", "spell", "Grease"],
+  ["rule_absorb_elements", "rules_source_xgte", "absorb-elements", "spell", "Absorb Elements"],
+  ["rule_shield", "rules_source_phb", "shield", "spell", "Shield"],
+  ["rule_thunderwave", "rules_source_phb", "thunderwave", "spell", "Thunderwave"],
 ];
 
 const ruleLinks: RuleLinkSeed[] = [
-  ["link_lynott_enhanced_defence", "rule_enhanced_defence", "active_infusion", 0, 1, 10],
-  ["link_lynott_repeating_shot", "rule_repeating_shot", "active_infusion", 0, 1, 20],
-  ["link_lynott_mage_hand", "rule_mage_hand", "known_cantrip", 1, 1, 30],
+  ["link_lynott_magical_tinkering", "rule_magical_tinkering", "class_feature", 0, 1, 10],
+  ["link_lynott_spellcasting", "rule_spellcasting", "class_feature", 0, 1, 20],
+  ["link_lynott_infuse_item", "rule_infuse_item", "class_feature", 0, 1, 30],
+  ["link_lynott_the_right_tool_for_the_job", "rule_the_right_tool_for_the_job", "class_feature", 0, 1, 40],
+  ["link_lynott_eldritch_cannon", "rule_eldritch_cannon", "subclass_feature", 0, 1, 50],
+  ["link_lynott_fey_gift", "rule_fey_gift", "species_trait", 0, 1, 60],
+  ["link_lynott_fortune_from_the_many", "rule_fortune_from_the_many", "species_trait", 0, 1, 70],
+  ["link_lynott_enhanced_defence", "rule_enhanced_defence", "active_infusion", 0, 1, 80],
+  ["link_lynott_repeating_shot", "rule_repeating_shot", "active_infusion", 0, 1, 90],
+  ["link_lynott_mage_hand", "rule_mage_hand", "known_cantrip", 1, 1, 100],
+  ["link_lynott_mending", "rule_mending", "known_cantrip", 1, 1, 110],
+  ["link_lynott_disguise_self", "rule_disguise_self", "prepared_spell", 1, 1, 120],
+  ["link_lynott_cure_wounds", "rule_cure_wounds", "prepared_spell", 1, 1, 130],
+  ["link_lynott_grease", "rule_grease", "prepared_spell", 1, 1, 140],
+  ["link_lynott_absorb_elements", "rule_absorb_elements", "prepared_spell", 1, 1, 150],
+  ["link_lynott_shield", "rule_shield", "artillerist_spell", 1, 1, 160],
+  ["link_lynott_thunderwave", "rule_thunderwave", "artillerist_spell", 1, 1, 170],
 ];
 
 export const seedDatabase = (database: Database) => {

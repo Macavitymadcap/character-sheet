@@ -1,5 +1,6 @@
 import { Hono, type Context } from "hono";
 import { AuthService, requireRole, requireSheetAccess, SessionService } from "./auth";
+import { isRestType, planRestResourceUpdates } from "./characters/rests";
 import { AdminPage } from "./components/pages/Admin";
 import { CampaignPage } from "./components/pages/Campaign";
 import { HomePage } from "./components/pages/Home";
@@ -8,6 +9,7 @@ import { LogoutPage } from "./components/pages/Logout";
 import { SheetPage } from "./components/pages/Sheet";
 import { SheetHeader } from "./components/organisms/SheetHeader";
 import { SheetTabPanel } from "./components/organisms/SheetTabPanel";
+import { SheetTabWorkspace } from "./components/organisms/SheetTabWorkspace";
 import { isSheetTabId } from "./components/organisms/SheetTabs";
 import type {
   AuthRepository,
@@ -337,6 +339,59 @@ export const createApp = (dependencies: AppDependencies) => {
     return context.html(
       <SheetHeader
         resources={updatedResources}
+        sheet={updatedSheet}
+      />,
+    );
+  });
+
+  app.post("/sheet/:characterRef/rests/:restType", async (context) => {
+    const session = readSession(context.req.header("cookie"));
+    if (!session) return context.redirect("/login", 303);
+
+    const sheet = getSheetByRef(context.req.param("characterRef"));
+    if (!sheet) return context.text("Not found", 404);
+
+    const guard = requireSheetAccess({
+      characterId: sheet.id,
+      characterRepository: dependencies.characterRepository,
+      permission: "write",
+      session,
+    });
+    const guarded = guardResponse(context, guard);
+    if (guarded) return guarded;
+
+    const restType = context.req.param("restType");
+    if (!isRestType(restType)) return context.text("Invalid rest", 400);
+
+    const body = await context.req.parseBody();
+    const requestedTabId = parseSheetTabId(body.tabId);
+    if (body.tabId !== undefined && !requestedTabId) {
+      return context.text("Invalid tab", 400);
+    }
+    const tabId = requestedTabId ?? "actions";
+
+    const resources = dependencies.characterRepository.listResources(sheet.id);
+    for (const update of planRestResourceUpdates({ resources, restType })) {
+      dependencies.characterRepository.updateResourceCurrent(
+        sheet.id,
+        update.resourceId,
+        update.current,
+      );
+    }
+
+    const updatedSheet = dependencies.characterRepository.getSheetById(sheet.id);
+    if (!updatedSheet) return context.text("Not found", 404);
+
+    const updatedResources = dependencies.characterRepository.listResources(sheet.id);
+
+    return context.html(
+      <SheetTabWorkspace
+        activeTab={tabId}
+        equipment={dependencies.characterRepository.listEquipment(sheet.id)}
+        header={<SheetHeader resources={updatedResources} sheet={updatedSheet} />}
+        notes={dependencies.notesRepository.listNotesForCharacter(sheet.id, session.user.role)}
+        resources={updatedResources}
+        ruleLinks={dependencies.rulesRepository.listRuleLinksForCharacter(sheet.id)}
         sheet={updatedSheet}
       />,
     );

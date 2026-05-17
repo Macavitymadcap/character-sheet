@@ -84,6 +84,7 @@ const ActionsTab = ({ data }: { data: TabContentData }) => {
 
   return (
     <div class="tab-compact-grid">
+      {renderRestControls(data.sheet.slug, "actions")}
       {renderCompactSection(
         "action-resources-heading",
         "Action resources",
@@ -245,6 +246,32 @@ function renderResourceControls(resource: CharacterResource, characterSlug: stri
         </button>
       </form>
     </span>
+  );
+}
+
+function renderRestControls(characterSlug: string, tabId: SheetTabId) {
+  return (
+    <section class="tab-compact-section tab-rest-section" aria-labelledby="rest-actions-heading">
+      <h3 id="rest-actions-heading">Rest</h3>
+      <div class="tab-rest-controls" role="group" aria-label="Rest actions">
+        <form
+          hx-post={`/sheet/${characterSlug}/rests/short`}
+          hx-target="#sheet-tab-workspace"
+          hx-swap="outerHTML"
+        >
+          <input type="hidden" name="tabId" value={tabId} />
+          <button type="submit">Short rest</button>
+        </form>
+        <form
+          hx-post={`/sheet/${characterSlug}/rests/long`}
+          hx-target="#sheet-tab-workspace"
+          hx-swap="outerHTML"
+        >
+          <input type="hidden" name="tabId" value={tabId} />
+          <button type="submit">Long rest</button>
+        </form>
+      </div>
+    </section>
   );
 }
 

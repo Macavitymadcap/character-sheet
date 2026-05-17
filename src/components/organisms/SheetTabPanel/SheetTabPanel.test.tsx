@@ -147,6 +147,9 @@ describe("SheetTabPanel", () => {
     const notesTab = renderPanel("notes");
 
     expect(actions).toContain("Action resources");
+    expect(actions).toContain("Rest");
+    expect(actions).toContain('hx-post="/sheet/lynott/rests/long"');
+    expect(actions).toContain('hx-target="#sheet-tab-workspace"');
     expect(actions).toContain("Pistol with Repeating Shot infusion");
     expect(spellcasting).toContain("Mage Hand");
     expect(spellcasting).toContain("1st-level spell slots");
