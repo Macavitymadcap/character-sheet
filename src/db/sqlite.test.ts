@@ -41,7 +41,7 @@ describe("SQLite repositories", () => {
 
   test("reads Lynott's seeded sheet summary", () => {
     runtime = createSqliteDatabase({ path: ":memory:" });
-    const sheet = runtime.repositories.characterRepository.getSheetBySlug("lynott-magulbisson");
+    const sheet = runtime.repositories.characterRepository.getSheetBySlug("lynott");
     const sheetById = runtime.repositories.characterRepository.getSheetById(
       "character_lynott_magulbisson",
     );
@@ -55,11 +55,11 @@ describe("SQLite repositories", () => {
       level: 4,
       name: "Lynott Magulbisson",
       proficiencyBonus: 2,
-      slug: "lynott-magulbisson",
+      slug: "lynott",
       species: "Hobgoblin",
       speedFeet: 30,
     });
-    expect(sheetById?.slug).toBe("lynott-magulbisson");
+    expect(sheetById?.slug).toBe("lynott");
     expect(sheet?.classes).toEqual([
       {
         className: "Artificer",

@@ -57,7 +57,7 @@ describe("createApp", () => {
     expect(html).toContain('<html lang="en-GB">');
     expect(html).toContain("<title>Character Sheet</title>");
     expect(html).toContain('<h1 id="home-heading">Character Sheet</h1>');
-    expect(html).toContain('<a class="site-auth-link" href="/login">Sign in</a>');
+    expect(html).toContain('<a class="popover-menu-item" href="/login" role="menuitem">Sign in</a>');
   });
 
   test("renders signed-in home with role continue links", async () => {
@@ -74,7 +74,7 @@ describe("createApp", () => {
     const adminHtml = await admin.text();
 
     expect(player.status).toBe(200);
-    expect(playerHtml).toContain('<a class="action-link" href="/sheet/character_lynott_magulbisson">Continue</a>');
+    expect(playerHtml).toContain('<a class="action-link" href="/sheet/lynott">Continue</a>');
     expect(gm.status).toBe(200);
     expect(gmHtml).toContain('<a class="action-link" href="/campaigns/rovnost-shadows">Continue</a>');
     expect(admin.status).toBe(200);
@@ -84,7 +84,7 @@ describe("createApp", () => {
   test("renders Lynott's authenticated sheet page with stable shell anchors", async () => {
     const { app, sessionService } = createTestApp("Character Sheet");
     const session = sessionService.createSession("user_lynott_player");
-    const response = await app.request("/sheet/character_lynott_magulbisson", {
+    const response = await app.request("/sheet/lynott", {
       headers: { cookie: session.cookie },
     });
     const html = await response.text();
@@ -103,9 +103,20 @@ describe("createApp", () => {
     expect(html).toContain("Breastplate");
   });
 
+  test("redirects internal sheet ids to the public sheet slug", async () => {
+    const { app, sessionService } = createTestApp("Character Sheet");
+    const session = sessionService.createSession("user_lynott_player");
+    const response = await app.request("/sheet/character_lynott_magulbisson", {
+      headers: { cookie: session.cookie },
+    });
+
+    expect(response.status).toBe(303);
+    expect(response.headers.get("location")).toBe("/sheet/lynott");
+  });
+
   test("redirects unauthenticated sheet page requests", async () => {
     const { app } = createTestApp("Character Sheet");
-    const response = await app.request("/sheet/character_lynott_magulbisson");
+    const response = await app.request("/sheet/lynott");
 
     expect(response.status).toBe(303);
     expect(response.headers.get("location")).toBe("/login");
@@ -114,7 +125,7 @@ describe("createApp", () => {
   test("serves sheet tab panels as HTMX fragment-only HTML", async () => {
     const { app, sessionService } = createTestApp("Character Sheet");
     const session = sessionService.createSession("user_lynott_player");
-    const response = await app.request("/sheet/character_lynott_magulbisson/tabs/spellcasting", {
+    const response = await app.request("/sheet/lynott/tabs/spellcasting", {
       headers: { cookie: session.cookie },
     });
     const html = await response.text();
@@ -135,7 +146,7 @@ describe("createApp", () => {
     const cookie = session.cookie;
 
     const damage = await app.request(
-      "/sheet/character_lynott_magulbisson/resources/resource_lynott_hit_points",
+      "/sheet/lynott/resources/resource_lynott_hit_points",
       {
         body: new URLSearchParams({ delta: "-5" }),
         headers: { cookie, "Content-Type": "application/x-www-form-urlencoded" },
@@ -144,7 +155,7 @@ describe("createApp", () => {
     );
     const damageHtml = await damage.text();
     const temp = await app.request(
-      "/sheet/character_lynott_magulbisson/resources/resource_lynott_temporary_hit_points",
+      "/sheet/lynott/resources/resource_lynott_temporary_hit_points",
       {
         body: new URLSearchParams({ current: "4" }),
         headers: { cookie, "Content-Type": "application/x-www-form-urlencoded" },
@@ -152,14 +163,14 @@ describe("createApp", () => {
       },
     );
     const inspire = await app.request(
-      "/sheet/character_lynott_magulbisson/resources/resource_lynott_inspiration",
+      "/sheet/lynott/resources/resource_lynott_inspiration",
       {
         body: new URLSearchParams({ current: "1" }),
         headers: { cookie, "Content-Type": "application/x-www-form-urlencoded" },
         method: "PATCH",
       },
     );
-    const sheet = await app.request("/sheet/character_lynott_magulbisson", {
+    const sheet = await app.request("/sheet/lynott", {
       headers: { cookie },
     });
     const sheetHtml = await sheet.text();
@@ -186,17 +197,19 @@ describe("createApp", () => {
 
     expect(response.status).toBe(200);
     expect(html).toContain("<title>Rovnost Shadows - Character Sheet</title>");
-    expect(html).toContain('<a href="/campaigns/rovnost-shadows" aria-current="page">Campaign</a>');
+    expect(html).toContain(
+      '<a class="popover-menu-item" href="/campaigns/rovnost-shadows" role="menuitem" aria-current="page">Campaign</a>',
+    );
     expect(html).toContain('<h1 id="campaign-heading" class="panel-heading">Rovnost Shadows</h1>');
   });
 
   test("serves database-backed core and skills tab fragments", async () => {
     const { app, sessionService } = createTestApp("Character Sheet");
     const session = sessionService.createSession("user_lynott_player");
-    const core = await app.request("/sheet/character_lynott_magulbisson/tabs/core", {
+    const core = await app.request("/sheet/lynott/tabs/core", {
       headers: { cookie: session.cookie },
     });
-    const skills = await app.request("/sheet/character_lynott_magulbisson/tabs/skills", {
+    const skills = await app.request("/sheet/lynott/tabs/skills", {
       headers: { cookie: session.cookie },
     });
     const coreHtml = await core.text();
@@ -220,11 +233,11 @@ describe("createApp", () => {
   test("rejects unauthenticated, unknown, and invalid sheet tab requests", async () => {
     const { app, sessionService } = createTestApp("Character Sheet");
     const session = sessionService.createSession("user_lynott_player");
-    const unauthenticated = await app.request("/sheet/character_lynott_magulbisson/tabs/core");
+    const unauthenticated = await app.request("/sheet/lynott/tabs/core");
     const unknownCharacter = await app.request("/sheet/character_unknown/tabs/core", {
       headers: { cookie: session.cookie },
     });
-    const unknownTab = await app.request("/sheet/character_lynott_magulbisson/tabs/unknown", {
+    const unknownTab = await app.request("/sheet/lynott/tabs/unknown", {
       headers: { cookie: session.cookie },
     });
 

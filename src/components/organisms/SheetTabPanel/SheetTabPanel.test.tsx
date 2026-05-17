@@ -30,7 +30,7 @@ const sheet: CharacterSheetReadModel = {
   proficiencyBonus: 2,
   senses: [{ label: "Darkvision", value: "60 ft" }],
   skills: [{ ability: "dexterity", modifier: 5, proficiencyLevel: 1, skill: "stealth" }],
-  slug: "lynott-magulbisson",
+  slug: "lynott",
   species: "Hobgoblin",
   speedFeet: 30,
 };

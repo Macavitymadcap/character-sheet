@@ -20,7 +20,7 @@ const sheet: CharacterSheetReadModel = {
   proficiencyBonus: 2,
   senses: [],
   skills: [],
-  slug: "lynott-magulbisson",
+  slug: "lynott",
   species: "Hobgoblin",
   speedFeet: 30,
 };

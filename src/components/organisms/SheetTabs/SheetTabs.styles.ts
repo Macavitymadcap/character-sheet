@@ -52,12 +52,35 @@ export const sheetTabsStyles = /* css */ `
   min-width: 0;
   padding: 0.35rem 0.5rem;
   text-decoration: none;
+  transition:
+    background-color var(--theme-transition),
+    border-color var(--theme-transition),
+    color var(--theme-text-transition);
   white-space: nowrap;
+}
+
+.sheet-tab:hover {
+  background: var(--stat-background-colour);
+  border-color: var(--border-colour);
+  color: var(--heading-colour);
 }
 
 .sheet-tab[data-state="active"] {
   background: var(--nav-active-background-colour);
   border-color: var(--nav-active-border-colour);
   color: var(--nav-active-text-colour);
+}
+
+@media (min-width: 980px) {
+  .sheet-tabs {
+    grid-auto-flow: initial;
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    overflow-x: visible;
+  }
+
+  .sheet-tab {
+    white-space: normal;
+    width: 100%;
+  }
 }
 `;

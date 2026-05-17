@@ -30,7 +30,7 @@ try {
 
   await runPa11y("home", `${baseUrl}/`);
   await runPa11y("login", `${baseUrl}/login`);
-  await runPa11y("sheet", `${baseUrl}/sheet/character_lynott_magulbisson`, playerCookie);
+  await runPa11y("sheet", `${baseUrl}/sheet/lynott`, playerCookie);
   await runPa11y("campaign", `${baseUrl}/campaigns/rovnost-shadows`, gmCookie);
   await runPa11y("admin", `${baseUrl}/admin`, adminCookie);
 } finally {

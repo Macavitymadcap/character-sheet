@@ -29,7 +29,7 @@ const sheet: CharacterSheetReadModel = {
     { ability: "dexterity", modifier: 5, proficiencyLevel: 1, skill: "stealth" },
     { ability: "intelligence", modifier: 4, proficiencyLevel: 0, skill: "arcana" },
   ],
-  slug: "lynott-magulbisson",
+  slug: "lynott",
   species: "Hobgoblin",
   speedFeet: 30,
 };

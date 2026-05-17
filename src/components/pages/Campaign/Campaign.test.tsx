@@ -32,7 +32,9 @@ describe("CampaignPage", () => {
 
     expect(html).toContain("<title>Rovnost Shadows - Character Sheet</title>");
     expect(html).toContain('<header id="site-header" class="site-header">');
-    expect(html).toContain('<a href="/campaigns/rovnost-shadows" aria-current="page">Campaign</a>');
+    expect(html).toContain(
+      '<a class="popover-menu-item" href="/campaigns/rovnost-shadows" role="menuitem" aria-current="page">Campaign</a>',
+    );
     expect(html).toContain('<h1 id="campaign-heading" class="panel-heading">Rovnost Shadows</h1>');
     expect(html).toContain("<dt>Members</dt>");
     expect(html).toContain("<dd>2</dd>");

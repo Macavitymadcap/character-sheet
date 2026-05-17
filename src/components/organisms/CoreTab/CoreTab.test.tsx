@@ -30,7 +30,7 @@ const sheet: CharacterSheetReadModel = {
     { label: "Passive perception", value: "13" },
   ],
   skills: [],
-  slug: "lynott-magulbisson",
+  slug: "lynott",
   species: "Hobgoblin",
   speedFeet: 30,
 };

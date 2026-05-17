@@ -32,7 +32,7 @@ const sheet: CharacterSheetReadModel = {
   proficiencyBonus: 2,
   senses: [],
   skills: [],
-  slug: "lynott-magulbisson",
+  slug: "lynott",
   species: "Hobgoblin",
   speedFeet: 30,
 };
@@ -77,8 +77,8 @@ describe("SheetHeader", () => {
     expect(html).toContain('<details class="hp-control">');
     expect(html).toContain('aria-label="Manage hit points"');
     expect(html).toContain("31 / 31");
-    expect(html).toContain('hx-patch="/sheet/character_lynott_magulbisson/resources/resource_lynott_hit_points"');
-    expect(html).toContain('hx-patch="/sheet/character_lynott_magulbisson/resources/resource_lynott_temporary_hit_points"');
+    expect(html).toContain('hx-patch="/sheet/lynott/resources/resource_lynott_hit_points"');
+    expect(html).toContain('hx-patch="/sheet/lynott/resources/resource_lynott_temporary_hit_points"');
     expect(html).toContain("<dt>Conditions</dt>");
     expect(html).toContain("<dd>None</dd>");
     expect(html).toContain('id="inspiration-toggle"');

@@ -6,15 +6,13 @@ const render = (node: unknown): string => String(node);
 
 describe("SheetTabs", () => {
   test("renders accessible HTMX tab links", () => {
-    const html = render(
-      <SheetTabs activeTab="core" characterId="character_lynott_magulbisson" />,
-    );
+    const html = render(<SheetTabs activeTab="core" characterSlug="lynott" />);
 
     expect(html).toContain('<nav id="sheet-tabs" class="sheet-tabs" aria-label="Sheet tabs" role="tablist">');
     expect(html).toContain('id="sheet-tab-core"');
     expect(html).toContain('aria-selected="true"');
     expect(html).toContain('data-tab-id="core"');
-    expect(html).toContain('hx-get="/sheet/character_lynott_magulbisson/tabs/core"');
+    expect(html).toContain('hx-get="/sheet/lynott/tabs/core"');
     expect(html).toContain('hx-target="#sheet-tab-panel"');
     expect(html).not.toContain('hx-push-url');
     expect(html).toContain(">Spellcasting</a>");

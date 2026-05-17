@@ -224,10 +224,25 @@ export const seedDatabase = (database: Database) => {
   }
 
   database.run(
-    "insert or ignore into characters (id, slug, owner_user_id, campaign_id, name, species, background, alignment, level, proficiency_bonus, armour_class, initiative, speed_ft, hit_point_max, hit_point_current, temporary_hit_points) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    `insert into characters (id, slug, owner_user_id, campaign_id, name, species, background, alignment, level, proficiency_bonus, armour_class, initiative, speed_ft, hit_point_max, hit_point_current, temporary_hit_points)
+     values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+     on conflict(id) do update set
+       slug = excluded.slug,
+       owner_user_id = excluded.owner_user_id,
+       campaign_id = excluded.campaign_id,
+       name = excluded.name,
+       species = excluded.species,
+       background = excluded.background,
+       alignment = excluded.alignment,
+       level = excluded.level,
+       proficiency_bonus = excluded.proficiency_bonus,
+       armour_class = excluded.armour_class,
+       initiative = excluded.initiative,
+       speed_ft = excluded.speed_ft,
+       hit_point_max = excluded.hit_point_max`,
     [
       "character_lynott_magulbisson",
-      "lynott-magulbisson",
+      "lynott",
       "user_lynott_player",
       "campaign_rovnost_shadows",
       "Lynott Magulbisson",

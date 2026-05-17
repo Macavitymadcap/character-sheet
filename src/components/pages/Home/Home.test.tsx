@@ -10,7 +10,7 @@ describe("HomePage", () => {
     expect(html).toContain('<title>Character Sheet</title>');
     expect(html).toContain('<header id="site-header" class="site-header">');
     expect(html).toContain('<span class="site-title">Character Sheet</span>');
-    expect(html).toContain('<a class="site-auth-link" href="/login">Sign in</a>');
+    expect(html).toContain('<a class="popover-menu-item" href="/login" role="menuitem">Sign in</a>');
     expect(html).toContain('<h1 id="home-heading">Character Sheet</h1>');
     expect(html).toContain("Rovnost Shadows");
     expect(html).toContain('<a class="action-link" href="/login">Sign in</a>');
@@ -36,7 +36,7 @@ describe("HomePage", () => {
       <HomePage appName="Character Sheet" user={{ displayName: "Admin", role: "admin" }} />,
     );
 
-    expect(player).toContain('<a class="action-link" href="/sheet/character_lynott_magulbisson">Continue</a>');
+    expect(player).toContain('<a class="action-link" href="/sheet/lynott">Continue</a>');
     expect(gm).toContain('<a class="action-link" href="/campaigns/rovnost-shadows">Continue</a>');
     expect(admin).toContain('<a class="action-link" href="/admin">Continue</a>');
   });

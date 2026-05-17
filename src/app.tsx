@@ -41,8 +41,12 @@ export const createApp = (dependencies: AppDependencies) => {
     if (role === "admin") return "/admin";
     if (role === "game_master") return "/campaigns/rovnost-shadows";
 
-    return "/sheet/character_lynott_magulbisson";
+    return "/sheet/lynott";
   };
+
+  const getSheetByRef = (characterRef: string) =>
+    dependencies.characterRepository.getSheetBySlug(characterRef) ??
+    dependencies.characterRepository.getSheetById(characterRef);
 
   const guardResponse = (context: Context, result: ReturnType<typeof requireRole>) => {
     if (result.ok) return null;
@@ -211,38 +215,45 @@ export const createApp = (dependencies: AppDependencies) => {
     });
   });
 
-  app.get("/sheet/:characterId", (context) => {
+  app.get("/sheet/:characterRef", (context) => {
     const session = readSession(context.req.header("cookie"));
-    const characterId = context.req.param("characterId");
+    if (!session) return context.redirect("/login", 303);
+
+    const characterRef = context.req.param("characterRef");
+    const sheet = getSheetByRef(characterRef);
+    if (!sheet) return context.text("Not found", 404);
+
     const guard = requireSheetAccess({
-      characterId,
+      characterId: sheet.id,
       characterRepository: dependencies.characterRepository,
       permission: "read",
       session,
     });
     const guarded = guardResponse(context, guard);
     if (guarded) return guarded;
-    if (!session) return context.redirect("/login", 303);
 
-    const sheet = dependencies.characterRepository.getSheetById(characterId);
-    if (!sheet) return context.text("Not found", 404);
+    if (characterRef !== sheet.slug) return context.redirect(`/sheet/${sheet.slug}`, 303);
 
     return context.html(
       <SheetPage
         activeTab="core"
         appName={dependencies.appName}
-        resources={dependencies.characterRepository.listResources(characterId)}
+        resources={dependencies.characterRepository.listResources(sheet.id)}
         sheet={sheet}
         user={session.user}
       />,
     );
   });
 
-  app.get("/sheet/:characterId/tabs/:tabId", (context) => {
+  app.get("/sheet/:characterRef/tabs/:tabId", (context) => {
     const session = readSession(context.req.header("cookie"));
-    const characterId = context.req.param("characterId");
+    if (!session) return context.redirect("/login", 303);
+
+    const sheet = getSheetByRef(context.req.param("characterRef"));
+    if (!sheet) return context.text("Not found", 404);
+
     const guard = requireSheetAccess({
-      characterId,
+      characterId: sheet.id,
       characterRepository: dependencies.characterRepository,
       permission: "read",
       session,
@@ -253,23 +264,24 @@ export const createApp = (dependencies: AppDependencies) => {
     const tabId = context.req.param("tabId");
     if (!isSheetTabId(tabId)) return context.text("Not found", 404);
 
-    const sheet = dependencies.characterRepository.getSheetById(characterId);
-    if (!sheet) return context.text("Not found", 404);
-
     return context.html(
       <SheetTabPanel
-        resources={dependencies.characterRepository.listResources(characterId)}
+        resources={dependencies.characterRepository.listResources(sheet.id)}
         sheet={sheet}
         tabId={tabId}
       />,
     );
   });
 
-  app.patch("/sheet/:characterId/resources/:resourceId", async (context) => {
+  app.patch("/sheet/:characterRef/resources/:resourceId", async (context) => {
     const session = readSession(context.req.header("cookie"));
-    const characterId = context.req.param("characterId");
+    if (!session) return context.redirect("/login", 303);
+
+    const sheet = getSheetByRef(context.req.param("characterRef"));
+    if (!sheet) return context.text("Not found", 404);
+
     const guard = requireSheetAccess({
-      characterId,
+      characterId: sheet.id,
       characterRepository: dependencies.characterRepository,
       permission: "write",
       session,
@@ -279,7 +291,7 @@ export const createApp = (dependencies: AppDependencies) => {
 
     const resourceId = context.req.param("resourceId");
     const resource = dependencies.characterRepository
-      .listResources(characterId)
+      .listResources(sheet.id)
       .find((candidate) => candidate.id === resourceId);
     if (!resource) return context.text("Not found", 404);
 
@@ -290,19 +302,19 @@ export const createApp = (dependencies: AppDependencies) => {
 
     const nextCurrent = current ?? resource.current + Number(delta);
     const updated = dependencies.characterRepository.updateResourceCurrent(
-      characterId,
+      sheet.id,
       resourceId,
       nextCurrent,
     );
     if (!updated) return context.text("Not found", 404);
 
-    const sheet = dependencies.characterRepository.getSheetById(characterId);
-    if (!sheet) return context.text("Not found", 404);
+    const updatedSheet = dependencies.characterRepository.getSheetById(sheet.id);
+    if (!updatedSheet) return context.text("Not found", 404);
 
     return context.html(
       <SheetHeader
-        resources={dependencies.characterRepository.listResources(characterId)}
-        sheet={sheet}
+        resources={dependencies.characterRepository.listResources(sheet.id)}
+        sheet={updatedSheet}
       />,
     );
   });

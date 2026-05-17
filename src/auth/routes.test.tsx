@@ -49,7 +49,7 @@ const login = async (email: string) => {
 
 describe("auth routes", () => {
   test("redirects protected pages to login", async () => {
-    const response = await app.request("/sheet/character_lynott_magulbisson");
+    const response = await app.request("/sheet/lynott");
 
     expect(response.status).toBe(303);
     expect(response.headers.get("location")).toBe("/login");
@@ -72,7 +72,7 @@ describe("auth routes", () => {
     });
 
     expect(response.status).toBe(303);
-    expect(response.headers.get("location")).toBe("/sheet/character_lynott_magulbisson");
+    expect(response.headers.get("location")).toBe("/sheet/lynott");
     expect(response.headers.get("set-cookie")).toContain("character_sheet_session=");
     expect(response.headers.get("set-cookie")).toContain("HttpOnly");
   });
@@ -97,14 +97,16 @@ describe("auth routes", () => {
     const afterLogoutHtml = await afterLogout.text();
 
     expect(home.status).toBe(200);
-    expect(homeHtml).toContain('<a class="action-link" href="/sheet/character_lynott_magulbisson">Continue</a>');
+    expect(homeHtml).toContain('<a class="action-link" href="/sheet/lynott">Continue</a>');
     expect(logoutPage.status).toBe(200);
     expect(await logoutPage.text()).toContain("End the current session for Lynott Player.");
     expect(logout.status).toBe(303);
     expect(logout.headers.get("location")).toBe("/");
     expect(logout.headers.get("set-cookie")).toContain("character_sheet_session=;");
     expect(afterLogout.status).toBe(200);
-    expect(afterLogoutHtml).toContain('<a class="site-auth-link" href="/login">Sign in</a>');
+    expect(afterLogoutHtml).toContain(
+      '<a class="popover-menu-item" href="/login" role="menuitem">Sign in</a>',
+    );
   });
 });
 
@@ -123,7 +125,7 @@ describe("admin and sheet guards", () => {
       headers: { cookie: playerCookie },
     });
     const gmSheetWrite = await app.request(
-      "/sheet/character_lynott_magulbisson/resources/resource_lynott_hit_points",
+      "/sheet/lynott/resources/resource_lynott_hit_points",
       {
         body: new URLSearchParams({ delta: "-1" }),
         headers: { cookie: gmCookie, "Content-Type": "application/x-www-form-urlencoded" },
@@ -131,7 +133,7 @@ describe("admin and sheet guards", () => {
       },
     );
     const adminSheetWrite = await app.request(
-      "/sheet/character_lynott_magulbisson/resources/resource_lynott_hit_points",
+      "/sheet/lynott/resources/resource_lynott_hit_points",
       { headers: { cookie: adminCookie }, method: "PATCH" },
     );
 
@@ -168,7 +170,7 @@ describe("admin and sheet guards", () => {
     const playerCookie = await login("lynott.player@example.local");
 
     const ownSheet = await app.request(
-      "/sheet/character_lynott_magulbisson/resources/resource_lynott_hit_points",
+      "/sheet/lynott/resources/resource_lynott_hit_points",
       {
         body: new URLSearchParams({ delta: "-1" }),
         headers: { cookie: playerCookie, "Content-Type": "application/x-www-form-urlencoded" },

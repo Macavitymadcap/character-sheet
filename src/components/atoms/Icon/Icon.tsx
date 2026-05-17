@@ -56,6 +56,13 @@ const icons: Record<string, unknown> = {
     </>
   ),
   circle: <circle cx="12" cy="12" r="7.25" fill="none" stroke="currentColor" stroke-width="2.5" />,
+  menu: (
+    <>
+      <path d="M4.5 7h15" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2.4" />
+      <path d="M4.5 12h15" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2.4" />
+      <path d="M4.5 17h15" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2.4" />
+    </>
+  ),
   moon: (
     <path
       d="M20.4 14.7A8.8 8.8 0 019.3 3.6 8.8 8.8 0 1012 21.1a8.8 8.8 0 008.4-6.4z"

@@ -13,7 +13,7 @@ export const SheetTabWorkspace = ({ activeTab, header, resources, sheet }: Sheet
   <div id="sheet-tab-workspace" class="sheet-tab-workspace">
     <div class="sheet-sticky-stack">
       {header}
-      <SheetTabs activeTab={activeTab} characterId={sheet.id} />
+      <SheetTabs activeTab={activeTab} characterSlug={sheet.slug} />
     </div>
     <SheetTabPanel resources={resources} sheet={sheet} tabId={activeTab} />
   </div>

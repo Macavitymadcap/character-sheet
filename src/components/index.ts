@@ -8,6 +8,7 @@ export { LabelledOutput } from "./molecules/LabelledOutput";
 export { LoginPage } from "./pages/Login";
 export { LogoutPage } from "./pages/Logout";
 export { Panel } from "./atoms/Panel";
+export { PopoverMenu } from "./molecules/PopoverMenu";
 export { CoreTab } from "./organisms/CoreTab";
 export { SheetHeader } from "./organisms/SheetHeader";
 export { SheetPage } from "./pages/Sheet";

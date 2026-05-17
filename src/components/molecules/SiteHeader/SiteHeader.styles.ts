@@ -7,7 +7,7 @@ export const siteHeaderStyles = /* css */ `
   box-shadow: 0 0.75rem 1.75rem var(--shadow-colour);
   display: grid;
   gap: 0.35rem;
-  grid-template-columns: minmax(0, auto) minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, auto) minmax(0, 1fr);
   min-height: 2.85rem;
   padding: 0.35rem;
   position: sticky;
@@ -29,33 +29,6 @@ export const siteHeaderStyles = /* css */ `
   display: block;
   font-size: 1rem;
   line-height: 1.1;
-}
-
-.site-nav {
-  align-items: center;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.25rem;
-  justify-content: center;
-  min-width: 0;
-}
-
-.site-nav a,
-.site-auth-link {
-  border: 1px solid transparent;
-  border-radius: 0.375rem;
-  color: var(--muted-text-colour);
-  font-weight: 700;
-  min-height: 2rem;
-  padding: 0.35rem 0.45rem;
-  text-decoration: none;
-}
-
-.site-nav a[aria-current="page"],
-.site-auth-link[aria-current="page"] {
-  background: var(--nav-active-background-colour);
-  border-color: var(--nav-active-border-colour);
-  color: var(--nav-active-text-colour);
 }
 
 .site-actions {
@@ -92,18 +65,12 @@ export const siteHeaderStyles = /* css */ `
 
 @media (min-width: 820px) {
   .site-header {
-    grid-template-columns: minmax(10rem, 1fr) auto minmax(11rem, 1fr);
     min-height: 3.15rem;
     padding: 0.45rem 0.7rem;
   }
 
   .site-title {
     font-size: 1.2rem;
-  }
-
-  .site-nav {
-    grid-column: auto;
-    justify-content: center;
   }
 }
 `;

@@ -11,13 +11,13 @@ export const SheetHeader = ({ resources, sheet }: SheetHeaderProps) => {
   const temporaryHitPoints = findResource(resources, "temporary_hit_points");
   const inspiration = findResource(resources, "inspiration");
   const hitPointTarget = hitPoints
-    ? `/sheet/${sheet.id}/resources/${hitPoints.id}`
+    ? `/sheet/${sheet.slug}/resources/${hitPoints.id}`
     : undefined;
   const temporaryHitPointTarget = temporaryHitPoints
-    ? `/sheet/${sheet.id}/resources/${temporaryHitPoints.id}`
+    ? `/sheet/${sheet.slug}/resources/${temporaryHitPoints.id}`
     : undefined;
   const inspirationTarget = inspiration
-    ? `/sheet/${sheet.id}/resources/${inspiration.id}`
+    ? `/sheet/${sheet.slug}/resources/${inspiration.id}`
     : undefined;
 
   return (

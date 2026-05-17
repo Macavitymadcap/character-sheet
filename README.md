@@ -44,13 +44,13 @@ The development server should default to `http://localhost:3000`. The root page 
 
 | Role | Default route |
 | --- | --- |
-| Player | `/sheet/character_lynott_magulbisson` |
+| Player | `/sheet/lynott` |
 | Game Master | `/campaigns/rovnost-shadows` |
 | Admin | `/admin` |
 
 After signing in as the seeded player, Lynott's sheet is available at
-`/sheet/character_lynott_magulbisson`. The sheet tab fragments are served from
-`/sheet/character_lynott_magulbisson/tabs/:tabId` for HTMX swaps. Those fragments include the tab strip and active panel so the active tab state stays aligned with the displayed content.
+`/sheet/lynott`. The sheet tab fragments are served from
+`/sheet/lynott/tabs/:tabId` for HTMX swaps. Those swaps target only the active panel, so the sticky tab strip keeps its scroll position while the active tab state stays aligned with the displayed content.
 
 The sheet header includes HTMX-backed hit point controls for current and temporary HP, plus an inspiration switch. These mutate `character_resources`, refresh the compact header fragment, and keep the character summary hit point fields in sync.
 
@@ -90,7 +90,7 @@ bun run verify
 
 `bun run verify` runs typecheck, component and route tests, and accessibility checks in sequence.
 
-`bun run test:a11y` starts an in-memory app on an available local port and runs Pa11y against public `/`, `/login`, authenticated `/sheet/character_lynott_magulbisson`, authenticated `/campaigns/rovnost-shadows`, and authenticated `/admin`.
+`bun run test:a11y` starts an in-memory app on an available local port and runs Pa11y against public `/`, `/login`, authenticated `/sheet/lynott`, authenticated `/campaigns/rovnost-shadows`, and authenticated `/admin`.
 
 Repository maintenance scripts:
 
