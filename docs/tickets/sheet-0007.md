@@ -10,8 +10,8 @@ Implement the action-facing sheet tabs: actions, spellcasting, features and trai
 - Add mutation routes for spending/restoring resources such as hit points, temporary hit points, hit dice, spell slots, inspiration, Fey Gift, Fortune from the Many, and conditions. Current hit points, temporary hit points, conditions, and inspiration are controlled from the compact sheet header.
 - Add compact d20 popovers for abilities, skills, tools, and weapon attacks, including advantage/disadvantage and extra modifiers.
 - Add equipment controls for carried/equipped state and quantities, including the coin purse.
-- Add short-rest and long-rest services that reset the correct resources for the MVP.
-- Render spellcasting and rules text from structured rules data with source metadata.
+- Add rest services for the MVP resources, with long rest recovery implemented and short rest kept as a safe no-op until short-rest resources are modelled.
+- Render selected spellcasting and feature entries from rules links with source metadata; fuller runtime rendering from `rule_mechanics` is deferred.
 
 ```mermaid
 sequenceDiagram
@@ -38,7 +38,7 @@ sequenceDiagram
 ## Tests First
 
 - Write repository tests for actions, spellcasting, feature, trait, infusion, and equipment read models.
-- Write service tests for resource spending, invalid resource changes, short rest, long rest, spell slot use, and condition updates.
+- Write service tests for resource spending, invalid resource changes, long rest recovery, the current short-rest no-op, spell slot use, and condition updates.
 - Write component tests for action rows, spell cards, feature lists, equipment lists, and resource controls.
 - Write HTMX mutation tests that assert updated fragments and persisted state.
 
@@ -48,5 +48,5 @@ sequenceDiagram
 - Resource controls persist changes and update relevant fragments.
 - Dice roll and condition popovers are reusable, tested components or component patterns.
 - Equipment quantity/equipped controls persist changes and update the active tab fragment.
-- Rest actions reset only the resources documented for the MVP.
+- Long-rest actions reset only the resources documented for the MVP; short rest remains a tested no-op.
 - Routes reject unauthorised or invalid mutations.

@@ -2,7 +2,7 @@
 
 ## Summary
 
-Build the first local MVP of Character Sheet as a Hono + HTMX + SQLite application. The MVP should support Lynott Magulbisson as the first player character, one Game Master, and one admin. It should run locally, store structured sheet and rules data in SQLite, and use the `pace-calculator` app as the implementation template.
+Build the first seeded local MVP of Character Sheet as a Hono + HTMX + SQLite application. The MVP should support Lynott Magulbisson as the first player character, one Game Master, and one admin. It should run locally, store structured sheet and rules data in SQLite, and use the `pace-calculator` app as the implementation template.
 
 This epic replaces the earlier static GitHub Pages/localStorage architecture. Railway deployment and Postgres are deferred to the next epic.
 
@@ -10,7 +10,7 @@ This epic replaces the earlier static GitHub Pages/localStorage architecture. Ra
 
 - Scaffold a Bun, Hono, HTMX, TypeScript, JSX, and SQLite app.
 - Implement local password authentication, sessions, seeded users, admin invites, and admin-triggered password reset tokens.
-- Store character state, notes, equipment, spells, features, traits, and rules mechanics in SQLite.
+- Store seeded character state, notes, equipment, spells, features, traits, and imported rules mechanics in SQLite.
 - Seed enough D&D 2014 rules and character data to support Lynott.
 - Render a usable character sheet with sticky site and sheet headers, compact resource controls, and scrollable tabs.
 - Use British English in docs, code naming, database fields, CSS custom properties, and user-facing copy.
@@ -20,9 +20,9 @@ This epic replaces the earlier static GitHub Pages/localStorage architecture. Ra
 
 | Role | MVP user | Permissions |
 | --- | --- | --- |
-| Player | Lynott player | Create, read, update, and delete their own character sheet and player notes. |
-| Game Master | Campaign GM | Manage all sheets, campaign/session records, Game Master notes, invites, and password reset tokens. |
-| Admin | Site admin | Manage invites, password resets, users, and basic data reads. |
+| Player | Lynott player | Read Lynott's sheet and update table-use state such as resources, conditions, equipment, rests, rolls, and their existing player note. |
+| Game Master | Campaign GM | Read and update Lynott's sheet state and existing player/Game Master notes, plus view the seeded campaign shell. |
+| Admin | Site admin | Access the admin shell, create local invite tokens, and use local password-reset token routes by known user id. |
 
 ```mermaid
 flowchart TD
@@ -31,10 +31,14 @@ flowchart TD
     C --> D["Player sheet"]
     C --> E["Game Master campaign tools"]
     C --> F["Admin tools"]
-    D --> G["Own sheet and notes"]
-    E --> H["All sheets, sessions, GM notes"]
-    F --> I["Users, invites, password resets"]
+    D --> G["Seeded sheet state and player note"]
+    E --> H["Seeded sheet, GM note, campaign shell"]
+    F --> I["Invite and reset token routes"]
 ```
+
+## Deferred Scope
+
+The epic deliberately stops at a seeded local sheet MVP. Character creation and deletion, multiple player characters, campaign/session record management, note creation beyond seeded notes, admin user/read tables, richer runtime rules text from `rule_mechanics`, Railway deployment, and a Postgres adapter are follow-up work.
 
 ## Data Model
 
@@ -101,7 +105,7 @@ The sheet body is tabbed and vertically scrollable:
 | `sheet-0005` | Build the app shell, site header, sheet header, tabs, and responsive layout. |
 | `sheet-0006` | Implement core, skills, proficiencies, speed, and defence tabs. |
 | `sheet-0007` | Implement actions, spellcasting, features, traits, equipment, and resource tracking. |
-| `sheet-0008` | Implement background, player notes, Game Master notes, permissions, and admin reads. |
+| `sheet-0008` | Implement the background tab, seeded note editing, permissions, campaign shell, and admin shell. |
 | `sheet-0009` | Add the local rules importer and British English normalisation. |
 | `sheet-0010` | Complete accessibility, screenshots, documentation polish, and MVP acceptance checks. |
 
@@ -126,4 +130,5 @@ flowchart TD
 - The MVP architecture is aligned to the `pace-calculator` server-rendered template.
 - The docs clearly defer Railway, Postgres, and live 5e.tools fetching to later work.
 - Lynott's sheet, the Game Master, and the admin are explicitly covered.
+- Deferred group-management and deployment features are named rather than implied as complete.
 - British English expectations are documented.
