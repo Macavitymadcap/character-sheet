@@ -15,9 +15,11 @@ export const layoutStyles = /* css */ `
   --row-background-colour: #ffffff;
   --shadow-colour: rgb(15 23 42 / 0.08);
   --stat-background-colour: #fbfcff;
+  --success-colour: #1d7a45;
   --surface-colour: #ffffff;
   --switch-icon-dark: #334155;
   --switch-icon-light: #f59e0b;
+  --warning-colour: #b45309;
   --theme-duration: 220ms;
   --theme-easing: ease;
   --theme-transition: var(--theme-duration) var(--theme-easing);
@@ -43,9 +45,11 @@ export const layoutStyles = /* css */ `
   --row-background-colour: #111c2d;
   --shadow-colour: rgb(0 0 0 / 0.24);
   --stat-background-colour: #162238;
+  --success-colour: #86efac;
   --surface-colour: #121c2d;
   --switch-icon-dark: #f8fafc;
   --switch-icon-light: #fde68a;
+  --warning-colour: #fbbf24;
   color-scheme: dark;
 }
 

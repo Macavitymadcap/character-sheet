@@ -4,7 +4,7 @@ import { SiteHeader } from "./SiteHeader";
 const render = (node: unknown): string => String(node);
 
 describe("SiteHeader", () => {
-  test("renders primary navigation and the current user state", () => {
+  test("renders primary navigation and the current user identity", () => {
     const html = render(
       <SiteHeader
         appName="Character Sheet"

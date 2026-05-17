@@ -6,7 +6,7 @@ Build the reusable app shell, sticky site header, sticky sheet header, tab navig
 
 ## Implementation
 
-- Add site layout with app name, navigation menu, current user state, login, and logout.
+- Add site layout with app name, navigation menu, current user identity and role, login, and logout.
 - Add sheet page route and `SheetPage` composition.
 - Add sticky `SheetHeader` with a compact identity line, armour class, hit point controls, initiative, speed, conditions, and inspiration.
 - Add tab navigation for the eight MVP sheet tabs.

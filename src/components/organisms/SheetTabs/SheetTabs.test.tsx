@@ -13,8 +13,10 @@ describe("SheetTabs", () => {
     expect(html).toContain('<nav id="sheet-tabs" class="sheet-tabs" aria-label="Sheet tabs" role="tablist">');
     expect(html).toContain('id="sheet-tab-core"');
     expect(html).toContain('aria-selected="true"');
+    expect(html).toContain('data-tab-id="core"');
     expect(html).toContain('hx-get="/sheet/character_lynott_magulbisson/tabs/core"');
-    expect(html).toContain('hx-target="#sheet-tab-workspace"');
+    expect(html).toContain('hx-target="#sheet-tab-panel"');
+    expect(html).not.toContain('hx-push-url');
     expect(html).toContain(">Spellcasting</a>");
     expect(html).toContain(">Notes</a>");
   });

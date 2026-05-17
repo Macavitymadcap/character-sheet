@@ -97,13 +97,13 @@ const proficiencies: ProficiencySeed[] = [
   ["proficiency_lynott_medium_armour", "armour", "Medium armour", "Artificer training.", 20],
   ["proficiency_lynott_shields", "armour", "Shields", "Artificer training.", 30],
   ["proficiency_lynott_simple_weapons", "weapon", "Simple weapons", "Artificer training.", 40],
-  ["proficiency_lynott_firearms", "weapon", "Firearms", "1st Astrilian Artificers training.", 50],
-  ["proficiency_lynott_thieves_tools", "tool", "Thieves' tools", "Expertise from Artificer.", 60],
-  ["proficiency_lynott_tinkers_tools", "tool", "Tinker's tools", "Expertise from Artificer.", 70],
-  ["proficiency_lynott_smiths_tools", "tool", "Smith's tools", "Expertise from Artificer.", 80],
-  ["proficiency_lynott_woodcarvers_tools", "tool", "Woodcarver's tools", "Expertise from Artificer.", 90],
-  ["proficiency_lynott_three_dragon_ante", "tool", "Three Dragon Ante", "Gaming set.", 100],
-  ["proficiency_lynott_vehicles_land", "tool", "Vehicles (land)", "Background training.", 110],
+  ["proficiency_lynott_firearms", "weapon", "Firearms", "Artificer training and campaign exposure.", 50],
+  ["proficiency_lynott_thieves_tools", "tool", "Thieves' tools", "Artificer training.", 60],
+  ["proficiency_lynott_tinkers_tools", "tool", "Tinker's tools", "Artificer training.", 70],
+  ["proficiency_lynott_smiths_tools", "tool", "Smith's tools", "Artificer artisan tool choice.", 80],
+  ["proficiency_lynott_woodcarvers_tools", "tool", "Woodcarver's tools", "Artillerist specialist training.", 90],
+  ["proficiency_lynott_disguise_kit", "tool", "Disguise kit", "Special Operations background.", 100],
+  ["proficiency_lynott_forgery_kit", "tool", "Forgery kit", "Special Operations background.", 110],
   ["proficiency_lynott_common", "language", "Common", "Known language.", 120],
   ["proficiency_lynott_goblin", "language", "Goblin", "Known language.", 130],
   [
@@ -113,20 +113,13 @@ const proficiencies: ProficiencySeed[] = [
     "To be determined by campaign setting.",
     140,
   ],
-  [
-    "training_lynott_infiltration",
-    "training",
-    "Covert operations",
-    "Infiltration, intelligence gathering, sabotage, and threat assessment.",
-    150,
-  ],
-  [
-    "training_lynott_magitech",
-    "training",
-    "Magitech weapons programme",
-    "Experimental firearm maintenance and field use.",
-    160,
-  ],
+];
+
+const staleProficiencyIds = [
+  "proficiency_lynott_three_dragon_ante",
+  "proficiency_lynott_vehicles_land",
+  "training_lynott_infiltration",
+  "training_lynott_magitech",
 ];
 
 const resources: ResourceSeed[] = [
@@ -300,9 +293,22 @@ export const seedDatabase = (database: Database) => {
     );
   }
 
+  database.run(
+    `delete from character_proficiencies
+     where character_id = ?
+       and id in (${staleProficiencyIds.map(() => "?").join(", ")})`,
+    ["character_lynott_magulbisson", ...staleProficiencyIds],
+  );
+
   for (const proficiency of proficiencies) {
     database.run(
-      "insert or ignore into character_proficiencies (id, character_id, category, name, detail, sort_order) values (?, ?, ?, ?, ?, ?)",
+      `insert into character_proficiencies (id, character_id, category, name, detail, sort_order)
+       values (?, ?, ?, ?, ?, ?)
+       on conflict(id) do update set
+         category = excluded.category,
+         name = excluded.name,
+         detail = excluded.detail,
+         sort_order = excluded.sort_order`,
       [proficiency[0], "character_lynott_magulbisson", ...proficiency.slice(1)],
     );
   }

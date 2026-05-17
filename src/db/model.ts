@@ -116,7 +116,7 @@ export interface CharacterDefence {
 }
 
 export interface CharacterProficiency {
-  category: "armour" | "language" | "tool" | "training" | "weapon";
+  category: "armour" | "language" | "tool" | "weapon";
   detail: string;
   name: string;
 }

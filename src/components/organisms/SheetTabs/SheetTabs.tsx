@@ -14,11 +14,12 @@ export const SheetTabs = ({ activeTab, characterId }: SheetTabsProps) => {
           aria-controls="sheet-tab-panel"
           aria-selected={tab.id === activeTab ? "true" : "false"}
           class="sheet-tab"
+          data-tab-id={tab.id}
           data-state={tab.id === activeTab ? "active" : "idle"}
           href={`/sheet/${characterId}/tabs/${tab.id}`}
           hx-get={`/sheet/${characterId}/tabs/${tab.id}`}
           hx-swap="outerHTML"
-          hx-target="#sheet-tab-workspace"
+          hx-target="#sheet-tab-panel"
           role="tab"
         >
           {tab.label}

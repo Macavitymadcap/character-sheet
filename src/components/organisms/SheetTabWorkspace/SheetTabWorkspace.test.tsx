@@ -26,7 +26,7 @@ const sheet: CharacterSheetReadModel = {
 };
 
 describe("SheetTabWorkspace", () => {
-  test("renders tabs and the active panel as one HTMX swap target", () => {
+  test("renders tabs around a separately swappable active panel", () => {
     const html = render(<SheetTabWorkspace activeTab="skills" resources={[]} sheet={sheet} />);
 
     expect(html).toContain('<div id="sheet-tab-workspace" class="sheet-tab-workspace">');
@@ -35,5 +35,6 @@ describe("SheetTabWorkspace", () => {
     expect(html).toContain('id="sheet-tab-skills"');
     expect(html).toContain('aria-selected="true"');
     expect(html).toContain('data-tab-id="skills"');
+    expect(html).toContain('hx-target="#sheet-tab-panel"');
   });
 });

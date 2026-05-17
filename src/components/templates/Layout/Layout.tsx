@@ -65,6 +65,34 @@ const themeScript = /* js */ `
 })();
 `;
 
+const sheetTabsScript = /* js */ `
+(() => {
+  const syncSheetTabs = (tabId) => {
+    if (!tabId) return;
+
+    document.querySelectorAll(".sheet-tab").forEach((tab) => {
+      const isActive = tab.id === "sheet-tab-" + tabId;
+      tab.dataset.state = isActive ? "active" : "idle";
+      tab.setAttribute("aria-selected", String(isActive));
+    });
+  };
+
+  document.addEventListener("click", (event) => {
+    const target = event.target instanceof Element ? event.target : event.target?.parentElement;
+    const tab = target?.closest?.(".sheet-tab");
+    if (!tab) return;
+
+    syncSheetTabs(tab.dataset.tabId);
+  });
+
+  document.addEventListener("htmx:afterSettle", () => {
+    const panel = document.querySelector("#sheet-tab-panel");
+
+    syncSheetTabs(panel?.dataset.tabId);
+  });
+})();
+`;
+
 interface LayoutProps {
   children: unknown;
   title: string;
@@ -78,11 +106,8 @@ export const Layout = ({ children, title }: LayoutProps) => {
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>{title}</title>
         <script>{raw(themeScript)}</script>
+        <script>{raw(sheetTabsScript)}</script>
         <script src="https://unpkg.com/htmx.org@1.9.12"></script>
-        <link
-          rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,1,0&display=swap"
-        />
         <style>{raw(appStyles)}</style>
       </head>
       <body>{children}</body>

@@ -91,9 +91,11 @@ export const switchStyles = /* css */ `
   display: grid;
   font-size: 1.25rem;
   line-height: 1;
+  overflow: hidden;
   place-items: center;
   position: relative;
   transition: color var(--theme-text-transition);
+  width: 1.25rem;
   z-index: 1;
 }
 
@@ -106,11 +108,11 @@ export const switchStyles = /* css */ `
 }
 
 .switch[data-variant="inspiration"] {
-  --switch-track-gradient: linear-gradient(110deg, #312e81 0%, #7c3aed 36%, #f59e0b 72%, #fef3c7 100%);
-  --switch-track-overlay: linear-gradient(110deg, #1e1b4b, #6d28d9, #f59e0b, #fff7ed);
-  --switch-thumb-gradient: linear-gradient(135deg, #ede9fe 0%, #c4b5fd 36%, #fde68a 70%, #ffffff 100%);
+  --switch-track-gradient: linear-gradient(110deg, #164e63 0%, #0891b2 34%, #f59e0b 68%, #fff7ed 100%);
+  --switch-track-overlay: linear-gradient(110deg, #0f172a, #0e7490, #fb923c, #fff7ed);
+  --switch-thumb-gradient: linear-gradient(135deg, #cffafe 0%, #67e8f9 35%, #fed7aa 72%, #ffffff 100%);
   --switch-icon-dark: #fff7ed;
-  --switch-icon-light: #d8b4fe;
+  --switch-icon-light: #a5f3fc;
 }
 
 .switch-input:checked + .switch-track,

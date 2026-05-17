@@ -49,9 +49,7 @@ export const SheetHeader = ({ resources, sheet }: SheetHeaderProps) => {
                     <form hx-patch={hitPointTarget} hx-target="#sheet-header" hx-swap="outerHTML">
                       <input type="hidden" name="delta" value="-1" />
                       <button type="submit" aria-label="Subtract 1 hit point">
-                        <span class="material-symbols-outlined" aria-hidden="true">
-                          remove
-                        </span>
+                        <span aria-hidden="true">−</span>
                       </button>
                     </form>
                     <span>
@@ -60,9 +58,7 @@ export const SheetHeader = ({ resources, sheet }: SheetHeaderProps) => {
                     <form hx-patch={hitPointTarget} hx-target="#sheet-header" hx-swap="outerHTML">
                       <input type="hidden" name="delta" value="1" />
                       <button type="submit" aria-label="Add 1 hit point">
-                        <span class="material-symbols-outlined" aria-hidden="true">
-                          add
-                        </span>
+                        <span aria-hidden="true">+</span>
                       </button>
                     </form>
                   </div>
@@ -82,13 +78,11 @@ export const SheetHeader = ({ resources, sheet }: SheetHeaderProps) => {
                       name="current"
                       type="number"
                       value={sheet.hitPoints.temporary}
-                    />
-                    <button type="submit" aria-label="Set temporary hit points">
-                      <span class="material-symbols-outlined" aria-hidden="true">
-                        check
-                      </span>
-                    </button>
-                  </form>
+                  />
+                  <button type="submit" aria-label="Set temporary hit points">
+                    <span aria-hidden="true">✓</span>
+                  </button>
+                </form>
                 ) : null}
               </div>
             </details>
@@ -117,11 +111,9 @@ export const SheetHeader = ({ resources, sheet }: SheetHeaderProps) => {
                 offIcon="radio_button_unchecked"
                 onIcon="auto_awesome"
                 variant="inspiration"
-                trackGradient="linear-gradient(110deg, #164e63 0%, #0891b2 38%, #f97316 72%, #fde68a 100%)"
-                trackOverlay="linear-gradient(110deg, #0f172a, #0e7490, #fb923c, #fff7ed)"
-                thumbGradient="linear-gradient(135deg, #cffafe 0%, #67e8f9 35%, #fed7aa 72%, #ffffff 100%)"
                 hxPatch={inspirationTarget}
                 hxTarget="#sheet-header"
+                hxTrigger="change delay:250ms"
                 hxSwap="outerHTML"
                 hxVals="js:{current: event.target.checked ? 1 : 0}"
               />

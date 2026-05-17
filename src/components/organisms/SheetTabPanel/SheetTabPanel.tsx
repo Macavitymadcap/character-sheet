@@ -69,7 +69,7 @@ function getPlaceholderOutputs(
     ],
     skills: [
       { label: "Trained skills", value: trainedSkills },
-      { label: "Training notes", value: "Grouped" },
+      { label: "Proficiencies", value: "Grouped" },
     ],
     spellcasting: [
       { label: "Spellcasting ability", value: "Intelligence" },

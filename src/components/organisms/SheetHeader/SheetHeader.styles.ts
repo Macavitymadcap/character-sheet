@@ -5,8 +5,8 @@ export const sheetHeaderStyles = /* css */ `
   border-radius: 0.5rem;
   box-shadow: 0 1rem 2.5rem var(--shadow-colour);
   display: grid;
-  gap: 0.75rem;
-  padding: 0.75rem;
+  gap: 0.55rem;
+  padding: 0.55rem;
   position: static;
   transition:
     background-color var(--theme-transition),
@@ -19,19 +19,20 @@ export const sheetHeaderStyles = /* css */ `
   align-items: baseline;
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem 1rem;
+  gap: 0.25rem 0.75rem;
   justify-content: space-between;
 }
 
 .sheet-heading {
   color: var(--heading-colour);
-  font-size: 1.45rem;
+  font-size: 1.35rem;
   line-height: 1.1;
   margin: 0;
 }
 
 .sheet-subtitle {
   color: var(--muted-text-colour);
+  font-size: 0.95rem;
   font-weight: 800;
   margin: 0;
 }
@@ -39,7 +40,7 @@ export const sheetHeaderStyles = /* css */ `
 .sheet-header-grid {
   display: grid;
   gap: 0.5rem;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   margin: 0;
 }
 
@@ -49,8 +50,8 @@ export const sheetHeaderStyles = /* css */ `
   border-radius: 0.375rem;
   display: grid;
   gap: 0.15rem;
-  min-height: 3.25rem;
-  padding: 0.5rem;
+  min-height: 2.85rem;
+  padding: 0.42rem;
   position: relative;
   transition:
     background-color var(--theme-transition),
@@ -59,7 +60,7 @@ export const sheetHeaderStyles = /* css */ `
 
 .sheet-metric dt {
   color: var(--muted-text-colour);
-  font-size: 0.68rem;
+  font-size: 0.64rem;
   font-weight: 800;
   text-transform: uppercase;
 }
@@ -68,7 +69,7 @@ export const sheetHeaderStyles = /* css */ `
   align-items: center;
   color: var(--heading-colour);
   display: flex;
-  font-size: 1.05rem;
+  font-size: 0.98rem;
   font-weight: 900;
   line-height: 1.05;
   margin: 0;
@@ -76,7 +77,7 @@ export const sheetHeaderStyles = /* css */ `
 }
 
 .sheet-metric-wide {
-  grid-column: span 2;
+  grid-column: span 1;
 }
 
 .hp-control {
@@ -189,14 +190,14 @@ export const sheetHeaderStyles = /* css */ `
 
 @media (min-width: 720px) {
   .sheet-header {
-    gap: 0.75rem;
-    padding: 0.85rem;
+    gap: 0.55rem;
+    padding: 0.7rem;
     position: sticky;
     top: 4.5rem;
   }
 
   .sheet-heading {
-    font-size: 1.55rem;
+    font-size: 1.45rem;
   }
 
   .sheet-header-grid {
@@ -206,6 +207,16 @@ export const sheetHeaderStyles = /* css */ `
 
   .sheet-metric-wide {
     grid-column: span 1;
+  }
+}
+
+@media (max-width: 360px) {
+  .sheet-header-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sheet-metric-wide {
+    grid-column: span 2;
   }
 }
 

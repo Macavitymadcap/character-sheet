@@ -68,7 +68,7 @@ Core table groups:
 
 ## Sheet Experience
 
-The site header is sticky and includes the app name, current user state, navigation, login, and logout.
+The site header is sticky and includes the app name, current user identity and role, navigation, login, and logout.
 
 The sheet page has a second sticky header with:
 
@@ -82,7 +82,7 @@ The sheet page has a second sticky header with:
 The sheet body is tabbed and vertically scrollable:
 
 - core: abilities, saves, senses, speed, and defence
-- skills, proficiencies, and training
+- skills, proficiencies, languages, and tools
 - actions
 - spellcasting
 - features and traits
@@ -98,7 +98,7 @@ The sheet body is tabbed and vertically scrollable:
 | `sheet-0003` | Add SQLite schema, repositories, migrations, and Lynott seed data. |
 | `sheet-0004` | Add local password auth, sessions, seeded users, invites, and reset flows. |
 | `sheet-0005` | Build the app shell, site header, sheet header, tabs, and responsive layout. |
-| `sheet-0006` | Implement core, skills, proficiencies, training, speed, and defence tabs. |
+| `sheet-0006` | Implement core, skills, proficiencies, speed, and defence tabs. |
 | `sheet-0007` | Implement actions, spellcasting, features, traits, equipment, and resource tracking. |
 | `sheet-0008` | Implement background, player notes, Game Master notes, permissions, and admin reads. |
 | `sheet-0009` | Add the local rules importer and British English normalisation. |

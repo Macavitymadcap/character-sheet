@@ -1,5 +1,6 @@
 import { buttonStyles } from "./atoms/Button/Button.styles";
 import { badgeStyles } from "./atoms/Badge/Badge.styles";
+import { iconStyles } from "./atoms/Icon/Icon.styles";
 import { panelStyles } from "./atoms/Panel/Panel.styles";
 import { switchStyles } from "./atoms/Switch/Switch.styles";
 import { formFieldStyles } from "./molecules/FormField/FormField.styles";
@@ -21,6 +22,7 @@ export const appStyles = [
   layoutStyles,
   badgeStyles,
   buttonStyles,
+  iconStyles,
   labelledOutputStyles,
   panelStyles,
   switchStyles,

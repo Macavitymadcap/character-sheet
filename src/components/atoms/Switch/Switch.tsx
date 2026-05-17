@@ -4,6 +4,7 @@ interface SwitchProps {
   hxPatch?: string;
   hxSwap?: string;
   hxTarget?: string;
+  hxTrigger?: string;
   hxVals?: string;
   id: string;
   label: string;
@@ -21,6 +22,7 @@ export const Switch = ({
   hxPatch,
   hxSwap,
   hxTarget,
+  hxTrigger,
   hxVals,
   id,
   label,
@@ -48,16 +50,28 @@ export const Switch = ({
         hx-patch={hxPatch}
         hx-swap={hxSwap}
         hx-target={hxTarget}
+        hx-trigger={hxTrigger}
         hx-vals={hxVals}
       />
       <span class="switch-track" aria-hidden="true">
-        <span class="material-symbols-outlined switch-icon switch-icon-off">{offIcon}</span>
-        <span class="material-symbols-outlined switch-icon switch-icon-on">{onIcon}</span>
+        <span class="switch-icon switch-icon-off">{formatSwitchIcon(offIcon)}</span>
+        <span class="switch-icon switch-icon-on">{formatSwitchIcon(onIcon)}</span>
         <span class="switch-thumb"></span>
       </span>
     </label>
   );
 };
+
+function formatSwitchIcon(name: string) {
+  const icons: Record<string, string> = {
+    auto_awesome: "✦",
+    dark_mode: "◐",
+    light_mode: "☀",
+    radio_button_unchecked: "○",
+  };
+
+  return icons[name] ?? name;
+}
 
 function formatSwitchStyle({
   thumbGradient,

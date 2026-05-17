@@ -17,7 +17,8 @@ describe("Layout", () => {
     expect(html).toContain("<title>Test Sheet</title>");
     expect(html).toContain("character-sheet-theme");
     expect(html).toContain('document.querySelector("[data-theme-toggle]")');
-    expect(html).toContain("Material+Symbols+Outlined");
+    expect(html).toContain("htmx:afterSettle");
+    expect(html).not.toContain("Material+Symbols+Outlined");
     expect(html).toContain("https://unpkg.com/htmx.org");
     expect(html).toContain("<style>");
     expect(html).toContain(':root[data-theme="dark"]');

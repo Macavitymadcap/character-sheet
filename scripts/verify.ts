@@ -1,4 +1,5 @@
 #!/usr/bin/env bun
+import { spawn } from "node:child_process";
 
 interface Check {
   command: string[];
@@ -14,11 +15,7 @@ const checks: Check[] = [
 for (const check of checks) {
   console.log(`\n== ${check.label} ==`);
 
-  const child = Bun.spawn(check.command, {
-    stderr: "inherit",
-    stdout: "inherit",
-  });
-  const exitCode = await child.exited;
+  const exitCode = await runCommand(check.command);
 
   if (exitCode !== 0) {
     console.error(`${check.label} failed with exit code ${exitCode}.`);
@@ -27,3 +24,18 @@ for (const check of checks) {
 }
 
 console.log("\nVerification complete.");
+
+function runCommand(command: string[]) {
+  return new Promise<number>((resolve, reject) => {
+    const [executable, ...args] = command;
+    if (!executable) {
+      reject(new Error("Cannot run an empty command."));
+      return;
+    }
+
+    const child = spawn(executable, args, { stdio: "inherit" });
+
+    child.on("error", reject);
+    child.on("close", (code) => resolve(code ?? 1));
+  });
+}

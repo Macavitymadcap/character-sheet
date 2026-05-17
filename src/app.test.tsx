@@ -111,7 +111,7 @@ describe("createApp", () => {
     expect(response.headers.get("location")).toBe("/login");
   });
 
-  test("serves sheet tabs as HTMX fragment-only HTML", async () => {
+  test("serves sheet tab panels as HTMX fragment-only HTML", async () => {
     const { app, sessionService } = createTestApp("Character Sheet");
     const session = sessionService.createSession("user_lynott_player");
     const response = await app.request("/sheet/character_lynott_magulbisson/tabs/spellcasting", {
@@ -122,11 +122,10 @@ describe("createApp", () => {
     expect(response.status).toBe(200);
     expect(response.headers.get("content-type")).toContain("text/html");
     expect(html).not.toContain("<html");
-    expect(html).toContain('<div id="sheet-tab-workspace" class="sheet-tab-workspace">');
+    expect(html).not.toContain('id="sheet-tabs"');
+    expect(html).not.toContain('id="sheet-tab-workspace"');
     expect(html).toContain('<section id="sheet-tab-panel" class="sheet-tab-panel"');
     expect(html).toContain('data-tab-id="spellcasting"');
-    expect(html).toContain('id="sheet-tab-spellcasting"');
-    expect(html).toContain('aria-selected="true"');
     expect(html).toContain("<h2>Spellcasting</h2>");
   });
 
@@ -212,7 +211,9 @@ describe("createApp", () => {
     expect(skillsHtml).toContain("Skills");
     expect(skillsHtml).toContain("Stealth");
     expect(skillsHtml).toContain("Thieves&#39; tools");
-    expect(skillsHtml).toContain("Covert operations");
+    expect(skillsHtml).toContain("Disguise kit");
+    expect(skillsHtml).toContain("Forgery kit");
+    expect(skillsHtml).not.toContain("Covert operations");
   });
 
   test("rejects unauthenticated, unknown, and invalid sheet tab requests", async () => {

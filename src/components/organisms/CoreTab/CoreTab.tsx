@@ -1,5 +1,6 @@
 import type { CharacterAbility, CharacterSheetReadModel } from "../../../db";
 import { formatModifier } from "../../../characters/calculations";
+import { Icon } from "../../atoms/Icon";
 
 interface CoreTabProps {
   sheet: CharacterSheetReadModel;
@@ -18,7 +19,7 @@ export const CoreTab = ({ sheet }: CoreTabProps) => {
                 <th scope="col">Score</th>
                 <th scope="col">Modifier</th>
                 <th scope="col">Save</th>
-                <th scope="col">Training</th>
+                <th scope="col">Prof</th>
               </tr>
             </thead>
             <tbody>
@@ -28,7 +29,7 @@ export const CoreTab = ({ sheet }: CoreTabProps) => {
                   <td>{ability.score}</td>
                   <td>{formatModifier(ability.modifier)}</td>
                   <td>{formatModifier(ability.saveModifier)}</td>
-                  <td>{ability.saveProficient ? "Proficient" : "Untrained"}</td>
+                  <td class="proficiency-icon-cell">{renderSaveProficiencyIcon(ability.saveProficient)}</td>
                 </tr>
               ))}
             </tbody>
@@ -54,31 +55,51 @@ export const CoreTab = ({ sheet }: CoreTabProps) => {
 
       <section class="sheet-data-section" aria-labelledby="armour-heading">
         <h3 id="armour-heading">Armour and defence</h3>
-        <dl class="sheet-description-grid">
-          <div>
-            <dt>Armour class</dt>
-            <dd>{sheet.armourClass}</dd>
+        <dl class="sheet-description-grid armour-defence-grid">
+          <div class="armour-summary-card">
+            <dt>Armour</dt>
+            <dd class="inline-value-list">
+              <span>
+                <strong>AC {sheet.armourClass}</strong>
+              </span>
+              {sheet.armourClassBreakdown.map((source) => (
+                <span>
+                  <strong>{source.label}</strong> {formatModifier(source.value)}
+                  {source.notes ? ` · ${source.notes}` : ""}
+                </span>
+              ))}
+              {sheet.defences
+                .filter((defence) => defence.type === "armour")
+                .map((defence) => (
+                  <span>{defence.detail}</span>
+                ))}
+            </dd>
           </div>
-          {sheet.armourClassBreakdown.map((source) => (
-            <div>
-              <dt>{source.label}</dt>
-              <dd>
-                {formatModifier(source.value)}
-                {source.notes ? <span>{source.notes}</span> : null}
-              </dd>
-            </div>
-          ))}
-          {sheet.defences.map((defence) => (
-            <div>
-              <dt>{defence.label}</dt>
-              <dd>{defence.detail}</dd>
-            </div>
-          ))}
+          {sheet.defences
+            .filter((defence) => defence.type !== "armour")
+            .map((defence) => (
+              <div>
+                <dt>{defence.label}</dt>
+                <dd>{formatDefenceDetail(defence.detail)}</dd>
+              </div>
+            ))}
         </dl>
       </section>
     </div>
   );
 };
+
+function renderSaveProficiencyIcon(isProficient: boolean) {
+  return isProficient ? (
+    <Icon name="check_circle" label="Proficient" tone="success" />
+  ) : (
+    <Icon name="radio_button_unchecked" label="Untrained" tone="muted" />
+  );
+}
+
+function formatDefenceDetail(detail: string) {
+  return detail === "None currently recorded." ? "None" : detail;
+}
 
 function formatAbility(ability: CharacterAbility["ability"]) {
   const labels: Record<CharacterAbility["ability"], string> = {

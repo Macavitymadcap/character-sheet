@@ -12,8 +12,8 @@ describe("Switch", () => {
     expect(html).toContain('aria-label="Colour mode"');
     expect(html).toContain('aria-checked="false"');
     expect(html).toContain('data-theme-toggle=""');
-    expect(html).toContain("light_mode");
-    expect(html).toContain("dark_mode");
+    expect(html).toContain("☀");
+    expect(html).toContain("◐");
   });
 
   test("renders checked state for dark mode", () => {
@@ -35,16 +35,18 @@ describe("Switch", () => {
         hxPatch="/sheet/character/resources/inspiration"
         hxTarget="#sheet-header"
         hxSwap="outerHTML"
+        hxTrigger="change delay:250ms"
         hxVals="js:{current: event.target.checked ? 1 : 0}"
       />,
     );
 
     expect(html).toContain('data-variant="inspiration"');
-    expect(html).toContain("radio_button_unchecked");
-    expect(html).toContain("auto_awesome");
+    expect(html).toContain("○");
+    expect(html).toContain("✦");
     expect(html).toContain("--switch-track-gradient: linear-gradient(110deg, #0f766e, #f59e0b);");
     expect(html).toContain('hx-patch="/sheet/character/resources/inspiration"');
     expect(html).toContain('hx-target="#sheet-header"');
+    expect(html).toContain('hx-trigger="change delay:250ms"');
     expect(html).toContain('hx-vals="js:{current: event.target.checked ? 1 : 0}"');
   });
 });

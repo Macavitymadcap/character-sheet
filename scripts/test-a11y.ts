@@ -87,27 +87,24 @@ async function waitForHttp(url: string, attempts = 40, delayMs = 250) {
 
 function startServer() {
   const requestedPort = getRequestedPort();
-  const ports = requestedPort
-    ? [requestedPort]
-    : Array.from({ length: 50 }, (_, index) => 3999 + index);
 
-  for (const port of ports) {
-    try {
-      return Bun.serve({
-        fetch: app.fetch,
-        hostname: "127.0.0.1",
-        port,
-      });
-    } catch (error) {
-      if (requestedPort || !isAddressInUse(error)) throw error;
+  try {
+    return Bun.serve({
+      fetch: app.fetch,
+      hostname: "127.0.0.1",
+      port: requestedPort ?? 0,
+    });
+  } catch (error) {
+    if (requestedPort !== undefined && isAddressInUse(error)) {
+      throw new Error(`Requested A11Y_PORT ${requestedPort} is already in use.`);
     }
-  }
 
-  throw new Error("Could not find an available local port for Pa11y.");
+    throw error;
+  }
 }
 
 function getRequestedPort() {
-  if (!Bun.env.A11Y_PORT) return undefined;
+  if (Bun.env.A11Y_PORT === undefined) return undefined;
 
   const port = Number(Bun.env.A11Y_PORT);
   if (!Number.isInteger(port) || port < 0) {

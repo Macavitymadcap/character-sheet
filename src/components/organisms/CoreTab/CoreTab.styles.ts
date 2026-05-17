@@ -28,7 +28,7 @@ export const coreTabStyles = /* css */ `
 .sheet-table th,
 .sheet-table td {
   border-bottom: 1px solid var(--border-colour);
-  padding: 0.65rem 0.5rem;
+  padding: 0.45rem 0.5rem;
   text-align: left;
   vertical-align: top;
 }
@@ -56,8 +56,8 @@ export const coreTabStyles = /* css */ `
   border-radius: 0.375rem;
   display: grid;
   gap: 0.2rem;
-  min-height: 3.75rem;
-  padding: 0.6rem;
+  min-height: 3.25rem;
+  padding: 0.5rem;
 }
 
 .sheet-description-grid dt {
@@ -78,6 +78,35 @@ export const coreTabStyles = /* css */ `
   color: var(--muted-text-colour);
   font-size: 0.88rem;
   font-weight: 700;
+}
+
+.proficiency-icon-cell {
+  text-align: center;
+}
+
+.armour-defence-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.armour-summary-card {
+  grid-column: 1 / -1;
+}
+
+.inline-value-list {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+}
+
+.inline-value-list span {
+  color: var(--muted-text-colour);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.inline-value-list strong {
+  color: var(--heading-colour);
 }
 
 @media (max-width: 760px) {

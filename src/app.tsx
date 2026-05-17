@@ -7,7 +7,7 @@ import { LoginPage } from "./components/pages/Login";
 import { LogoutPage } from "./components/pages/Logout";
 import { SheetPage } from "./components/pages/Sheet";
 import { SheetHeader } from "./components/organisms/SheetHeader";
-import { SheetTabWorkspace } from "./components/organisms/SheetTabWorkspace";
+import { SheetTabPanel } from "./components/organisms/SheetTabPanel";
 import { isSheetTabId } from "./components/organisms/SheetTabs";
 import type {
   AuthRepository,
@@ -257,10 +257,10 @@ export const createApp = (dependencies: AppDependencies) => {
     if (!sheet) return context.text("Not found", 404);
 
     return context.html(
-      <SheetTabWorkspace
-        activeTab={tabId}
+      <SheetTabPanel
         resources={dependencies.characterRepository.listResources(characterId)}
         sheet={sheet}
+        tabId={tabId}
       />,
     );
   });
