@@ -138,6 +138,8 @@ describe("createApp", () => {
     expect(html).toContain('<section id="sheet-tab-panel" class="sheet-tab-panel"');
     expect(html).toContain('data-tab-id="spellcasting"');
     expect(html).toContain("<h2>Spellcasting</h2>");
+    expect(html).toContain("Mage Hand");
+    expect(html).toContain("1st-level spell slots");
   });
 
   test("updates header resources through HTMX fragments", async () => {
@@ -228,6 +230,41 @@ describe("createApp", () => {
     expect(skillsHtml).toContain("Disguise kit");
     expect(skillsHtml).toContain("Forgery kit");
     expect(skillsHtml).not.toContain("Covert operations");
+  });
+
+  test("serves compact action, equipment, and role-filtered notes fragments", async () => {
+    const { app, sessionService } = createTestApp("Character Sheet");
+    const playerSession = sessionService.createSession("user_lynott_player");
+    const gmSession = sessionService.createSession("user_game_master");
+    const actions = await app.request("/sheet/lynott/tabs/actions", {
+      headers: { cookie: playerSession.cookie },
+    });
+    const equipment = await app.request("/sheet/lynott/tabs/equipment", {
+      headers: { cookie: playerSession.cookie },
+    });
+    const playerNotes = await app.request("/sheet/lynott/tabs/notes", {
+      headers: { cookie: playerSession.cookie },
+    });
+    const gmNotes = await app.request("/sheet/lynott/tabs/notes", {
+      headers: { cookie: gmSession.cookie },
+    });
+    const actionsHtml = await actions.text();
+    const equipmentHtml = await equipment.text();
+    const playerNotesHtml = await playerNotes.text();
+    const gmNotesHtml = await gmNotes.text();
+
+    expect(actions.status).toBe(200);
+    expect(actionsHtml).toContain("Action resources");
+    expect(actionsHtml).toContain("Pistol with Repeating Shot infusion");
+    expect(actionsHtml).toContain('class="compact-list"');
+    expect(equipment.status).toBe(200);
+    expect(equipmentHtml).toContain("Breastplate with Enhanced Defence infusion");
+    expect(equipmentHtml).toContain("Range 30/90 ft.");
+    expect(playerNotes.status).toBe(200);
+    expect(playerNotesHtml).toContain("Player notes");
+    expect(playerNotesHtml).not.toContain("Sergeant Kora Steelheart");
+    expect(gmNotes.status).toBe(200);
+    expect(gmNotesHtml).toContain("Game Master notes");
   });
 
   test("rejects unauthenticated, unknown, and invalid sheet tab requests", async () => {

@@ -10,8 +10,9 @@ import type {
   CampaignSummary,
   CharacterAccessContext,
   CharacterAbility,
-  CharacterNote,
   CharacterDefence,
+  CharacterEquipment,
+  CharacterNote,
   CharacterProficiency,
   CharacterRepository,
   CharacterResource,
@@ -138,6 +139,15 @@ interface CharacterResourceRow {
   max_value: number | null;
   resource_key: string;
   resource_type: string;
+}
+
+interface CharacterEquipmentRow {
+  category: string;
+  equipped: number;
+  id: string;
+  name: string;
+  notes: string;
+  quantity: number;
 }
 
 interface CharacterNoteRow {
@@ -456,6 +466,25 @@ class SqliteCharacterRepository implements CharacterRepository {
       )
       .all(characterId)
       .map(toCharacterResource);
+  }
+
+  listEquipment(characterId: string): CharacterEquipment[] {
+    return this.database
+      .query<CharacterEquipmentRow, [string]>(
+        `select id, name, category, quantity, equipped, notes
+         from character_equipment
+         where character_id = ?
+         order by equipped desc, category, name`,
+      )
+      .all(characterId)
+      .map((row) => ({
+        category: row.category,
+        equipped: row.equipped === 1,
+        id: row.id,
+        name: row.name,
+        notes: row.notes,
+        quantity: row.quantity,
+      }));
   }
 
   updateResourceCurrent(

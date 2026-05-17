@@ -10,6 +10,7 @@ export type {
   CharacterAccessContext,
   CharacterAbility,
   CharacterDefence,
+  CharacterEquipment,
   CharacterNote,
   CharacterProficiency,
   CharacterRepository,

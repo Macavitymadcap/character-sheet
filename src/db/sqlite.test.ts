@@ -225,6 +225,32 @@ describe("SQLite repositories", () => {
     ]);
   });
 
+  test("reads equipment for Lynott", () => {
+    runtime = createSqliteDatabase({ path: ":memory:" });
+    const equipment = runtime.repositories.characterRepository.listEquipment(
+      "character_lynott_magulbisson",
+    );
+
+    expect(equipment).toEqual([
+      {
+        category: "armour",
+        equipped: true,
+        id: "equipment_lynott_breastplate",
+        name: "Breastplate with Enhanced Defence infusion",
+        notes: "AC 14 plus Dexterity modifier, improved by the active infusion.",
+        quantity: 1,
+      },
+      {
+        category: "weapon",
+        equipped: true,
+        id: "equipment_lynott_pistol",
+        name: "Pistol with Repeating Shot infusion",
+        notes: "Range 30/90 ft., 1d10+4 magical piercing damage.",
+        quantity: 1,
+      },
+    ]);
+  });
+
   test("updates resources and mirrors hit point fields on the sheet summary", () => {
     runtime = createSqliteDatabase({ path: ":memory:" });
     const characters = runtime.repositories.characterRepository;

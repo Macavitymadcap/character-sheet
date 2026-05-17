@@ -5,8 +5,7 @@ export const sheetTabPanelStyles = /* css */ `
   border-radius: 0.5rem;
   box-shadow: 0 1rem 2.5rem var(--shadow-colour);
   display: grid;
-  gap: 0.75rem;
-  min-height: 18rem;
+  gap: 0.65rem;
   padding: 0.75rem;
   transition:
     background-color var(--theme-transition),
@@ -31,21 +30,38 @@ export const sheetTabPanelStyles = /* css */ `
   margin: 0;
 }
 
-.tab-placeholder-grid {
-  align-content: start;
+.tab-compact-stack {
   display: grid;
-  gap: 0.5rem;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
 }
 
-@media (max-width: 960px) {
-  .tab-placeholder-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+.tab-compact-grid {
+  align-items: start;
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.tab-compact-section {
+  display: grid;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.tab-compact-section h3 {
+  font-size: 0.95rem;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.tab-empty-state {
+  color: var(--muted-text-colour);
+  font-weight: 700;
+  margin: 0;
 }
 
 @media (max-width: 760px) {
-  .tab-placeholder-grid {
+  .tab-compact-grid {
     grid-template-columns: 1fr;
   }
 }

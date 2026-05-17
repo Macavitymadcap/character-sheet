@@ -54,7 +54,10 @@ describe("SheetPage", () => {
       <SheetPage
         activeTab="core"
         appName="Character Sheet"
+        equipment={[]}
+        notes={[]}
         resources={resources}
+        ruleLinks={[]}
         sheet={sheet}
         user={{ displayName: "Lynott Player", role: "player" }}
       />,

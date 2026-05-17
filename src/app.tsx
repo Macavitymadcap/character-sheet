@@ -238,7 +238,10 @@ export const createApp = (dependencies: AppDependencies) => {
       <SheetPage
         activeTab="core"
         appName={dependencies.appName}
+        equipment={dependencies.characterRepository.listEquipment(sheet.id)}
+        notes={dependencies.notesRepository.listNotesForCharacter(sheet.id, session.user.role)}
         resources={dependencies.characterRepository.listResources(sheet.id)}
+        ruleLinks={dependencies.rulesRepository.listRuleLinksForCharacter(sheet.id)}
         sheet={sheet}
         user={session.user}
       />,
@@ -266,7 +269,10 @@ export const createApp = (dependencies: AppDependencies) => {
 
     return context.html(
       <SheetTabPanel
+        equipment={dependencies.characterRepository.listEquipment(sheet.id)}
+        notes={dependencies.notesRepository.listNotesForCharacter(sheet.id, session.user.role)}
         resources={dependencies.characterRepository.listResources(sheet.id)}
+        ruleLinks={dependencies.rulesRepository.listRuleLinksForCharacter(sheet.id)}
         sheet={sheet}
         tabId={tabId}
       />,

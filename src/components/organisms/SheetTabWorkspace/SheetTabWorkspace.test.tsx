@@ -27,7 +27,16 @@ const sheet: CharacterSheetReadModel = {
 
 describe("SheetTabWorkspace", () => {
   test("renders tabs around a separately swappable active panel", () => {
-    const html = render(<SheetTabWorkspace activeTab="skills" resources={[]} sheet={sheet} />);
+    const html = render(
+      <SheetTabWorkspace
+        activeTab="skills"
+        equipment={[]}
+        notes={[]}
+        resources={[]}
+        ruleLinks={[]}
+        sheet={sheet}
+      />,
+    );
 
     expect(html).toContain('<div id="sheet-tab-workspace" class="sheet-tab-workspace">');
     expect(html).toContain('class="sheet-sticky-stack"');
