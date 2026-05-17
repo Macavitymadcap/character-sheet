@@ -233,16 +233,16 @@ erDiagram
 
 ### Rules Data
 
-Rules import starts local-first:
+Rules import is local-first:
 
 1. Read existing local markdown or JSON exports.
 2. Parse metadata and text into structured rule entities.
 3. Normalise spellings to British English.
 4. Resolve source precedence for official 2014 rules and reprints.
-5. Seed only the entities Lynott needs for the MVP.
+5. Seed the local MVP corpus idempotently.
 6. Keep enough source metadata to audit where each imported rule came from.
 
-The importer should be written behind a service boundary so live 5e.tools fetching can be added without changing route code.
+The importer lives behind `RulesImportService` and `RulesSeedRepository`, so live 5e.tools fetching can be added later without changing route code.
 
 ## Lynott MVP Coverage
 
@@ -328,6 +328,6 @@ Release automation can be added after the MVP scaffold exists. Railway and Postg
 - Existing markdown remains useful as source material and human-readable reference, but runtime features should read structured tables.
 - Local password auth is in scope now; external identity providers are not.
 - Admin invite and password reset flows are local workflows without email delivery in this epic.
-- Live 5e.tools fetching is deferred behind an importer boundary; local imports come first.
+- Live 5e.tools fetching is deferred behind the importer boundary; local imports are available through `bun run import:rules`.
 - British English is required across copy, docs, code naming, and CSS variables.
 - The first implementation sequence is documentation and tickets, then source code through accepted tickets.
