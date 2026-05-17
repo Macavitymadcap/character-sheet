@@ -1,4 +1,11 @@
-import type { AuthUser, CharacterResource, CharacterSheetReadModel } from "../../../db";
+import type {
+  AuthUser,
+  CharacterEquipment,
+  CharacterNote,
+  CharacterResource,
+  CharacterRuleLink,
+  CharacterSheetReadModel,
+} from "../../../db";
 import { SiteHeader } from "../../molecules/SiteHeader";
 import { SheetHeader } from "../../organisms/SheetHeader";
 import { type SheetTabId } from "../../organisms/SheetTabs";
@@ -8,12 +15,24 @@ import { Layout } from "../../templates/Layout";
 interface SheetPageProps {
   activeTab: SheetTabId;
   appName: string;
+  equipment: CharacterEquipment[];
+  notes: CharacterNote[];
   resources: CharacterResource[];
+  ruleLinks: CharacterRuleLink[];
   sheet: CharacterSheetReadModel;
   user: Pick<AuthUser, "displayName" | "role">;
 }
 
-export const SheetPage = ({ activeTab, appName, resources, sheet, user }: SheetPageProps) => {
+export const SheetPage = ({
+  activeTab,
+  appName,
+  equipment,
+  notes,
+  resources,
+  ruleLinks,
+  sheet,
+  user,
+}: SheetPageProps) => {
   return (
     <Layout title={`${sheet.name} - ${appName}`}>
       <div class="shell sheet-shell">
@@ -21,8 +40,11 @@ export const SheetPage = ({ activeTab, appName, resources, sheet, user }: SheetP
         <main class="sheet-main" aria-labelledby="sheet-heading">
           <SheetTabWorkspace
             activeTab={activeTab}
+            equipment={equipment}
             header={<SheetHeader resources={resources} sheet={sheet} />}
+            notes={notes}
             resources={resources}
+            ruleLinks={ruleLinks}
             sheet={sheet}
           />
         </main>

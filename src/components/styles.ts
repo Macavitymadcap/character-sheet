@@ -3,6 +3,7 @@ import { badgeStyles } from "./atoms/Badge/Badge.styles";
 import { iconStyles } from "./atoms/Icon/Icon.styles";
 import { panelStyles } from "./atoms/Panel/Panel.styles";
 import { switchStyles } from "./atoms/Switch/Switch.styles";
+import { compactListStyles } from "./molecules/CompactList/CompactList.styles";
 import { formFieldStyles } from "./molecules/FormField/FormField.styles";
 import { labelledOutputStyles } from "./molecules/LabelledOutput/LabelledOutput.styles";
 import { popoverMenuStyles } from "./molecules/PopoverMenu/PopoverMenu.styles";
@@ -23,6 +24,7 @@ export const appStyles = [
   layoutStyles,
   badgeStyles,
   buttonStyles,
+  compactListStyles,
   iconStyles,
   labelledOutputStyles,
   popoverMenuStyles,

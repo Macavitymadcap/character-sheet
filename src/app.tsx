@@ -1,5 +1,6 @@
 import { Hono, type Context } from "hono";
 import { AuthService, requireRole, requireSheetAccess, SessionService } from "./auth";
+import { isRestType, planRestResourceUpdates } from "./characters/rests";
 import { AdminPage } from "./components/pages/Admin";
 import { CampaignPage } from "./components/pages/Campaign";
 import { HomePage } from "./components/pages/Home";
@@ -8,6 +9,7 @@ import { LogoutPage } from "./components/pages/Logout";
 import { SheetPage } from "./components/pages/Sheet";
 import { SheetHeader } from "./components/organisms/SheetHeader";
 import { SheetTabPanel } from "./components/organisms/SheetTabPanel";
+import { SheetTabWorkspace } from "./components/organisms/SheetTabWorkspace";
 import { isSheetTabId } from "./components/organisms/SheetTabs";
 import type {
   AuthRepository,
@@ -238,7 +240,10 @@ export const createApp = (dependencies: AppDependencies) => {
       <SheetPage
         activeTab="core"
         appName={dependencies.appName}
+        equipment={dependencies.characterRepository.listEquipment(sheet.id)}
+        notes={dependencies.notesRepository.listNotesForCharacter(sheet.id, session.user.role)}
         resources={dependencies.characterRepository.listResources(sheet.id)}
+        ruleLinks={dependencies.rulesRepository.listRuleLinksForCharacter(sheet.id)}
         sheet={sheet}
         user={session.user}
       />,
@@ -266,7 +271,10 @@ export const createApp = (dependencies: AppDependencies) => {
 
     return context.html(
       <SheetTabPanel
+        equipment={dependencies.characterRepository.listEquipment(sheet.id)}
+        notes={dependencies.notesRepository.listNotesForCharacter(sheet.id, session.user.role)}
         resources={dependencies.characterRepository.listResources(sheet.id)}
+        ruleLinks={dependencies.rulesRepository.listRuleLinksForCharacter(sheet.id)}
         sheet={sheet}
         tabId={tabId}
       />,
@@ -298,6 +306,8 @@ export const createApp = (dependencies: AppDependencies) => {
     const body = await context.req.parseBody();
     const current = parseFormNumber(body.current);
     const delta = parseFormNumber(body.delta);
+    const tabId = parseSheetTabId(body.tabId);
+    if (body.tabId !== undefined && !tabId) return context.text("Invalid tab", 400);
     if (current === null && delta === null) return context.text("Invalid resource update", 400);
 
     const nextCurrent = current ?? resource.current + Number(delta);
@@ -311,9 +321,77 @@ export const createApp = (dependencies: AppDependencies) => {
     const updatedSheet = dependencies.characterRepository.getSheetById(sheet.id);
     if (!updatedSheet) return context.text("Not found", 404);
 
+    const updatedResources = dependencies.characterRepository.listResources(sheet.id);
+
+    if (tabId) {
+      return context.html(
+        <SheetTabPanel
+          equipment={dependencies.characterRepository.listEquipment(sheet.id)}
+          notes={dependencies.notesRepository.listNotesForCharacter(sheet.id, session.user.role)}
+          resources={updatedResources}
+          ruleLinks={dependencies.rulesRepository.listRuleLinksForCharacter(sheet.id)}
+          sheet={updatedSheet}
+          tabId={tabId}
+        />,
+      );
+    }
+
     return context.html(
       <SheetHeader
-        resources={dependencies.characterRepository.listResources(sheet.id)}
+        resources={updatedResources}
+        sheet={updatedSheet}
+      />,
+    );
+  });
+
+  app.post("/sheet/:characterRef/rests/:restType", async (context) => {
+    const session = readSession(context.req.header("cookie"));
+    if (!session) return context.redirect("/login", 303);
+
+    const sheet = getSheetByRef(context.req.param("characterRef"));
+    if (!sheet) return context.text("Not found", 404);
+
+    const guard = requireSheetAccess({
+      characterId: sheet.id,
+      characterRepository: dependencies.characterRepository,
+      permission: "write",
+      session,
+    });
+    const guarded = guardResponse(context, guard);
+    if (guarded) return guarded;
+
+    const restType = context.req.param("restType");
+    if (!isRestType(restType)) return context.text("Invalid rest", 400);
+
+    const body = await context.req.parseBody();
+    const requestedTabId = parseSheetTabId(body.tabId);
+    if (body.tabId !== undefined && !requestedTabId) {
+      return context.text("Invalid tab", 400);
+    }
+    const tabId = requestedTabId ?? "actions";
+
+    const resources = dependencies.characterRepository.listResources(sheet.id);
+    for (const update of planRestResourceUpdates({ resources, restType })) {
+      dependencies.characterRepository.updateResourceCurrent(
+        sheet.id,
+        update.resourceId,
+        update.current,
+      );
+    }
+
+    const updatedSheet = dependencies.characterRepository.getSheetById(sheet.id);
+    if (!updatedSheet) return context.text("Not found", 404);
+
+    const updatedResources = dependencies.characterRepository.listResources(sheet.id);
+
+    return context.html(
+      <SheetTabWorkspace
+        activeTab={tabId}
+        equipment={dependencies.characterRepository.listEquipment(sheet.id)}
+        header={<SheetHeader resources={updatedResources} sheet={updatedSheet} />}
+        notes={dependencies.notesRepository.listNotesForCharacter(sheet.id, session.user.role)}
+        resources={updatedResources}
+        ruleLinks={dependencies.rulesRepository.listRuleLinksForCharacter(sheet.id)}
         sheet={updatedSheet}
       />,
     );
@@ -331,4 +409,10 @@ function parseFormNumber(value: unknown) {
 
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : null;
+}
+
+function parseSheetTabId(value: unknown) {
+  if (typeof value !== "string" || value.trim() === "") return null;
+
+  return isSheetTabId(value) ? value : null;
 }

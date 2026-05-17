@@ -38,10 +38,10 @@ describe("PasswordService", () => {
 
 describe("AuthService", () => {
   test("verifies seeded local credentials", () => {
-    const user = authService.verifyCredentials("lynott.player@example.local", "password123");
+    const user = authService.verifyCredentials("lynott@example.local", "password123");
 
     expect(user).toMatchObject({
-      email: "lynott.player@example.local",
+      email: "lynott@example.local",
       id: "user_lynott_player",
       role: "player",
     });
@@ -49,7 +49,7 @@ describe("AuthService", () => {
 
   test("rejects missing users and wrong passwords", () => {
     expect(authService.verifyCredentials("missing@example.local", "password123")).toBeNull();
-    expect(authService.verifyCredentials("lynott.player@example.local", "wrong")).toBeNull();
+    expect(authService.verifyCredentials("lynott@example.local", "wrong")).toBeNull();
   });
 
   test("creates and reads invite tokens locally", () => {

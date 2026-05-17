@@ -103,6 +103,15 @@ export interface CharacterResource {
   type: string;
 }
 
+export interface CharacterEquipment {
+  category: string;
+  equipped: boolean;
+  id: string;
+  name: string;
+  notes: string;
+  quantity: number;
+}
+
 export interface ArmourClassSource {
   label: string;
   notes: string;
@@ -155,6 +164,7 @@ export interface CharacterRepository {
   getAccessContext(characterId: string): CharacterAccessContext | null;
   getSheetById(id: string): CharacterSheetReadModel | null;
   getSheetBySlug(slug: string): CharacterSheetReadModel | null;
+  listEquipment(characterId: string): CharacterEquipment[];
   listResources(characterId: string): CharacterResource[];
   updateResourceCurrent(
     characterId: string,

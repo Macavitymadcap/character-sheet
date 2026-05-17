@@ -138,6 +138,8 @@ describe("createApp", () => {
     expect(html).toContain('<section id="sheet-tab-panel" class="sheet-tab-panel"');
     expect(html).toContain('data-tab-id="spellcasting"');
     expect(html).toContain("<h2>Spellcasting</h2>");
+    expect(html).toContain("Mage Hand");
+    expect(html).toContain("1st-level spell slots");
   });
 
   test("updates header resources through HTMX fragments", async () => {
@@ -187,6 +189,110 @@ describe("createApp", () => {
     expect(sheetHtml).toContain('aria-checked="true"');
   });
 
+  test("updates tab resources through HTMX panel fragments", async () => {
+    const { app, sessionService } = createTestApp("Character Sheet");
+    const session = sessionService.createSession("user_lynott_player");
+    const cookie = session.cookie;
+
+    const spendSlot = await app.request(
+      "/sheet/lynott/resources/resource_lynott_spell_slots_1",
+      {
+        body: new URLSearchParams({ delta: "-1", tabId: "spellcasting" }),
+        headers: { cookie, "Content-Type": "application/x-www-form-urlencoded" },
+        method: "PATCH",
+      },
+    );
+    const spendSlotHtml = await spendSlot.text();
+    const spellcasting = await app.request("/sheet/lynott/tabs/spellcasting", {
+      headers: { cookie },
+    });
+    const spellcastingHtml = await spellcasting.text();
+    const invalidTab = await app.request(
+      "/sheet/lynott/resources/resource_lynott_spell_slots_1",
+      {
+        body: new URLSearchParams({ delta: "-1", tabId: "unknown" }),
+        headers: { cookie, "Content-Type": "application/x-www-form-urlencoded" },
+        method: "PATCH",
+      },
+    );
+
+    expect(spendSlot.status).toBe(200);
+    expect(spendSlotHtml).toContain('<section id="sheet-tab-panel" class="sheet-tab-panel"');
+    expect(spendSlotHtml).toContain('data-tab-id="spellcasting"');
+    expect(spendSlotHtml).not.toContain('id="sheet-header"');
+    expect(spendSlotHtml).toContain("2 / 3");
+    expect(spellcasting.status).toBe(200);
+    expect(spellcastingHtml).toContain("2 / 3");
+    expect(invalidTab.status).toBe(400);
+  });
+
+  test("applies long rests and refreshes the full sheet workspace", async () => {
+    const { app, sessionService } = createTestApp("Character Sheet");
+    const session = sessionService.createSession("user_lynott_player");
+    const cookie = session.cookie;
+    const formHeaders = { cookie, "Content-Type": "application/x-www-form-urlencoded" };
+
+    await app.request("/sheet/lynott/resources/resource_lynott_hit_points", {
+      body: new URLSearchParams({ current: "12" }),
+      headers: formHeaders,
+      method: "PATCH",
+    });
+    await app.request("/sheet/lynott/resources/resource_lynott_temporary_hit_points", {
+      body: new URLSearchParams({ current: "5" }),
+      headers: formHeaders,
+      method: "PATCH",
+    });
+    await app.request("/sheet/lynott/resources/resource_lynott_hit_dice", {
+      body: new URLSearchParams({ current: "1" }),
+      headers: formHeaders,
+      method: "PATCH",
+    });
+    await app.request("/sheet/lynott/resources/resource_lynott_spell_slots_1", {
+      body: new URLSearchParams({ current: "0" }),
+      headers: formHeaders,
+      method: "PATCH",
+    });
+    await app.request("/sheet/lynott/resources/resource_lynott_fey_gift", {
+      body: new URLSearchParams({ current: "0" }),
+      headers: formHeaders,
+      method: "PATCH",
+    });
+
+    const longRest = await app.request("/sheet/lynott/rests/long", {
+      body: new URLSearchParams({ tabId: "actions" }),
+      headers: formHeaders,
+      method: "POST",
+    });
+    const html = await longRest.text();
+    const spellcasting = await app.request("/sheet/lynott/tabs/spellcasting", {
+      headers: { cookie },
+    });
+    const spellcastingHtml = await spellcasting.text();
+    const invalidRest = await app.request("/sheet/lynott/rests/watch", {
+      body: new URLSearchParams({ tabId: "actions" }),
+      headers: formHeaders,
+      method: "POST",
+    });
+    const invalidTab = await app.request("/sheet/lynott/rests/long", {
+      body: new URLSearchParams({ tabId: "unknown" }),
+      headers: formHeaders,
+      method: "POST",
+    });
+
+    expect(longRest.status).toBe(200);
+    expect(html).toContain('id="sheet-tab-workspace"');
+    expect(html).toContain('id="sheet-header"');
+    expect(html).toContain('data-tab-id="actions"');
+    expect(html).toContain("31 / 31");
+    expect(html).toContain("Hit dice d8");
+    expect(html).toContain("3 / 4");
+    expect(html).toContain("Fey Gift");
+    expect(html).toContain("2 / 2");
+    expect(spellcastingHtml).toContain("3 / 3");
+    expect(invalidRest.status).toBe(400);
+    expect(invalidTab.status).toBe(400);
+  });
+
   test("renders the Game Master campaign page", async () => {
     const { app, sessionService } = createTestApp("Character Sheet");
     const session = sessionService.createSession("user_game_master");
@@ -228,6 +334,41 @@ describe("createApp", () => {
     expect(skillsHtml).toContain("Disguise kit");
     expect(skillsHtml).toContain("Forgery kit");
     expect(skillsHtml).not.toContain("Covert operations");
+  });
+
+  test("serves compact action, equipment, and role-filtered notes fragments", async () => {
+    const { app, sessionService } = createTestApp("Character Sheet");
+    const playerSession = sessionService.createSession("user_lynott_player");
+    const gmSession = sessionService.createSession("user_game_master");
+    const actions = await app.request("/sheet/lynott/tabs/actions", {
+      headers: { cookie: playerSession.cookie },
+    });
+    const equipment = await app.request("/sheet/lynott/tabs/equipment", {
+      headers: { cookie: playerSession.cookie },
+    });
+    const playerNotes = await app.request("/sheet/lynott/tabs/notes", {
+      headers: { cookie: playerSession.cookie },
+    });
+    const gmNotes = await app.request("/sheet/lynott/tabs/notes", {
+      headers: { cookie: gmSession.cookie },
+    });
+    const actionsHtml = await actions.text();
+    const equipmentHtml = await equipment.text();
+    const playerNotesHtml = await playerNotes.text();
+    const gmNotesHtml = await gmNotes.text();
+
+    expect(actions.status).toBe(200);
+    expect(actionsHtml).toContain("Action resources");
+    expect(actionsHtml).toContain("Pistol with Repeating Shot infusion");
+    expect(actionsHtml).toContain('class="compact-list"');
+    expect(equipment.status).toBe(200);
+    expect(equipmentHtml).toContain("Breastplate with Enhanced Defence infusion");
+    expect(equipmentHtml).toContain("Range 30/90 ft.");
+    expect(playerNotes.status).toBe(200);
+    expect(playerNotesHtml).toContain("Player notes");
+    expect(playerNotesHtml).not.toContain("Sergeant Kora Steelheart");
+    expect(gmNotes.status).toBe(200);
+    expect(gmNotesHtml).toContain("Game Master notes");
   });
 
   test("rejects unauthenticated, unknown, and invalid sheet tab requests", async () => {

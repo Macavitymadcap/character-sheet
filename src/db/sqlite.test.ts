@@ -17,7 +17,7 @@ describe("SQLite repositories", () => {
     expect(users).toEqual([
       {
         displayName: "Lynott Player",
-        email: "lynott.player@example.local",
+        email: "lynott@example.local",
         id: "user_lynott_player",
         role: "player",
         status: "active",
@@ -222,6 +222,56 @@ describe("SQLite repositories", () => {
         max: 3,
         type: "spell_slot",
       },
+      {
+        current: 2,
+        id: "resource_lynott_fey_gift",
+        key: "fey_gift",
+        label: "Fey Gift",
+        max: 2,
+        type: "feature_use",
+      },
+      {
+        current: 2,
+        id: "resource_lynott_fortune_from_the_many",
+        key: "fortune_from_the_many",
+        label: "Fortune from the Many",
+        max: 2,
+        type: "feature_use",
+      },
+      {
+        current: 1,
+        id: "resource_lynott_eldritch_cannon",
+        key: "eldritch_cannon",
+        label: "Eldritch Cannon",
+        max: 1,
+        type: "feature_use",
+      },
+    ]);
+  });
+
+  test("reads equipment for Lynott", () => {
+    runtime = createSqliteDatabase({ path: ":memory:" });
+    const equipment = runtime.repositories.characterRepository.listEquipment(
+      "character_lynott_magulbisson",
+    );
+
+    expect(equipment).toEqual([
+      {
+        category: "armour",
+        equipped: true,
+        id: "equipment_lynott_breastplate",
+        name: "Breastplate with Enhanced Defence infusion",
+        notes: "AC 14 plus Dexterity modifier, improved by the active infusion.",
+        quantity: 1,
+      },
+      {
+        category: "weapon",
+        equipped: true,
+        id: "equipment_lynott_pistol",
+        name: "Pistol with Repeating Shot infusion",
+        notes: "Range 30/90 ft., 1d10+4 magical piercing damage.",
+        quantity: 1,
+      },
     ]);
   });
 
@@ -293,6 +343,62 @@ describe("SQLite repositories", () => {
       runtime.repositories.rulesRepository.listRuleLinksForCharacter("character_lynott_magulbisson"),
     ).toEqual([
       {
+        entityName: "Magical Tinkering",
+        entityType: "class_feature",
+        prepared: false,
+        selected: true,
+        selectionType: "class_feature",
+        sourceName: "Tasha's Cauldron of Everything",
+      },
+      {
+        entityName: "Spellcasting",
+        entityType: "class_feature",
+        prepared: false,
+        selected: true,
+        selectionType: "class_feature",
+        sourceName: "Tasha's Cauldron of Everything",
+      },
+      {
+        entityName: "Infuse Item",
+        entityType: "class_feature",
+        prepared: false,
+        selected: true,
+        selectionType: "class_feature",
+        sourceName: "Tasha's Cauldron of Everything",
+      },
+      {
+        entityName: "The Right Tool for the Job",
+        entityType: "class_feature",
+        prepared: false,
+        selected: true,
+        selectionType: "class_feature",
+        sourceName: "Tasha's Cauldron of Everything",
+      },
+      {
+        entityName: "Eldritch Cannon",
+        entityType: "subclass_feature",
+        prepared: false,
+        selected: true,
+        selectionType: "subclass_feature",
+        sourceName: "Tasha's Cauldron of Everything",
+      },
+      {
+        entityName: "Fey Gift",
+        entityType: "species_trait",
+        prepared: false,
+        selected: true,
+        selectionType: "species_trait",
+        sourceName: "Mordenkainen Presents: Monsters of the Multiverse",
+      },
+      {
+        entityName: "Fortune from the Many",
+        entityType: "species_trait",
+        prepared: false,
+        selected: true,
+        selectionType: "species_trait",
+        sourceName: "Mordenkainen Presents: Monsters of the Multiverse",
+      },
+      {
         entityName: "Enhanced Defence",
         entityType: "infusion",
         prepared: false,
@@ -314,6 +420,62 @@ describe("SQLite repositories", () => {
         prepared: true,
         selected: true,
         selectionType: "known_cantrip",
+        sourceName: "Player's Handbook",
+      },
+      {
+        entityName: "Mending",
+        entityType: "spell",
+        prepared: true,
+        selected: true,
+        selectionType: "known_cantrip",
+        sourceName: "Player's Handbook",
+      },
+      {
+        entityName: "Disguise Self",
+        entityType: "spell",
+        prepared: true,
+        selected: true,
+        selectionType: "prepared_spell",
+        sourceName: "Player's Handbook",
+      },
+      {
+        entityName: "Cure Wounds",
+        entityType: "spell",
+        prepared: true,
+        selected: true,
+        selectionType: "prepared_spell",
+        sourceName: "Player's Handbook",
+      },
+      {
+        entityName: "Grease",
+        entityType: "spell",
+        prepared: true,
+        selected: true,
+        selectionType: "prepared_spell",
+        sourceName: "Player's Handbook",
+      },
+      {
+        entityName: "Absorb Elements",
+        entityType: "spell",
+        prepared: true,
+        selected: true,
+        selectionType: "prepared_spell",
+        sourceName: "Xanathar's Guide to Everything",
+      },
+      {
+        entityName: "Shield",
+        entityType: "spell",
+        prepared: true,
+        selected: true,
+        selectionType: "artillerist_spell",
+        sourceName: "Player's Handbook",
+      },
+      {
+        entityName: "Thunderwave",
+        entityType: "spell",
+        prepared: true,
+        selected: true,
+        selectionType: "artillerist_spell",
         sourceName: "Player's Handbook",
       },
     ]);

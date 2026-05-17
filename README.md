@@ -52,7 +52,7 @@ After signing in as the seeded player, Lynott's sheet is available at
 `/sheet/lynott`. The sheet tab fragments are served from
 `/sheet/lynott/tabs/:tabId` for HTMX swaps. Those swaps target only the active panel, so the sticky tab strip keeps its scroll position while the active tab state stays aligned with the displayed content.
 
-The sheet header includes HTMX-backed hit point controls for current and temporary HP, plus an inspiration switch. These mutate `character_resources`, refresh the compact header fragment, and keep the character summary hit point fields in sync.
+The sheet header includes HTMX-backed hit point controls for current and temporary HP, plus an inspiration switch. Action and spellcasting tab resources use the same mutation route from compact inline controls. Long rests recover hit points, spell slots, feature uses, and hit dice through a workspace-level HTMX swap so the compact header and active tab stay in sync. These flows mutate `character_resources`, refresh the relevant compact fragment, and keep the character summary hit point fields in sync.
 
 Current environment variables:
 
@@ -69,7 +69,7 @@ Local seed users are available for development:
 
 | Role | Email | Password |
 | --- | --- | --- |
-| Player | `lynott.player@example.local` | `password123` |
+| Player | `lynott@example.local` | `password123` |
 | Game Master | `gm@example.local` | `password123` |
 | Admin | `admin@example.local` | `password123` |
 
