@@ -1,5 +1,4 @@
 import type { CharacterResource, CharacterSheetReadModel } from "../../../db";
-import { LabelledOutput } from "../../atoms/LabelledOutput";
 
 interface SheetHeaderProps {
   resources: CharacterResource[];
@@ -14,22 +13,35 @@ export const SheetHeader = ({ resources, sheet }: SheetHeaderProps) => {
           {sheet.name}
         </h1>
         <p class="sheet-subtitle">
-          {sheet.species} {formatClassSummary(sheet)}
+          {sheet.species} · Level {sheet.level} {formatClassSummary(sheet)}
         </p>
       </div>
-      <div class="sheet-header-grid" aria-label="Sheet summary">
-        <LabelledOutput label="Name" value={sheet.name} />
-        <LabelledOutput label="Species" value={sheet.species} />
-        <LabelledOutput label="Class" value={formatClassSummary(sheet)} />
-        <LabelledOutput label="Level" value={String(sheet.level)} />
-        <LabelledOutput label="Armour class" value={String(sheet.armourClass)} />
-        <LabelledOutput label="Hit points" value={formatHitPoints(sheet)} />
-        <LabelledOutput label="Initiative" value={formatModifier(sheet.initiative)} />
-        <LabelledOutput label="Conditions" value={formatConditions(resources)} />
-        <LabelledOutput label="Inspiration" value={formatInspiration(resources)} />
-        <LabelledOutput label="Rest" value="Short / long" />
-        <LabelledOutput label="Settings" value="Local" />
-      </div>
+      <dl class="sheet-header-grid" aria-label="Sheet summary">
+        <div class="sheet-metric">
+          <dt>AC</dt>
+          <dd>{sheet.armourClass}</dd>
+        </div>
+        <div class="sheet-metric">
+          <dt>HP</dt>
+          <dd>{formatHitPoints(sheet)}</dd>
+        </div>
+        <div class="sheet-metric">
+          <dt>Init</dt>
+          <dd>{formatModifier(sheet.initiative)}</dd>
+        </div>
+        <div class="sheet-metric">
+          <dt>Speed</dt>
+          <dd>{sheet.speedFeet} ft</dd>
+        </div>
+        <div class="sheet-metric sheet-metric-wide">
+          <dt>State</dt>
+          <dd>{formatConditions(resources)}</dd>
+        </div>
+        <div class="sheet-metric">
+          <dt>Insp</dt>
+          <dd>{formatInspiration(resources)}</dd>
+        </div>
+      </dl>
     </section>
   );
 };

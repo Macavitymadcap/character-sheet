@@ -54,13 +54,14 @@ describe("SheetHeader", () => {
 
     expect(html).toContain('<section id="sheet-header" class="sheet-header" aria-labelledby="sheet-heading">');
     expect(html).toContain('<h1 id="sheet-heading" class="sheet-heading">Lynott Magulbisson</h1>');
-    expect(html).toContain('<span class="labelled-output-label">Armour class</span>');
-    expect(html).toContain('<strong class="labelled-output-value">17</strong>');
-    expect(html).toContain('<span class="labelled-output-label">Hit points</span>');
-    expect(html).toContain('<strong class="labelled-output-value">31 / 31</strong>');
-    expect(html).toContain('<span class="labelled-output-label">Conditions</span>');
-    expect(html).toContain('<strong class="labelled-output-value">None</strong>');
-    expect(html).toContain('<span class="labelled-output-label">Settings</span>');
+    expect(html).toContain("Hobgoblin · Level 4 Artillerist Artificer");
+    expect(html).toContain("<dt>AC</dt>");
+    expect(html).toContain("<dd>17</dd>");
+    expect(html).toContain("<dt>HP</dt>");
+    expect(html).toContain("<dd>31 / 31</dd>");
+    expect(html).toContain("<dt>State</dt>");
+    expect(html).toContain("<dd>None</dd>");
+    expect(html).not.toContain("<dt>Settings</dt>");
   });
 
   test("renders temporary hit points, active conditions, and inspiration", () => {
@@ -89,8 +90,8 @@ describe("SheetHeader", () => {
       />,
     );
 
-    expect(html).toContain('<strong class="labelled-output-value">22 / 31 + 5 temporary</strong>');
-    expect(html).toContain('<strong class="labelled-output-value">Poisoned</strong>');
-    expect(html).toContain('<strong class="labelled-output-value">Yes</strong>');
+    expect(html).toContain("<dd>22 / 31 + 5 temporary</dd>");
+    expect(html).toContain("<dd>Poisoned</dd>");
+    expect(html).toContain("<dd>Yes</dd>");
   });
 });

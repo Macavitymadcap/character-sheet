@@ -14,7 +14,7 @@ describe("SheetTabs", () => {
     expect(html).toContain('id="sheet-tab-core"');
     expect(html).toContain('aria-selected="true"');
     expect(html).toContain('hx-get="/sheet/character_lynott_magulbisson/tabs/core"');
-    expect(html).toContain('hx-target="#sheet-tab-panel"');
+    expect(html).toContain('hx-target="#sheet-tab-workspace"');
     expect(html).toContain(">Spellcasting</a>");
     expect(html).toContain(">Notes</a>");
   });

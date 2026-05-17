@@ -63,6 +63,7 @@ describe("SheetPage", () => {
     expect(html).toContain("<title>Lynott Magulbisson - Character Sheet</title>");
     expect(html).toContain('id="site-header"');
     expect(html).toContain('id="sheet-header"');
+    expect(html).toContain('id="sheet-tab-workspace"');
     expect(html).toContain('id="sheet-tabs"');
     expect(html).toContain('id="sheet-tab-panel"');
   });

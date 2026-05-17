@@ -10,6 +10,8 @@ describe("AdminPage", () => {
     );
 
     expect(html).toContain("<title>Character Sheet</title>");
+    expect(html).toContain('<header id="site-header" class="site-header">');
+    expect(html).toContain('<a href="/admin" aria-current="page">Admin</a>');
     expect(html).toContain("Admin");
     expect(html).toContain("Site Admin");
     expect(html).toContain('<section class="panel" data-width="default" aria-labelledby="admin-heading">');

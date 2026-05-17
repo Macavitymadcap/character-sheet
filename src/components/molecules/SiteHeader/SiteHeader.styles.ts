@@ -4,14 +4,18 @@ export const siteHeaderStyles = /* css */ `
   background: var(--surface-colour);
   border: 1px solid var(--border-colour);
   border-radius: 0.5rem;
-  box-shadow: 0 1rem 2.5rem rgb(15 23 42 / 0.08);
+  box-shadow: 0 1rem 2.5rem var(--shadow-colour);
   display: grid;
-  gap: 0.75rem;
-  grid-template-columns: minmax(12rem, 1fr) auto minmax(10rem, 1fr);
-  min-height: 4rem;
-  padding: 0.85rem 1rem;
+  gap: 0.6rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+  min-height: 3.5rem;
+  padding: 0.6rem;
   position: sticky;
-  top: var(--page-gutter);
+  top: 0.5rem;
+  transition:
+    background-color var(--theme-transition),
+    border-color var(--theme-transition),
+    box-shadow var(--theme-transition);
   z-index: 5;
 }
 
@@ -23,7 +27,7 @@ export const siteHeaderStyles = /* css */ `
 
 .site-title {
   display: block;
-  font-size: 1.45rem;
+  font-size: 1.1rem;
   line-height: 1.1;
 }
 
@@ -32,20 +36,23 @@ export const siteHeaderStyles = /* css */ `
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  justify-content: center;
+  grid-column: 1 / -1;
+  justify-content: flex-start;
 }
 
 .site-nav a,
-.site-login-link {
+.site-auth-link {
   border: 1px solid transparent;
   border-radius: 0.375rem;
   color: var(--muted-text-colour);
   font-weight: 700;
-  padding: 0.45rem 0.6rem;
+  min-height: 2.25rem;
+  padding: 0.5rem 0.6rem;
   text-decoration: none;
 }
 
-.site-nav a[aria-current="page"] {
+.site-nav a[aria-current="page"],
+.site-auth-link[aria-current="page"] {
   background: var(--nav-active-background-colour);
   border-color: var(--nav-active-border-colour);
   color: var(--nav-active-text-colour);
@@ -54,19 +61,14 @@ export const siteHeaderStyles = /* css */ `
 .site-actions {
   align-items: center;
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
+  gap: 0.5rem;
   justify-content: flex-end;
-}
-
-.site-actions form {
-  margin: 0;
 }
 
 .site-user {
   color: var(--muted-text-colour);
-  display: grid;
-  font-size: 0.88rem;
+  display: none;
+  font-size: 0.8rem;
   font-weight: 700;
   gap: 0.1rem;
   line-height: 1.2;
@@ -74,19 +76,35 @@ export const siteHeaderStyles = /* css */ `
   text-align: right;
 }
 
-@media (max-width: 760px) {
+@media (min-width: 560px) {
   .site-header {
-    align-items: stretch;
-    grid-template-columns: 1fr;
+    padding: 0.75rem;
   }
 
-  .site-nav,
-  .site-actions {
-    justify-content: flex-start;
+  .site-title {
+    font-size: 1.25rem;
   }
 
   .site-user {
-    text-align: left;
+    display: grid;
+  }
+}
+
+@media (min-width: 820px) {
+  .site-header {
+    grid-template-columns: minmax(12rem, 1fr) auto minmax(13rem, 1fr);
+    min-height: 4rem;
+    padding: 0.85rem 1rem;
+    top: var(--page-gutter);
+  }
+
+  .site-title {
+    font-size: 1.45rem;
+  }
+
+  .site-nav {
+    grid-column: auto;
+    justify-content: center;
   }
 }
 `;

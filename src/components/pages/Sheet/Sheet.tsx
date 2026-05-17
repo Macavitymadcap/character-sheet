@@ -1,8 +1,8 @@
 import type { AuthUser, CharacterResource, CharacterSheetReadModel } from "../../../db";
 import { SiteHeader } from "../../molecules/SiteHeader";
 import { SheetHeader } from "../../organisms/SheetHeader";
-import { SheetTabPanel } from "../../organisms/SheetTabPanel";
-import { SheetTabs, type SheetTabId } from "../../organisms/SheetTabs";
+import { type SheetTabId } from "../../organisms/SheetTabs";
+import { SheetTabWorkspace } from "../../organisms/SheetTabWorkspace";
 import { Layout } from "../../templates/Layout";
 
 interface SheetPageProps {
@@ -20,8 +20,7 @@ export const SheetPage = ({ activeTab, appName, resources, sheet, user }: SheetP
         <SiteHeader appName={appName} currentSection="sheet" user={user} />
         <main class="sheet-main" aria-labelledby="sheet-heading">
           <SheetHeader resources={resources} sheet={sheet} />
-          <SheetTabs activeTab={activeTab} characterId={sheet.id} />
-          <SheetTabPanel resources={resources} sheet={sheet} tabId={activeTab} />
+          <SheetTabWorkspace activeTab={activeTab} resources={resources} sheet={sheet} />
         </main>
       </div>
     </Layout>

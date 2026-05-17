@@ -1,10 +1,12 @@
 import { Hono, type Context } from "hono";
 import { AuthService, requireRole, requireSheetAccess, SessionService } from "./auth";
 import { AdminPage } from "./components/pages/Admin";
+import { CampaignPage } from "./components/pages/Campaign";
 import { HomePage } from "./components/pages/Home";
 import { LoginPage } from "./components/pages/Login";
+import { LogoutPage } from "./components/pages/Logout";
 import { SheetPage } from "./components/pages/Sheet";
-import { SheetTabPanel } from "./components/organisms/SheetTabPanel";
+import { SheetTabWorkspace } from "./components/organisms/SheetTabWorkspace";
 import { isSheetTabId } from "./components/organisms/SheetTabs";
 import type {
   AuthRepository,
@@ -34,6 +36,13 @@ export const createApp = (dependencies: AppDependencies) => {
   const readSession = (cookieHeader: string | undefined) =>
     dependencies.sessionService.readSession(cookieHeader);
 
+  const defaultRouteForRole = (role: UserRole) => {
+    if (role === "admin") return "/admin";
+    if (role === "game_master") return "/campaigns/rovnost-shadows";
+
+    return "/sheet/character_lynott_magulbisson";
+  };
+
   const guardResponse = (context: Context, result: ReturnType<typeof requireRole>) => {
     if (result.ok) return null;
     if (result.reason === "unauthenticated") return context.redirect("/login", 303);
@@ -44,14 +53,14 @@ export const createApp = (dependencies: AppDependencies) => {
 
   app.get("/", (context) => {
     const session = readSession(context.req.header("cookie"));
-    if (!session) return context.redirect("/login", 303);
+    if (session) return context.redirect(defaultRouteForRole(session.user.role), 303);
 
-    return context.html(<HomePage appName={dependencies.appName} user={session.user} />);
+    return context.html(<HomePage appName={dependencies.appName} />);
   });
 
   app.get("/login", (context) => {
     const session = readSession(context.req.header("cookie"));
-    if (session) return context.redirect("/", 303);
+    if (session) return context.redirect(defaultRouteForRole(session.user.role), 303);
 
     return context.html(<LoginPage appName={dependencies.appName} />);
   });
@@ -72,14 +81,20 @@ export const createApp = (dependencies: AppDependencies) => {
     const session = dependencies.sessionService.createSession(user.id);
     context.header("Set-Cookie", session.cookie);
 
-    return context.redirect("/", 303);
+    return context.redirect(defaultRouteForRole(user.role), 303);
+  });
+
+  app.get("/logout", (context) => {
+    const session = readSession(context.req.header("cookie"));
+
+    return context.html(<LogoutPage appName={dependencies.appName} user={session?.user} />);
   });
 
   app.post("/logout", (context) => {
     dependencies.sessionService.logout(context.req.header("cookie"));
     context.header("Set-Cookie", dependencies.sessionService.clearCookie());
 
-    return context.redirect("/login", 303);
+    return context.redirect("/", 303);
   });
 
   app.get("/admin", (context) => {
@@ -90,6 +105,28 @@ export const createApp = (dependencies: AppDependencies) => {
     if (!session) return context.redirect("/login", 303);
 
     return context.html(<AdminPage appName={dependencies.appName} user={session.user} />);
+  });
+
+  app.get("/campaigns/:campaignSlug", (context) => {
+    const session = readSession(context.req.header("cookie"));
+    const guard = requireRole(session, ["game_master"]);
+    const guarded = guardResponse(context, guard);
+    if (guarded) return guarded;
+    if (!session) return context.redirect("/login", 303);
+
+    const campaign = dependencies.campaignRepository.getCampaignBySlug(
+      context.req.param("campaignSlug"),
+    );
+    if (!campaign) return context.text("Not found", 404);
+
+    return context.html(
+      <CampaignPage
+        appName={dependencies.appName}
+        campaign={campaign}
+        members={dependencies.campaignRepository.listMembers(campaign.id)}
+        user={session.user}
+      />,
+    );
   });
 
   app.post("/admin/invites", async (context) => {
@@ -220,10 +257,10 @@ export const createApp = (dependencies: AppDependencies) => {
     if (!sheet) return context.text("Not found", 404);
 
     return context.html(
-      <SheetTabPanel
+      <SheetTabWorkspace
+        activeTab={tabId}
         resources={dependencies.characterRepository.listResources(characterId)}
         sheet={sheet}
-        tabId={tabId}
       />,
     );
   });

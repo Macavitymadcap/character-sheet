@@ -15,8 +15,12 @@ describe("Layout", () => {
     expect(html).toContain('<meta charset="UTF-8"/>');
     expect(html).toContain('<meta name="viewport" content="width=device-width, initial-scale=1.0"/>');
     expect(html).toContain("<title>Test Sheet</title>");
+    expect(html).toContain("character-sheet-theme");
+    expect(html).toContain('document.querySelector("[data-theme-toggle]")');
+    expect(html).toContain("Material+Symbols+Outlined");
     expect(html).toContain("https://unpkg.com/htmx.org");
     expect(html).toContain("<style>");
+    expect(html).toContain(':root[data-theme="dark"]');
     expect(html).toContain("--background-colour");
     expect(html).toContain("--surface-colour");
     expect(html).toContain("<main>Body</main>");

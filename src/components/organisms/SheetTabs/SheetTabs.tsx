@@ -18,7 +18,7 @@ export const SheetTabs = ({ activeTab, characterId }: SheetTabsProps) => {
           href={`/sheet/${characterId}/tabs/${tab.id}`}
           hx-get={`/sheet/${characterId}/tabs/${tab.id}`}
           hx-swap="outerHTML"
-          hx-target="#sheet-tab-panel"
+          hx-target="#sheet-tab-workspace"
           role="tab"
         >
           {tab.label}

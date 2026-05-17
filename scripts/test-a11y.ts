@@ -25,11 +25,13 @@ const baseUrl = `http://127.0.0.1:${server.port}`;
 try {
   await waitForHttp(`${baseUrl}/healthz`);
   const playerCookie = await login("lynott.player@example.local");
+  const gmCookie = await login("gm@example.local");
   const adminCookie = await login("admin@example.local");
 
+  await runPa11y("home", `${baseUrl}/`);
   await runPa11y("login", `${baseUrl}/login`);
-  await runPa11y("home", `${baseUrl}/`, playerCookie);
   await runPa11y("sheet", `${baseUrl}/sheet/character_lynott_magulbisson`, playerCookie);
+  await runPa11y("campaign", `${baseUrl}/campaigns/rovnost-shadows`, gmCookie);
   await runPa11y("admin", `${baseUrl}/admin`, adminCookie);
 } finally {
   server.stop(true);

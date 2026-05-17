@@ -44,7 +44,7 @@ function getPlaceholderOutputs(
 
   const outputs: Record<SheetTabId, Array<{ label: string; value: string }>> = {
     actions: [
-      { label: "Action records", value: "Ready" },
+      { label: "Action records", value: "Resources" },
       { label: "Tracked resources", value: resourceCount },
     ],
     background: [
@@ -69,7 +69,7 @@ function getPlaceholderOutputs(
     ],
     skills: [
       { label: "Trained skills", value: trainedSkills },
-      { label: "Training model", value: "SQLite" },
+      { label: "Training notes", value: "Grouped" },
     ],
     spellcasting: [
       { label: "Spellcasting ability", value: "Intelligence" },

@@ -1,8 +1,6 @@
-import { Badge } from "../../atoms/Badge";
-import { LabelledOutput } from "../../atoms/LabelledOutput";
+import type { AuthUser } from "../../../db";
 import { SiteHeader } from "../../molecules/SiteHeader";
 import { Layout } from "../../templates/Layout";
-import type { AuthUser } from "../../../db";
 
 interface HomePageProps {
   appName: string;
@@ -12,76 +10,40 @@ interface HomePageProps {
   };
 }
 
-const keyStats = [
-  { label: "Armour class", value: "17" },
-  { label: "Hit points", value: "31" },
-  { label: "Initiative", value: "+3" },
-  { label: "Speed", value: "30 ft" },
-];
-
 export const HomePage = ({ appName, user }: HomePageProps) => {
   return (
     <Layout title={appName}>
-      <div class="shell">
-        <SiteHeader appName={appName} currentSection="sheet" user={user} />
+      <div class="shell home-shell">
+        <SiteHeader appName={appName} currentSection="home" user={user} />
 
-        <main class="home-main">
-          {user ? (
-            <p class="account-summary">
-              {user.displayName} · {user.role}
+        <main class="home-main" aria-labelledby="home-heading">
+          <section class="home-intro">
+            <p class="home-kicker">Rovnost Shadows</p>
+            <h1 id="home-heading">Character Sheet</h1>
+            <p>
+              Local table tools for Lynott, the Game Master, and campaign administration.
             </p>
-          ) : null}
-          <section class="dashboard-panel" aria-labelledby="character-heading">
-            <div class="character-summary">
-              <div class="character-heading">
-                <div>
-                  <h2 id="character-heading" class="character-name">
-                    Lynott Magulbisson
-                  </h2>
-                  <p class="character-kicker">Level 4 hobgoblin Artillerist Artificer</p>
-                </div>
-                <div class="badge-row" aria-label="Character state">
-                  <Badge tone="accent">Ready</Badge>
-                  <Badge tone="warning">Local SQLite</Badge>
-                </div>
-              </div>
-
-              <div class="stat-grid" aria-label="Combat summary">
-                {keyStats.map((stat) => (
-                  <LabelledOutput label={stat.label} value={stat.value} />
-                ))}
-              </div>
+            <div class="home-actions">
+              {user ? (
+                <a class="action-link" href={getDestination(user.role)}>
+                  Continue
+                </a>
+              ) : (
+                <a class="action-link" href="/login">
+                  Sign in
+                </a>
+              )}
             </div>
-
-            <section aria-labelledby="sheet-sections-heading">
-              <h3 id="sheet-sections-heading" class="section-heading">
-                Sheet sections
-              </h3>
-              <dl class="sheet-list">
-                <div class="sheet-row">
-                  <dt>Core</dt>
-                  <dd>Abilities, saves, senses, speed, and defence</dd>
-                </div>
-                <div class="sheet-row">
-                  <dt>Actions</dt>
-                  <dd>Weapons, spells, features, and rest actions</dd>
-                </div>
-                <div class="sheet-row">
-                  <dt>Notes</dt>
-                  <dd>Player notes and Game Master records</dd>
-                </div>
-              </dl>
-            </section>
           </section>
-
-          <div class="action-bar">
-            <strong>Runtime scaffold online</strong>
-            <a class="action-link" href="/sheet/character_lynott_magulbisson">
-              Open sheet
-            </a>
-          </div>
         </main>
       </div>
     </Layout>
   );
 };
+
+function getDestination(role: AuthUser["role"]) {
+  if (role === "admin") return "/admin";
+  if (role === "game_master") return "/campaigns/rovnost-shadows";
+
+  return "/sheet/character_lynott_magulbisson";
+}

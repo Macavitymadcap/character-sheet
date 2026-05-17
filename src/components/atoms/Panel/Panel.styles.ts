@@ -6,10 +6,13 @@ export const panelStyles = /* css */ `
   display: grid;
   gap: 1rem;
   padding: 1rem;
+  transition:
+    background-color var(--theme-transition),
+    border-color var(--theme-transition);
 }
 
 .panel[data-width="narrow"] {
-  box-shadow: 0 1rem 2.5rem rgb(15 23 42 / 0.08);
+  box-shadow: 0 1rem 2.5rem var(--shadow-colour);
   margin-inline: auto;
   max-width: 28rem;
   width: 100%;

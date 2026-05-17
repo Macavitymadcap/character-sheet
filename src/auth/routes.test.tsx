@@ -49,7 +49,7 @@ const login = async (email: string) => {
 
 describe("auth routes", () => {
   test("redirects protected pages to login", async () => {
-    const response = await app.request("/");
+    const response = await app.request("/sheet/character_lynott_magulbisson");
 
     expect(response.status).toBe(303);
     expect(response.headers.get("location")).toBe("/login");
@@ -72,7 +72,7 @@ describe("auth routes", () => {
     });
 
     expect(response.status).toBe(303);
-    expect(response.headers.get("location")).toBe("/");
+    expect(response.headers.get("location")).toBe("/sheet/character_lynott_magulbisson");
     expect(response.headers.get("set-cookie")).toContain("character_sheet_session=");
     expect(response.headers.get("set-cookie")).toContain("HttpOnly");
   });
@@ -90,16 +90,20 @@ describe("auth routes", () => {
   test("renders the home page for authenticated users and logs out", async () => {
     const cookie = await login("lynott.player@example.local");
     const home = await app.request("/", { headers: { cookie } });
+    const logoutPage = await app.request("/logout", { headers: { cookie } });
     const logout = await app.request("/logout", { headers: { cookie }, method: "POST" });
     const afterLogout = await app.request("/", { headers: { cookie } });
+    const afterLogoutHtml = await afterLogout.text();
 
-    expect(home.status).toBe(200);
-    expect(await home.text()).toContain("Lynott Player");
+    expect(home.status).toBe(303);
+    expect(home.headers.get("location")).toBe("/sheet/character_lynott_magulbisson");
+    expect(logoutPage.status).toBe(200);
+    expect(await logoutPage.text()).toContain("End the current session for Lynott Player.");
     expect(logout.status).toBe(303);
-    expect(logout.headers.get("location")).toBe("/login");
+    expect(logout.headers.get("location")).toBe("/");
     expect(logout.headers.get("set-cookie")).toContain("character_sheet_session=;");
-    expect(afterLogout.status).toBe(303);
-    expect(afterLogout.headers.get("location")).toBe("/login");
+    expect(afterLogout.status).toBe(200);
+    expect(afterLogoutHtml).toContain('<a class="site-auth-link" href="/login">Sign in</a>');
   });
 });
 
@@ -107,9 +111,16 @@ describe("admin and sheet guards", () => {
   test("separates admin and Game Master permissions", async () => {
     const adminCookie = await login("admin@example.local");
     const gmCookie = await login("gm@example.local");
+    const playerCookie = await login("lynott.player@example.local");
 
     const adminPage = await app.request("/admin", { headers: { cookie: adminCookie } });
     const gmAdminPage = await app.request("/admin", { headers: { cookie: gmCookie } });
+    const gmCampaignPage = await app.request("/campaigns/rovnost-shadows", {
+      headers: { cookie: gmCookie },
+    });
+    const playerCampaignPage = await app.request("/campaigns/rovnost-shadows", {
+      headers: { cookie: playerCookie },
+    });
     const gmSheetWrite = await app.request(
       "/sheet/character_lynott_magulbisson/resources/resource_lynott_hit_points",
       { headers: { cookie: gmCookie }, method: "PATCH" },
@@ -122,6 +133,9 @@ describe("admin and sheet guards", () => {
     expect(adminPage.status).toBe(200);
     expect(await adminPage.text()).toContain("Admin");
     expect(gmAdminPage.status).toBe(403);
+    expect(gmCampaignPage.status).toBe(200);
+    expect(await gmCampaignPage.text()).toContain("Rovnost Shadows");
+    expect(playerCampaignPage.status).toBe(403);
     expect(gmSheetWrite.status).toBe(204);
     expect(adminSheetWrite.status).toBe(403);
   });

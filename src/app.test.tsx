@@ -47,18 +47,35 @@ describe("createApp", () => {
     expect(await response.json()).toEqual({ ok: true });
   });
 
-  test("renders the home page as a full HTML document", async () => {
-    const { app, sessionService } = createTestApp("Character Sheet");
-    const session = sessionService.createSession("user_lynott_player");
-    const response = await app.request("/", { headers: { cookie: session.cookie } });
+  test("renders the public home page as a full HTML document", async () => {
+    const { app } = createTestApp("Character Sheet");
+    const response = await app.request("/");
     const html = await response.text();
 
     expect(response.status).toBe(200);
     expect(response.headers.get("content-type")).toContain("text/html");
     expect(html).toContain('<html lang="en-GB">');
     expect(html).toContain("<title>Character Sheet</title>");
-    expect(html).toContain("Character Sheet");
-    expect(html).toContain("Lynott Magulbisson");
+    expect(html).toContain('<h1 id="home-heading">Character Sheet</h1>');
+    expect(html).toContain('<a class="site-auth-link" href="/login">Sign in</a>');
+  });
+
+  test("redirects signed-in users to their role home", async () => {
+    const { app, sessionService } = createTestApp("Character Sheet");
+    const playerSession = sessionService.createSession("user_lynott_player");
+    const gmSession = sessionService.createSession("user_game_master");
+    const adminSession = sessionService.createSession("user_site_admin");
+
+    const player = await app.request("/", { headers: { cookie: playerSession.cookie } });
+    const gm = await app.request("/", { headers: { cookie: gmSession.cookie } });
+    const admin = await app.request("/", { headers: { cookie: adminSession.cookie } });
+
+    expect(player.status).toBe(303);
+    expect(player.headers.get("location")).toBe("/sheet/character_lynott_magulbisson");
+    expect(gm.status).toBe(303);
+    expect(gm.headers.get("location")).toBe("/campaigns/rovnost-shadows");
+    expect(admin.status).toBe(303);
+    expect(admin.headers.get("location")).toBe("/admin");
   });
 
   test("renders Lynott's authenticated sheet page with stable shell anchors", async () => {
@@ -75,10 +92,9 @@ describe("createApp", () => {
     expect(html).toContain('id="site-header"');
     expect(html).toContain('id="sheet-header"');
     expect(html).toContain('id="sheet-tabs"');
+    expect(html).toContain('id="sheet-tab-workspace"');
     expect(html).toContain('id="sheet-tab-panel"');
-    expect(html).toContain("Armour class");
     expect(html).toContain("17");
-    expect(html).toContain("Short / long");
     expect(html).toContain("Abilities and saves");
     expect(html).toContain("Darkvision");
     expect(html).toContain("Breastplate");
@@ -103,9 +119,26 @@ describe("createApp", () => {
     expect(response.status).toBe(200);
     expect(response.headers.get("content-type")).toContain("text/html");
     expect(html).not.toContain("<html");
+    expect(html).toContain('<div id="sheet-tab-workspace" class="sheet-tab-workspace">');
     expect(html).toContain('<section id="sheet-tab-panel" class="sheet-tab-panel"');
     expect(html).toContain('data-tab-id="spellcasting"');
+    expect(html).toContain('id="sheet-tab-spellcasting"');
+    expect(html).toContain('aria-selected="true"');
     expect(html).toContain("<h2>Spellcasting</h2>");
+  });
+
+  test("renders the Game Master campaign page", async () => {
+    const { app, sessionService } = createTestApp("Character Sheet");
+    const session = sessionService.createSession("user_game_master");
+    const response = await app.request("/campaigns/rovnost-shadows", {
+      headers: { cookie: session.cookie },
+    });
+    const html = await response.text();
+
+    expect(response.status).toBe(200);
+    expect(html).toContain("<title>Rovnost Shadows - Character Sheet</title>");
+    expect(html).toContain('<a href="/campaigns/rovnost-shadows" aria-current="page">Campaign</a>');
+    expect(html).toContain('<h1 id="campaign-heading" class="panel-heading">Rovnost Shadows</h1>');
   });
 
   test("serves database-backed core and skills tab fragments", async () => {
