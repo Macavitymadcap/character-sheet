@@ -115,6 +115,69 @@ export const sheetTabPanelStyles = /* css */ `
   border-color: var(--focus-border-colour);
 }
 
+.note-editor-list {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.note-editor {
+  border-block-end: 1px solid var(--border-colour);
+  display: grid;
+  gap: 0.45rem;
+  margin: 0;
+  padding-block-end: 0.6rem;
+}
+
+.note-editor:last-child {
+  border-block-end: 0;
+  padding-block-end: 0;
+}
+
+.note-editor label {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.5rem;
+}
+
+.note-editor label strong {
+  font-size: 0.98rem;
+  line-height: 1.2;
+}
+
+.note-editor label span {
+  color: var(--muted-text-colour);
+  font-size: 0.78rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.note-editor textarea {
+  background: var(--stat-background-colour);
+  border: 1px solid var(--border-colour);
+  border-radius: 0.4rem;
+  color: var(--heading-colour);
+  min-height: 5.5rem;
+  padding: 0.5rem;
+  resize: vertical;
+  transition:
+    background-color var(--theme-transition),
+    border-color var(--theme-transition),
+    color var(--theme-text-transition);
+}
+
+.note-editor button {
+  background: var(--action-background-colour);
+  border: 1px solid var(--action-border-colour);
+  border-radius: 0.4rem;
+  color: var(--action-text-colour);
+  cursor: pointer;
+  font-weight: 850;
+  justify-self: start;
+  min-height: 2rem;
+  padding: 0.35rem 0.65rem;
+}
+
 @media (max-width: 760px) {
   .tab-compact-grid {
     grid-template-columns: 1fr;

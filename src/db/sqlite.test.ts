@@ -386,6 +386,50 @@ describe("SQLite repositories", () => {
     ]);
   });
 
+  test("updates visible notes without exposing Game Master notes to players", () => {
+    runtime = createSqliteDatabase({ path: ":memory:" });
+    const notes = runtime.repositories.notesRepository;
+
+    const playerNote = notes.updateNoteBody(
+      "character_lynott_magulbisson",
+      "note_lynott_player",
+      "player",
+      "Updated from the MVP smoke path.",
+    );
+    const blockedGmNote = notes.updateNoteBody(
+      "character_lynott_magulbisson",
+      "note_lynott_gm",
+      "player",
+      "Players should not be able to write this.",
+    );
+    const gmNote = notes.updateNoteBody(
+      "character_lynott_magulbisson",
+      "note_lynott_gm",
+      "game_master",
+      "Updated Game Master note.",
+    );
+
+    expect(playerNote).toMatchObject({
+      body: "Updated from the MVP smoke path.",
+      id: "note_lynott_player",
+      visibility: "player",
+    });
+    expect(blockedGmNote).toBeNull();
+    expect(gmNote).toMatchObject({
+      body: "Updated Game Master note.",
+      id: "note_lynott_gm",
+      visibility: "game_master",
+    });
+    expect(notes.listNotesForCharacter("character_lynott_magulbisson", "player")).toEqual([
+      {
+        body: "Updated from the MVP smoke path.",
+        id: "note_lynott_player",
+        title: "Player notes",
+        visibility: "player",
+      },
+    ]);
+  });
+
   test("reads campaign and starter rules references", () => {
     runtime = createSqliteDatabase({ path: ":memory:" });
 

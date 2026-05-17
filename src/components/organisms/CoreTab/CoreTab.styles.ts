@@ -65,6 +65,16 @@ export const coreTabStyles = /* css */ `
   padding-inline: 0.25rem;
 }
 
+.ability-table th:not(:first-child),
+.ability-table td:not(:first-child) {
+  text-align: center;
+}
+
+.ability-short {
+  display: none;
+  text-decoration: none;
+}
+
 .sheet-description-grid {
   display: grid;
   gap: 0.5rem;
@@ -180,6 +190,16 @@ export const coreTabStyles = /* css */ `
 
   .sheet-description-grid-compact {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .ability-full {
+    display: none;
+  }
+
+  .ability-short {
+    display: inline;
   }
 }
 
