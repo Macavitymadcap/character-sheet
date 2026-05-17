@@ -69,7 +69,7 @@ Local seed users are available for development:
 
 | Role | Email | Password |
 | --- | --- | --- |
-| Player | `lynott.player@example.local` | `password123` |
+| Player | `lynott@example.local` | `password123` |
 | Game Master | `gm@example.local` | `password123` |
 | Admin | `admin@example.local` | `password123` |
 

@@ -17,7 +17,7 @@ describe("SQLite repositories", () => {
     expect(users).toEqual([
       {
         displayName: "Lynott Player",
-        email: "lynott.player@example.local",
+        email: "lynott@example.local",
         id: "user_lynott_player",
         role: "player",
         status: "active",

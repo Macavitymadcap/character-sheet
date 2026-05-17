@@ -67,7 +67,7 @@ describe("auth routes", () => {
 
   test("logs in seeded users with HTTP-only sessions", async () => {
     const response = await postForm("/login", {
-      email: "lynott.player@example.local",
+      email: "lynott@example.local",
       password: "password123",
     });
 
@@ -79,7 +79,7 @@ describe("auth routes", () => {
 
   test("rejects bad login attempts", async () => {
     const response = await postForm("/login", {
-      email: "lynott.player@example.local",
+      email: "lynott@example.local",
       password: "wrong",
     });
 
@@ -88,7 +88,7 @@ describe("auth routes", () => {
   });
 
   test("renders the home page for authenticated users and logs out", async () => {
-    const cookie = await login("lynott.player@example.local");
+    const cookie = await login("lynott@example.local");
     const home = await app.request("/", { headers: { cookie } });
     const homeHtml = await home.text();
     const logoutPage = await app.request("/logout", { headers: { cookie } });
@@ -114,7 +114,7 @@ describe("admin and sheet guards", () => {
   test("separates admin and Game Master permissions", async () => {
     const adminCookie = await login("admin@example.local");
     const gmCookie = await login("gm@example.local");
-    const playerCookie = await login("lynott.player@example.local");
+    const playerCookie = await login("lynott@example.local");
 
     const adminPage = await app.request("/admin", { headers: { cookie: adminCookie } });
     const gmAdminPage = await app.request("/admin", { headers: { cookie: gmCookie } });
@@ -167,7 +167,7 @@ describe("admin and sheet guards", () => {
         8,
       ],
     );
-    const playerCookie = await login("lynott.player@example.local");
+    const playerCookie = await login("lynott@example.local");
 
     const ownSheet = await app.request(
       "/sheet/lynott/resources/resource_lynott_hit_points",

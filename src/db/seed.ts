@@ -16,7 +16,7 @@ type StringSeed = string[];
 const users = [
   [
     "user_lynott_player",
-    "lynott.player@example.local",
+    "lynott@example.local",
     "Lynott Player",
     "player",
     new PasswordService().hashPassword("password123", "seed-user-lynott-player"),

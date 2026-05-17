@@ -24,7 +24,7 @@ const baseUrl = `http://127.0.0.1:${server.port}`;
 
 try {
   await waitForHttp(`${baseUrl}/healthz`);
-  const playerCookie = await login("lynott.player@example.local");
+  const playerCookie = await login("lynott@example.local");
   const gmCookie = await login("gm@example.local");
   const adminCookie = await login("admin@example.local");
 
