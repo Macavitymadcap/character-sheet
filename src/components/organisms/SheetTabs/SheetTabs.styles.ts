@@ -27,11 +27,13 @@ export const sheetTabsStyles = /* css */ `
   box-shadow: 0 1rem 2.5rem var(--shadow-colour);
   display: flex;
   gap: 0.25rem;
+  justify-content: flex-start;
   max-width: 100%;
   min-width: 0;
   overflow-x: auto;
   overflow-y: hidden;
   padding: 0.25rem;
+  scrollbar-gutter: stable;
   transition:
     background-color var(--theme-transition),
     border-color var(--theme-transition),
@@ -46,7 +48,9 @@ export const sheetTabsStyles = /* css */ `
   display: inline-flex;
   flex: 0 0 auto;
   font-weight: 800;
+  inline-size: max-content;
   justify-content: center;
+  line-height: 1;
   min-height: 2.2rem;
   min-width: 0;
   padding: 0.35rem 0.5rem;

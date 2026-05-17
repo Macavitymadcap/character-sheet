@@ -767,6 +767,42 @@ class SqliteNotesRepository implements NotesRepository {
       visibility: row.visibility,
     }));
   }
+
+  updateNoteBody(
+    characterId: string,
+    noteId: string,
+    viewerRole: UserRole,
+    body: string,
+  ): CharacterNote | null {
+    this.database
+      .query<never, [string, string, string, UserRole]>(
+        `update character_notes
+         set body = ?
+         where character_id = ?
+           and id = ?
+           and (? != 'player' or visibility = 'player')`,
+      )
+      .run(body, characterId, noteId, viewerRole);
+
+    const row = this.database
+      .query<CharacterNoteRow, [string, string, UserRole]>(
+        `select id, title, body, visibility
+         from character_notes
+         where character_id = ?
+           and id = ?
+           and (? != 'player' or visibility = 'player')`,
+      )
+      .get(characterId, noteId, viewerRole);
+
+    return row
+      ? {
+          body: row.body,
+          id: row.id,
+          title: row.title,
+          visibility: row.visibility,
+        }
+      : null;
+  }
 }
 
 class SqliteCampaignRepository implements CampaignRepository {

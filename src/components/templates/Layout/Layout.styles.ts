@@ -5,6 +5,7 @@ export const layoutStyles = /* css */ `
   --action-text-colour: #ffffff;
   --background-colour: #f4f7fb;
   --border-colour: #d7dee9;
+  --focus-border-colour: #d24b3f;
   --focus-colour: #d24b3f;
   --heading-colour: #172033;
   --muted-text-colour: #536174;
@@ -50,6 +51,7 @@ export const layoutStyles = /* css */ `
   --action-text-colour: #0e1726;
   --background-colour: #0f1726;
   --border-colour: #334155;
+  --focus-border-colour: #f59e0b;
   --focus-colour: #f59e0b;
   --heading-colour: #eef4ff;
   --muted-text-colour: #b8c4d6;

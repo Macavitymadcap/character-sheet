@@ -219,6 +219,12 @@ export interface CharacterNote {
 
 export interface NotesRepository {
   listNotesForCharacter(characterId: string, viewerRole: UserRole): CharacterNote[];
+  updateNoteBody(
+    characterId: string,
+    noteId: string,
+    viewerRole: UserRole,
+    body: string,
+  ): CharacterNote | null;
 }
 
 export interface CharacterRuleLink {

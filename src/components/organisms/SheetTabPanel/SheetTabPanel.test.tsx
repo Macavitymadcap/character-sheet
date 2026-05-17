@@ -189,6 +189,10 @@ describe("SheetTabPanel", () => {
     expect(backgroundTab).toContain("Jonas Blarendon");
     expect(backgroundTab).toContain("Sergeant Kora Steelheart");
     expect(notesTab).toContain("Keep the false identities ready");
+    expect(notesTab).toContain('class="note-editor"');
+    expect(notesTab).toContain('hx-patch="/sheet/lynott/notes/note_lynott_player"');
+    expect(notesTab).toContain('hx-target="#sheet-tab-panel"');
+    expect(notesTab).toContain('<button type="submit">Save note</button>');
     expect(actions).toContain('class="compact-list"');
     expect(actions).not.toContain("labelled-output");
   });
