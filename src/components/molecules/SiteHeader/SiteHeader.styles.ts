@@ -11,7 +11,7 @@ export const siteHeaderStyles = /* css */ `
   min-height: 3.5rem;
   padding: 0.6rem;
   position: sticky;
-  top: 0.5rem;
+  top: 0;
   transition:
     background-color var(--theme-transition),
     border-color var(--theme-transition),
@@ -95,7 +95,6 @@ export const siteHeaderStyles = /* css */ `
     grid-template-columns: minmax(12rem, 1fr) auto minmax(13rem, 1fr);
     min-height: 4rem;
     padding: 0.85rem 1rem;
-    top: var(--page-gutter);
   }
 
   .site-title {

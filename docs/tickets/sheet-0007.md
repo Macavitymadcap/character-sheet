@@ -7,7 +7,7 @@ Implement the action-facing sheet tabs: actions, spellcasting, features and trai
 ## Implementation
 
 - Add read models for attacks, actions, bonus actions, reactions, spells, spell slots, class features, species traits, infusions, equipment, and conditions.
-- Add mutation routes for spending/restoring resources such as hit points, temporary hit points, hit dice, spell slots, inspiration, Fey Gift, Fortune from the Many, and conditions.
+- Add mutation routes for spending/restoring resources such as hit points, temporary hit points, hit dice, spell slots, inspiration, Fey Gift, Fortune from the Many, and conditions. Current hit points, temporary hit points, and inspiration are controlled from the compact sheet header.
 - Add short-rest and long-rest services that reset the correct resources for the MVP.
 - Render spellcasting and rules text from structured rules data with source metadata.
 

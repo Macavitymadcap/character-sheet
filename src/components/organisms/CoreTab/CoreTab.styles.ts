@@ -41,9 +41,13 @@ export const coreTabStyles = /* css */ `
 
 .sheet-description-grid {
   display: grid;
-  gap: 0.75rem;
+  gap: 0.5rem;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   margin: 0;
+}
+
+.sheet-description-grid-compact {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .sheet-description-grid div {
@@ -52,8 +56,8 @@ export const coreTabStyles = /* css */ `
   border-radius: 0.375rem;
   display: grid;
   gap: 0.2rem;
-  min-height: 4.5rem;
-  padding: 0.75rem;
+  min-height: 3.75rem;
+  padding: 0.6rem;
 }
 
 .sheet-description-grid dt {
@@ -78,6 +82,16 @@ export const coreTabStyles = /* css */ `
 
 @media (max-width: 760px) {
   .sheet-description-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sheet-description-grid-compact {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 340px) {
+  .sheet-description-grid-compact {
     grid-template-columns: 1fr;
   }
 }

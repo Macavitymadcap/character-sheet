@@ -1,9 +1,9 @@
 import { buttonStyles } from "./atoms/Button/Button.styles";
 import { badgeStyles } from "./atoms/Badge/Badge.styles";
-import { labelledOutputStyles } from "./atoms/LabelledOutput/LabelledOutput.styles";
 import { panelStyles } from "./atoms/Panel/Panel.styles";
 import { switchStyles } from "./atoms/Switch/Switch.styles";
 import { formFieldStyles } from "./molecules/FormField/FormField.styles";
+import { labelledOutputStyles } from "./molecules/LabelledOutput/LabelledOutput.styles";
 import { siteHeaderStyles } from "./molecules/SiteHeader/SiteHeader.styles";
 import { coreTabStyles } from "./organisms/CoreTab/CoreTab.styles";
 import { sheetHeaderStyles } from "./organisms/SheetHeader/SheetHeader.styles";

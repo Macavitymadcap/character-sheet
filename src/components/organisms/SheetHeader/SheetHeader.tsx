@@ -1,4 +1,5 @@
 import type { CharacterResource, CharacterSheetReadModel } from "../../../db";
+import { Switch } from "../../atoms/Switch";
 
 interface SheetHeaderProps {
   resources: CharacterResource[];
@@ -6,6 +7,19 @@ interface SheetHeaderProps {
 }
 
 export const SheetHeader = ({ resources, sheet }: SheetHeaderProps) => {
+  const hitPoints = findResource(resources, "hit_points");
+  const temporaryHitPoints = findResource(resources, "temporary_hit_points");
+  const inspiration = findResource(resources, "inspiration");
+  const hitPointTarget = hitPoints
+    ? `/sheet/${sheet.id}/resources/${hitPoints.id}`
+    : undefined;
+  const temporaryHitPointTarget = temporaryHitPoints
+    ? `/sheet/${sheet.id}/resources/${temporaryHitPoints.id}`
+    : undefined;
+  const inspirationTarget = inspiration
+    ? `/sheet/${sheet.id}/resources/${inspiration.id}`
+    : undefined;
+
   return (
     <section id="sheet-header" class="sheet-header" aria-labelledby="sheet-heading">
       <div class="sheet-title-block">
@@ -23,7 +37,62 @@ export const SheetHeader = ({ resources, sheet }: SheetHeaderProps) => {
         </div>
         <div class="sheet-metric">
           <dt>HP</dt>
-          <dd>{formatHitPoints(sheet)}</dd>
+          <dd>
+            <details class="hp-control">
+              <summary class="metric-value-button" aria-label="Manage hit points">
+                {formatHitPoints(sheet)}
+              </summary>
+              <div class="metric-popover" role="group" aria-label="Hit point controls">
+                <p class="metric-popover-heading">Hit points</p>
+                {hitPointTarget ? (
+                  <div class="metric-stepper" role="group" aria-label="Current hit points">
+                    <form hx-patch={hitPointTarget} hx-target="#sheet-header" hx-swap="outerHTML">
+                      <input type="hidden" name="delta" value="-1" />
+                      <button type="submit" aria-label="Subtract 1 hit point">
+                        <span class="material-symbols-outlined" aria-hidden="true">
+                          remove
+                        </span>
+                      </button>
+                    </form>
+                    <span>
+                      {sheet.hitPoints.current} / {sheet.hitPoints.max}
+                    </span>
+                    <form hx-patch={hitPointTarget} hx-target="#sheet-header" hx-swap="outerHTML">
+                      <input type="hidden" name="delta" value="1" />
+                      <button type="submit" aria-label="Add 1 hit point">
+                        <span class="material-symbols-outlined" aria-hidden="true">
+                          add
+                        </span>
+                      </button>
+                    </form>
+                  </div>
+                ) : null}
+                {temporaryHitPointTarget ? (
+                  <form
+                    class="metric-popover-form"
+                    hx-patch={temporaryHitPointTarget}
+                    hx-target="#sheet-header"
+                    hx-swap="outerHTML"
+                  >
+                    <label for="temporary-hit-points-input">Temp HP</label>
+                    <input
+                      id="temporary-hit-points-input"
+                      inputmode="numeric"
+                      min="0"
+                      name="current"
+                      type="number"
+                      value={sheet.hitPoints.temporary}
+                    />
+                    <button type="submit" aria-label="Set temporary hit points">
+                      <span class="material-symbols-outlined" aria-hidden="true">
+                        check
+                      </span>
+                    </button>
+                  </form>
+                ) : null}
+              </div>
+            </details>
+          </dd>
         </div>
         <div class="sheet-metric">
           <dt>Init</dt>
@@ -34,17 +103,41 @@ export const SheetHeader = ({ resources, sheet }: SheetHeaderProps) => {
           <dd>{sheet.speedFeet} ft</dd>
         </div>
         <div class="sheet-metric sheet-metric-wide">
-          <dt>State</dt>
+          <dt>Conditions</dt>
           <dd>{formatConditions(resources)}</dd>
         </div>
         <div class="sheet-metric">
           <dt>Insp</dt>
-          <dd>{formatInspiration(resources)}</dd>
+          <dd>
+            {inspirationTarget ? (
+              <Switch
+                id="inspiration-toggle"
+                label="Inspiration"
+                checked={isInspired(resources)}
+                offIcon="radio_button_unchecked"
+                onIcon="auto_awesome"
+                variant="inspiration"
+                trackGradient="linear-gradient(110deg, #164e63 0%, #0891b2 38%, #f97316 72%, #fde68a 100%)"
+                trackOverlay="linear-gradient(110deg, #0f172a, #0e7490, #fb923c, #fff7ed)"
+                thumbGradient="linear-gradient(135deg, #cffafe 0%, #67e8f9 35%, #fed7aa 72%, #ffffff 100%)"
+                hxPatch={inspirationTarget}
+                hxTarget="#sheet-header"
+                hxSwap="outerHTML"
+                hxVals="js:{current: event.target.checked ? 1 : 0}"
+              />
+            ) : (
+              "No"
+            )}
+          </dd>
         </div>
       </dl>
     </section>
   );
 };
+
+function findResource(resources: CharacterResource[], key: string) {
+  return resources.find((resource) => resource.key === key);
+}
 
 function formatClassSummary(sheet: CharacterSheetReadModel) {
   const classes = sheet.classes.map((characterClass) =>
@@ -77,9 +170,8 @@ function formatConditions(resources: CharacterResource[]) {
     : "None";
 }
 
-function formatInspiration(resources: CharacterResource[]) {
+function isInspired(resources: CharacterResource[]) {
   const inspiration = resources.find((resource) => resource.key === "inspiration");
-  if (!inspiration) return "No";
 
-  return inspiration.current > 0 ? "Yes" : "No";
+  return Boolean(inspiration && inspiration.current > 0);
 }

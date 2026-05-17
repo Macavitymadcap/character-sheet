@@ -111,7 +111,7 @@ Routes that are triggered by HTMX should not return a full page unless the inter
 
 The MVP page set:
 
-- `/` public base home page; signed-in users are redirected to their role home.
+- `/` base home page for visitors and signed-in users; signed-in users get a role-aware continue link.
 - `/login` login form using the shared site shell.
 - `/logout` sign-out confirmation page using the shared site shell.
 - `POST /logout` logout route that clears the session and redirects to `/`.
@@ -132,11 +132,11 @@ The sheet page has a second sticky header containing compact mobile-first identi
 
 - character name, species, class, and level as a concise identity line
 - armour class
-- hit points and temporary hit points
+- hit points and temporary hit points, editable through a compact popover
 - initiative
 - speed
 - conditions
-- inspiration
+- inspiration, editable through a resource-backed switch
 
 Sheet content is arranged as scrollable tabs:
 
@@ -257,8 +257,8 @@ The seed data must support Lynott as described in `docs/characters/Lynott-Magulb
 
 Components are grouped by rendered responsibility:
 
-- Atoms: primitive controls and outputs such as `Button`, `IconButton`, `LabelledOutput`, `Panel`, `Tab`, and `Badge`.
-- Molecules: small compositions such as `FormField`, resource steppers, ability rows, note editors, and condition chips.
+- Atoms: primitive controls and outputs such as `Button`, `IconButton`, `Panel`, `Switch`, `Tab`, and `Badge`.
+- Molecules: small compositions such as `FormField`, `LabelledOutput`, resource steppers, ability rows, note editors, and condition chips.
 - Organisms: feature regions such as `SheetHeader`, `SheetTabs`, `SpellcastingPanel`, `ActionsPanel`, and `AdminUserTable`.
 - Pages: full route compositions such as `HomePage`, `LoginPage`, `SheetPage`, and `AdminPage`.
 - Templates: document shell, shared scripts, style injection, and layout slots.

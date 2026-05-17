@@ -90,13 +90,14 @@ describe("auth routes", () => {
   test("renders the home page for authenticated users and logs out", async () => {
     const cookie = await login("lynott.player@example.local");
     const home = await app.request("/", { headers: { cookie } });
+    const homeHtml = await home.text();
     const logoutPage = await app.request("/logout", { headers: { cookie } });
     const logout = await app.request("/logout", { headers: { cookie }, method: "POST" });
     const afterLogout = await app.request("/", { headers: { cookie } });
     const afterLogoutHtml = await afterLogout.text();
 
-    expect(home.status).toBe(303);
-    expect(home.headers.get("location")).toBe("/sheet/character_lynott_magulbisson");
+    expect(home.status).toBe(200);
+    expect(homeHtml).toContain('<a class="action-link" href="/sheet/character_lynott_magulbisson">Continue</a>');
     expect(logoutPage.status).toBe(200);
     expect(await logoutPage.text()).toContain("End the current session for Lynott Player.");
     expect(logout.status).toBe(303);
@@ -123,7 +124,11 @@ describe("admin and sheet guards", () => {
     });
     const gmSheetWrite = await app.request(
       "/sheet/character_lynott_magulbisson/resources/resource_lynott_hit_points",
-      { headers: { cookie: gmCookie }, method: "PATCH" },
+      {
+        body: new URLSearchParams({ delta: "-1" }),
+        headers: { cookie: gmCookie, "Content-Type": "application/x-www-form-urlencoded" },
+        method: "PATCH",
+      },
     );
     const adminSheetWrite = await app.request(
       "/sheet/character_lynott_magulbisson/resources/resource_lynott_hit_points",
@@ -136,7 +141,7 @@ describe("admin and sheet guards", () => {
     expect(gmCampaignPage.status).toBe(200);
     expect(await gmCampaignPage.text()).toContain("Rovnost Shadows");
     expect(playerCampaignPage.status).toBe(403);
-    expect(gmSheetWrite.status).toBe(204);
+    expect(gmSheetWrite.status).toBe(200);
     expect(adminSheetWrite.status).toBe(403);
   });
 
@@ -164,14 +169,18 @@ describe("admin and sheet guards", () => {
 
     const ownSheet = await app.request(
       "/sheet/character_lynott_magulbisson/resources/resource_lynott_hit_points",
-      { headers: { cookie: playerCookie }, method: "PATCH" },
+      {
+        body: new URLSearchParams({ delta: "-1" }),
+        headers: { cookie: playerCookie, "Content-Type": "application/x-www-form-urlencoded" },
+        method: "PATCH",
+      },
     );
     const otherSheet = await app.request("/sheet/character_other/resources/resource_lynott_hit_points", {
       headers: { cookie: playerCookie },
       method: "PATCH",
     });
 
-    expect(ownSheet.status).toBe(204);
+    expect(ownSheet.status).toBe(200);
     expect(otherSheet.status).toBe(403);
   });
 

@@ -12,7 +12,7 @@ This epic replaces the earlier static GitHub Pages/localStorage architecture. Ra
 - Implement local password authentication, sessions, seeded users, admin invites, and admin-triggered password reset tokens.
 - Store character state, notes, equipment, spells, features, traits, and rules mechanics in SQLite.
 - Seed enough D&D 2014 rules and character data to support Lynott.
-- Render a usable character sheet with sticky site and sheet headers, labelled state outputs, and scrollable tabs.
+- Render a usable character sheet with sticky site and sheet headers, compact resource controls, and scrollable tabs.
 - Use British English in docs, code naming, database fields, CSS custom properties, and user-facing copy.
 - Use TDD for repositories, services, routes, components, and HTMX fragment contracts wherever practical.
 
@@ -74,12 +74,10 @@ The sheet page has a second sticky header with:
 
 - character name, species, class, and level
 - armour class
-- hit points
+- hit points with current and temporary HP controls
 - initiative
 - conditions
-- inspiration
-- rest actions
-- settings
+- inspiration switch
 
 The sheet body is tabbed and vertically scrollable:
 

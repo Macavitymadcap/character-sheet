@@ -60,7 +60,7 @@ describe("createApp", () => {
     expect(html).toContain('<a class="site-auth-link" href="/login">Sign in</a>');
   });
 
-  test("redirects signed-in users to their role home", async () => {
+  test("renders signed-in home with role continue links", async () => {
     const { app, sessionService } = createTestApp("Character Sheet");
     const playerSession = sessionService.createSession("user_lynott_player");
     const gmSession = sessionService.createSession("user_game_master");
@@ -69,13 +69,16 @@ describe("createApp", () => {
     const player = await app.request("/", { headers: { cookie: playerSession.cookie } });
     const gm = await app.request("/", { headers: { cookie: gmSession.cookie } });
     const admin = await app.request("/", { headers: { cookie: adminSession.cookie } });
+    const playerHtml = await player.text();
+    const gmHtml = await gm.text();
+    const adminHtml = await admin.text();
 
-    expect(player.status).toBe(303);
-    expect(player.headers.get("location")).toBe("/sheet/character_lynott_magulbisson");
-    expect(gm.status).toBe(303);
-    expect(gm.headers.get("location")).toBe("/campaigns/rovnost-shadows");
-    expect(admin.status).toBe(303);
-    expect(admin.headers.get("location")).toBe("/admin");
+    expect(player.status).toBe(200);
+    expect(playerHtml).toContain('<a class="action-link" href="/sheet/character_lynott_magulbisson">Continue</a>');
+    expect(gm.status).toBe(200);
+    expect(gmHtml).toContain('<a class="action-link" href="/campaigns/rovnost-shadows">Continue</a>');
+    expect(admin.status).toBe(200);
+    expect(adminHtml).toContain('<a class="action-link" href="/admin">Continue</a>');
   });
 
   test("renders Lynott's authenticated sheet page with stable shell anchors", async () => {
@@ -125,6 +128,53 @@ describe("createApp", () => {
     expect(html).toContain('id="sheet-tab-spellcasting"');
     expect(html).toContain('aria-selected="true"');
     expect(html).toContain("<h2>Spellcasting</h2>");
+  });
+
+  test("updates header resources through HTMX fragments", async () => {
+    const { app, sessionService } = createTestApp("Character Sheet");
+    const session = sessionService.createSession("user_lynott_player");
+    const cookie = session.cookie;
+
+    const damage = await app.request(
+      "/sheet/character_lynott_magulbisson/resources/resource_lynott_hit_points",
+      {
+        body: new URLSearchParams({ delta: "-5" }),
+        headers: { cookie, "Content-Type": "application/x-www-form-urlencoded" },
+        method: "PATCH",
+      },
+    );
+    const damageHtml = await damage.text();
+    const temp = await app.request(
+      "/sheet/character_lynott_magulbisson/resources/resource_lynott_temporary_hit_points",
+      {
+        body: new URLSearchParams({ current: "4" }),
+        headers: { cookie, "Content-Type": "application/x-www-form-urlencoded" },
+        method: "PATCH",
+      },
+    );
+    const inspire = await app.request(
+      "/sheet/character_lynott_magulbisson/resources/resource_lynott_inspiration",
+      {
+        body: new URLSearchParams({ current: "1" }),
+        headers: { cookie, "Content-Type": "application/x-www-form-urlencoded" },
+        method: "PATCH",
+      },
+    );
+    const sheet = await app.request("/sheet/character_lynott_magulbisson", {
+      headers: { cookie },
+    });
+    const sheetHtml = await sheet.text();
+
+    expect(damage.status).toBe(200);
+    expect(damageHtml).toContain('<section id="sheet-header" class="sheet-header"');
+    expect(damageHtml).toContain("26 / 31");
+    expect(temp.status).toBe(200);
+    expect(await temp.text()).toContain("26 / 31 + 4 temporary");
+    expect(inspire.status).toBe(200);
+    expect(await inspire.text()).toContain('aria-checked="true"');
+    expect(sheet.status).toBe(200);
+    expect(sheetHtml).toContain("26 / 31 + 4 temporary");
+    expect(sheetHtml).toContain('aria-checked="true"');
   });
 
   test("renders the Game Master campaign page", async () => {

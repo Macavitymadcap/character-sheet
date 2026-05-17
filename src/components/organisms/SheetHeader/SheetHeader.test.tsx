@@ -46,6 +46,22 @@ const resources: CharacterResource[] = [
     max: 31,
     type: "hit_points",
   },
+  {
+    current: 0,
+    id: "resource_lynott_temporary_hit_points",
+    key: "temporary_hit_points",
+    label: "Temporary hit points",
+    max: null,
+    type: "temporary_hit_points",
+  },
+  {
+    current: 0,
+    id: "resource_lynott_inspiration",
+    key: "inspiration",
+    label: "Inspiration",
+    max: 1,
+    type: "inspiration",
+  },
 ];
 
 describe("SheetHeader", () => {
@@ -58,9 +74,17 @@ describe("SheetHeader", () => {
     expect(html).toContain("<dt>AC</dt>");
     expect(html).toContain("<dd>17</dd>");
     expect(html).toContain("<dt>HP</dt>");
-    expect(html).toContain("<dd>31 / 31</dd>");
-    expect(html).toContain("<dt>State</dt>");
+    expect(html).toContain('<details class="hp-control">');
+    expect(html).toContain('aria-label="Manage hit points"');
+    expect(html).toContain("31 / 31");
+    expect(html).toContain('hx-patch="/sheet/character_lynott_magulbisson/resources/resource_lynott_hit_points"');
+    expect(html).toContain('hx-patch="/sheet/character_lynott_magulbisson/resources/resource_lynott_temporary_hit_points"');
+    expect(html).toContain("<dt>Conditions</dt>");
     expect(html).toContain("<dd>None</dd>");
+    expect(html).toContain('id="inspiration-toggle"');
+    expect(html).toContain('data-variant="inspiration"');
+    expect(html).toContain("radio_button_unchecked");
+    expect(html).toContain("auto_awesome");
     expect(html).not.toContain("<dt>Settings</dt>");
   });
 
@@ -68,7 +92,9 @@ describe("SheetHeader", () => {
     const html = render(
       <SheetHeader
         resources={[
-          ...resources,
+          ...resources.map((resource) =>
+            resource.key === "inspiration" ? { ...resource, current: 1 } : resource,
+          ),
           {
             current: 1,
             id: "condition_poisoned",
@@ -77,21 +103,14 @@ describe("SheetHeader", () => {
             max: 1,
             type: "condition",
           },
-          {
-            current: 1,
-            id: "resource_inspiration",
-            key: "inspiration",
-            label: "Inspiration",
-            max: 1,
-            type: "state",
-          },
         ]}
         sheet={{ ...sheet, hitPoints: { current: 22, max: 31, temporary: 5 } }}
       />,
     );
 
-    expect(html).toContain("<dd>22 / 31 + 5 temporary</dd>");
+    expect(html).toContain("22 / 31 + 5 temporary");
     expect(html).toContain("<dd>Poisoned</dd>");
-    expect(html).toContain("<dd>Yes</dd>");
+    expect(html).toContain('aria-checked="true"');
+    expect(html).toContain('checked=""');
   });
 });

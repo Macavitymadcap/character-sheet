@@ -3,7 +3,7 @@ export { Button } from "./atoms/Button";
 export { CampaignPage } from "./pages/Campaign";
 export { HomePage } from "./pages/Home";
 export { FormField } from "./molecules/FormField";
-export { LabelledOutput } from "./atoms/LabelledOutput";
+export { LabelledOutput } from "./molecules/LabelledOutput";
 export { LoginPage } from "./pages/Login";
 export { LogoutPage } from "./pages/Logout";
 export { Panel } from "./atoms/Panel";

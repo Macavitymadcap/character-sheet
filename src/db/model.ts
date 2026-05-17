@@ -156,6 +156,11 @@ export interface CharacterRepository {
   getSheetById(id: string): CharacterSheetReadModel | null;
   getSheetBySlug(slug: string): CharacterSheetReadModel | null;
   listResources(characterId: string): CharacterResource[];
+  updateResourceCurrent(
+    characterId: string,
+    resourceId: string,
+    current: number,
+  ): CharacterResource | null;
 }
 
 export interface CharacterAccessContext {

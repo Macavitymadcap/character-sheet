@@ -6,6 +6,7 @@ import { HomePage } from "./components/pages/Home";
 import { LoginPage } from "./components/pages/Login";
 import { LogoutPage } from "./components/pages/Logout";
 import { SheetPage } from "./components/pages/Sheet";
+import { SheetHeader } from "./components/organisms/SheetHeader";
 import { SheetTabWorkspace } from "./components/organisms/SheetTabWorkspace";
 import { isSheetTabId } from "./components/organisms/SheetTabs";
 import type {
@@ -53,9 +54,8 @@ export const createApp = (dependencies: AppDependencies) => {
 
   app.get("/", (context) => {
     const session = readSession(context.req.header("cookie"));
-    if (session) return context.redirect(defaultRouteForRole(session.user.role), 303);
 
-    return context.html(<HomePage appName={dependencies.appName} />);
+    return context.html(<HomePage appName={dependencies.appName} user={session?.user} />);
   });
 
   app.get("/login", (context) => {
@@ -265,10 +265,11 @@ export const createApp = (dependencies: AppDependencies) => {
     );
   });
 
-  app.patch("/sheet/:characterId/resources/:resourceId", (context) => {
+  app.patch("/sheet/:characterId/resources/:resourceId", async (context) => {
     const session = readSession(context.req.header("cookie"));
+    const characterId = context.req.param("characterId");
     const guard = requireSheetAccess({
-      characterId: context.req.param("characterId"),
+      characterId,
       characterRepository: dependencies.characterRepository,
       permission: "write",
       session,
@@ -276,7 +277,34 @@ export const createApp = (dependencies: AppDependencies) => {
     const guarded = guardResponse(context, guard);
     if (guarded) return guarded;
 
-    return context.body(null, 204);
+    const resourceId = context.req.param("resourceId");
+    const resource = dependencies.characterRepository
+      .listResources(characterId)
+      .find((candidate) => candidate.id === resourceId);
+    if (!resource) return context.text("Not found", 404);
+
+    const body = await context.req.parseBody();
+    const current = parseFormNumber(body.current);
+    const delta = parseFormNumber(body.delta);
+    if (current === null && delta === null) return context.text("Invalid resource update", 400);
+
+    const nextCurrent = current ?? resource.current + Number(delta);
+    const updated = dependencies.characterRepository.updateResourceCurrent(
+      characterId,
+      resourceId,
+      nextCurrent,
+    );
+    if (!updated) return context.text("Not found", 404);
+
+    const sheet = dependencies.characterRepository.getSheetById(characterId);
+    if (!sheet) return context.text("Not found", 404);
+
+    return context.html(
+      <SheetHeader
+        resources={dependencies.characterRepository.listResources(characterId)}
+        sheet={sheet}
+      />,
+    );
   });
 
   return app;
@@ -284,4 +312,11 @@ export const createApp = (dependencies: AppDependencies) => {
 
 function isUserRole(role: string): role is UserRole {
   return role === "admin" || role === "game_master" || role === "player";
+}
+
+function parseFormNumber(value: unknown) {
+  if (typeof value !== "string" || value.trim() === "") return null;
+
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
 }

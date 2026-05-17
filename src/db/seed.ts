@@ -7,7 +7,7 @@ type DefenceSeed = [string, string, string, string, number];
 type EquipmentSeed = [string, string, string, number, number, string];
 type NoteSeed = [string, string, string, string, string];
 type ProficiencySeed = [string, string, string, string, number];
-type ResourceSeed = [string, string, string, string, number, number, number];
+type ResourceSeed = [string, string, string, string, number, number | null, number];
 type RuleLinkSeed = [string, string, string, number, number, number];
 type SenseSeed = [string, string, string, number];
 type SourceSeed = [string, string, string, string, number];
@@ -137,9 +137,10 @@ const resources: ResourceSeed[] = [
     "temporary_hit_points",
     "Temporary hit points",
     0,
-    0,
+    null,
     20,
   ],
+  ["resource_lynott_inspiration", "inspiration", "inspiration", "Inspiration", 0, 1, 25],
   ["resource_lynott_hit_dice", "hit_dice_d8", "hit_dice", "Hit dice d8", 4, 4, 30],
   ["resource_lynott_spell_slots_1", "spell_slots_1", "spell_slot", "1st-level spell slots", 3, 3, 40],
 ];
@@ -308,7 +309,14 @@ export const seedDatabase = (database: Database) => {
 
   for (const resource of resources) {
     database.run(
-      "insert or ignore into character_resources (id, character_id, resource_key, resource_type, label, current_value, max_value, sort_order) values (?, ?, ?, ?, ?, ?, ?, ?)",
+      `insert into character_resources (id, character_id, resource_key, resource_type, label, current_value, max_value, sort_order)
+       values (?, ?, ?, ?, ?, ?, ?, ?)
+       on conflict(id) do update set
+         resource_key = excluded.resource_key,
+         resource_type = excluded.resource_type,
+         label = excluded.label,
+         max_value = excluded.max_value,
+         sort_order = excluded.sort_order`,
       [resource[0], "character_lynott_magulbisson", ...resource.slice(1)],
     );
   }

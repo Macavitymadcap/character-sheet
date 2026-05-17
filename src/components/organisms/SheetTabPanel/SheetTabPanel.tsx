@@ -1,5 +1,5 @@
 import type { CharacterResource, CharacterSheetReadModel } from "../../../db";
-import { LabelledOutput } from "../../atoms/LabelledOutput";
+import { LabelledOutput } from "../../molecules/LabelledOutput";
 import { CoreTab } from "../CoreTab";
 import { SkillsTrainingTab } from "../SkillsTrainingTab";
 import { getSheetTab, type SheetTabId } from "../SheetTabs";

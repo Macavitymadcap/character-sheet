@@ -28,7 +28,7 @@ export const switchStyles = /* css */ `
 
 .switch-track {
   align-items: center;
-  background-image: linear-gradient(110deg, #e2e8f0 0%, #bae6fd 34%, #3b82f6 66%, #1e1b4b 100%);
+  background-image: var(--switch-track-gradient, linear-gradient(110deg, #e2e8f0 0%, #bae6fd 34%, #3b82f6 66%, #1e1b4b 100%));
   background-position: 0% 50%;
   background-size: 260% 100%;
   border: 1px solid var(--border-colour);
@@ -48,7 +48,7 @@ export const switchStyles = /* css */ `
 }
 
 .switch-track::before {
-  background-image: linear-gradient(110deg, #f8fafc, #cffafe, #2563eb, #111827);
+  background-image: var(--switch-track-overlay, linear-gradient(110deg, #f8fafc, #cffafe, #2563eb, #111827));
   background-position: 0% 50%;
   background-size: 260% 100%;
   content: "";
@@ -61,7 +61,7 @@ export const switchStyles = /* css */ `
 }
 
 .switch-thumb {
-  background-image: linear-gradient(135deg, #ffffff 0%, #e0f2fe 38%, #bfdbfe 68%, #111827 100%);
+  background-image: var(--switch-thumb-gradient, linear-gradient(135deg, #ffffff 0%, #e0f2fe 38%, #bfdbfe 68%, #111827 100%));
   background-position: 0% 50%;
   background-size: 280% 100%;
   border-radius: 999px;
@@ -97,29 +97,41 @@ export const switchStyles = /* css */ `
   z-index: 1;
 }
 
-.switch-icon-light {
+.switch-icon-off {
   color: var(--switch-icon-light);
 }
 
-.switch-icon-dark {
+.switch-icon-on {
   color: var(--switch-icon-dark);
 }
 
-:root[data-theme="dark"] .switch-input + .switch-track {
+.switch[data-variant="inspiration"] {
+  --switch-track-gradient: linear-gradient(110deg, #312e81 0%, #7c3aed 36%, #f59e0b 72%, #fef3c7 100%);
+  --switch-track-overlay: linear-gradient(110deg, #1e1b4b, #6d28d9, #f59e0b, #fff7ed);
+  --switch-thumb-gradient: linear-gradient(135deg, #ede9fe 0%, #c4b5fd 36%, #fde68a 70%, #ffffff 100%);
+  --switch-icon-dark: #fff7ed;
+  --switch-icon-light: #d8b4fe;
+}
+
+.switch-input:checked + .switch-track,
+:root[data-theme="dark"] .switch[data-variant="theme"] .switch-input + .switch-track {
   background-position: 100% 50%;
 }
 
-:root[data-theme="dark"] .switch-input + .switch-track::before {
+.switch-input:checked + .switch-track::before,
+:root[data-theme="dark"] .switch[data-variant="theme"] .switch-input + .switch-track::before {
   background-position: 100% 50%;
   opacity: 0.7;
 }
 
-:root[data-theme="dark"] .switch-input + .switch-track .switch-thumb {
+.switch-input:checked + .switch-track .switch-thumb,
+:root[data-theme="dark"] .switch[data-variant="theme"] .switch-input + .switch-track .switch-thumb {
   background-position: 100% 50%;
   transform: translateX(1.75rem);
 }
 
-:root[data-theme="dark"] .switch-input + .switch-track .switch-thumb::before {
+.switch-input:checked + .switch-track .switch-thumb::before,
+:root[data-theme="dark"] .switch[data-variant="theme"] .switch-input + .switch-track .switch-thumb::before {
   opacity: 0.2;
 }
 

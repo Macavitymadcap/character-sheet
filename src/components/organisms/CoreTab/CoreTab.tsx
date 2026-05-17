@@ -38,7 +38,7 @@ export const CoreTab = ({ sheet }: CoreTabProps) => {
 
       <section class="sheet-data-section" aria-labelledby="senses-speed-heading">
         <h3 id="senses-speed-heading">Senses and speed</h3>
-        <dl class="sheet-description-grid">
+        <dl class="sheet-description-grid sheet-description-grid-compact">
           <div>
             <dt>Speed</dt>
             <dd>{sheet.speedFeet} ft</dd>

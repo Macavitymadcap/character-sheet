@@ -455,14 +455,50 @@ class SqliteCharacterRepository implements CharacterRepository {
          order by sort_order, label`,
       )
       .all(characterId)
-      .map((row) => ({
-        current: row.current_value,
-        id: row.id,
-        key: row.resource_key,
-        label: row.label,
-        max: row.max_value,
-        type: row.resource_type,
-      }));
+      .map(toCharacterResource);
+  }
+
+  updateResourceCurrent(
+    characterId: string,
+    resourceId: string,
+    current: number,
+  ): CharacterResource | null {
+    const resource = this.getResource(characterId, resourceId);
+    if (!resource) return null;
+
+    const nextCurrent = clampResourceCurrent(resource, current);
+    this.database.run(
+      "update character_resources set current_value = ? where character_id = ? and id = ?",
+      [nextCurrent, characterId, resourceId],
+    );
+
+    if (resource.type === "hit_points") {
+      this.database.run("update characters set hit_point_current = ? where id = ?", [
+        nextCurrent,
+        characterId,
+      ]);
+    }
+
+    if (resource.type === "temporary_hit_points") {
+      this.database.run("update characters set temporary_hit_points = ? where id = ?", [
+        nextCurrent,
+        characterId,
+      ]);
+    }
+
+    return this.getResource(characterId, resourceId);
+  }
+
+  private getResource(characterId: string, resourceId: string): CharacterResource | null {
+    const row = this.database
+      .query<CharacterResourceRow, [string, string]>(
+        `select id, resource_key, resource_type, label, current_value, max_value
+         from character_resources
+         where character_id = ? and id = ?`,
+      )
+      .get(characterId, resourceId);
+
+    return row ? toCharacterResource(row) : null;
   }
 
   private listAbilities(characterId: string): CharacterAbility[] {
@@ -666,6 +702,24 @@ function toAuthUser(row: UserRow): AuthUser {
     role: row.role,
     status: row.status,
   };
+}
+
+function toCharacterResource(row: CharacterResourceRow): CharacterResource {
+  return {
+    current: row.current_value,
+    id: row.id,
+    key: row.resource_key,
+    label: row.label,
+    max: row.max_value,
+    type: row.resource_type,
+  };
+}
+
+function clampResourceCurrent(resource: CharacterResource, current: number) {
+  const wholeCurrent = Math.trunc(current);
+  const lowerBounded = Math.max(0, wholeCurrent);
+
+  return resource.max === null ? lowerBounded : Math.min(lowerBounded, resource.max);
 }
 
 function toSqlDate(date: Date) {

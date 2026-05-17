@@ -205,8 +205,16 @@ describe("SQLite repositories", () => {
         id: "resource_lynott_temporary_hit_points",
         key: "temporary_hit_points",
         label: "Temporary hit points",
-        max: 0,
+        max: null,
         type: "temporary_hit_points",
+      },
+      {
+        current: 0,
+        id: "resource_lynott_inspiration",
+        key: "inspiration",
+        label: "Inspiration",
+        max: 1,
+        type: "inspiration",
       },
       {
         current: 4,
@@ -225,6 +233,33 @@ describe("SQLite repositories", () => {
         type: "spell_slot",
       },
     ]);
+  });
+
+  test("updates resources and mirrors hit point fields on the sheet summary", () => {
+    runtime = createSqliteDatabase({ path: ":memory:" });
+    const characters = runtime.repositories.characterRepository;
+
+    const hitPoints = characters.updateResourceCurrent(
+      "character_lynott_magulbisson",
+      "resource_lynott_hit_points",
+      40,
+    );
+    const temporaryHitPoints = characters.updateResourceCurrent(
+      "character_lynott_magulbisson",
+      "resource_lynott_temporary_hit_points",
+      6,
+    );
+    const inspiration = characters.updateResourceCurrent(
+      "character_lynott_magulbisson",
+      "resource_lynott_inspiration",
+      2,
+    );
+    const sheet = characters.getSheetById("character_lynott_magulbisson");
+
+    expect(hitPoints?.current).toBe(31);
+    expect(temporaryHitPoints?.current).toBe(6);
+    expect(inspiration?.current).toBe(1);
+    expect(sheet?.hitPoints).toEqual({ current: 31, max: 31, temporary: 6 });
   });
 
   test("filters note visibility by viewer role", () => {
