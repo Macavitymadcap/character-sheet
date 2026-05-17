@@ -9,6 +9,8 @@ export type {
   CampaignSummary,
   CharacterAccessContext,
   CharacterAbility,
+  CharacterBackgroundCategory,
+  CharacterBackgroundEntry,
   CharacterDefence,
   CharacterEquipment,
   CharacterNote,

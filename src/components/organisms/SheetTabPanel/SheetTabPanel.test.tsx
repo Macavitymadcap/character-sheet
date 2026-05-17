@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { SheetTabPanel } from "./SheetTabPanel";
 import { sheetTabs } from "../SheetTabs";
 import type {
+  CharacterBackgroundEntry,
   CharacterEquipment,
   CharacterNote,
   CharacterResource,
@@ -79,6 +80,27 @@ const equipment: CharacterEquipment[] = [
   },
 ];
 
+const backgroundEntries: CharacterBackgroundEntry[] = [
+  {
+    body: "Always watches exits, reads crowds, and catalogues threats.",
+    category: "personality",
+    id: "background_lynott_personality_exits",
+    title: "Threat reading",
+  },
+  {
+    body: "Male human travelling tinker and independent contractor.",
+    category: "false_identity",
+    id: "background_lynott_identity_jonas",
+    title: "Jonas Blarendon",
+  },
+  {
+    body: "Hobgoblin squad leader who gave the order to fire.",
+    category: "npc",
+    id: "background_lynott_npc_kora",
+    title: "Sergeant Kora Steelheart",
+  },
+];
+
 const notes: CharacterNote[] = [
   {
     body: "Keep the false identities ready and weapons maintained.",
@@ -110,6 +132,7 @@ const ruleLinks: CharacterRuleLink[] = [
 const renderPanel = (tabId: (typeof sheetTabs)[number]["id"]) =>
   render(
     <SheetTabPanel
+      backgroundEntries={backgroundEntries}
       equipment={equipment}
       notes={notes}
       resources={resources}
@@ -144,6 +167,7 @@ describe("SheetTabPanel", () => {
     const spellcasting = renderPanel("spellcasting");
     const features = renderPanel("features");
     const equipmentTab = renderPanel("equipment");
+    const backgroundTab = renderPanel("background");
     const notesTab = renderPanel("notes");
 
     expect(actions).toContain("Action resources");
@@ -152,13 +176,18 @@ describe("SheetTabPanel", () => {
     expect(actions).toContain('hx-target="#sheet-tab-workspace"');
     expect(actions).toContain("Pistol with Repeating Shot infusion");
     expect(spellcasting).toContain("Mage Hand");
+    expect(spellcasting).toContain("Spell attack");
+    expect(spellcasting).toContain('<details class="accordion-item" name="spell-list">');
     expect(spellcasting).toContain("1st-level spell slots");
     expect(spellcasting).toContain('hx-patch="/sheet/lynott/resources/resource_lynott_spell_slots_1"');
     expect(spellcasting).toContain('hx-target="#sheet-tab-panel"');
     expect(spellcasting).toContain('name="tabId" value="spellcasting"');
     expect(spellcasting).toContain('aria-label="Spend one 1st-level spell slots"');
     expect(features).toContain("Repeating Shot");
+    expect(features).toContain('<details class="accordion-item" name="feature-list">');
     expect(equipmentTab).toContain("Range 30/90 ft.");
+    expect(backgroundTab).toContain("Jonas Blarendon");
+    expect(backgroundTab).toContain("Sergeant Kora Steelheart");
     expect(notesTab).toContain("Keep the false identities ready");
     expect(actions).toContain('class="compact-list"');
     expect(actions).not.toContain("labelled-output");

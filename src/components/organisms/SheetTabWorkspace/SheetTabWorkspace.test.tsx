@@ -30,6 +30,7 @@ describe("SheetTabWorkspace", () => {
     const html = render(
       <SheetTabWorkspace
         activeTab="skills"
+        backgroundEntries={[]}
         equipment={[]}
         notes={[]}
         resources={[]}

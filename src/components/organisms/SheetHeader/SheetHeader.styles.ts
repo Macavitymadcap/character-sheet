@@ -78,13 +78,20 @@ export const sheetHeaderStyles = /* css */ `
   grid-column: span 1;
 }
 
-.hp-control {
+.hp-control,
+.condition-control {
   position: relative;
   width: 100%;
 }
 
+.condition-control {
+  --condition-anchor-name: --condition-control-anchor;
+  display: inline-flex;
+}
+
 .metric-value-button {
   appearance: none;
+  anchor-name: var(--condition-anchor-name);
   background: transparent;
   border: 0;
   color: inherit;
@@ -120,8 +127,15 @@ export const sheetHeaderStyles = /* css */ `
   z-index: 30;
 }
 
-.hp-control[open] .metric-popover {
+.hp-control[open] .metric-popover,
+.metric-popover:popover-open {
   display: grid;
+}
+
+.condition-popover {
+  inset-block-start: calc(var(--site-header-height) + 0.5rem);
+  inset-inline-start: var(--page-gutter);
+  position: fixed;
 }
 
 .metric-popover-heading {
@@ -184,6 +198,81 @@ export const sheetHeaderStyles = /* css */ `
   min-height: 2.25rem;
   min-width: 0;
   padding: 0.35rem 0.45rem;
+}
+
+.condition-chip-list {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.condition-chip {
+  background: color-mix(in srgb, var(--success-colour) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--success-colour) 45%, var(--border-colour));
+  border-radius: 999rem;
+  color: var(--heading-colour);
+  display: inline-flex;
+  font-size: 0.72rem;
+  font-weight: 900;
+  line-height: 1;
+  padding: 0.28rem 0.45rem;
+}
+
+.condition-chip-form {
+  margin: 0;
+}
+
+.condition-chip-form button {
+  cursor: pointer;
+}
+
+.condition-empty {
+  color: var(--muted-text-colour);
+  font-size: 0.85rem;
+  font-weight: 800;
+  margin: 0;
+}
+
+.condition-add-form {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.condition-add-form label {
+  color: var(--muted-text-colour);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.condition-add-form input {
+  background: var(--stat-background-colour);
+  border: 1px solid var(--border-colour);
+  border-radius: 0.375rem;
+  color: var(--heading-colour);
+  font-weight: 800;
+  min-height: 2.25rem;
+  padding: 0.35rem 0.45rem;
+}
+
+.condition-add-form button {
+  background: var(--action-background-colour);
+  border: 1px solid var(--action-border-colour);
+  border-radius: 0.375rem;
+  color: var(--action-text-colour);
+  cursor: pointer;
+  font-weight: 900;
+  min-height: 2.25rem;
+}
+
+@supports (position-anchor: --condition-control-anchor) {
+  .condition-popover {
+    inset: auto;
+    position-anchor: var(--condition-anchor-name);
+    position-area: block-end span-inline-start;
+    position-try-fallbacks: block-end span-inline-end, block-start span-inline-start;
+  }
 }
 
 @media (min-width: 720px) {

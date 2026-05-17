@@ -25,10 +25,8 @@ export const sheetTabsStyles = /* css */ `
   border: 1px solid var(--border-colour);
   border-radius: 0.5rem;
   box-shadow: 0 1rem 2.5rem var(--shadow-colour);
-  display: grid;
+  display: flex;
   gap: 0.25rem;
-  grid-auto-columns: max-content;
-  grid-auto-flow: column;
   max-width: 100%;
   min-width: 0;
   overflow-x: auto;
@@ -46,6 +44,7 @@ export const sheetTabsStyles = /* css */ `
   border-radius: 0.375rem;
   color: var(--muted-text-colour);
   display: inline-flex;
+  flex: 0 0 auto;
   font-weight: 800;
   justify-content: center;
   min-height: 2.2rem;
@@ -69,18 +68,5 @@ export const sheetTabsStyles = /* css */ `
   background: var(--nav-active-background-colour);
   border-color: var(--nav-active-border-colour);
   color: var(--nav-active-text-colour);
-}
-
-@media (min-width: 980px) {
-  .sheet-tabs {
-    grid-auto-flow: initial;
-    grid-template-columns: repeat(8, minmax(0, 1fr));
-    overflow-x: visible;
-  }
-
-  .sheet-tab {
-    white-space: normal;
-    width: 100%;
-  }
 }
 `;

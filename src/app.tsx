@@ -240,6 +240,7 @@ export const createApp = (dependencies: AppDependencies) => {
       <SheetPage
         activeTab="core"
         appName={dependencies.appName}
+        backgroundEntries={dependencies.characterRepository.listBackgroundEntries(sheet.id)}
         equipment={dependencies.characterRepository.listEquipment(sheet.id)}
         notes={dependencies.notesRepository.listNotesForCharacter(sheet.id, session.user.role)}
         resources={dependencies.characterRepository.listResources(sheet.id)}
@@ -271,6 +272,7 @@ export const createApp = (dependencies: AppDependencies) => {
 
     return context.html(
       <SheetTabPanel
+        backgroundEntries={dependencies.characterRepository.listBackgroundEntries(sheet.id)}
         equipment={dependencies.characterRepository.listEquipment(sheet.id)}
         notes={dependencies.notesRepository.listNotesForCharacter(sheet.id, session.user.role)}
         resources={dependencies.characterRepository.listResources(sheet.id)}
@@ -326,6 +328,7 @@ export const createApp = (dependencies: AppDependencies) => {
     if (tabId) {
       return context.html(
         <SheetTabPanel
+          backgroundEntries={dependencies.characterRepository.listBackgroundEntries(sheet.id)}
           equipment={dependencies.characterRepository.listEquipment(sheet.id)}
           notes={dependencies.notesRepository.listNotesForCharacter(sheet.id, session.user.role)}
           resources={updatedResources}
@@ -341,6 +344,136 @@ export const createApp = (dependencies: AppDependencies) => {
         resources={updatedResources}
         sheet={updatedSheet}
       />,
+    );
+  });
+
+  app.patch("/sheet/:characterRef/equipment/:equipmentId", async (context) => {
+    const session = readSession(context.req.header("cookie"));
+    if (!session) return context.redirect("/login", 303);
+
+    const sheet = getSheetByRef(context.req.param("characterRef"));
+    if (!sheet) return context.text("Not found", 404);
+
+    const guard = requireSheetAccess({
+      characterId: sheet.id,
+      characterRepository: dependencies.characterRepository,
+      permission: "write",
+      session,
+    });
+    const guarded = guardResponse(context, guard);
+    if (guarded) return guarded;
+
+    const body = await context.req.parseBody();
+    const equipmentId = context.req.param("equipmentId");
+    const currentEquipment = dependencies.characterRepository
+      .listEquipment(sheet.id)
+      .find((candidate) => candidate.id === equipmentId);
+    if (!currentEquipment) return context.text("Not found", 404);
+
+    const quantity = parseFormNumber(body.quantity);
+    const deltaQuantity = parseFormNumber(body.deltaQuantity);
+    const equipped = parseFormBoolean(body.equipped);
+    if (quantity === null && deltaQuantity === null && equipped === null) {
+      return context.text("Invalid equipment update", 400);
+    }
+
+    const nextQuantity =
+      quantity ?? (deltaQuantity === null ? undefined : currentEquipment.quantity + deltaQuantity);
+    const updated = dependencies.characterRepository.updateEquipmentItem(sheet.id, equipmentId, {
+      equipped: equipped ?? undefined,
+      quantity: nextQuantity,
+    });
+    if (!updated) return context.text("Not found", 404);
+
+    const updatedSheet = dependencies.characterRepository.getSheetById(sheet.id);
+    if (!updatedSheet) return context.text("Not found", 404);
+
+    return context.html(
+      <SheetTabPanel
+        backgroundEntries={dependencies.characterRepository.listBackgroundEntries(sheet.id)}
+        equipment={dependencies.characterRepository.listEquipment(sheet.id)}
+        notes={dependencies.notesRepository.listNotesForCharacter(sheet.id, session.user.role)}
+        resources={dependencies.characterRepository.listResources(sheet.id)}
+        ruleLinks={dependencies.rulesRepository.listRuleLinksForCharacter(sheet.id)}
+        sheet={updatedSheet}
+        tabId="equipment"
+      />,
+    );
+  });
+
+  app.post("/sheet/:characterRef/conditions", async (context) => {
+    const session = readSession(context.req.header("cookie"));
+    if (!session) return context.redirect("/login", 303);
+
+    const sheet = getSheetByRef(context.req.param("characterRef"));
+    if (!sheet) return context.text("Not found", 404);
+
+    const guard = requireSheetAccess({
+      characterId: sheet.id,
+      characterRepository: dependencies.characterRepository,
+      permission: "write",
+      session,
+    });
+    const guarded = guardResponse(context, guard);
+    if (guarded) return guarded;
+
+    const body = await context.req.parseBody();
+    const label = parseFormText(body.label);
+    if (!label) return context.text("Invalid condition", 400);
+
+    dependencies.characterRepository.upsertConditionResource(sheet.id, label);
+    const updatedSheet = dependencies.characterRepository.getSheetById(sheet.id);
+    if (!updatedSheet) return context.text("Not found", 404);
+
+    return context.html(
+      <SheetHeader
+        resources={dependencies.characterRepository.listResources(sheet.id)}
+        sheet={updatedSheet}
+      />,
+    );
+  });
+
+  app.post("/sheet/:characterRef/rolls", async (context) => {
+    const session = readSession(context.req.header("cookie"));
+    if (!session) return context.redirect("/login", 303);
+
+    const sheet = getSheetByRef(context.req.param("characterRef"));
+    if (!sheet) return context.text("Not found", 404);
+
+    const guard = requireSheetAccess({
+      characterId: sheet.id,
+      characterRepository: dependencies.characterRepository,
+      permission: "read",
+      session,
+    });
+    const guarded = guardResponse(context, guard);
+    if (guarded) return guarded;
+
+    const body = await context.req.parseBody();
+    const label = parseFormText(body.label);
+    if (!label) return context.text("Invalid roll", 400);
+    const resultId = parseFormText(body.resultId);
+
+    const baseModifier = parseFormNumber(body.modifier) ?? parseFormNumber(body.baseModifier) ?? 0;
+    const proficiencyBonus = parseFormNumber(body.proficiencyBonus) ?? 0;
+    const additionalModifier = parseFormNumber(body.additionalModifier) ?? 0;
+    const modifier = baseModifier + proficiencyBonus + additionalModifier;
+    const mode = parseRollMode(body.mode);
+    const first = rollD20();
+    const second = mode === "normal" ? null : rollD20();
+    const die =
+      second === null
+        ? first
+        : mode === "advantage"
+          ? Math.max(first, second)
+          : Math.min(first, second);
+    const total = die + modifier;
+    const rollText = second === null ? String(first) : `${first}, ${second}`;
+
+    return context.html(
+      <output id={resultId ?? undefined} class="dice-roll-result">
+        {label}: d20 ({rollText}) {formatSignedNumber(modifier)} = {total}
+      </output>,
     );
   });
 
@@ -387,6 +520,7 @@ export const createApp = (dependencies: AppDependencies) => {
     return context.html(
       <SheetTabWorkspace
         activeTab={tabId}
+        backgroundEntries={dependencies.characterRepository.listBackgroundEntries(sheet.id)}
         equipment={dependencies.characterRepository.listEquipment(sheet.id)}
         header={<SheetHeader resources={updatedResources} sheet={updatedSheet} />}
         notes={dependencies.notesRepository.listNotesForCharacter(sheet.id, session.user.role)}
@@ -411,8 +545,37 @@ function parseFormNumber(value: unknown) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+function parseFormBoolean(value: unknown) {
+  if (value === "1" || value === "true") return true;
+  if (value === "0" || value === "false") return false;
+
+  return null;
+}
+
+function parseFormText(value: unknown) {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+
+  return trimmed.length > 0 ? trimmed : null;
+}
+
 function parseSheetTabId(value: unknown) {
   if (typeof value !== "string" || value.trim() === "") return null;
 
   return isSheetTabId(value) ? value : null;
+}
+
+function parseRollMode(value: unknown) {
+  return value === "advantage" || value === "disadvantage" ? value : "normal";
+}
+
+function rollD20() {
+  return Math.floor(Math.random() * 20) + 1;
+}
+
+function formatSignedNumber(value: number) {
+  if (value === 0) return "+ 0";
+  if (value > 0) return `+ ${value}`;
+
+  return `- ${Math.abs(value)}`;
 }

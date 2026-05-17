@@ -52,6 +52,7 @@ erDiagram
     characters ||--o{ character_skills : has
     characters ||--o{ character_resources : tracks
     characters ||--o{ character_equipment : owns
+    characters ||--o{ character_background_entries : describes
     characters ||--o{ character_notes : owns
     rules_sources ||--o{ rules_entities : provides
     rules_entities ||--o{ rule_mechanics : describes
@@ -63,7 +64,7 @@ Core table groups:
 
 - Auth and access: `users`, `sessions`, `invites`, `password_reset_tokens`.
 - Campaign and play: `campaigns`, `campaign_members`, `campaign_sessions`.
-- Character sheet: `characters`, `character_classes`, `character_abilities`, `character_skills`, `character_resources`, `character_equipment`, `character_notes`.
+- Character sheet: `characters`, `character_classes`, `character_abilities`, `character_skills`, `character_resources`, `character_equipment`, `character_background_entries`, `character_notes`.
 - Rules: `rules_sources`, `rules_entities`, `rule_mechanics`, `character_rule_links`.
 
 ## Sheet Experience

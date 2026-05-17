@@ -1,4 +1,5 @@
 import type {
+  CharacterBackgroundEntry,
   CharacterEquipment,
   CharacterNote,
   CharacterResource,
@@ -10,6 +11,7 @@ import { SheetTabs, type SheetTabId } from "../SheetTabs";
 
 interface SheetTabWorkspaceProps {
   activeTab: SheetTabId;
+  backgroundEntries: CharacterBackgroundEntry[];
   equipment: CharacterEquipment[];
   header?: unknown;
   notes: CharacterNote[];
@@ -20,6 +22,7 @@ interface SheetTabWorkspaceProps {
 
 export const SheetTabWorkspace = ({
   activeTab,
+  backgroundEntries,
   equipment,
   header,
   notes,
@@ -33,6 +36,7 @@ export const SheetTabWorkspace = ({
       <SheetTabs activeTab={activeTab} characterSlug={sheet.slug} />
     </div>
     <SheetTabPanel
+      backgroundEntries={backgroundEntries}
       equipment={equipment}
       notes={notes}
       resources={resources}

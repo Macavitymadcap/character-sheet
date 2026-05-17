@@ -112,6 +112,23 @@ export interface CharacterEquipment {
   quantity: number;
 }
 
+export type CharacterBackgroundCategory =
+  | "backstory"
+  | "bond"
+  | "false_identity"
+  | "flaw"
+  | "ideal"
+  | "npc"
+  | "personality"
+  | "rank";
+
+export interface CharacterBackgroundEntry {
+  body: string;
+  category: CharacterBackgroundCategory;
+  id: string;
+  title: string;
+}
+
 export interface ArmourClassSource {
   label: string;
   notes: string;
@@ -164,13 +181,20 @@ export interface CharacterRepository {
   getAccessContext(characterId: string): CharacterAccessContext | null;
   getSheetById(id: string): CharacterSheetReadModel | null;
   getSheetBySlug(slug: string): CharacterSheetReadModel | null;
+  listBackgroundEntries(characterId: string): CharacterBackgroundEntry[];
   listEquipment(characterId: string): CharacterEquipment[];
   listResources(characterId: string): CharacterResource[];
+  updateEquipmentItem(
+    characterId: string,
+    equipmentId: string,
+    patch: { equipped?: boolean; quantity?: number },
+  ): CharacterEquipment | null;
   updateResourceCurrent(
     characterId: string,
     resourceId: string,
     current: number,
   ): CharacterResource | null;
+  upsertConditionResource(characterId: string, label: string): CharacterResource;
 }
 
 export interface CharacterAccessContext {

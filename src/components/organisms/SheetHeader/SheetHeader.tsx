@@ -10,6 +10,9 @@ export const SheetHeader = ({ resources, sheet }: SheetHeaderProps) => {
   const hitPoints = findResource(resources, "hit_points");
   const temporaryHitPoints = findResource(resources, "temporary_hit_points");
   const inspiration = findResource(resources, "inspiration");
+  const activeConditions = resources.filter(
+    (resource) => resource.type === "condition" && resource.current > 0,
+  );
   const hitPointTarget = hitPoints
     ? `/sheet/${sheet.slug}/resources/${hitPoints.id}`
     : undefined;
@@ -98,7 +101,7 @@ export const SheetHeader = ({ resources, sheet }: SheetHeaderProps) => {
         </div>
         <div class="sheet-metric sheet-metric-wide">
           <dt>Conditions</dt>
-          <dd>{formatConditions(resources)}</dd>
+          <dd>{renderConditions(activeConditions, sheet.slug)}</dd>
         </div>
         <div class="sheet-metric">
           <dt>Insp</dt>
@@ -152,18 +155,72 @@ function formatModifier(value: number) {
   return value >= 0 ? `+${value}` : String(value);
 }
 
-function formatConditions(resources: CharacterResource[]) {
-  const activeConditions = resources.filter(
-    (resource) => resource.type === "condition" && resource.current > 0,
-  );
-
-  return activeConditions.length > 0
-    ? activeConditions.map((resource) => resource.label).join(", ")
-    : "None";
-}
-
 function isInspired(resources: CharacterResource[]) {
   const inspiration = resources.find((resource) => resource.key === "inspiration");
 
   return Boolean(inspiration && inspiration.current > 0);
+}
+
+function renderConditions(activeConditions: CharacterResource[], characterSlug: string) {
+  const panelId = `condition-popover-${characterSlug}`;
+
+  return (
+    <span class="condition-control">
+      <button
+        class="metric-value-button"
+        type="button"
+        aria-label="Manage conditions"
+        popovertarget={panelId}
+        popovertargetaction="toggle"
+      >
+        {activeConditions.length > 0 ? (
+          <span class="condition-chip-list">
+            {activeConditions.map((condition) => (
+              <span class="condition-chip">{condition.label}</span>
+            ))}
+          </span>
+        ) : (
+          "None"
+        )}
+      </button>
+      <div
+        id={panelId}
+        class="metric-popover condition-popover"
+        role="group"
+        aria-label="Condition controls"
+        popover="auto"
+      >
+        <p class="metric-popover-heading">Conditions</p>
+        {activeConditions.length > 0 ? (
+          <div class="condition-chip-list">
+            {activeConditions.map((condition) => (
+              <form
+                class="condition-chip-form"
+                hx-patch={`/sheet/${characterSlug}/resources/${condition.id}`}
+                hx-target="#sheet-header"
+                hx-swap="outerHTML"
+              >
+                <input type="hidden" name="current" value="0" />
+                <button type="submit" class="condition-chip" aria-label={`Remove ${condition.label}`}>
+                  {condition.label} ×
+                </button>
+              </form>
+            ))}
+          </div>
+        ) : (
+          <p class="condition-empty">No active conditions.</p>
+        )}
+        <form
+          class="condition-add-form"
+          hx-post={`/sheet/${characterSlug}/conditions`}
+          hx-target="#sheet-header"
+          hx-swap="outerHTML"
+        >
+          <label for="condition-label-input">Add condition</label>
+          <input id="condition-label-input" name="label" type="text" placeholder="Custom condition" />
+          <button type="submit">Add</button>
+        </form>
+      </div>
+    </span>
+  );
 }

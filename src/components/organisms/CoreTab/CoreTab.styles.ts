@@ -32,7 +32,7 @@ export const coreTabStyles = /* css */ `
 
 .ability-table th:first-child,
 .ability-table td:first-child {
-  width: 32%;
+  width: 28%;
 }
 
 .ability-table th:nth-child(2),
@@ -43,7 +43,7 @@ export const coreTabStyles = /* css */ `
 .ability-table td:nth-child(4),
 .ability-table th:last-child,
 .ability-table td:last-child {
-  width: 17%;
+  width: 14%;
 }
 
 .sheet-table th,

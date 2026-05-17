@@ -54,6 +54,7 @@ describe("SheetPage", () => {
       <SheetPage
         activeTab="core"
         appName="Character Sheet"
+        backgroundEntries={[]}
         equipment={[]}
         notes={[]}
         resources={resources}

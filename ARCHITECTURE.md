@@ -194,6 +194,8 @@ erDiagram
     characters ||--o{ character_defences : tracks
     characters ||--o{ character_proficiencies : has
     characters ||--o{ character_resources : tracks
+    characters ||--o{ character_equipment : owns
+    characters ||--o{ character_background_entries : describes
     characters ||--o{ character_notes : owns
     characters ||--o{ character_rule_links : references
     rules_sources ||--o{ rules_entities : provides
@@ -222,6 +224,7 @@ erDiagram
 | `character_proficiencies` | Armour, weapon, tool, language, and training entries for the skills tab. |
 | `character_resources` | Mutable resources such as hit points, hit dice, spell slots, inspiration, trait uses, and conditions. |
 | `character_equipment` | Inventory, equipped items, attunement, and active item modifiers. |
+| `character_background_entries` | Structured personality, backstory, false identities, NPCs, and rank structure rows for the background tab. |
 | `character_notes` | Player-visible and Game Master-only notes. |
 | `rules_sources` | Source metadata such as Tasha's Cauldron of Everything and source precedence. |
 | `rules_entities` | Spells, class features, species traits, backgrounds, equipment, infusions, and conditions. |

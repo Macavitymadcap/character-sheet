@@ -189,6 +189,45 @@ describe("createApp", () => {
     expect(sheetHtml).toContain('aria-checked="true"');
   });
 
+  test("adds custom conditions and returns dice roll fragments", async () => {
+    const { app, sessionService } = createTestApp("Character Sheet");
+    const session = sessionService.createSession("user_lynott_player");
+    const cookie = session.cookie;
+    const headers = { cookie, "Content-Type": "application/x-www-form-urlencoded" };
+
+    const condition = await app.request("/sheet/lynott/conditions", {
+      body: new URLSearchParams({ label: "Frightened" }),
+      headers,
+      method: "POST",
+    });
+    const conditionHtml = await condition.text();
+    const roll = await app.request("/sheet/lynott/rolls", {
+      body: new URLSearchParams({
+        additionalModifier: "1",
+        label: "Stealth",
+        mode: "advantage",
+        modifier: "5",
+      }),
+      headers,
+      method: "POST",
+    });
+    const rollHtml = await roll.text();
+    const invalidCondition = await app.request("/sheet/lynott/conditions", {
+      body: new URLSearchParams({ label: "" }),
+      headers,
+      method: "POST",
+    });
+
+    expect(condition.status).toBe(200);
+    expect(conditionHtml).toContain('<span class="condition-chip">Frightened</span>');
+    expect(conditionHtml).toContain('hx-patch="/sheet/lynott/resources/condition_character_lynott_magulbisson_frightened"');
+    expect(roll.status).toBe(200);
+    expect(rollHtml).toContain('<output class="dice-roll-result">');
+    expect(rollHtml).toContain("Stealth: d20");
+    expect(rollHtml).toContain("+ 6 =");
+    expect(invalidCondition.status).toBe(400);
+  });
+
   test("updates tab resources through HTMX panel fragments", async () => {
     const { app, sessionService } = createTestApp("Character Sheet");
     const session = sessionService.createSession("user_lynott_player");
@@ -207,6 +246,10 @@ describe("createApp", () => {
       headers: { cookie },
     });
     const spellcastingHtml = await spellcasting.text();
+    const features = await app.request("/sheet/lynott/tabs/features", {
+      headers: { cookie },
+    });
+    const featuresHtml = await features.text();
     const invalidTab = await app.request(
       "/sheet/lynott/resources/resource_lynott_spell_slots_1",
       {
@@ -268,6 +311,10 @@ describe("createApp", () => {
       headers: { cookie },
     });
     const spellcastingHtml = await spellcasting.text();
+    const features = await app.request("/sheet/lynott/tabs/features", {
+      headers: { cookie },
+    });
+    const featuresHtml = await features.text();
     const invalidRest = await app.request("/sheet/lynott/rests/watch", {
       body: new URLSearchParams({ tabId: "actions" }),
       headers: formHeaders,
@@ -286,8 +333,8 @@ describe("createApp", () => {
     expect(html).toContain("31 / 31");
     expect(html).toContain("Hit dice d8");
     expect(html).toContain("3 / 4");
-    expect(html).toContain("Fey Gift");
-    expect(html).toContain("2 / 2");
+    expect(featuresHtml).toContain("Fey Gift");
+    expect(featuresHtml).toContain("2 / 2");
     expect(spellcastingHtml).toContain("3 / 3");
     expect(invalidRest.status).toBe(400);
     expect(invalidTab.status).toBe(400);
@@ -346,24 +393,47 @@ describe("createApp", () => {
     const equipment = await app.request("/sheet/lynott/tabs/equipment", {
       headers: { cookie: playerSession.cookie },
     });
+    const background = await app.request("/sheet/lynott/tabs/background", {
+      headers: { cookie: playerSession.cookie },
+    });
     const playerNotes = await app.request("/sheet/lynott/tabs/notes", {
       headers: { cookie: playerSession.cookie },
     });
     const gmNotes = await app.request("/sheet/lynott/tabs/notes", {
       headers: { cookie: gmSession.cookie },
     });
+    const updateMoney = await app.request("/sheet/lynott/equipment/equipment_lynott_coin_purse", {
+      body: new URLSearchParams({ deltaQuantity: "5" }),
+      headers: {
+        cookie: playerSession.cookie,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      method: "PATCH",
+    });
     const actionsHtml = await actions.text();
     const equipmentHtml = await equipment.text();
+    const backgroundHtml = await background.text();
     const playerNotesHtml = await playerNotes.text();
     const gmNotesHtml = await gmNotes.text();
+    const updateMoneyHtml = await updateMoney.text();
 
     expect(actions.status).toBe(200);
     expect(actionsHtml).toContain("Action resources");
+    expect(actionsHtml).toContain("Bonus actions and reactions");
+    expect(actionsHtml).toContain("Absorb Elements");
     expect(actionsHtml).toContain("Pistol with Repeating Shot infusion");
     expect(actionsHtml).toContain('class="compact-list"');
     expect(equipment.status).toBe(200);
+    expect(equipmentHtml).toContain("Coin purse");
+    expect(equipmentHtml).toContain('hx-patch="/sheet/lynott/equipment/equipment_lynott_coin_purse"');
     expect(equipmentHtml).toContain("Breastplate with Enhanced Defence infusion");
     expect(equipmentHtml).toContain("Range 30/90 ft.");
+    expect(updateMoney.status).toBe(200);
+    expect(updateMoneyHtml).toContain("5 gp");
+    expect(background.status).toBe(200);
+    expect(backgroundHtml).toContain("Jonas Blarendon");
+    expect(backgroundHtml).toContain("Sergeant Kora Steelheart");
+    expect(backgroundHtml).toContain("Rank structure");
     expect(playerNotes.status).toBe(200);
     expect(playerNotesHtml).toContain("Player notes");
     expect(playerNotesHtml).not.toContain("Sergeant Kora Steelheart");

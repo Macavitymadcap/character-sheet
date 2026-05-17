@@ -1,7 +1,9 @@
 export { AdminPage } from "./pages/Admin";
+export { Accordion } from "./molecules/Accordion";
 export { Button } from "./atoms/Button";
 export { CampaignPage } from "./pages/Campaign";
 export { CompactList } from "./molecules/CompactList";
+export { DiceRoller } from "./molecules/DiceRoller";
 export { HomePage } from "./pages/Home";
 export { FormField } from "./molecules/FormField";
 export { Icon } from "./atoms/Icon";

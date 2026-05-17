@@ -3,6 +3,7 @@ import { PasswordService } from "../auth/password";
 
 type AbilitySeed = [string, number, number, number, number];
 type ArmourClassSourceSeed = [string, string, number, string, number];
+type BackgroundEntrySeed = [string, string, string, string, number];
 type DefenceSeed = [string, string, string, string, number];
 type EquipmentSeed = [string, string, string, number, number, string];
 type NoteSeed = [string, string, string, string, string];
@@ -151,6 +152,14 @@ const resources: ResourceSeed[] = [
 
 const equipment: EquipmentSeed[] = [
   [
+    "equipment_lynott_coin_purse",
+    "Coin purse",
+    "money",
+    0,
+    0,
+    "Starting gold to be determined.",
+  ],
+  [
     "equipment_lynott_breastplate",
     "Breastplate with Enhanced Defence infusion",
     "armour",
@@ -165,6 +174,250 @@ const equipment: EquipmentSeed[] = [
     1,
     1,
     "Range 30/90 ft., 1d10+4 magical piercing damage.",
+  ],
+  [
+    "equipment_lynott_eldritch_cannon",
+    "Eldritch Cannon",
+    "construct",
+    1,
+    1,
+    "Artillerist cannon; created through the Eldritch Cannon feature.",
+  ],
+  [
+    "equipment_lynott_component_pouch",
+    "Component pouch",
+    "gear",
+    1,
+    1,
+    "Bits of wire and tools used for artificer casting.",
+  ],
+  [
+    "equipment_lynott_dungeoneers_pack",
+    "Dungeoneer's pack",
+    "gear",
+    1,
+    0,
+    "Bedroll, mess kit, tinderbox, torches, rations, waterskin, and rope.",
+  ],
+  [
+    "equipment_lynott_travellers_clothes",
+    "Traveller's clothes",
+    "gear",
+    1,
+    0,
+    "Jonas Blarendon identity clothing.",
+  ],
+  [
+    "equipment_lynott_common_clothes",
+    "Common clothes",
+    "gear",
+    1,
+    0,
+    "Blending-in clothes for factory district work.",
+  ],
+  [
+    "equipment_lynott_insignia",
+    "Insignia of rank",
+    "gear",
+    1,
+    0,
+    "Hidden, wrapped, and stashed.",
+  ],
+  [
+    "equipment_lynott_dark_cloak",
+    "Dark cloak and hood",
+    "gear",
+    1,
+    0,
+    "For moving unseen.",
+  ],
+  [
+    "equipment_lynott_disguise_kit",
+    "Disguise kit",
+    "tool",
+    1,
+    0,
+    "Special Operations background tool.",
+  ],
+  [
+    "equipment_lynott_forgery_kit",
+    "Forgery kit",
+    "tool",
+    1,
+    0,
+    "Special Operations background tool.",
+  ],
+  [
+    "equipment_lynott_maintenance_tools",
+    "Maintenance tools for weapons",
+    "tool",
+    1,
+    0,
+    "Covered by tinker's tools.",
+  ],
+];
+
+const backgroundEntries: BackgroundEntrySeed[] = [
+  [
+    "background_lynott_personality_weapons",
+    "personality",
+    "Weapon maintenance",
+    "Maintains weapons with obsessive precision, even while hating what they represent.",
+    10,
+  ],
+  [
+    "background_lynott_personality_exits",
+    "personality",
+    "Threat reading",
+    "Always watches exits, reads crowds, and catalogues threats; military habits die hard.",
+    20,
+  ],
+  [
+    "background_lynott_ideal_vengeance",
+    "ideal",
+    "Vengeance",
+    "The army must answer for what they made him do, and for what they did to his people.",
+    30,
+  ],
+  [
+    "background_lynott_bond_faces",
+    "bond",
+    "The faces remain",
+    "The faces of those he killed haunt him every night. He owes them justice, even if he can never make it right.",
+    40,
+  ],
+  [
+    "background_lynott_flaw_borrowed_faces",
+    "flaw",
+    "Borrowed faces",
+    "He does not know who he is when he is not wearing someone else's face.",
+    50,
+  ],
+  [
+    "background_lynott_backstory_factory",
+    "backstory",
+    "Factory district",
+    "I grew up in the factory district of Rovnost, part of a long line of hobgoblin engineers. My family worked the machines that kept the city running. My father, his father, generations feeding the furnaces and maintaining the great industrial engines. I had the family gift for tinkering, for understanding how things worked, but I also had ambition. When the military began recruiting technically skilled individuals for their new magitech weapons programme, I saw my opportunity: escape the smog, see the world, make something of myself beyond the factory floor.",
+    60,
+  ],
+  [
+    "background_lynott_backstory_artificers",
+    "backstory",
+    "The 1st Astrilian Artificers",
+    "I excelled in the 1st Astrilian Artificers. The discipline came naturally; hobgoblin culture had prepared me for military life. The unit wasn't just about firepower. We were infiltrators, intelligence gatherers, saboteurs with experimental magitech at our disposal. I learned to move unseen through urban terrain, to blend into crowds, to gather information and disappear before anyone noticed. I became proficient with experimental magitech firearms, rose through the ranks to Corporal, and earned respect as both a soldier and a technician. We operated in the shadows, maintaining order through precision strikes and covert operations. The work was dangerous, sometimes morally grey, but I told myself I was protecting progress, maintaining stability. The doubts were there. Whispers in the back of my mind during certain operations. But the alternative was going back to the factories, so I pushed them down and did my duty.",
+    70,
+  ],
+  [
+    "background_lynott_backstory_home_order",
+    "backstory",
+    "Sent home",
+    "The order came down: suppress a workers' uprising in my old district. Use the new weapon, an experimental magitech cannon designed for crowd control with minimal casualties. Sergeant Kora Steelheart gave the order without hesitation. We were assured it was humane, effective, necessary. Private First Class Rennik Coppergear had made sure the cannon worked perfectly. I carried out the mission.",
+    80,
+  ],
+  [
+    "background_lynott_backstory_cannon",
+    "backstory",
+    "The cannon",
+    "The cannon worked exactly as designed. Alchemically enhanced shot spread over distance, rupturing bodies from within. Turning people inside out without fully killing them. Leaving them dying in agony on the factory floor. I killed people I knew. I heard Riggo Three-Finger Tarn screaming; we'd grown up together, and he'd been organising the workers. I saw Old Korrin in the crowd before I fired; he'd taught me everything I knew about engineering. Childhood friends. Neighbours. Maybe even my Aunt Marta, though I couldn't bring myself to look closely enough to know for sure. Familiar faces now screaming, their insides on the outside, begging for death that wouldn't come quickly.",
+    85,
+  ],
+  [
+    "background_lynott_backstory_aftermath",
+    "backstory",
+    "Aftermath",
+    "Corporal Matchstick Venn was sick in the alley afterward, but he stayed. He believed the system could be fixed from within. Private Dulsa Ironbrace deserted three days after me; I don't know if she made it out. Others, like Sergeant Steelheart, believed it was necessary, righteous even. These were traitors threatening the city's prosperity, they said. Captain Theron Blackwood filed his after-action report praising the mission's success. Major Selvanis Kresh, who'd briefed us on the weapon's minimal casualties, knew exactly what it would do all along.",
+    87,
+  ],
+  [
+    "background_lynott_backstory_desertion",
+    "backstory",
+    "Desertion",
+    "I couldn't reconcile it anymore. The doubts became certainties. Within days, I deserted. I took my service weapons; a rifle and revolver, both heavily modified to be unrecognisable. I learned minor illusion magic, enough to hide the scars crossing my face and the regimental tattoo marking my shoulder. Now I'm back where I started: the factory district, blood on my hands, maintaining weapons I resent out of pure habit, wearing borrowed faces and hoping nobody looks too closely at who I really am.",
+    89,
+  ],
+  [
+    "background_lynott_identity_jonas",
+    "false_identity",
+    "Jonas Blarendon",
+    "Male human travelling tinker and independent contractor; friendly, skilled with tools, and carrying a forged recommendation.",
+    90,
+  ],
+  [
+    "background_lynott_identity_soot",
+    "false_identity",
+    "Soot Marren Coalwhisper",
+    "Male half-orc factory district hauler; useful for blending into working-class crowds when Jonas draws attention.",
+    100,
+  ],
+  [
+    "background_lynott_identity_petra",
+    "false_identity",
+    "Petra Wrenwright",
+    "Female gnome scribe and records clerk; forgettable enough to access offices and records without raising suspicion.",
+    110,
+  ],
+  [
+    "background_lynott_npc_kora",
+    "npc",
+    "Sergeant Kora Steelheart",
+    "Hobgoblin squad leader who gave the order to fire and likely leads the search for Lynott.",
+    120,
+  ],
+  [
+    "background_lynott_npc_matchstick",
+    "npc",
+    "Corporal Matchstick Venn Ashlock",
+    "Human demolitions specialist who hated the mission but stayed, hoping the system could be fixed from within.",
+    130,
+  ],
+  [
+    "background_lynott_npc_dulsa",
+    "npc",
+    "Private Dulsa Ironbrace",
+    "Dwarf sharpshooter who deserted three days after Lynott; her fate is unknown.",
+    140,
+  ],
+  [
+    "background_lynott_npc_rennik",
+    "npc",
+    "Private First Class Rennik Coppergear",
+    "Gnome magitech engineer who maintained the experimental cannon and cared more for efficiency than consequence.",
+    150,
+  ],
+  [
+    "background_lynott_npc_blackwood",
+    "npc",
+    "Captain Theron Blackwood",
+    "Company commander who sees Lynott as a malfunctioning asset and has the connections to coordinate the search.",
+    160,
+  ],
+  [
+    "background_lynott_npc_selvanis",
+    "npc",
+    "Major Selvanis Kresh",
+    "Half-elf intelligence officer who understood what the weapon would do and treated people as variables.",
+    170,
+  ],
+  [
+    "background_lynott_npc_home",
+    "npc",
+    "People from home",
+    "Aunt Marta, Riggo Three-Finger Tarn, and Old Korrin tie Lynott back to the factory district and the uprising's cost.",
+    180,
+  ],
+  [
+    "background_lynott_rank_enlisted",
+    "rank",
+    "Enlisted technical specialists",
+    "Private, Private First Class, Corporal, and Sergeant cover basic operators through squad leaders.",
+    190,
+  ],
+  [
+    "background_lynott_rank_command",
+    "rank",
+    "Command ranks",
+    "Lieutenant, Captain, and Major cover platoon leadership through battalion staff and intelligence operations.",
+    200,
   ],
 ];
 
@@ -405,6 +658,19 @@ export const seedDatabase = (database: Database) => {
     database.run(
       "insert or ignore into character_equipment (id, character_id, name, category, quantity, equipped, notes) values (?, ?, ?, ?, ?, ?, ?)",
       [item[0], "character_lynott_magulbisson", ...item.slice(1)],
+    );
+  }
+
+  for (const entry of backgroundEntries) {
+    database.run(
+      `insert into character_background_entries (id, character_id, category, title, body, sort_order)
+       values (?, ?, ?, ?, ?, ?)
+       on conflict(id) do update set
+         category = excluded.category,
+         title = excluded.title,
+         body = excluded.body,
+         sort_order = excluded.sort_order`,
+      [entry[0], "character_lynott_magulbisson", ...entry.slice(1)],
     );
   }
 
