@@ -175,6 +175,17 @@ CREATE TABLE IF NOT EXISTS character_equipment (
   notes TEXT NOT NULL DEFAULT ''
 );
 
+CREATE TABLE IF NOT EXISTS character_background_entries (
+  id TEXT PRIMARY KEY,
+  character_id TEXT NOT NULL REFERENCES characters(id) ON DELETE CASCADE,
+  category TEXT NOT NULL CHECK (
+    category IN ('backstory', 'bond', 'false_identity', 'flaw', 'ideal', 'npc', 'personality', 'rank')
+  ),
+  title TEXT NOT NULL,
+  body TEXT NOT NULL,
+  sort_order INTEGER NOT NULL DEFAULT 0
+);
+
 CREATE TABLE IF NOT EXISTS character_notes (
   id TEXT PRIMARY KEY,
   character_id TEXT NOT NULL REFERENCES characters(id) ON DELETE CASCADE,

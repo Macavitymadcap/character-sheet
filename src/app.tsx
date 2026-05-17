@@ -240,6 +240,7 @@ export const createApp = (dependencies: AppDependencies) => {
       <SheetPage
         activeTab="core"
         appName={dependencies.appName}
+        backgroundEntries={dependencies.characterRepository.listBackgroundEntries(sheet.id)}
         equipment={dependencies.characterRepository.listEquipment(sheet.id)}
         notes={dependencies.notesRepository.listNotesForCharacter(sheet.id, session.user.role)}
         resources={dependencies.characterRepository.listResources(sheet.id)}
@@ -271,6 +272,7 @@ export const createApp = (dependencies: AppDependencies) => {
 
     return context.html(
       <SheetTabPanel
+        backgroundEntries={dependencies.characterRepository.listBackgroundEntries(sheet.id)}
         equipment={dependencies.characterRepository.listEquipment(sheet.id)}
         notes={dependencies.notesRepository.listNotesForCharacter(sheet.id, session.user.role)}
         resources={dependencies.characterRepository.listResources(sheet.id)}
@@ -326,6 +328,7 @@ export const createApp = (dependencies: AppDependencies) => {
     if (tabId) {
       return context.html(
         <SheetTabPanel
+          backgroundEntries={dependencies.characterRepository.listBackgroundEntries(sheet.id)}
           equipment={dependencies.characterRepository.listEquipment(sheet.id)}
           notes={dependencies.notesRepository.listNotesForCharacter(sheet.id, session.user.role)}
           resources={updatedResources}
@@ -387,6 +390,7 @@ export const createApp = (dependencies: AppDependencies) => {
     return context.html(
       <SheetTabWorkspace
         activeTab={tabId}
+        backgroundEntries={dependencies.characterRepository.listBackgroundEntries(sheet.id)}
         equipment={dependencies.characterRepository.listEquipment(sheet.id)}
         header={<SheetHeader resources={updatedResources} sheet={updatedSheet} />}
         notes={dependencies.notesRepository.listNotesForCharacter(sheet.id, session.user.role)}

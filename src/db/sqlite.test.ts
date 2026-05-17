@@ -275,6 +275,28 @@ describe("SQLite repositories", () => {
     ]);
   });
 
+  test("reads Lynott's structured background entries", () => {
+    runtime = createSqliteDatabase({ path: ":memory:" });
+    const entries = runtime.repositories.characterRepository.listBackgroundEntries(
+      "character_lynott_magulbisson",
+    );
+
+    expect(entries).toContainEqual({
+      body: "Male human travelling tinker and independent contractor; friendly, skilled with tools, and carrying a forged recommendation.",
+      category: "false_identity",
+      id: "background_lynott_identity_jonas",
+      title: "Jonas Blarendon",
+    });
+    expect(entries).toContainEqual({
+      body: "Hobgoblin squad leader who gave the order to fire and likely leads the search for Lynott.",
+      category: "npc",
+      id: "background_lynott_npc_kora",
+      title: "Sergeant Kora Steelheart",
+    });
+    expect(entries.map((entry) => entry.category)).toContain("rank");
+    expect(entries).toHaveLength(20);
+  });
+
   test("updates resources and mirrors hit point fields on the sheet summary", () => {
     runtime = createSqliteDatabase({ path: ":memory:" });
     const characters = runtime.repositories.characterRepository;

@@ -346,6 +346,9 @@ describe("createApp", () => {
     const equipment = await app.request("/sheet/lynott/tabs/equipment", {
       headers: { cookie: playerSession.cookie },
     });
+    const background = await app.request("/sheet/lynott/tabs/background", {
+      headers: { cookie: playerSession.cookie },
+    });
     const playerNotes = await app.request("/sheet/lynott/tabs/notes", {
       headers: { cookie: playerSession.cookie },
     });
@@ -354,6 +357,7 @@ describe("createApp", () => {
     });
     const actionsHtml = await actions.text();
     const equipmentHtml = await equipment.text();
+    const backgroundHtml = await background.text();
     const playerNotesHtml = await playerNotes.text();
     const gmNotesHtml = await gmNotes.text();
 
@@ -364,6 +368,10 @@ describe("createApp", () => {
     expect(equipment.status).toBe(200);
     expect(equipmentHtml).toContain("Breastplate with Enhanced Defence infusion");
     expect(equipmentHtml).toContain("Range 30/90 ft.");
+    expect(background.status).toBe(200);
+    expect(backgroundHtml).toContain("Jonas Blarendon");
+    expect(backgroundHtml).toContain("Sergeant Kora Steelheart");
+    expect(backgroundHtml).toContain("Rank structure");
     expect(playerNotes.status).toBe(200);
     expect(playerNotesHtml).toContain("Player notes");
     expect(playerNotesHtml).not.toContain("Sergeant Kora Steelheart");

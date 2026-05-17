@@ -3,6 +3,7 @@ import { PasswordService } from "../auth/password";
 
 type AbilitySeed = [string, number, number, number, number];
 type ArmourClassSourceSeed = [string, string, number, string, number];
+type BackgroundEntrySeed = [string, string, string, string, number];
 type DefenceSeed = [string, string, string, string, number];
 type EquipmentSeed = [string, string, string, number, number, string];
 type NoteSeed = [string, string, string, string, string];
@@ -165,6 +166,149 @@ const equipment: EquipmentSeed[] = [
     1,
     1,
     "Range 30/90 ft., 1d10+4 magical piercing damage.",
+  ],
+];
+
+const backgroundEntries: BackgroundEntrySeed[] = [
+  [
+    "background_lynott_personality_weapons",
+    "personality",
+    "Weapon maintenance",
+    "Maintains weapons with obsessive precision, even while hating what they represent.",
+    10,
+  ],
+  [
+    "background_lynott_personality_exits",
+    "personality",
+    "Threat reading",
+    "Always watches exits, reads crowds, and catalogues threats; military habits die hard.",
+    20,
+  ],
+  [
+    "background_lynott_ideal_vengeance",
+    "ideal",
+    "Vengeance",
+    "The army must answer for what they made him do, and for what they did to his people.",
+    30,
+  ],
+  [
+    "background_lynott_bond_faces",
+    "bond",
+    "The faces remain",
+    "The faces of those he killed haunt him every night. He owes them justice, even if he can never make it right.",
+    40,
+  ],
+  [
+    "background_lynott_flaw_borrowed_faces",
+    "flaw",
+    "Borrowed faces",
+    "He does not know who he is when he is not wearing someone else's face.",
+    50,
+  ],
+  [
+    "background_lynott_backstory_factory",
+    "backstory",
+    "Factory district",
+    "Raised in Rovnost's factory district among hobgoblin engineers, Lynott joined the 1st Astrilian Artificers to escape the furnaces and use his technical skill.",
+    60,
+  ],
+  [
+    "background_lynott_backstory_uprising",
+    "backstory",
+    "The uprising",
+    "Ordered to suppress a workers' uprising at home, he fired an experimental cannon that maimed people he knew. The mission turned his doubts into certainty.",
+    70,
+  ],
+  [
+    "background_lynott_backstory_desertion",
+    "backstory",
+    "Desertion",
+    "Within days he deserted, taking modified service weapons and relying on disguise magic and forged identities to survive in the city.",
+    80,
+  ],
+  [
+    "background_lynott_identity_jonas",
+    "false_identity",
+    "Jonas Blarendon",
+    "Male human travelling tinker and independent contractor; friendly, skilled with tools, and carrying a forged recommendation.",
+    90,
+  ],
+  [
+    "background_lynott_identity_soot",
+    "false_identity",
+    "Soot Marren Coalwhisper",
+    "Male half-orc factory district hauler; useful for blending into working-class crowds when Jonas draws attention.",
+    100,
+  ],
+  [
+    "background_lynott_identity_petra",
+    "false_identity",
+    "Petra Wrenwright",
+    "Female gnome scribe and records clerk; forgettable enough to access offices and records without raising suspicion.",
+    110,
+  ],
+  [
+    "background_lynott_npc_kora",
+    "npc",
+    "Sergeant Kora Steelheart",
+    "Hobgoblin squad leader who gave the order to fire and likely leads the search for Lynott.",
+    120,
+  ],
+  [
+    "background_lynott_npc_matchstick",
+    "npc",
+    "Corporal Matchstick Venn Ashlock",
+    "Human demolitions specialist who hated the mission but stayed, hoping the system could be fixed from within.",
+    130,
+  ],
+  [
+    "background_lynott_npc_dulsa",
+    "npc",
+    "Private Dulsa Ironbrace",
+    "Dwarf sharpshooter who deserted three days after Lynott; her fate is unknown.",
+    140,
+  ],
+  [
+    "background_lynott_npc_rennik",
+    "npc",
+    "Private First Class Rennik Coppergear",
+    "Gnome magitech engineer who maintained the experimental cannon and cared more for efficiency than consequence.",
+    150,
+  ],
+  [
+    "background_lynott_npc_blackwood",
+    "npc",
+    "Captain Theron Blackwood",
+    "Company commander who sees Lynott as a malfunctioning asset and has the connections to coordinate the search.",
+    160,
+  ],
+  [
+    "background_lynott_npc_selvanis",
+    "npc",
+    "Major Selvanis Kresh",
+    "Half-elf intelligence officer who understood what the weapon would do and treated people as variables.",
+    170,
+  ],
+  [
+    "background_lynott_npc_home",
+    "npc",
+    "People from home",
+    "Aunt Marta, Riggo Three-Finger Tarn, and Old Korrin tie Lynott back to the factory district and the uprising's cost.",
+    180,
+  ],
+  [
+    "background_lynott_rank_enlisted",
+    "rank",
+    "Enlisted technical specialists",
+    "Private, Private First Class, Corporal, and Sergeant cover basic operators through squad leaders.",
+    190,
+  ],
+  [
+    "background_lynott_rank_command",
+    "rank",
+    "Command ranks",
+    "Lieutenant, Captain, and Major cover platoon leadership through battalion staff and intelligence operations.",
+    200,
   ],
 ];
 
@@ -405,6 +549,19 @@ export const seedDatabase = (database: Database) => {
     database.run(
       "insert or ignore into character_equipment (id, character_id, name, category, quantity, equipped, notes) values (?, ?, ?, ?, ?, ?, ?)",
       [item[0], "character_lynott_magulbisson", ...item.slice(1)],
+    );
+  }
+
+  for (const entry of backgroundEntries) {
+    database.run(
+      `insert into character_background_entries (id, character_id, category, title, body, sort_order)
+       values (?, ?, ?, ?, ?, ?)
+       on conflict(id) do update set
+         category = excluded.category,
+         title = excluded.title,
+         body = excluded.body,
+         sort_order = excluded.sort_order`,
+      [entry[0], "character_lynott_magulbisson", ...entry.slice(1)],
     );
   }
 

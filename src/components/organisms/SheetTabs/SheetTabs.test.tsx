@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { SheetTabs } from "./SheetTabs";
 import { isSheetTabId, sheetTabs } from "./SheetTabs.config";
+import { sheetTabsStyles } from "./SheetTabs.styles";
 
 const render = (node: unknown): string => String(node);
 
@@ -32,5 +33,13 @@ describe("SheetTabs", () => {
     ]);
     expect(isSheetTabId("core")).toBeTrue();
     expect(isSheetTabId("unknown")).toBeFalse();
+  });
+
+  test("keeps tab buttons compact while spacing the strip on wide screens", () => {
+    expect(sheetTabsStyles).toContain("display: flex;");
+    expect(sheetTabsStyles).toContain("flex: 0 0 auto;");
+    expect(sheetTabsStyles).toContain("justify-content: space-between;");
+    expect(sheetTabsStyles).not.toContain("repeat(8");
+    expect(sheetTabsStyles).not.toContain("grid-template-columns");
   });
 });

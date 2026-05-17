@@ -1,5 +1,6 @@
 import type {
   AuthUser,
+  CharacterBackgroundEntry,
   CharacterEquipment,
   CharacterNote,
   CharacterResource,
@@ -15,6 +16,7 @@ import { Layout } from "../../templates/Layout";
 interface SheetPageProps {
   activeTab: SheetTabId;
   appName: string;
+  backgroundEntries: CharacterBackgroundEntry[];
   equipment: CharacterEquipment[];
   notes: CharacterNote[];
   resources: CharacterResource[];
@@ -26,6 +28,7 @@ interface SheetPageProps {
 export const SheetPage = ({
   activeTab,
   appName,
+  backgroundEntries,
   equipment,
   notes,
   resources,
@@ -40,6 +43,7 @@ export const SheetPage = ({
         <main class="sheet-main" aria-labelledby="sheet-heading">
           <SheetTabWorkspace
             activeTab={activeTab}
+            backgroundEntries={backgroundEntries}
             equipment={equipment}
             header={<SheetHeader resources={resources} sheet={sheet} />}
             notes={notes}

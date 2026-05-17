@@ -1,4 +1,5 @@
 import type {
+  CharacterBackgroundEntry,
   CharacterEquipment,
   CharacterNote,
   CharacterResource,
@@ -11,6 +12,7 @@ import { SkillsTrainingTab } from "../SkillsTrainingTab";
 import { getSheetTab, type SheetTabId } from "../SheetTabs";
 
 interface SheetTabPanelProps {
+  backgroundEntries: CharacterBackgroundEntry[];
   equipment: CharacterEquipment[];
   notes: CharacterNote[];
   resources: CharacterResource[];
@@ -20,6 +22,7 @@ interface SheetTabPanelProps {
 }
 
 export const SheetTabPanel = ({
+  backgroundEntries,
   equipment,
   notes,
   resources,
@@ -41,12 +44,20 @@ export const SheetTabPanel = ({
         <h2>{tab.label}</h2>
         <p>{tab.description}</p>
       </div>
-      {renderTabContent(tab.id, { equipment, notes, resources, ruleLinks, sheet })}
+      {renderTabContent(tab.id, {
+        backgroundEntries,
+        equipment,
+        notes,
+        resources,
+        ruleLinks,
+        sheet,
+      })}
     </section>
   );
 };
 
 interface TabContentData {
+  backgroundEntries: CharacterBackgroundEntry[];
   equipment: CharacterEquipment[];
   notes: CharacterNote[];
   resources: CharacterResource[];
@@ -163,26 +174,29 @@ const EquipmentTab = ({ data }: { data: TabContentData }) => {
 };
 
 const BackgroundTab = ({ data }: { data: TabContentData }) => {
-  const languages = data.sheet.proficiencies
-    .filter((proficiency) => proficiency.category === "language")
-    .map((proficiency) => proficiency.name)
-    .join(", ");
-  const tools = data.sheet.proficiencies
-    .filter((proficiency) => proficiency.category === "tool")
-    .map((proficiency) => proficiency.name)
-    .join(", ");
+  const profileItems = data.backgroundEntries
+    .filter((entry) => ["personality", "ideal", "bond", "flaw"].includes(entry.category))
+    .map(backgroundEntryToItem);
+  const backstoryItems = data.backgroundEntries
+    .filter((entry) => entry.category === "backstory")
+    .map(backgroundEntryToItem);
+  const identityItems = data.backgroundEntries
+    .filter((entry) => entry.category === "false_identity")
+    .map(backgroundEntryToItem);
+  const npcItems = data.backgroundEntries
+    .filter((entry) => entry.category === "npc")
+    .map(backgroundEntryToItem);
+  const rankItems = data.backgroundEntries
+    .filter((entry) => entry.category === "rank")
+    .map(backgroundEntryToItem);
 
   return (
     <div class="tab-compact-grid">
-      {renderCompactSection("background-summary-heading", "Background", [
-        { label: "Origin", value: data.sheet.background },
-        { label: "Campaign", value: "Rovnost Shadows" },
-        { label: "Identity", value: `${data.sheet.name}, ${data.sheet.species}` },
-      ])}
-      {renderCompactSection("background-training-heading", "Training", [
-        { label: "Tools", value: tools || "None recorded" },
-        { label: "Languages", value: languages || "None recorded" },
-      ])}
+      {renderCompactSection("background-profile-heading", "Profile", profileItems)}
+      {renderCompactSection("background-story-heading", "Backstory", backstoryItems)}
+      {renderCompactSection("background-identities-heading", "False identities", identityItems)}
+      {renderCompactSection("background-npcs-heading", "NPCs", npcItems)}
+      {renderCompactSection("background-rank-heading", "Rank structure", rankItems)}
     </div>
   );
 };
@@ -280,6 +294,14 @@ function equipmentToItem(item: CharacterEquipment): CompactListItem {
     label: formatWords(item.category),
     meta: `${item.equipped ? "Equipped" : "Carried"} · Qty ${item.quantity} · ${item.notes}`,
     value: item.name,
+  };
+}
+
+function backgroundEntryToItem(entry: CharacterBackgroundEntry): CompactListItem {
+  return {
+    label: formatWords(entry.category.replaceAll("_", " ")),
+    meta: entry.body,
+    value: entry.title,
   };
 }
 

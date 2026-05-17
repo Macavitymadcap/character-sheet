@@ -10,6 +10,7 @@ import type {
   CampaignSummary,
   CharacterAccessContext,
   CharacterAbility,
+  CharacterBackgroundEntry,
   CharacterDefence,
   CharacterEquipment,
   CharacterNote,
@@ -148,6 +149,13 @@ interface CharacterEquipmentRow {
   name: string;
   notes: string;
   quantity: number;
+}
+
+interface CharacterBackgroundEntryRow {
+  body: string;
+  category: CharacterBackgroundEntry["category"];
+  id: string;
+  title: string;
 }
 
 interface CharacterNoteRow {
@@ -484,6 +492,23 @@ class SqliteCharacterRepository implements CharacterRepository {
         name: row.name,
         notes: row.notes,
         quantity: row.quantity,
+      }));
+  }
+
+  listBackgroundEntries(characterId: string): CharacterBackgroundEntry[] {
+    return this.database
+      .query<CharacterBackgroundEntryRow, [string]>(
+        `select id, category, title, body
+         from character_background_entries
+         where character_id = ?
+         order by sort_order, title`,
+      )
+      .all(characterId)
+      .map((row) => ({
+        body: row.body,
+        category: row.category,
+        id: row.id,
+        title: row.title,
       }));
   }
 

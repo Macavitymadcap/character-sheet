@@ -31,6 +31,7 @@ describe("bootstrapDatabase", () => {
       "campaigns",
       "character_abilities",
       "character_armour_class_sources",
+      "character_background_entries",
       "character_classes",
       "character_defences",
       "character_equipment",
@@ -125,6 +126,12 @@ describe("bootstrapDatabase", () => {
       database.run(
         "insert into character_proficiencies (id, character_id, category, name) values (?, ?, ?, ?)",
         ["proficiency_1", "character_2", "colour", "Blue"],
+      ),
+    ).toThrow();
+    expect(() =>
+      database.run(
+        "insert into character_background_entries (id, character_id, category, title, body) values (?, ?, ?, ?, ?)",
+        ["background_1", "character_2", "rumour", "Rumour", "Unsupported category."],
       ),
     ).toThrow();
   });
