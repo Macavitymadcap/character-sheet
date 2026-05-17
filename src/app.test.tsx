@@ -32,6 +32,25 @@ const createTestApp = (appName = "Test Character Sheet") => {
   return { app, sessionService };
 };
 
+const formHeaders = (cookie?: string) => ({
+  ...(cookie ? { cookie } : {}),
+  "Content-Type": "application/x-www-form-urlencoded",
+});
+
+const login = async (app: ReturnType<typeof createTestApp>["app"], email: string) => {
+  const response = await app.request("/login", {
+    body: new URLSearchParams({ email, password: "password123" }),
+    headers: formHeaders(),
+    method: "POST",
+  });
+  const cookie = response.headers.get("set-cookie")?.split(";")[0] ?? "";
+
+  expect(response.status).toBe(303);
+  expect(cookie).toStartWith("character_sheet_session=");
+
+  return cookie;
+};
+
 describe("createApp", () => {
   test("can be constructed with test dependencies", () => {
     const { app } = createTestApp();
@@ -439,6 +458,109 @@ describe("createApp", () => {
     expect(playerNotesHtml).not.toContain("Sergeant Kora Steelheart");
     expect(gmNotes.status).toBe(200);
     expect(gmNotesHtml).toContain("Game Master notes");
+  });
+
+  test("saves visible notes and keeps role-only notes protected", async () => {
+    const { app, sessionService } = createTestApp("Character Sheet");
+    const playerSession = sessionService.createSession("user_lynott_player");
+    const gmSession = sessionService.createSession("user_game_master");
+
+    const playerUpdate = await app.request("/sheet/lynott/notes/note_lynott_player", {
+      body: new URLSearchParams({ body: "Smoke-tested player note." }),
+      headers: formHeaders(playerSession.cookie),
+      method: "PATCH",
+    });
+    const blockedGmUpdate = await app.request("/sheet/lynott/notes/note_lynott_gm", {
+      body: new URLSearchParams({ body: "This should not land." }),
+      headers: formHeaders(playerSession.cookie),
+      method: "PATCH",
+    });
+    const gmUpdate = await app.request("/sheet/lynott/notes/note_lynott_gm", {
+      body: new URLSearchParams({ body: "Smoke-tested Game Master note." }),
+      headers: formHeaders(gmSession.cookie),
+      method: "PATCH",
+    });
+    const playerNotes = await app.request("/sheet/lynott/tabs/notes", {
+      headers: { cookie: playerSession.cookie },
+    });
+    const gmNotes = await app.request("/sheet/lynott/tabs/notes", {
+      headers: { cookie: gmSession.cookie },
+    });
+    const playerHtml = await playerNotes.text();
+    const gmHtml = await gmNotes.text();
+
+    expect(playerUpdate.status).toBe(200);
+    expect(await playerUpdate.text()).toContain("Smoke-tested player note.");
+    expect(blockedGmUpdate.status).toBe(404);
+    expect(gmUpdate.status).toBe(200);
+    expect(await gmUpdate.text()).toContain("Smoke-tested Game Master note.");
+    expect(playerHtml).toContain("Smoke-tested player note.");
+    expect(playerHtml).not.toContain("Smoke-tested Game Master note.");
+    expect(gmHtml).toContain("Smoke-tested player note.");
+    expect(gmHtml).toContain("Smoke-tested Game Master note.");
+  });
+
+  test("smokes the seeded MVP workflow through login, sheet play, notes, roles, and logout", async () => {
+    const { app } = createTestApp("Character Sheet");
+    const playerCookie = await login(app, "lynott@example.local");
+
+    const sheet = await app.request("/sheet/lynott", { headers: { cookie: playerCookie } });
+    const damage = await app.request("/sheet/lynott/resources/resource_lynott_hit_points", {
+      body: new URLSearchParams({ delta: "-3" }),
+      headers: formHeaders(playerCookie),
+      method: "PATCH",
+    });
+    const note = await app.request("/sheet/lynott/notes/note_lynott_player", {
+      body: new URLSearchParams({ body: "MVP smoke note saved." }),
+      headers: formHeaders(playerCookie),
+      method: "PATCH",
+    });
+    const tabs = await Promise.all(
+      ["core", "skills", "actions", "spellcasting", "features", "equipment", "background", "notes"].map(
+        async (tabId) => {
+          const response = await app.request(`/sheet/lynott/tabs/${tabId}`, {
+            headers: { cookie: playerCookie },
+          });
+
+          return { html: await response.text(), response, tabId };
+        },
+      ),
+    );
+    const logout = await app.request("/logout", {
+      headers: formHeaders(playerCookie),
+      method: "POST",
+    });
+    const afterLogout = await app.request("/sheet/lynott", { headers: { cookie: playerCookie } });
+    const gmCookie = await login(app, "gm@example.local");
+    const campaign = await app.request("/campaigns/rovnost-shadows", {
+      headers: { cookie: gmCookie },
+    });
+    const gmNotes = await app.request("/sheet/lynott/tabs/notes", {
+      headers: { cookie: gmCookie },
+    });
+    const adminCookie = await login(app, "admin@example.local");
+    const admin = await app.request("/admin", { headers: { cookie: adminCookie } });
+
+    expect(sheet.status).toBe(200);
+    expect(await sheet.text()).toContain("<title>Lynott Magulbisson - Character Sheet</title>");
+    expect(damage.status).toBe(200);
+    expect(await damage.text()).toContain("28 / 31");
+    expect(note.status).toBe(200);
+    expect(await note.text()).toContain("MVP smoke note saved.");
+    for (const tab of tabs) {
+      expect(tab.response.status).toBe(200);
+      expect(tab.html).toContain(`data-tab-id="${tab.tabId}"`);
+    }
+    expect(logout.status).toBe(303);
+    expect(logout.headers.get("location")).toBe("/");
+    expect(afterLogout.status).toBe(303);
+    expect(afterLogout.headers.get("location")).toBe("/login");
+    expect(campaign.status).toBe(200);
+    expect(await campaign.text()).toContain("Rovnost Shadows");
+    expect(gmNotes.status).toBe(200);
+    expect(await gmNotes.text()).toContain("Game Master notes");
+    expect(admin.status).toBe(200);
+    expect(await admin.text()).toContain("Admin");
   });
 
   test("rejects unauthenticated, unknown, and invalid sheet tab requests", async () => {

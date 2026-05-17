@@ -117,7 +117,8 @@ The MVP page set:
 - `POST /logout` logout route that clears the session and redirects to `/`.
 - `/campaigns/:campaignSlug` Game Master campaign page.
 - `/sheet/:characterId` character sheet page.
-- `/sheet/:characterId/tabs/:tabId` sheet tab workspace fragment route for HTMX swaps.
+- `/sheet/:characterId/tabs/:tabId` sheet tab panel fragment route for HTMX swaps.
+- `PATCH /sheet/:characterId/notes/:noteId` note save route that returns the notes tab panel.
 - `/admin` admin page for users, invites, password resets, and basic reads.
 
 The site header is sticky and contains:
@@ -149,7 +150,9 @@ Sheet content is arranged as scrollable tabs:
 - background
 - notes
 
-Each tab panel should be independently renderable, and tab navigation swaps the shared tab workspace so the tab strip active state and displayed panel stay in sync. Resource controls inside tab panels use the same route as the header controls, but request the active tab fragment back so tab-local resources can update without moving the sticky sheet chrome. Rest actions that can affect both header and tab resources return the full sheet tab workspace fragment.
+Each tab panel should be independently renderable, and tab navigation swaps only the active panel so the tab strip stays mounted and keeps its scroll position. Resource controls inside tab panels use the same route as the header controls, but request the active tab fragment back so tab-local resources can update without moving the sticky sheet chrome. Rest actions that can affect both header and tab resources return the full sheet tab workspace fragment.
+
+The current tab navigation swaps only `#sheet-tab-panel`; the sticky `SheetHeader` and `SheetTabs` remain in place and client-side sync updates `aria-selected` after the panel settles. Rest actions still return the whole `#sheet-tab-workspace` because they can affect both the sheet header and tab-local resources.
 
 ## Roles And Permissions
 
@@ -233,16 +236,16 @@ erDiagram
 
 ### Rules Data
 
-Rules import starts local-first:
+Rules import is local-first:
 
 1. Read existing local markdown or JSON exports.
 2. Parse metadata and text into structured rule entities.
 3. Normalise spellings to British English.
 4. Resolve source precedence for official 2014 rules and reprints.
-5. Seed only the entities Lynott needs for the MVP.
+5. Seed the local MVP corpus idempotently.
 6. Keep enough source metadata to audit where each imported rule came from.
 
-The importer should be written behind a service boundary so live 5e.tools fetching can be added without changing route code.
+The importer lives behind `RulesImportService` and `RulesSeedRepository`, so live 5e.tools fetching can be added later without changing route code.
 
 ## Lynott MVP Coverage
 
@@ -290,16 +293,15 @@ Development should be tests first where practical:
 - Component tests render JSX to strings and assert semantic HTML, labels, headings, ARIA, HTMX attributes, and empty states.
 - Accessibility tests run Pa11y against key pages once a runnable app exists.
 - Screenshot tests capture the sheet in light and dark states for user-facing UI changes.
+- MVP smoke tests exercise seeded login, sheet navigation, resource mutation, note saving, role pages, and logout.
 
 The minimum verification before a source-code ticket is complete:
 
 ```bash
-bun run typecheck
-bun run test
-bun run test:a11y
+bun run verify
 ```
 
-The accessibility script currently checks public `/`, `/login`, authenticated `/sheet/character_lynott_magulbisson`, authenticated `/campaigns/rovnost-shadows`, and authenticated `/admin`.
+The accessibility script currently checks public `/`, `/login`, authenticated `/sheet/lynott`, authenticated `/logout`, authenticated `/campaigns/rovnost-shadows`, and authenticated `/admin`. The MVP smoke script renders every sheet tab fragment directly. The screenshot script captures Lynott's sheet in light and dark mode to `docs/pr-screenshots/` by default.
 
 ## Pipeline
 
@@ -328,6 +330,6 @@ Release automation can be added after the MVP scaffold exists. Railway and Postg
 - Existing markdown remains useful as source material and human-readable reference, but runtime features should read structured tables.
 - Local password auth is in scope now; external identity providers are not.
 - Admin invite and password reset flows are local workflows without email delivery in this epic.
-- Live 5e.tools fetching is deferred behind an importer boundary; local imports come first.
+- Live 5e.tools fetching is deferred behind the importer boundary; local imports are available through `bun run import:rules`.
 - British English is required across copy, docs, code naming, and CSS variables.
 - The first implementation sequence is documentation and tickets, then source code through accepted tickets.

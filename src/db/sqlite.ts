@@ -25,7 +25,10 @@ import type {
   NotesRepository,
   PasswordResetToken,
   RulesRepository,
+  RulesSeedRepository,
+  RuleEntitySeedInput,
   StoredSession,
+  UpsertedRuleEntity,
   UserRole,
 } from "./model";
 import { bootstrapDatabase } from "./schema";
@@ -187,12 +190,29 @@ interface RuleLinkRow {
   source_name: string;
 }
 
+interface RuleSourceRow {
+  abbreviation: string;
+  id: string;
+  name: string;
+  precedence: number;
+  slug: string;
+}
+
+interface RuleEntityRow {
+  entity_type: RuleEntitySeedInput["entityType"];
+  id: string;
+  name: string;
+  slug: string;
+  source_id: string;
+}
+
 export interface SqliteRepositories {
   authRepository: AuthRepository;
   campaignRepository: CampaignRepository;
   characterRepository: CharacterRepository;
   notesRepository: NotesRepository;
   rulesRepository: RulesRepository;
+  rulesSeedRepository: RulesSeedRepository;
 }
 
 export interface SqliteDatabaseRuntime {
@@ -229,6 +249,7 @@ export const createSqliteRepositories = (database: Database): SqliteRepositories
   characterRepository: new SqliteCharacterRepository(database),
   notesRepository: new SqliteNotesRepository(database),
   rulesRepository: new SqliteRulesRepository(database),
+  rulesSeedRepository: new SqliteRulesSeedRepository(database),
 });
 
 class SqliteAuthRepository implements AuthRepository {
@@ -746,6 +767,42 @@ class SqliteNotesRepository implements NotesRepository {
       visibility: row.visibility,
     }));
   }
+
+  updateNoteBody(
+    characterId: string,
+    noteId: string,
+    viewerRole: UserRole,
+    body: string,
+  ): CharacterNote | null {
+    this.database
+      .query<never, [string, string, string, UserRole]>(
+        `update character_notes
+         set body = ?
+         where character_id = ?
+           and id = ?
+           and (? != 'player' or visibility = 'player')`,
+      )
+      .run(body, characterId, noteId, viewerRole);
+
+    const row = this.database
+      .query<CharacterNoteRow, [string, string, UserRole]>(
+        `select id, title, body, visibility
+         from character_notes
+         where character_id = ?
+           and id = ?
+           and (? != 'player' or visibility = 'player')`,
+      )
+      .get(characterId, noteId, viewerRole);
+
+    return row
+      ? {
+          body: row.body,
+          id: row.id,
+          title: row.title,
+          visibility: row.visibility,
+        }
+      : null;
+  }
 }
 
 class SqliteCampaignRepository implements CampaignRepository {
@@ -812,6 +869,82 @@ class SqliteRulesRepository implements RulesRepository {
   }
 }
 
+class SqliteRulesSeedRepository implements RulesSeedRepository {
+  constructor(private readonly database: Database) {}
+
+  upsertRuleEntity(entity: RuleEntitySeedInput): UpsertedRuleEntity {
+    const source = this.upsertSource(entity.source);
+    const existingEntity = this.getEntityByNaturalKey(source.id, entity.entityType, entity.slug);
+    const entityId = existingEntity?.id ?? entity.id ?? ruleEntityId(source.slug, entity.entityType, entity.slug);
+
+    this.database.run(
+      `insert into rules_entities (id, source_id, slug, entity_type, name)
+       values (?, ?, ?, ?, ?)
+       on conflict(source_id, entity_type, slug) do update set
+         name = excluded.name`,
+      [entityId, source.id, entity.slug, entity.entityType, entity.name],
+    );
+
+    this.database.run("delete from rule_mechanics where rules_entity_id = ?", [entityId]);
+    entity.mechanics.forEach((mechanic, index) => {
+      this.database.run(
+        `insert into rule_mechanics (id, rules_entity_id, mechanic_type, data_json)
+         values (?, ?, ?, ?)`,
+        [
+          ruleMechanicId(entityId, mechanic.mechanicType, index),
+          entityId,
+          mechanic.mechanicType,
+          JSON.stringify(mechanic.data),
+        ],
+      );
+    });
+
+    return {
+      ...entity,
+      id: entityId,
+      source,
+    };
+  }
+
+  private upsertSource(source: RuleEntitySeedInput["source"]) {
+    const sourceId = source.id ?? ruleSourceId(source.slug);
+
+    this.database.run(
+      `insert into rules_sources (id, slug, name, abbreviation, precedence)
+       values (?, ?, ?, ?, ?)
+       on conflict(slug) do update set
+         name = excluded.name,
+         abbreviation = excluded.abbreviation,
+         precedence = excluded.precedence`,
+      [sourceId, source.slug, source.name, source.abbreviation, source.precedence],
+    );
+
+    const row = this.database
+      .query<RuleSourceRow, [string]>(
+        "select id, slug, name, abbreviation, precedence from rules_sources where slug = ?",
+      )
+      .get(source.slug);
+
+    if (!row) throw new Error(`Could not upsert rules source ${source.slug}`);
+
+    return row;
+  }
+
+  private getEntityByNaturalKey(
+    sourceId: string,
+    entityType: RuleEntitySeedInput["entityType"],
+    slug: string,
+  ) {
+    return this.database
+      .query<RuleEntityRow, [string, string, string]>(
+        `select id, source_id, slug, entity_type, name
+         from rules_entities
+         where source_id = ? and entity_type = ? and slug = ?`,
+      )
+      .get(sourceId, entityType, slug);
+  }
+}
+
 function toAuthUser(row: UserRow): AuthUser {
   return {
     displayName: row.display_name,
@@ -859,6 +992,18 @@ function slugify(value: string) {
     .replace(/^_+|_+$/g, "");
 
   return slug || "custom";
+}
+
+function ruleSourceId(sourceSlug: string) {
+  return `rules_source_${slugify(sourceSlug)}`;
+}
+
+function ruleEntityId(sourceSlug: string, entityType: string, entitySlug: string) {
+  return `rule_${slugify(sourceSlug)}_${slugify(entityType)}_${slugify(entitySlug)}`;
+}
+
+function ruleMechanicId(entityId: string, mechanicType: string, index: number) {
+  return `${entityId}_${slugify(mechanicType)}_${index + 1}`;
 }
 
 function toSqlDate(date: Date) {

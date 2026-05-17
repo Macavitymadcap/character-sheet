@@ -36,6 +36,14 @@ flowchart TD
 - `bun run typecheck` passes.
 - `bun run test` passes.
 - `bun run test:a11y` passes.
+- `bun run smoke:mvp` passes.
 - Screenshot capture works for the sheet's main states.
 - README and architecture match the implemented scripts and runtime behaviour.
 - The MVP can be run locally from a fresh checkout and seeded database.
+
+## Implementation Notes
+
+- `bun run smoke:mvp` should exercise seeded player, Game Master, and admin flows against an in-memory app.
+- `bun run screenshots:sheet` should capture Lynott's sheet in light and dark mode to ignored local review artefacts.
+- `bun run verify` should run typecheck, tests, accessibility, smoke, and screenshots so the MVP acceptance pass is one command.
+- Note saving is part of the final smoke path because player and Game Master notes are mutable sheet state, not static copy.

@@ -214,15 +214,32 @@ const BackgroundTab = ({ data }: { data: TabContentData }) => {
 const NotesTab = ({ data }: { data: TabContentData }) => {
   return (
     <div class="tab-compact-stack">
-      {renderCompactSection(
-        "notes-list-heading",
-        "Notes",
-        data.notes.map((note) => ({
-          label: note.visibility === "game_master" ? "Game Master" : "Player",
-          meta: note.body,
-          value: note.title,
-        })),
-      )}
+      <section class="tab-compact-section" aria-labelledby="notes-list-heading">
+        <h3 id="notes-list-heading">Notes</h3>
+        {data.notes.length > 0 ? (
+          <div class="note-editor-list">
+            {data.notes.map((note) => (
+              <form
+                class="note-editor"
+                hx-patch={`/sheet/${data.sheet.slug}/notes/${note.id}`}
+                hx-target="#sheet-tab-panel"
+                hx-swap="outerHTML"
+              >
+                <label for={`note-body-${slugify(note.id)}`}>
+                  <strong>{note.title}</strong>
+                  <span>{note.visibility === "game_master" ? "Game Master" : "Player"}</span>
+                </label>
+                <textarea id={`note-body-${slugify(note.id)}`} name="body" rows={4}>
+                  {note.body}
+                </textarea>
+                <button type="submit">Save note</button>
+              </form>
+            ))}
+          </div>
+        ) : (
+          <p class="tab-empty-state">None recorded.</p>
+        )}
+      </section>
     </div>
   );
 };

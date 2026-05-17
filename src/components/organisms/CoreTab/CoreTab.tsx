@@ -27,7 +27,12 @@ export const CoreTab = ({ sheet }: CoreTabProps) => {
             <tbody>
               {sheet.abilities.map((ability) => (
                 <tr>
-                  <th scope="row">{formatAbility(ability.ability)}</th>
+                  <th scope="row">
+                    <span class="ability-full">{formatAbility(ability.ability)}</span>
+                    <abbr class="ability-short" title={formatAbility(ability.ability)}>
+                      {formatAbilityShort(ability.ability)}
+                    </abbr>
+                  </th>
                   <td>{ability.score}</td>
                   <td>{formatModifier(ability.modifier)}</td>
                   <td>{formatModifier(ability.saveModifier)}</td>
@@ -130,6 +135,19 @@ function formatAbility(ability: CharacterAbility["ability"]) {
     intelligence: "Intelligence",
     strength: "Strength",
     wisdom: "Wisdom",
+  };
+
+  return labels[ability];
+}
+
+function formatAbilityShort(ability: CharacterAbility["ability"]) {
+  const labels: Record<CharacterAbility["ability"], string> = {
+    charisma: "CHA",
+    constitution: "CON",
+    dexterity: "DEX",
+    intelligence: "INT",
+    strength: "STR",
+    wisdom: "WIS",
   };
 
   return labels[ability];

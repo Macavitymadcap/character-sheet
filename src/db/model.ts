@@ -219,6 +219,12 @@ export interface CharacterNote {
 
 export interface NotesRepository {
   listNotesForCharacter(characterId: string, viewerRole: UserRole): CharacterNote[];
+  updateNoteBody(
+    characterId: string,
+    noteId: string,
+    viewerRole: UserRole,
+    body: string,
+  ): CharacterNote | null;
 }
 
 export interface CharacterRuleLink {
@@ -232,4 +238,44 @@ export interface CharacterRuleLink {
 
 export interface RulesRepository {
   listRuleLinksForCharacter(characterId: string): CharacterRuleLink[];
+}
+
+export type RuleEntityType =
+  | "background"
+  | "class_feature"
+  | "condition"
+  | "equipment"
+  | "infusion"
+  | "species_trait"
+  | "spell";
+
+export interface RulesSourceSeedInput {
+  abbreviation: string;
+  id?: string;
+  name: string;
+  precedence: number;
+  slug: string;
+}
+
+export interface RuleMechanicSeedInput {
+  data: Record<string, unknown>;
+  mechanicType: string;
+}
+
+export interface RuleEntitySeedInput {
+  entityType: RuleEntityType;
+  id?: string;
+  mechanics: RuleMechanicSeedInput[];
+  name: string;
+  slug: string;
+  source: RulesSourceSeedInput;
+}
+
+export interface UpsertedRuleEntity extends RuleEntitySeedInput {
+  id: string;
+  source: RulesSourceSeedInput & { id: string };
+}
+
+export interface RulesSeedRepository {
+  upsertRuleEntity(entity: RuleEntitySeedInput): UpsertedRuleEntity;
 }
