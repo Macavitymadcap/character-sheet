@@ -1,5 +1,6 @@
 #!/usr/bin/env bun
 import { mkdir } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import { createInMemoryApp, login, requestText, startLocalServer, waitForHttp } from "./lib/local-app";
 
 export const mvpSmokeTabs = [
@@ -166,7 +167,7 @@ export async function runMvpSmoke() {
     imageForm.set("width", "1");
     imageForm.set("height", "1");
     imageForm.set("image", new File([new Uint8Array([137, 80, 78, 71])], "smoke.png", { type: "image/png" }));
-    await mkdir(process.env.CHARACTER_SHEET_ASSET_ROOT ?? "/private/tmp/character-sheet-script-assets", { recursive: true });
+    await mkdir(process.env.CHARACTER_SHEET_ASSET_ROOT ?? `${tmpdir()}/character-sheet-script-assets`, { recursive: true });
     const assetUpload = await requestText(`${baseUrl}/campaigns/rovnost-shadows/assets`, {
       body: imageForm,
       cookie: gmCookie,

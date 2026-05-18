@@ -14,6 +14,7 @@ describe("CampaignPage", () => {
           name: "Rovnost Shadows",
           slug: "rovnost-shadows",
         }}
+        gameMasterDisplayName="Game Master"
         imageAssets={[]}
         members={[
           {

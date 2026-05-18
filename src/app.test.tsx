@@ -1,3 +1,4 @@
+import { tmpdir } from "node:os";
 import { afterEach, describe, expect, test } from "bun:test";
 import { createApp } from "./app";
 import { AuthService, PasswordService, SessionService } from "./auth";
@@ -12,7 +13,7 @@ afterEach(() => {
 });
 
 const createTestApp = (appName = "Test Character Sheet") => {
-  process.env.CHARACTER_SHEET_ASSET_ROOT = "/private/tmp/character-sheet-test-assets";
+  process.env.CHARACTER_SHEET_ASSET_ROOT = `${tmpdir()}/character-sheet-test-assets`;
   runtime = createSqliteDatabase({ path: ":memory:" });
   const passwordService = new PasswordService();
 
@@ -417,10 +418,15 @@ describe("createApp", () => {
   test("renders the Game Master campaign page", async () => {
     const { app, sessionService } = createTestApp("Character Sheet");
     const session = sessionService.createSession("user_game_master");
+    const playerSession = sessionService.createSession("user_lynott_player");
     const response = await app.request("/campaigns/rovnost-shadows", {
       headers: { cookie: session.cookie },
     });
     const html = await response.text();
+    const playerResponse = await app.request("/campaigns/rovnost-shadows", {
+      headers: { cookie: playerSession.cookie },
+    });
+    const playerHtml = await playerResponse.text();
 
     expect(response.status).toBe(200);
     expect(html).toContain("<title>Rovnost Shadows - Character Sheet</title>");
@@ -430,6 +436,8 @@ describe("createApp", () => {
     expect(html).toContain('<h1 id="campaign-heading" class="panel-heading">Rovnost Shadows</h1>');
     expect(html).toContain("Sessions");
     expect(html).toContain("Session Zero");
+    expect(playerResponse.status).toBe(200);
+    expect(playerHtml).toContain("<dt>Game Master</dt><dd>Campaign GM</dd>");
   });
 
   test("creates player and Game Master roster characters", async () => {
@@ -825,8 +833,21 @@ describe("createApp", () => {
       .find((item) => item.title === "Secret seal");
     expect(asset).toBeDefined();
 
+    const outsider = runtime?.repositories.authRepository.createUser({
+      displayName: "Campaign Outsider",
+      email: "outsider@example.local",
+      id: "user_campaign_outsider",
+      passwordHash: "unused",
+      role: "player",
+      status: "active",
+    });
+    expect(outsider).toBeDefined();
+    const outsiderCookie = sessionService.createSession("user_campaign_outsider").cookie;
     const playerAsset = await app.request(`/campaigns/rovnost-shadows/assets/${asset?.id}`, {
       headers: { cookie: playerCookie },
+    });
+    const outsiderAsset = await app.request(`/campaigns/rovnost-shadows/assets/${asset?.id}`, {
+      headers: { cookie: outsiderCookie },
     });
     const gmAsset = await app.request(`/campaigns/rovnost-shadows/assets/${asset?.id}`, {
       headers: { cookie: gmCookie },
@@ -838,6 +859,7 @@ describe("createApp", () => {
     expect(upload.status).toBe(303);
     expect(asset?.storageKey).not.toContain("seal.png");
     expect(playerAsset.status).toBe(404);
+    expect(outsiderAsset.status).toBe(403);
     expect(gmAsset.status).toBe(200);
     expect(gmAsset.headers.get("content-type")).toContain("image/png");
   });

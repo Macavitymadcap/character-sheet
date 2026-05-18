@@ -1,3 +1,5 @@
+import { mkdir } from "node:fs/promises";
+import { dirname } from "node:path";
 import { Hono, type Context } from "hono";
 import { AuthService, requireCampaignAccess, requireRole, requireSheetAccess, SessionService } from "./auth";
 import { isCampaignWikiPageType, normaliseGoogleDocsMarkdown } from "./campaigns/wiki";
@@ -153,6 +155,10 @@ export const createApp = (dependencies: AppDependencies) => {
       <CampaignPage
         appName={dependencies.appName}
         campaign={campaign}
+        gameMasterDisplayName={
+          dependencies.authRepository.findUserById(campaign.gmUserId)?.displayName ??
+          campaign.gmUserId
+        }
         imageAssets={dependencies.campaignContentRepository.listImageAssetsForCampaign(campaign.id, session.user.role)}
         members={dependencies.campaignRepository.listMembers(campaign.id)}
         sessions={dependencies.campaignContentRepository.listSessionsForCampaign(campaign.id, session.user.role)}
@@ -226,6 +232,15 @@ export const createApp = (dependencies: AppDependencies) => {
       context.req.param("campaignSlug"),
     );
     if (!campaign) return context.text("Not found", 404);
+
+    const guard = requireCampaignAccess({
+      campaignId: campaign.id,
+      campaignRepository: dependencies.campaignRepository,
+      permission: "read",
+      session,
+    });
+    const guarded = guardResponse(context, guard);
+    if (guarded) return guarded;
 
     const asset = dependencies.campaignContentRepository.getImageAssetById(
       campaign.id,
@@ -1658,7 +1673,9 @@ async function parseCampaignAssetForm(
 
   const bytes = new Uint8Array(await image.arrayBuffer());
   const storageKey = `campaigns/${campaignSlug}/${crypto.randomUUID()}.${extension}`;
-  await Bun.write(`${assetStorageRoot()}/${storageKey}`, bytes);
+  const storagePath = `${assetStorageRoot()}/${storageKey}`;
+  await mkdir(dirname(storagePath), { recursive: true });
+  await Bun.write(storagePath, bytes);
 
   return {
     ok: true,

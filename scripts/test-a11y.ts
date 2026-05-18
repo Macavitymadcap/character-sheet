@@ -1,5 +1,6 @@
 #!/usr/bin/env bun
 import { mkdir } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import { createInMemoryApp, login, startLocalServer, waitForHttp } from "./lib/local-app";
 
 export const pa11yTargets = [
@@ -59,7 +60,7 @@ async function runPa11y(label: string, url: string, cookie = "") {
 }
 
 async function writeSeedAssetPlaceholders() {
-  const root = process.env.CHARACTER_SHEET_ASSET_ROOT ?? "/private/tmp/character-sheet-script-assets";
+  const root = process.env.CHARACTER_SHEET_ASSET_ROOT ?? `${tmpdir()}/character-sheet-script-assets`;
   const bytes = Uint8Array.from(atob("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII="), (char) => char.charCodeAt(0));
 
   await mkdir(`${root}/campaigns/rovnost-shadows`, { recursive: true });

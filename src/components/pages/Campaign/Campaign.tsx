@@ -7,6 +7,7 @@ import { Layout } from "../../templates/Layout";
 interface CampaignPageProps {
   appName: string;
   campaign: CampaignSummary;
+  gameMasterDisplayName: string;
   members: CampaignMember[];
   imageAssets: CampaignImageAsset[];
   sessions: CampaignSessionRecord[];
@@ -14,7 +15,7 @@ interface CampaignPageProps {
   wikiPages: CampaignWikiPage[];
 }
 
-export const CampaignPage = ({ appName, campaign, imageAssets, members, sessions, user, wikiPages }: CampaignPageProps) => {
+export const CampaignPage = ({ appName, campaign, gameMasterDisplayName, imageAssets, members, sessions, user, wikiPages }: CampaignPageProps) => {
   return (
     <Layout title={`${campaign.name} - ${appName}`}>
       <div class="shell campaign-shell">
@@ -30,7 +31,7 @@ export const CampaignPage = ({ appName, campaign, imageAssets, members, sessions
             <dl class="campaign-summary-list">
               <div>
                 <dt>Game Master</dt>
-                <dd>{user.displayName}</dd>
+                <dd>{gameMasterDisplayName}</dd>
               </div>
               <div>
                 <dt>Members</dt>

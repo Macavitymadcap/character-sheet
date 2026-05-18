@@ -1,12 +1,13 @@
 import { setTimeout as delay } from "node:timers/promises";
 import { createServer, type IncomingMessage } from "node:http";
+import { tmpdir } from "node:os";
 import type { Hono } from "hono";
 import { createApp } from "../../src/app";
 import { AuthService, PasswordService, SessionService } from "../../src/auth";
 import { createSqliteDatabase } from "../../src/db";
 
 export function createInMemoryApp(appName = "Character Sheet", secret = "local-script-session-secret") {
-  process.env.CHARACTER_SHEET_ASSET_ROOT ??= "/private/tmp/character-sheet-script-assets";
+  process.env.CHARACTER_SHEET_ASSET_ROOT ??= `${tmpdir()}/character-sheet-script-assets`;
   const databaseRuntime = createSqliteDatabase({ path: ":memory:" });
   const passwordService = new PasswordService();
   const sessionService = new SessionService({
