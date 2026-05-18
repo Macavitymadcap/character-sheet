@@ -704,6 +704,63 @@ describe("createApp", () => {
     ).toBe(false);
   });
 
+  test("lets players and Game Masters update character faction choices", async () => {
+    const { app, sessionService } = createTestApp("Character Sheet");
+    const playerCookie = sessionService.createSession("user_lynott_player").cookie;
+    const otherPlayerCookie = sessionService.createSession("user_mira_player").cookie;
+    const gmCookie = sessionService.createSession("user_game_master").cookie;
+
+    const playerUpdate = await app.request("/sheet/lynott/faction", {
+      body: new URLSearchParams({
+        connectionNote: "Canal contacts smuggled Lynott through the lock gates.",
+        factionId: "faction_tidebound",
+      }),
+      headers: formHeaders(playerCookie),
+      method: "PATCH",
+    });
+    const blockedOtherPlayer = await app.request("/sheet/lynott/faction", {
+      body: new URLSearchParams({
+        connectionNote: "Mira cannot edit Lynott.",
+        factionId: "faction_skywright_guild",
+      }),
+      headers: formHeaders(otherPlayerCookie),
+      method: "PATCH",
+    });
+    const invalidFaction = await app.request("/sheet/lynott/faction", {
+      body: new URLSearchParams({
+        connectionNote: "Wrong campaign.",
+        factionId: "missing_faction",
+      }),
+      headers: formHeaders(playerCookie),
+      method: "PATCH",
+    });
+    const gmOverride = await app.request("/sheet/lynott/faction", {
+      body: new URLSearchParams({
+        connectionNote: "A magistrate licence file has Lynott's name in the margin.",
+        factionId: "faction_council_of_magisters",
+      }),
+      headers: formHeaders(gmCookie),
+      method: "PATCH",
+    });
+    const unaffiliated = await app.request("/sheet/lynott/faction", {
+      body: new URLSearchParams({
+        connectionNote: "Keeps faction ties informal.",
+        factionId: "",
+      }),
+      headers: formHeaders(playerCookie),
+      method: "PATCH",
+    });
+
+    expect(playerUpdate.status).toBe(200);
+    expect(await playerUpdate.text()).toContain("Canal contacts smuggled Lynott");
+    expect(blockedOtherPlayer.status).toBe(403);
+    expect(invalidFaction.status).toBe(400);
+    expect(gmOverride.status).toBe(200);
+    expect(await gmOverride.text()).toContain("Council of Magisters");
+    expect(unaffiliated.status).toBe(200);
+    expect(await unaffiliated.text()).toContain("Unaffiliated/Other: Keeps faction ties informal.");
+  });
+
   test("serves campaign wiki pages by visibility", async () => {
     const { app, sessionService } = createTestApp("Character Sheet");
     const playerCookie = sessionService.createSession("user_lynott_player").cookie;

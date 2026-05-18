@@ -14,6 +14,12 @@ describe("sheet screenshot targets", () => {
         label: "Lynott sheet dark",
         theme: "dark",
       },
+      {
+        fileName: "lynott-background-faction.png",
+        label: "Lynott background faction",
+        tabId: "background",
+        theme: "light",
+      },
     ]);
   });
 });

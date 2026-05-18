@@ -1,10 +1,12 @@
 import type {
   CharacterBackgroundEntry,
   CharacterEquipment,
+  CharacterFactionChoice,
   CharacterNote,
   CharacterResource,
   CharacterRuleLink,
   CharacterSheetReadModel,
+  CampaignFaction,
 } from "../../../db";
 import { SheetTabPanel } from "../SheetTabPanel";
 import { SheetTabs, type SheetTabId } from "../SheetTabs";
@@ -12,7 +14,9 @@ import { SheetTabs, type SheetTabId } from "../SheetTabs";
 interface SheetTabWorkspaceProps {
   activeTab: SheetTabId;
   backgroundEntries: CharacterBackgroundEntry[];
+  campaignFactions: CampaignFaction[];
   equipment: CharacterEquipment[];
+  factionChoice: CharacterFactionChoice | null;
   header?: unknown;
   notes: CharacterNote[];
   resources: CharacterResource[];
@@ -23,7 +27,9 @@ interface SheetTabWorkspaceProps {
 export const SheetTabWorkspace = ({
   activeTab,
   backgroundEntries,
+  campaignFactions,
   equipment,
+  factionChoice,
   header,
   notes,
   resources,
@@ -37,7 +43,9 @@ export const SheetTabWorkspace = ({
     </div>
     <SheetTabPanel
       backgroundEntries={backgroundEntries}
+      campaignFactions={campaignFactions}
       equipment={equipment}
+      factionChoice={factionChoice}
       notes={notes}
       resources={resources}
       ruleLinks={ruleLinks}

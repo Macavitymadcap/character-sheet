@@ -692,7 +692,9 @@ export const createApp = (dependencies: AppDependencies) => {
         activeTab="core"
         appName={dependencies.appName}
         backgroundEntries={dependencies.characterRepository.listBackgroundEntries(sheet.id)}
+        campaignFactions={campaignFactionsForSheet(dependencies, sheet.id)}
         equipment={dependencies.characterRepository.listEquipment(sheet.id)}
+        factionChoice={dependencies.campaignContentRepository.getCharacterFactionChoice(sheet.id)}
         notes={dependencies.notesRepository.listNotesForCharacter(sheet.id, session.user.role)}
         resources={dependencies.characterRepository.listResources(sheet.id)}
         ruleLinks={dependencies.rulesRepository.listRuleLinksForCharacter(sheet.id)}
@@ -725,7 +727,9 @@ export const createApp = (dependencies: AppDependencies) => {
     return context.html(
       <SheetTabPanel
         backgroundEntries={dependencies.characterRepository.listBackgroundEntries(sheet.id)}
+        campaignFactions={campaignFactionsForSheet(dependencies, sheet.id)}
         equipment={dependencies.characterRepository.listEquipment(sheet.id)}
+        factionChoice={dependencies.campaignContentRepository.getCharacterFactionChoice(sheet.id)}
         notes={dependencies.notesRepository.listNotesForCharacter(sheet.id, session.user.role)}
         resources={dependencies.characterRepository.listResources(sheet.id)}
         ruleLinks={dependencies.rulesRepository.listRuleLinksForCharacter(sheet.id)}
@@ -957,7 +961,9 @@ export const createApp = (dependencies: AppDependencies) => {
       return context.html(
         <SheetTabPanel
           backgroundEntries={dependencies.characterRepository.listBackgroundEntries(sheet.id)}
+          campaignFactions={campaignFactionsForSheet(dependencies, sheet.id)}
           equipment={dependencies.characterRepository.listEquipment(sheet.id)}
+          factionChoice={dependencies.campaignContentRepository.getCharacterFactionChoice(sheet.id)}
           notes={dependencies.notesRepository.listNotesForCharacter(sheet.id, session.user.role)}
           resources={updatedResources}
           ruleLinks={dependencies.rulesRepository.listRuleLinksForCharacter(sheet.id)}
@@ -1036,7 +1042,9 @@ export const createApp = (dependencies: AppDependencies) => {
     return context.html(
       <SheetTabPanel
         backgroundEntries={dependencies.characterRepository.listBackgroundEntries(sheet.id)}
+        campaignFactions={campaignFactionsForSheet(dependencies, sheet.id)}
         equipment={dependencies.characterRepository.listEquipment(sheet.id)}
+        factionChoice={dependencies.campaignContentRepository.getCharacterFactionChoice(sheet.id)}
         notes={dependencies.notesRepository.listNotesForCharacter(sheet.id, session.user.role)}
         resources={dependencies.characterRepository.listResources(sheet.id)}
         ruleLinks={dependencies.rulesRepository.listRuleLinksForCharacter(sheet.id)}
@@ -1082,7 +1090,9 @@ export const createApp = (dependencies: AppDependencies) => {
     return context.html(
       <SheetTabPanel
         backgroundEntries={dependencies.characterRepository.listBackgroundEntries(sheet.id)}
+        campaignFactions={campaignFactionsForSheet(dependencies, sheet.id)}
         equipment={dependencies.characterRepository.listEquipment(sheet.id)}
+        factionChoice={dependencies.campaignContentRepository.getCharacterFactionChoice(sheet.id)}
         notes={dependencies.notesRepository.listNotesForCharacter(sheet.id, session.user.role)}
         resources={dependencies.characterRepository.listResources(sheet.id)}
         ruleLinks={dependencies.rulesRepository.listRuleLinksForCharacter(sheet.id)}
@@ -1160,6 +1170,43 @@ export const createApp = (dependencies: AppDependencies) => {
     if (!updatedSheet) return context.text("Not found", 404);
 
     return renderSheetTabPanel(context, dependencies, updatedSheet, session.user.role, "notes");
+  });
+
+  app.patch("/sheet/:characterRef/faction", async (context) => {
+    const session = readSession(context.req.header("cookie"));
+    if (!session) return context.redirect("/login", 303);
+
+    const sheet = getSheetByRef(context.req.param("characterRef"));
+    if (!sheet) return context.text("Not found", 404);
+
+    const guard = requireSheetAccess({
+      campaignRepository: dependencies.campaignRepository,
+      characterId: sheet.id,
+      characterRepository: dependencies.characterRepository,
+      permission: "write",
+      session,
+    });
+    const guarded = guardResponse(context, guard);
+    if (guarded) return guarded;
+
+    const body = await context.req.parseBody();
+    const factionId = parseFormString(body.factionId) || null;
+    const connectionNote = parseFormString(body.connectionNote) ?? "";
+    if (factionId && !campaignFactionsForSheet(dependencies, sheet.id).some((faction) => faction.id === factionId)) {
+      return context.text("Invalid faction", 400);
+    }
+
+    const choice = dependencies.campaignContentRepository.updateCharacterFactionChoice(
+      sheet.id,
+      factionId,
+      connectionNote,
+    );
+    if (factionId && !choice) return context.text("Invalid faction", 400);
+
+    const updatedSheet = dependencies.characterRepository.getSheetById(sheet.id);
+    if (!updatedSheet) return context.text("Not found", 404);
+
+    return renderSheetTabPanel(context, dependencies, updatedSheet, session.user.role, "background");
   });
 
   app.post("/sheet/:characterRef/conditions", async (context) => {
@@ -1285,7 +1332,9 @@ export const createApp = (dependencies: AppDependencies) => {
       <SheetTabWorkspace
         activeTab={tabId}
         backgroundEntries={dependencies.characterRepository.listBackgroundEntries(sheet.id)}
+        campaignFactions={campaignFactionsForSheet(dependencies, sheet.id)}
         equipment={dependencies.characterRepository.listEquipment(sheet.id)}
+        factionChoice={dependencies.campaignContentRepository.getCharacterFactionChoice(sheet.id)}
         header={<SheetHeader resources={updatedResources} sheet={updatedSheet} />}
         notes={dependencies.notesRepository.listNotesForCharacter(sheet.id, session.user.role)}
         resources={updatedResources}
@@ -1347,6 +1396,13 @@ function membersWithDisplayNames(dependencies: AppDependencies, campaignId: stri
   }));
 }
 
+function campaignFactionsForSheet(dependencies: AppDependencies, characterId: string) {
+  const access = dependencies.characterRepository.getAccessContext(characterId);
+  if (!access) return [];
+
+  return dependencies.campaignContentRepository.listFactionsForCampaign(access.campaignId);
+}
+
 function renderSheetTabPanel(
   context: Context,
   dependencies: AppDependencies,
@@ -1357,7 +1413,9 @@ function renderSheetTabPanel(
   return context.html(
     <SheetTabPanel
       backgroundEntries={dependencies.characterRepository.listBackgroundEntries(sheet.id)}
+      campaignFactions={campaignFactionsForSheet(dependencies, sheet.id)}
       equipment={dependencies.characterRepository.listEquipment(sheet.id)}
+      factionChoice={dependencies.campaignContentRepository.getCharacterFactionChoice(sheet.id)}
       notes={dependencies.notesRepository.listNotesForCharacter(sheet.id, viewerRole)}
       resources={dependencies.characterRepository.listResources(sheet.id)}
       ruleLinks={dependencies.rulesRepository.listRuleLinksForCharacter(sheet.id)}

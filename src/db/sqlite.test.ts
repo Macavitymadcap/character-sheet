@@ -897,13 +897,70 @@ describe("SQLite repositories", () => {
       "Skywright Guild",
     ]);
     expect(factions.find((faction) => faction.slug === "discontents")).toMatchObject({
+      connections: ["Strike organiser", "Safehouse keeper", "Sympathetic courier"],
+      motto: "No city owns the hands that built it.",
       playerPrompt: "Who in the factory districts still trusts you?",
       rumours: ["They can hide someone for a night, but not for free."],
+      wikiPageSlug: "factions-guide",
     });
     expect(content.getCharacterFactionChoice("character_lynott_magulbisson")).toMatchObject({
       characterId: "character_lynott_magulbisson",
       factionName: "Discontents",
       factionSlug: "discontents",
     });
+    expect(
+      content.updateCharacterFactionChoice(
+        "character_lynott_magulbisson",
+        "faction_tidebound",
+        "The canal crews know Lynott's old routes.",
+      ),
+    ).toMatchObject({
+      connectionNote: "The canal crews know Lynott's old routes.",
+      factionName: "Tidebound",
+      factionSlug: "tidebound",
+    });
+    expect(
+      content.updateCharacterFactionChoice(
+        "character_lynott_magulbisson",
+        "missing_faction",
+        "Nope.",
+      ),
+    ).toBeNull();
+    runtime.database.run(
+      "insert into campaigns (id, slug, name, gm_user_id) values (?, ?, ?, ?)",
+      ["campaign_elsewhere", "elsewhere", "Elsewhere", "user_game_master"],
+    );
+    runtime.database.run(
+      "insert into campaign_factions (id, campaign_id, slug, name) values (?, ?, ?, ?)",
+      ["faction_elsewhere", "campaign_elsewhere", "elsewhere", "Elsewhere"],
+    );
+    expect(
+      content.updateCharacterFactionChoice(
+        "character_lynott_magulbisson",
+        "faction_elsewhere",
+        "Wrong campaign.",
+      ),
+    ).toBeNull();
+    expect(
+      content.updateCharacterFactionChoice(
+        "character_lynott_magulbisson",
+        null,
+        "Keeps contacts informal.",
+      ),
+    ).toEqual({
+      characterId: "character_lynott_magulbisson",
+      connectionNote: "Keeps contacts informal.",
+      factionId: null,
+      factionName: null,
+      factionSlug: null,
+    });
+    expect(content.getCharacterFactionChoice("character_lynott_magulbisson")).toEqual({
+      characterId: "character_lynott_magulbisson",
+      connectionNote: "Keeps contacts informal.",
+      factionId: null,
+      factionName: null,
+      factionSlug: null,
+    });
+    expect(content.updateCharacterFactionChoice("missing_character", null, "Nope.")).toBeNull();
   });
 });

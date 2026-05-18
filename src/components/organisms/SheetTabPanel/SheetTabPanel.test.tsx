@@ -2,8 +2,10 @@ import { describe, expect, test } from "bun:test";
 import { SheetTabPanel } from "./SheetTabPanel";
 import { sheetTabs } from "../SheetTabs";
 import type {
+  CampaignFaction,
   CharacterBackgroundEntry,
   CharacterEquipment,
+  CharacterFactionChoice,
   CharacterNote,
   CharacterResource,
   CharacterRuleLink,
@@ -129,11 +131,39 @@ const ruleLinks: CharacterRuleLink[] = [
   },
 ];
 
+const campaignFactions: CampaignFaction[] = [
+  {
+    campaignId: "campaign_rovnost_shadows",
+    connections: ["Strike organiser", "Safehouse keeper"],
+    id: "faction_discontents",
+    imageAssetId: null,
+    motto: "No city owns the hands that built it.",
+    name: "Discontents",
+    playerPrompt: "Who in the factory districts still trusts you?",
+    publicReputation: "Dangerous agitators to the powerful.",
+    rumours: ["They can hide someone for a night, but not for free."],
+    slug: "discontents",
+    summary: "Workers, deserters, and organisers trying to loosen the city's grip.",
+    wikiPageSlug: "factions-guide",
+    wikiPageTitle: "Factions Guide",
+  },
+];
+
+const factionChoice: CharacterFactionChoice = {
+  characterId: "character_lynott_magulbisson",
+  connectionNote: "Factory district sympathies.",
+  factionId: "faction_discontents",
+  factionName: "Discontents",
+  factionSlug: "discontents",
+};
+
 const renderPanel = (tabId: (typeof sheetTabs)[number]["id"]) =>
   render(
     <SheetTabPanel
       backgroundEntries={backgroundEntries}
+      campaignFactions={campaignFactions}
       equipment={equipment}
+      factionChoice={factionChoice}
       notes={notes}
       resources={resources}
       ruleLinks={ruleLinks}
@@ -188,6 +218,11 @@ describe("SheetTabPanel", () => {
     expect(equipmentTab).toContain("Range 30/90 ft.");
     expect(backgroundTab).toContain("Jonas Blarendon");
     expect(backgroundTab).toContain("Sergeant Kora Steelheart");
+    expect(backgroundTab).toContain("Faction connection");
+    expect(backgroundTab).toContain('hx-patch="/sheet/lynott/faction"');
+    expect(backgroundTab).toContain("Discontents");
+    expect(backgroundTab).toContain("Factory district sympathies.");
+    expect(backgroundTab).toContain('href="/campaigns/rovnost-shadows/wiki/factions-guide"');
     expect(notesTab).toContain("Keep the false identities ready");
     expect(notesTab).toContain('class="note-editor"');
     expect(notesTab).toContain('hx-patch="/sheet/lynott/notes/note_lynott_player"');

@@ -124,12 +124,15 @@ CREATE TABLE IF NOT EXISTS campaign_factions (
   campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
   slug TEXT NOT NULL,
   name TEXT NOT NULL,
+  motto TEXT NOT NULL DEFAULT '',
   summary TEXT NOT NULL DEFAULT '',
   public_reputation TEXT NOT NULL DEFAULT '',
   player_prompt TEXT NOT NULL DEFAULT '',
+  connections_json TEXT NOT NULL DEFAULT '[]',
   rumours_json TEXT NOT NULL DEFAULT '[]',
   gm_notes TEXT NOT NULL DEFAULT '',
   image_asset_id TEXT REFERENCES campaign_image_assets(id) ON DELETE SET NULL,
+  wiki_page_id TEXT REFERENCES campaign_wiki_pages(id) ON DELETE SET NULL,
   sort_order INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -272,7 +275,7 @@ CREATE TABLE IF NOT EXISTS character_notes (
 
 CREATE TABLE IF NOT EXISTS character_faction_choices (
   character_id TEXT PRIMARY KEY REFERENCES characters(id) ON DELETE CASCADE,
-  faction_id TEXT NOT NULL REFERENCES campaign_factions(id) ON DELETE CASCADE,
+  faction_id TEXT REFERENCES campaign_factions(id) ON DELETE CASCADE,
   connection_note TEXT NOT NULL DEFAULT '',
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -324,6 +327,9 @@ const migrationStatements = [
   "ALTER TABLE character_notes ADD COLUMN updated_at TEXT NOT NULL DEFAULT ''",
   "ALTER TABLE campaign_image_assets ADD COLUMN title TEXT NOT NULL DEFAULT ''",
   "ALTER TABLE campaign_wiki_pages ADD COLUMN cover_image_asset_id TEXT REFERENCES campaign_image_assets(id) ON DELETE SET NULL",
+  "ALTER TABLE campaign_factions ADD COLUMN motto TEXT NOT NULL DEFAULT ''",
+  "ALTER TABLE campaign_factions ADD COLUMN connections_json TEXT NOT NULL DEFAULT '[]'",
+  "ALTER TABLE campaign_factions ADD COLUMN wiki_page_id TEXT REFERENCES campaign_wiki_pages(id) ON DELETE SET NULL",
 ];
 
 const triggers = /* sql */ `
@@ -362,9 +368,35 @@ export const bootstrapDatabase = (database: Database) => {
       if (!isDuplicateColumnError(error)) throw error;
     }
   }
+  relaxCharacterFactionChoiceFactionId(database);
   database.exec(triggers);
 };
 
 function isDuplicateColumnError(error: unknown) {
   return error instanceof Error && error.message.includes("duplicate column name");
+}
+
+function relaxCharacterFactionChoiceFactionId(database: Database) {
+  const factionIdColumn = database
+    .query<{ notnull: number; name: string }, []>("PRAGMA table_info(character_faction_choices)")
+    .all()
+    .find((column) => column.name === "faction_id");
+  if (!factionIdColumn?.notnull) return;
+
+  database.exec(/* sql */ `
+    CREATE TABLE character_faction_choices_relaxed (
+      character_id TEXT PRIMARY KEY REFERENCES characters(id) ON DELETE CASCADE,
+      faction_id TEXT REFERENCES campaign_factions(id) ON DELETE CASCADE,
+      connection_note TEXT NOT NULL DEFAULT '',
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+
+    INSERT INTO character_faction_choices_relaxed (character_id, faction_id, connection_note, created_at, updated_at)
+    SELECT character_id, faction_id, connection_note, created_at, updated_at
+    FROM character_faction_choices;
+
+    DROP TABLE character_faction_choices;
+    ALTER TABLE character_faction_choices_relaxed RENAME TO character_faction_choices;
+  `);
 }

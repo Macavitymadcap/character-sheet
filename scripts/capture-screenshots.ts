@@ -15,6 +15,12 @@ export const sheetScreenshotTargets = [
     label: "Lynott sheet dark",
     theme: "dark",
   },
+  {
+    fileName: "lynott-background-faction.png",
+    label: "Lynott background faction",
+    tabId: "background",
+    theme: "light",
+  },
 ] as const;
 
 if (import.meta.main) {
@@ -48,6 +54,10 @@ export async function captureSheetScreenshots(
       await page.goto(`${baseUrl}/sheet/lynott`, { waitUntil: "domcontentloaded" });
       await page.waitForSelector("#sheet-header");
       await page.waitForSelector('#sheet-tab-panel[data-tab-id="core"]');
+      if ("tabId" in target) {
+        await page.click(`#sheet-tab-${target.tabId}`);
+        await page.waitForSelector(`#sheet-tab-panel[data-tab-id="${target.tabId}"]`);
+      }
       await page.screenshot({ fullPage: true, path });
 
       console.log(`${target.label}: ${path}`);

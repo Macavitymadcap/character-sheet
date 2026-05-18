@@ -391,22 +391,26 @@ export interface CampaignSessionRecord {
 
 export interface CampaignFaction {
   campaignId: string;
+  connections: string[];
   id: string;
   imageAssetId: string | null;
+  motto: string;
   name: string;
   playerPrompt: string;
   publicReputation: string;
   rumours: string[];
   slug: string;
   summary: string;
+  wikiPageSlug: string | null;
+  wikiPageTitle: string | null;
 }
 
 export interface CharacterFactionChoice {
   characterId: string;
   connectionNote: string;
-  factionId: string;
-  factionName: string;
-  factionSlug: string;
+  factionId: string | null;
+  factionName: string | null;
+  factionSlug: string | null;
 }
 
 export interface CampaignContentRepository {
@@ -482,6 +486,11 @@ export interface CampaignContentRepository {
       visibility: CampaignContentVisibility;
     },
   ): CampaignSessionRecord | null;
+  updateCharacterFactionChoice(
+    characterId: string,
+    factionId: string | null,
+    connectionNote: string,
+  ): CharacterFactionChoice | null;
 }
 
 export interface CharacterRuleLink {

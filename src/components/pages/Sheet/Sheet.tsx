@@ -2,10 +2,12 @@ import type {
   AuthUser,
   CharacterBackgroundEntry,
   CharacterEquipment,
+  CharacterFactionChoice,
   CharacterNote,
   CharacterResource,
   CharacterRuleLink,
   CharacterSheetReadModel,
+  CampaignFaction,
 } from "../../../db";
 import { SiteHeader } from "../../molecules/SiteHeader";
 import { SheetHeader } from "../../organisms/SheetHeader";
@@ -17,7 +19,9 @@ interface SheetPageProps {
   activeTab: SheetTabId;
   appName: string;
   backgroundEntries: CharacterBackgroundEntry[];
+  campaignFactions: CampaignFaction[];
   equipment: CharacterEquipment[];
+  factionChoice: CharacterFactionChoice | null;
   notes: CharacterNote[];
   resources: CharacterResource[];
   ruleLinks: CharacterRuleLink[];
@@ -29,7 +33,9 @@ export const SheetPage = ({
   activeTab,
   appName,
   backgroundEntries,
+  campaignFactions,
   equipment,
+  factionChoice,
   notes,
   resources,
   ruleLinks,
@@ -44,7 +50,9 @@ export const SheetPage = ({
           <SheetTabWorkspace
             activeTab={activeTab}
             backgroundEntries={backgroundEntries}
+            campaignFactions={campaignFactions}
             equipment={equipment}
+            factionChoice={factionChoice}
             header={<SheetHeader resources={resources} sheet={sheet} />}
             notes={notes}
             resources={resources}

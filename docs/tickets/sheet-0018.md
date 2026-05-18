@@ -26,3 +26,10 @@ Add campaign factions as first-class Rovnost data and let characters choose a pr
 - Players can maintain their own faction connection.
 - Game Masters can edit faction choices for all campaign characters.
 - Faction choice does not grant rules mechanics automatically in this epic.
+
+## Implementation Notes
+
+- Added faction motto, possible connection, and wiki page fields to the campaign faction schema and seeded the six Rovnost factions with player-facing details.
+- Added repository support for reading faction wiki metadata and updating a character's primary faction choice, including `Unaffiliated/Other` as a valid cleared state.
+- Added the Background tab faction form, selected faction summary, connection note, and wiki link for player and Game Master sheet access.
+- Covered repository, route, component, and screenshot target behaviour for faction selection, invalid faction ids, campaign isolation, forbidden player edits, and empty states.

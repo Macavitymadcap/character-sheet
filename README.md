@@ -54,7 +54,7 @@ After signing in as the seeded Lynott player, Lynott's sheet is available at
 `/sheet/lynott`. The sheet tab fragments are served from
 `/sheet/lynott/tabs/:tabId` for HTMX swaps. Those swaps target only the active panel, so the sticky tab strip keeps its scroll position while the active tab state stays aligned with the displayed content.
 
-The background tab is backed by structured `character_background_entries` rows seeded from Lynott's source notes, including personality, ideals, bonds, flaws, full backstory beats, false identities, NPCs, and rank structure.
+The background tab is backed by structured `character_background_entries` rows seeded from Lynott's source notes, including personality, ideals, bonds, flaws, full backstory beats, false identities, NPCs, and rank structure. It also includes the character's primary Rovnost faction connection, with a player-editable or Game-Master-editable picker, connection note, faction summary, and wiki link.
 
 The sheet header includes HTMX-backed hit point controls for current and temporary HP, condition chips with an add/remove popover, and an inspiration switch. Abilities, skills, tools, and attacks expose compact d20 popovers that can roll normal, advantage, or disadvantage with extra modifiers. Action, spellcasting, feature, and equipment resources use small HTMX controls so the active tab can refresh without replacing the sticky sheet tabs. Long rests recover hit points, spell slots, feature uses, and hit dice through a workspace-level HTMX swap so the compact header and active tab stay in sync. These flows mutate `character_resources` or `character_equipment`, refresh the relevant compact fragment, and keep the character summary hit point fields in sync.
 
@@ -108,7 +108,7 @@ bun run verify
 
 `bun run smoke:mvp` starts an in-memory app and walks the seeded local workflow: login as Lynott, open the sheet, mutate hit points, save a player note, render every sheet tab fragment, logout, verify the protected sheet redirects, then login as Game Master and admin to check their role pages.
 
-`bun run screenshots:sheet` captures Lynott's sheet in light and dark mode. Screenshots are written to `docs/pr-screenshots/` by default, which is ignored by Git. Set `SCREENSHOT_DIR` to write them elsewhere.
+`bun run screenshots:sheet` captures Lynott's sheet in light and dark mode plus the Background tab faction picker. Screenshots are written to `docs/pr-screenshots/` by default, which is ignored by Git. Set `SCREENSHOT_DIR` to write them elsewhere.
 
 `bun run import:rules` imports local markdown or JSON rule files from `docs/rules` by default into the configured SQLite database. Pass a path to import one file or directory:
 
