@@ -225,4 +225,84 @@ describe("admin and sheet guards", () => {
       userId: "user_lynott_player",
     });
   });
+
+  test("keeps admins from disabling themselves while allowing other admin status changes", async () => {
+    const adminCookie = await login("admin@example.local");
+
+    const selfDisable = await postForm(
+      "/admin/users/user_site_admin/status",
+      { status: "disabled" },
+      adminCookie,
+    );
+    expect(selfDisable.status).toBe(400);
+    expect(await selfDisable.text()).toBe("Cannot disable your own account");
+
+    runtime.repositories.authRepository.createUser({
+      displayName: "Backup Admin",
+      email: "backup.admin@example.local",
+      id: "user_backup_admin",
+      passwordHash: new PasswordService().hashPassword("password123", "backup-admin"),
+      role: "admin",
+      status: "active",
+    });
+    const backupAdminCookie = await login("backup.admin@example.local");
+
+    const disableOriginalAdmin = await postForm(
+      "/admin/users/user_site_admin/status",
+      { status: "disabled" },
+      backupAdminCookie,
+    );
+    expect(disableOriginalAdmin.status).toBe(303);
+    expect(runtime.repositories.authRepository.findUserById("user_site_admin")?.status).toBe(
+      "disabled",
+    );
+  });
+
+  test("lets invited users accept local invites", async () => {
+    const adminCookie = await login("admin@example.local");
+    const inviteResponse = await postForm(
+      "/admin/invites",
+      { email: "new.player@example.local", role: "player" },
+      adminCookie,
+    );
+    const invite = (await inviteResponse.json()) as { token: string };
+
+    const accept = await postForm(`/invites/${invite.token}`, {
+      displayName: "New Player",
+      password: "new-password",
+    });
+
+    expect(accept.status).toBe(303);
+    expect(accept.headers.get("location")).toBe("/login");
+
+    const loginResponse = await postForm("/login", {
+      email: "new.player@example.local",
+      password: "new-password",
+    });
+
+    expect(loginResponse.status).toBe(303);
+    expect(loginResponse.headers.get("set-cookie")).toContain("character_sheet_session=");
+  });
+
+  test("lets password reset token holders set a new password", async () => {
+    const adminCookie = await login("admin@example.local");
+    const resetResponse = await app.request("/admin/users/user_lynott_player/password-reset", {
+      headers: { cookie: adminCookie },
+      method: "POST",
+    });
+    const reset = (await resetResponse.json()) as { token: string };
+
+    const useToken = await postForm(`/password-reset/${reset.token}`, { password: "new-password" });
+
+    expect(useToken.status).toBe(303);
+    expect(useToken.headers.get("location")).toBe("/login");
+
+    const loginResponse = await postForm("/login", {
+      email: "lynott@example.local",
+      password: "new-password",
+    });
+
+    expect(loginResponse.status).toBe(303);
+    expect(loginResponse.headers.get("set-cookie")).toContain("character_sheet_session=");
+  });
 });

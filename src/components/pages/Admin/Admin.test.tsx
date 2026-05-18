@@ -6,7 +6,23 @@ const render = (node: unknown): string => String(node);
 describe("AdminPage", () => {
   test("renders local admin workflows", () => {
     const html = render(
-      <AdminPage appName="Character Sheet" user={{ displayName: "Site Admin", role: "admin" }} />,
+      <AdminPage
+        appName="Character Sheet"
+        invites={[]}
+        resetTokens={[]}
+        users={[
+          {
+            campaignCount: 1,
+            characterCount: 2,
+            displayName: "Site Admin",
+            email: "admin@example.local",
+            id: "user_site_admin",
+            role: "admin",
+            status: "active",
+          },
+        ]}
+        user={{ displayName: "Site Admin", role: "admin" }}
+      />,
     );
 
     expect(html).toContain("<title>Character Sheet</title>");
@@ -24,5 +40,8 @@ describe("AdminPage", () => {
     expect(html).toContain(
       '<button class="button" data-variant="primary" type="submit">Create invite</button>',
     );
+    expect(html).toContain("Users");
+    expect(html).toContain("Invites");
+    expect(html).toContain("Password reset tokens");
   });
 });

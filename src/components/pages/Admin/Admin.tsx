@@ -5,12 +5,42 @@ import { FormField } from "../../molecules/FormField";
 import { SiteHeader } from "../../molecules/SiteHeader";
 import { Layout } from "../../templates/Layout";
 
+interface AdminUserRow {
+  campaignCount: number;
+  characterCount: number;
+  displayName: string;
+  email: string;
+  id: string;
+  role: AuthUser["role"];
+  status: AuthUser["status"];
+}
+
+interface AdminInviteRow {
+  acceptedAt: Date | null;
+  email: string;
+  expiresAt: Date;
+  id: string;
+  role: AuthUser["role"];
+}
+
+interface AdminResetTokenRow {
+  expiresAt: Date;
+  id: string;
+  usedAt: Date | null;
+  userId: string;
+}
+
 interface AdminPageProps {
   appName: string;
+  invites: AdminInviteRow[];
+  resetTokens: AdminResetTokenRow[];
+  users: AdminUserRow[];
   user: Pick<AuthUser, "displayName" | "role">;
 }
 
-export const AdminPage = ({ appName, user }: AdminPageProps) => {
+const formatDate = (date: Date | null) => (date ? date.toISOString().slice(0, 10) : "—");
+
+export const AdminPage = ({ appName, invites, resetTokens, users, user }: AdminPageProps) => {
   return (
     <Layout title={appName}>
       <div class="shell admin-page-shell">
@@ -34,6 +64,108 @@ export const AdminPage = ({ appName, user }: AdminPageProps) => {
                 </FormField>
                 <Button type="submit">Create invite</Button>
               </form>
+            </section>
+
+            <section aria-labelledby="users-heading">
+              <h2 id="users-heading">Users</h2>
+              <div class="table-scroll">
+                <table class="sheet-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">Display name</th>
+                      <th scope="col">Email</th>
+                      <th scope="col">Role</th>
+                      <th scope="col">Status</th>
+                      <th scope="col">Campaigns</th>
+                      <th scope="col">Characters</th>
+                      <th scope="col">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {users.map((row) => (
+                      <tr>
+                        <td>{row.displayName}</td>
+                        <td>{row.email}</td>
+                        <td>{row.role.replace("_", " ")}</td>
+                        <td>{row.status}</td>
+                        <td>{row.campaignCount}</td>
+                        <td>{row.characterCount}</td>
+                        <td>
+                          <form class="admin-inline-form" action={`/admin/users/${row.id}/status`} method="post">
+                            <input
+                              type="hidden"
+                              name="status"
+                              value={row.status === "active" ? "disabled" : "active"}
+                            />
+                            <Button type="submit" variant="ghost">
+                              {row.status === "active" ? "Disable" : "Reactivate"}
+                            </Button>
+                          </form>
+                          <form
+                            class="admin-inline-form"
+                            action={`/admin/users/${row.id}/password-reset`}
+                            method="post"
+                          >
+                            <Button type="submit" variant="ghost">
+                              Create reset token
+                            </Button>
+                          </form>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <section aria-labelledby="invites-heading">
+              <h2 id="invites-heading">Invites</h2>
+              <div class="table-scroll">
+                <table class="sheet-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">Email</th>
+                      <th scope="col">Role</th>
+                      <th scope="col">Expires</th>
+                      <th scope="col">Accepted</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {invites.map((invite) => (
+                      <tr>
+                        <td>{invite.email}</td>
+                        <td>{invite.role.replace("_", " ")}</td>
+                        <td>{formatDate(invite.expiresAt)}</td>
+                        <td>{formatDate(invite.acceptedAt)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <section aria-labelledby="reset-tokens-heading">
+              <h2 id="reset-tokens-heading">Password reset tokens</h2>
+              <div class="table-scroll">
+                <table class="sheet-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">User</th>
+                      <th scope="col">Expires</th>
+                      <th scope="col">Used</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {resetTokens.map((token) => (
+                      <tr>
+                        <td>{token.userId}</td>
+                        <td>{formatDate(token.expiresAt)}</td>
+                        <td>{formatDate(token.usedAt)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </section>
           </Panel>
         </main>

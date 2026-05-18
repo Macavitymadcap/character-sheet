@@ -1,0 +1,2 @@
+export { InviteAcceptPage } from "./InviteAccept";
+

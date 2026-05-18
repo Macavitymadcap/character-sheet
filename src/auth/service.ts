@@ -25,6 +25,17 @@ interface CreatePasswordResetInput {
   userId: string;
 }
 
+interface AcceptInviteInput {
+  displayName: string;
+  password: string;
+  token: string;
+}
+
+interface UsePasswordResetTokenInput {
+  password: string;
+  token: string;
+}
+
 export interface LocalInviteWithToken extends LocalInvite {
   token: string;
 }
@@ -77,8 +88,37 @@ export class AuthService {
   readInvite(token: string): LocalInvite | null {
     const invite = this.dependencies.authRepository.findInviteByTokenHash(hashToken(token));
     if (!invite || invite.expiresAt <= this.now()) return null;
+    if (invite.acceptedAt) return null;
 
     return invite;
+  }
+
+  acceptInvite(input: AcceptInviteInput): AuthUser {
+    const invite = this.dependencies.authRepository.findInviteByTokenHash(hashToken(input.token));
+    if (!invite || invite.expiresAt <= this.now() || invite.acceptedAt) {
+      throw new Error("Invite is invalid or expired.");
+    }
+
+    const existing = this.dependencies.authRepository.findUserByEmail(invite.email);
+    if (existing) throw new Error("Email already exists.");
+
+    const userId = randomUUID();
+    const passwordHash = this.dependencies.passwordService.hashPassword(
+      input.password,
+      `invite-${invite.id}`,
+    );
+    const user = this.dependencies.authRepository.createUser({
+      displayName: input.displayName,
+      email: invite.email,
+      id: userId,
+      passwordHash,
+      role: invite.role,
+      status: "active",
+    });
+
+    this.dependencies.authRepository.acceptInvite(invite.id, this.now());
+
+    return user;
   }
 
   createPasswordResetToken(input: CreatePasswordResetInput): PasswordResetTokenWithToken {
@@ -104,8 +144,29 @@ export class AuthService {
   readPasswordResetToken(token: string): PasswordResetToken | null {
     const reset = this.dependencies.authRepository.findPasswordResetTokenByTokenHash(hashToken(token));
     if (!reset || reset.expiresAt <= this.now()) return null;
+    if (reset.usedAt) return null;
 
     return reset;
+  }
+
+  usePasswordResetToken(input: UsePasswordResetTokenInput): AuthUser {
+    const reset = this.dependencies.authRepository.findPasswordResetTokenByTokenHash(hashToken(input.token));
+    if (!reset || reset.expiresAt <= this.now() || reset.usedAt) {
+      throw new Error("Password reset token is invalid or expired.");
+    }
+
+    const user = this.dependencies.authRepository.findUserById(reset.userId);
+    if (!user) throw new Error("Password reset user is missing.");
+    if (user.status !== "active") throw new Error("User is disabled.");
+
+    const passwordHash = this.dependencies.passwordService.hashPassword(
+      input.password,
+      `reset-${reset.id}`,
+    );
+    this.dependencies.authRepository.updateUserPasswordHash(user.id, passwordHash);
+    this.dependencies.authRepository.usePasswordResetToken(reset.id, this.now());
+
+    return user;
   }
 }
 

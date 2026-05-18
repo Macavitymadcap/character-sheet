@@ -23,6 +23,11 @@ export interface AuthUserWithPassword extends AuthUser {
   passwordHash: string;
 }
 
+export interface AdminUserSummary extends AuthUser {
+  campaignCount: number;
+  characterCount: number;
+}
+
 export interface StoredSession {
   expiresAt: Date;
   id: string;
@@ -49,6 +54,8 @@ export interface PasswordResetToken {
 }
 
 export interface AuthRepository {
+  acceptInvite(inviteId: string, acceptedAt: Date): void;
+  createUser(user: AuthUserWithPassword): AuthUser;
   createInvite(invite: LocalInvite): LocalInvite;
   createPasswordResetToken(token: PasswordResetToken): PasswordResetToken;
   createSession(session: StoredSession): StoredSession;
@@ -59,7 +66,14 @@ export interface AuthRepository {
   findPasswordResetTokenByTokenHash(tokenHash: string): PasswordResetToken | null;
   findSessionById(id: string): StoredSession | null;
   findUserWithPasswordByEmail(email: string): AuthUserWithPassword | null;
+  listInvites(): LocalInvite[];
+  listPasswordResetTokens(): PasswordResetToken[];
+  listUserSummaries(): AdminUserSummary[];
   listUsers(): AuthUser[];
+  countActiveAdmins(): number;
+  updateUserPasswordHash(userId: string, passwordHash: string): void;
+  updateUserStatus(userId: string, status: UserStatus): AuthUser | null;
+  usePasswordResetToken(tokenId: string, usedAt: Date): void;
 }
 
 export interface CampaignSummary {
