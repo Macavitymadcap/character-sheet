@@ -35,6 +35,24 @@ Markdown files must start with a level-one heading. JSON files must contain eith
 `RuleEntitySeedInput`, an array of `RuleEntitySeedInput`, or an object with an `entities` array.
 Other files are skipped and reported in the import result.
 
+## Parsed Metadata
+
+SRD Markdown imports emit metadata inside each mechanic's `data_json` so later tickets can add
+filters and sheet links without reparsing source files. The parser currently emits:
+
+- `tags`: deterministic tags derived from rule type, source folders, subtitles, spell level, and
+  equipment category.
+- `searchableText`: normalised plain text built from subtitles and body copy.
+- Spell metadata: level, school, casting time, range, components, duration, higher-level text, and
+  class availability when the source includes a `Classes` field.
+- Background metadata: feature name, skill proficiencies, tool proficiencies, and equipment.
+- Equipment metadata: category, supporting armour, weapon, adventuring gear, and generic equipment
+  folders.
+
+The parser recognises SRD actions, backgrounds, classes, class features, subclasses, conditions,
+core rules, equipment, feats, proficiencies, senses, species, and spells. Commercial non-SRD source
+types remain out of scope for the SRD epic.
+
 ## Provenance
 
 Imported mechanics include a `provenance` object in `data_json`:

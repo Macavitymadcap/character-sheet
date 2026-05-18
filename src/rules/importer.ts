@@ -99,12 +99,14 @@ function parseMechanic(
   if (entityType === "spell") return parseSpellMechanic(filePath, body);
   if (entityType === "infusion") return parseInfusionMechanic(body);
   if (entityType === "background") return parseBackgroundMechanic(body);
+  if (entityType === "equipment") return parseEquipmentMechanic(filePath, body);
 
   return {
     data: {
       description: normaliseRuleText(stripMetadata(body)),
       sections: parseSections(body),
       subtitle: normaliseRuleText(readSubtitle(body) ?? ""),
+      ...parseCommonMetadata(entityType, filePath, body),
     },
     mechanicType: entityType,
   };
@@ -152,6 +154,8 @@ function parseSpellMechanic(filePath: string, body: string): RuleMechanicSeedInp
       description: normaliseRuleText(description),
       duration: normaliseRuleText(fields.Duration ?? ""),
       higherLevels: normaliseRuleText(higherLevels ?? ""),
+      ...parseCommonMetadata("spell", filePath, body),
+      classes: splitCsv(fields.Classes),
       level: spellInfo.level,
       range: normaliseRuleText(fields.Range ?? ""),
       school: spellInfo.school,
@@ -166,6 +170,7 @@ function parseInfusionMechanic(body: string): RuleMechanicSeedInput {
   return {
     data: {
       description: normaliseRuleText(stripMetadata(body)),
+      ...parseCommonMetadata("infusion", "", body),
       prerequisite: normaliseRuleText(subtitle),
       requiresAttunement: /requires attunement/i.test(subtitle),
     },
@@ -183,10 +188,33 @@ function parseBackgroundMechanic(body: string): RuleMechanicSeedInput {
       description: normaliseRuleText(feature?.body ?? stripMetadata(body)),
       equipment: normaliseRuleText(fields.Equipment ?? ""),
       featureName: normaliseRuleText(feature?.title ?? ""),
+      ...parseCommonMetadata("background", "", body),
       skillProficiencies: splitCsv(fields["Skill Proficiencies"]),
       toolProficiencies: splitCsv(fields["Tool Proficiencies"]),
     },
     mechanicType: "background",
+  };
+}
+
+function parseEquipmentMechanic(filePath: string, body: string): RuleMechanicSeedInput {
+  return {
+    data: {
+      category: inferEquipmentCategory(filePath, body),
+      description: normaliseRuleText(stripMetadata(body)),
+      sections: parseSections(body),
+      subtitle: normaliseRuleText(readSubtitle(body) ?? ""),
+      ...parseCommonMetadata("equipment", filePath, body),
+    },
+    mechanicType: "equipment",
+  };
+}
+
+function parseCommonMetadata(entityType: RuleEntityType, filePath: string, body: string) {
+  const subtitle = readSubtitle(body);
+
+  return {
+    searchableText: normaliseRuleText(stripMarkdown(`${subtitle ?? ""}\n${stripMetadata(body)}`)),
+    tags: inferTags(entityType, filePath, body),
   };
 }
 
@@ -229,6 +257,15 @@ function stripMetadata(body: string) {
     .trim();
 }
 
+function stripMarkdown(value: string) {
+  return value
+    .replace(/\*\*([^*]+):\*\*/g, "$1:")
+    .replace(/\*([^*]+)\*/g, "$1")
+    .replace(/^#{1,6}\s+/gm, "")
+    .replace(/[`>]/g, "")
+    .trim();
+}
+
 function parseSections(body: string) {
   const sections: Array<{ body: string; title: string }> = [];
   const matches = [...body.matchAll(/^#{2,3}\s+(.+)$/gm)];
@@ -263,14 +300,84 @@ function parseSpellSubtitle(filePath: string, subtitle: string | null) {
 function inferEntityType(filePath: string): RuleEntityType {
   const normalisedPath = normalisePath(filePath);
 
+  if (normalisedPath.includes("/actions/")) return "action";
   if (normalisedPath.includes("/spells/")) return "spell";
   if (normalisedPath.includes("/infusions/")) return "infusion";
-  if (normalisedPath.includes("/species/")) return "species_trait";
+  if (normalisedPath.includes("/classes/") && normalisedPath.includes("/subclasses/")) {
+    return "subclass";
+  }
+  if (isClassOverviewFile(normalisedPath)) return "class";
+  if (normalisedPath.includes("/species/")) {
+    return normalisedPath.includes("/srd-5.1/") || normalisedPath.includes("/srd-5.1-fixtures/")
+      ? "species"
+      : "species_trait";
+  }
   if (normalisedPath.includes("/backgrounds/")) return "background";
   if (normalisedPath.includes("/equipment/")) return "equipment";
   if (normalisedPath.includes("/conditions/")) return "condition";
+  if (normalisedPath.includes("/core-rules/")) return "core_rule";
+  if (normalisedPath.includes("/feats/")) return "feat";
+  if (normalisedPath.includes("/proficiencies/")) return "proficiency";
+  if (normalisedPath.includes("/senses/")) return "sense";
 
   return "class_feature";
+}
+
+function isClassOverviewFile(filePath: string) {
+  const segments = filePath.split("/");
+  const classesIndex = segments.indexOf("classes");
+  if (classesIndex === -1) return false;
+
+  const classSlug = segments[classesIndex + 1];
+  const fileName = segments[classesIndex + 2];
+
+  return Boolean(classSlug && fileName === `${classSlug}.md`);
+}
+
+function inferTags(entityType: RuleEntityType, filePath: string, body: string) {
+  const tags = new Set<string>([entityType]);
+  const normalisedPath = normalisePath(filePath);
+  const subtitle = readSubtitle(body);
+
+  for (const segment of normalisedPath.split("/").slice(0, -1)) {
+    if (
+      [
+        "actions",
+        "backgrounds",
+        "classes",
+        "conditions",
+        "core-rules",
+        "equipment",
+        "feats",
+        "proficiencies",
+        "senses",
+        "species",
+        "spells",
+        "subclasses",
+      ].includes(segment)
+    ) {
+      tags.add(segment);
+    }
+  }
+
+  if (subtitle) tags.add(slugify(subtitle));
+  if (entityType === "spell") tags.add(`level-${parseSpellSubtitle(filePath, subtitle).level}`);
+  const equipmentCategory = entityType === "equipment" ? inferEquipmentCategory(filePath, body) : "";
+  if (equipmentCategory) tags.add(slugify(equipmentCategory));
+
+  return [...tags].sort();
+}
+
+function inferEquipmentCategory(filePath: string, body: string) {
+  const normalisedPath = normalisePath(filePath);
+  const subtitle = readSubtitle(body);
+  if (normalisedPath.includes("/equipment/armour/")) return "armour";
+  if (normalisedPath.includes("/equipment/armor/")) return "armour";
+  if (normalisedPath.includes("/equipment/weapons/")) return "weapon";
+  if (normalisedPath.includes("/equipment/adventuring-gear/")) return "adventuring gear";
+  if (subtitle) return normaliseRuleText(subtitle).toLowerCase();
+
+  return "equipment";
 }
 
 function inferRulesSource(filePath: string): RulesSourceSeedInput {

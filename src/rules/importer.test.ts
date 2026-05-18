@@ -184,27 +184,88 @@ describe("rules importer", () => {
       const importer = new RulesImportService(runtime.repositories.rulesSeedRepository);
       const result = await importer.importFromLocalSource("docs/rules/srd-5.1-fixtures");
 
-      expect(result.imported).toBe(5);
+      expect(result.imported).toBe(15);
       expect(result.skippedFiles).toEqual(["docs/rules/srd-5.1-fixtures/README.txt"]);
-      expect(result.sourceCounts).toEqual({ "srd-5-1": 5 });
+      expect(result.sourceCounts).toEqual({ "srd-5-1": 15 });
       expect(result.entities.map((entity) => `${entity.entityType}:${entity.slug}`)).toEqual([
+        "action:dash",
         "background:acolyte",
         "class_feature:action-surge",
+        "subclass:evoker",
+        "class:wizard",
         "condition:grappled",
+        "core_rule:ability-checks",
+        "equipment:rope-hempen",
+        "equipment:chain-mail",
         "equipment:longsword",
+        "feat:grappler",
+        "proficiency:longswords",
+        "sense:darkvision",
+        "species:dwarf",
         "spell:bless",
       ]);
       expect(result.entities.every((entity) => entity.source.abbreviation === "SRD 5.1")).toBe(
         true,
       );
       expect(result.entities[0]?.mechanics[0]?.data.provenance).toMatchObject({
-        originalPath: "docs/rules/srd-5.1-fixtures/backgrounds/acolyte.md",
-        ruleType: "background",
+        originalPath: "docs/rules/srd-5.1-fixtures/actions/dash.md",
+        ruleType: "action",
         source: "SRD 5.1",
         srdVersion: "5.1",
       });
     } finally {
       runtime?.close();
     }
+  });
+
+  test("extracts SRD parser metadata needed for filtering and sheet links", async () => {
+    const bless = parseRuleMarkdown(
+      "docs/rules/srd-5.1-fixtures/spells/level-1/bless.md",
+      await Bun.file("docs/rules/srd-5.1-fixtures/spells/level-1/bless.md").text(),
+    );
+    const chainMail = parseRuleMarkdown(
+      "docs/rules/srd-5.1-fixtures/equipment/armour/chain-mail.md",
+      await Bun.file("docs/rules/srd-5.1-fixtures/equipment/armour/chain-mail.md").text(),
+    );
+    const wizard = parseRuleMarkdown(
+      "docs/rules/srd-5.1-fixtures/classes/wizard/wizard.md",
+      await Bun.file("docs/rules/srd-5.1-fixtures/classes/wizard/wizard.md").text(),
+    );
+    const actionSurge = parseRuleMarkdown(
+      "docs/rules/srd-5.1-fixtures/classes/fighter/action-surge.md",
+      await Bun.file("docs/rules/srd-5.1-fixtures/classes/fighter/action-surge.md").text(),
+    );
+    const evoker = parseRuleMarkdown(
+      "docs/rules/srd-5.1-fixtures/classes/wizard/subclasses/evoker.md",
+      await Bun.file("docs/rules/srd-5.1-fixtures/classes/wizard/subclasses/evoker.md").text(),
+    );
+    const dwarf = parseRuleMarkdown(
+      "docs/rules/srd-5.1-fixtures/species/dwarf.md",
+      await Bun.file("docs/rules/srd-5.1-fixtures/species/dwarf.md").text(),
+    );
+
+    expect(bless).toMatchObject({
+      entityType: "spell",
+      source: { abbreviation: "SRD 5.1" },
+    });
+    expect(bless.mechanics[0]?.data).toMatchObject({
+      level: 1,
+      school: "Enchantment",
+    });
+    expect(bless.mechanics[0]?.data.tags).toEqual(
+      expect.arrayContaining(["level-1", "spell", "spells"]),
+    );
+    expect(String(bless.mechanics[0]?.data.searchableText)).toContain(
+      "You bless up to three creatures",
+    );
+    expect(chainMail).toMatchObject({ entityType: "equipment" });
+    expect(chainMail.mechanics[0]?.data).toMatchObject({
+      category: "armour",
+      tags: ["armour", "equipment", "heavy-armour"],
+    });
+    expect(wizard).toMatchObject({ entityType: "class" });
+    expect(actionSurge).toMatchObject({ entityType: "class_feature" });
+    expect(evoker).toMatchObject({ entityType: "subclass" });
+    expect(dwarf).toMatchObject({ entityType: "species" });
   });
 });

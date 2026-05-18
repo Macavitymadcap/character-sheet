@@ -507,12 +507,21 @@ export interface RulesRepository {
 }
 
 export type RuleEntityType =
+  | "action"
   | "background"
+  | "class"
   | "class_feature"
   | "condition"
+  | "core_rule"
   | "equipment"
+  | "feat"
   | "infusion"
+  | "proficiency"
+  | "sense"
+  | "species"
   | "species_trait"
+  | "subclass"
+  | "subclass_feature"
   | "spell";
 
 export interface RulesSourceSeedInput {
