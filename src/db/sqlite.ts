@@ -202,9 +202,12 @@ interface CharacterBackgroundEntryRow {
 }
 
 interface CharacterNoteRow {
+  author_user_id: string;
   body: string;
+  created_at: string;
   id: string;
   title: string;
+  updated_at: string;
   visibility: CharacterNote["visibility"];
 }
 
@@ -224,6 +227,7 @@ interface CampaignMemberRow {
 interface CampaignWikiPageRow {
   body_markdown: string;
   campaign_id: string;
+  cover_image_asset_id: string | null;
   id: string;
   page_type: WikiPageType;
   slug: string;
@@ -243,6 +247,7 @@ interface CampaignImageAssetRow {
   id: string;
   mime_type: string;
   storage_key: string;
+  title: string;
   visibility: CampaignContentVisibility;
   width: number | null;
 }
@@ -250,12 +255,14 @@ interface CampaignImageAssetRow {
 interface CampaignSessionRecordRow {
   body: string;
   campaign_id: string;
+  created_at: string;
   created_by_user_id: string | null;
   id: string;
   session_date: string | null;
   slug: string;
   summary: string;
   title: string;
+  updated_at: string;
   visibility: CampaignContentVisibility;
 }
 
@@ -1442,23 +1449,87 @@ class SqliteCharacterRepository implements CharacterRepository {
 class SqliteNotesRepository implements NotesRepository {
   constructor(private readonly database: Database) {}
 
+  createNote(input: {
+    authorUserId: string;
+    body: string;
+    characterId: string;
+    title: string;
+    visibility: CharacterNote["visibility"];
+  }): CharacterNote {
+    const id = `note_${randomUUID()}`;
+    this.database
+      .query<never, [string, string, string, string, string, string]>(
+        `insert into character_notes (id, character_id, author_user_id, visibility, title, body)
+         values (?, ?, ?, ?, ?, ?)`,
+      )
+      .run(id, input.characterId, input.authorUserId, input.visibility, input.title, input.body);
+
+    const row = this.database
+      .query<CharacterNoteRow, [string, string]>(
+        `select id, author_user_id, title, body, visibility, created_at, updated_at
+         from character_notes
+         where character_id = ? and id = ?`,
+      )
+      .get(input.characterId, id);
+    if (!row) throw new Error(`Created note ${id} could not be read.`);
+
+    return toCharacterNote(row);
+  }
+
+  deleteNote(characterId: string, noteId: string, viewerRole: UserRole): boolean {
+    const result = this.database
+      .query<never, [string, string, UserRole]>(
+        `delete from character_notes
+         where character_id = ?
+           and id = ?
+           and (? != 'player' or visibility = 'player')`,
+      )
+      .run(characterId, noteId, viewerRole);
+
+    return result.changes > 0;
+  }
+
   listNotesForCharacter(characterId: string, viewerRole: UserRole): CharacterNote[] {
     const rows = this.database
       .query<CharacterNoteRow, [string, UserRole]>(
-        `select id, title, body, visibility
+        `select id, author_user_id, title, body, visibility, created_at, updated_at
          from character_notes
          where character_id = ?
            and (? != 'player' or visibility = 'player')
-         order by case visibility when 'player' then 1 else 2 end, title`,
+         order by created_at, case visibility when 'player' then 1 else 2 end, title`,
       )
       .all(characterId, viewerRole);
 
-    return rows.map((row) => ({
-      body: row.body,
-      id: row.id,
-      title: row.title,
-      visibility: row.visibility,
-    }));
+    return rows.map(toCharacterNote);
+  }
+
+  updateNote(
+    characterId: string,
+    noteId: string,
+    viewerRole: UserRole,
+    patch: { body: string; title: string },
+  ): CharacterNote | null {
+    this.database
+      .query<never, [string, string, string, string, UserRole]>(
+        `update character_notes
+         set title = ?, body = ?, updated_at = CURRENT_TIMESTAMP
+         where character_id = ?
+           and id = ?
+           and (? != 'player' or visibility = 'player')`,
+      )
+      .run(patch.title, patch.body, characterId, noteId, viewerRole);
+
+    const row = this.database
+      .query<CharacterNoteRow, [string, string, UserRole]>(
+        `select id, author_user_id, title, body, visibility, created_at, updated_at
+         from character_notes
+         where character_id = ?
+           and id = ?
+           and (? != 'player' or visibility = 'player')`,
+      )
+      .get(characterId, noteId, viewerRole);
+
+    return row ? toCharacterNote(row) : null;
   }
 
   updateNoteBody(
@@ -1467,45 +1538,153 @@ class SqliteNotesRepository implements NotesRepository {
     viewerRole: UserRole,
     body: string,
   ): CharacterNote | null {
-    this.database
-      .query<never, [string, string, string, UserRole]>(
-        `update character_notes
-         set body = ?
-         where character_id = ?
-           and id = ?
-           and (? != 'player' or visibility = 'player')`,
-      )
-      .run(body, characterId, noteId, viewerRole);
-
     const row = this.database
       .query<CharacterNoteRow, [string, string, UserRole]>(
-        `select id, title, body, visibility
+        `select id, author_user_id, title, body, visibility, created_at, updated_at
          from character_notes
          where character_id = ?
            and id = ?
            and (? != 'player' or visibility = 'player')`,
       )
       .get(characterId, noteId, viewerRole);
+    if (!row) return null;
 
-    return row
-      ? {
-          body: row.body,
-          id: row.id,
-          title: row.title,
-          visibility: row.visibility,
-        }
-      : null;
+    return this.updateNote(characterId, noteId, viewerRole, { body, title: row.title });
   }
 }
 
 class SqliteCampaignContentRepository implements CampaignContentRepository {
   constructor(private readonly database: Database) {}
 
+  createImageAsset(input: {
+    altText: string;
+    byteSize: number;
+    campaignId: string;
+    caption: string;
+    height: number | null;
+    mimeType: string;
+    storageKey: string;
+    title: string;
+    visibility: CampaignContentVisibility;
+    width: number | null;
+  }): CampaignImageAsset {
+    const id = `campaign_image_asset_${randomUUID()}`;
+    this.database
+      .query<never, [string, string, string, string, string, number, number | null, number | null, string, string, CampaignContentVisibility]>(
+        `insert into campaign_image_assets (
+          id, campaign_id, title, storage_key, mime_type, byte_size, width, height, alt_text, caption, visibility
+        ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .run(
+        id,
+        input.campaignId,
+        input.title,
+        input.storageKey,
+        input.mimeType,
+        input.byteSize,
+        input.width,
+        input.height,
+        input.altText,
+        input.caption,
+        input.visibility,
+      );
+
+    const asset = this.getImageAssetById(input.campaignId, id, "game_master");
+    if (!asset) throw new Error(`Created image asset ${id} could not be read.`);
+
+    return asset;
+  }
+
+  createWikiPage(input: {
+    bodyMarkdown: string;
+    campaignId: string;
+    coverImageAssetId: string | null;
+    pageType: WikiPageType;
+    sourcePath: string | null;
+    sourceTitle: string | null;
+    tags: string[];
+    title: string;
+    visibility: CampaignContentVisibility;
+  }): CampaignWikiPage {
+    const id = `campaign_wiki_${randomUUID()}`;
+    const slug = uniqueCampaignWikiSlug(this.database, input.campaignId, input.title);
+    this.database
+      .query<never, [string, string, string, string, WikiPageType, string, CampaignContentVisibility, string, string | null, string | null, string | null]>(
+        `insert into campaign_wiki_pages (
+          id, campaign_id, slug, title, page_type, tags_json, visibility, body_markdown,
+          cover_image_asset_id, source_title, source_path
+        ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .run(
+        id,
+        input.campaignId,
+        slug,
+        input.title,
+        input.pageType,
+        JSON.stringify(input.tags),
+        input.visibility,
+        input.bodyMarkdown,
+        input.coverImageAssetId,
+        input.sourceTitle,
+        input.sourcePath,
+      );
+
+    const page = this.getWikiPageBySlug(input.campaignId, slug, "game_master");
+    if (!page) throw new Error(`Created wiki page ${id} could not be read.`);
+
+    return page;
+  }
+
+  createSession(input: {
+    body: string;
+    campaignId: string;
+    createdByUserId: string;
+    sessionDate: string | null;
+    summary: string;
+    title: string;
+    visibility: CampaignContentVisibility;
+  }): CampaignSessionRecord {
+    const id = `campaign_session_${randomUUID()}`;
+    const slug = uniqueCampaignSessionSlug(this.database, input.campaignId, input.title);
+    this.database
+      .query<never, [string, string, string, string, string | null, string, string, string, string]>(
+        `insert into campaign_sessions (
+          id, campaign_id, slug, title, session_date, summary, body, visibility, created_by_user_id
+        ) values (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .run(
+        id,
+        input.campaignId,
+        slug,
+        input.title,
+        input.sessionDate,
+        input.summary,
+        input.body,
+        input.visibility,
+        input.createdByUserId,
+      );
+
+    const row = this.getSessionRowById(input.campaignId, id);
+    if (!row) throw new Error(`Created campaign session ${id} could not be read.`);
+
+    return toCampaignSessionRecord(row);
+  }
+
+  deleteSession(campaignId: string, sessionId: string): boolean {
+    const result = this.database
+      .query<never, [string, string]>(
+        "delete from campaign_sessions where campaign_id = ? and id = ?",
+      )
+      .run(campaignId, sessionId);
+
+    return result.changes > 0;
+  }
+
   listWikiPagesForCampaign(campaignId: string, viewerRole: UserRole): CampaignWikiPage[] {
     return this.database
       .query<CampaignWikiPageRow, [string, number]>(
         `select id, campaign_id, slug, title, page_type, tags_json, visibility, body_markdown,
-          source_title, source_path
+          cover_image_asset_id, source_title, source_path
          from campaign_wiki_pages
          where campaign_id = ?
            and (? = 1 or visibility = 'player')
@@ -1523,7 +1702,7 @@ class SqliteCampaignContentRepository implements CampaignContentRepository {
     const row = this.database
       .query<CampaignWikiPageRow, [string, string, number]>(
         `select id, campaign_id, slug, title, page_type, tags_json, visibility, body_markdown,
-          source_title, source_path
+          cover_image_asset_id, source_title, source_path
          from campaign_wiki_pages
          where campaign_id = ?
            and slug = ?
@@ -1540,7 +1719,7 @@ class SqliteCampaignContentRepository implements CampaignContentRepository {
   ): CampaignImageAsset[] {
     return this.database
       .query<CampaignImageAssetRow, [string, number]>(
-        `select id, campaign_id, storage_key, mime_type, byte_size, width, height, alt_text,
+        `select id, campaign_id, title, storage_key, mime_type, byte_size, width, height, alt_text,
           caption, visibility
          from campaign_image_assets
          where campaign_id = ?
@@ -1551,6 +1730,47 @@ class SqliteCampaignContentRepository implements CampaignContentRepository {
       .map(toCampaignImageAsset);
   }
 
+  getImageAssetById(
+    campaignId: string,
+    assetId: string,
+    viewerRole: UserRole,
+  ): CampaignImageAsset | null {
+    const row = this.database
+      .query<CampaignImageAssetRow, [string, string, number]>(
+        `select id, campaign_id, title, storage_key, mime_type, byte_size, width, height, alt_text,
+          caption, visibility
+         from campaign_image_assets
+         where campaign_id = ?
+           and id = ?
+           and (? = 1 or visibility = 'player')`,
+      )
+      .get(campaignId, assetId, canSeeGameMasterContent(viewerRole));
+
+    return row ? toCampaignImageAsset(row) : null;
+  }
+
+  listImageAssetsForWikiPage(
+    campaignId: string,
+    wikiPageId: string,
+    attachmentType: "gallery" | "inline",
+    viewerRole: UserRole,
+  ): CampaignImageAsset[] {
+    return this.database
+      .query<CampaignImageAssetRow, [string, string, string, number]>(
+        `select a.id, a.campaign_id, a.title, a.storage_key, a.mime_type, a.byte_size,
+          a.width, a.height, a.alt_text, a.caption, a.visibility
+         from campaign_wiki_page_assets wa
+         join campaign_image_assets a on a.id = wa.image_asset_id
+         where a.campaign_id = ?
+           and wa.wiki_page_id = ?
+           and wa.attachment_type = ?
+           and (? = 1 or a.visibility = 'player')
+         order by wa.sort_order, a.title`,
+      )
+      .all(campaignId, wikiPageId, attachmentType, canSeeGameMasterContent(viewerRole))
+      .map(toCampaignImageAsset);
+  }
+
   listSessionsForCampaign(
     campaignId: string,
     viewerRole: UserRole,
@@ -1558,7 +1778,7 @@ class SqliteCampaignContentRepository implements CampaignContentRepository {
     return this.database
       .query<CampaignSessionRecordRow, [string, number]>(
         `select id, campaign_id, slug, title, session_date, summary, body, visibility,
-          created_by_user_id
+          created_by_user_id, created_at, updated_at
          from campaign_sessions
          where campaign_id = ?
            and (? = 1 or visibility = 'player')
@@ -1566,6 +1786,69 @@ class SqliteCampaignContentRepository implements CampaignContentRepository {
       )
       .all(campaignId, canSeeGameMasterContent(viewerRole))
       .map(toCampaignSessionRecord);
+  }
+
+  getSessionBySlug(
+    campaignId: string,
+    slug: string,
+    viewerRole: UserRole,
+  ): CampaignSessionRecord | null {
+    const row = this.database
+      .query<CampaignSessionRecordRow, [string, string, number]>(
+        `select id, campaign_id, slug, title, session_date, summary, body, visibility,
+          created_by_user_id, created_at, updated_at
+         from campaign_sessions
+         where campaign_id = ?
+           and slug = ?
+           and (? = 1 or visibility = 'player')`,
+      )
+      .get(campaignId, slug, canSeeGameMasterContent(viewerRole));
+
+    return row ? toCampaignSessionRecord(row) : null;
+  }
+
+  updateSession(
+    campaignId: string,
+    sessionId: string,
+    patch: {
+      body: string;
+      sessionDate: string | null;
+      summary: string;
+      title: string;
+      visibility: CampaignContentVisibility;
+    },
+  ): CampaignSessionRecord | null {
+    this.database
+      .query<never, [string, string | null, string, string, CampaignContentVisibility, string, string]>(
+        `update campaign_sessions
+         set title = ?, session_date = ?, summary = ?, body = ?, visibility = ?,
+           updated_at = CURRENT_TIMESTAMP
+         where campaign_id = ? and id = ?`,
+      )
+      .run(
+        patch.title,
+        patch.sessionDate,
+        patch.summary,
+        patch.body,
+        patch.visibility,
+        campaignId,
+        sessionId,
+      );
+
+    const row = this.getSessionRowById(campaignId, sessionId);
+
+    return row ? toCampaignSessionRecord(row) : null;
+  }
+
+  private getSessionRowById(campaignId: string, sessionId: string) {
+    return this.database
+      .query<CampaignSessionRecordRow, [string, string]>(
+        `select id, campaign_id, slug, title, session_date, summary, body, visibility,
+          created_by_user_id, created_at, updated_at
+         from campaign_sessions
+         where campaign_id = ? and id = ?`,
+      )
+      .get(campaignId, sessionId);
   }
 
   listFactionsForCampaign(campaignId: string): CampaignFaction[] {
@@ -1780,6 +2063,18 @@ function toCharacterEquipment(row: CharacterEquipmentRow): CharacterEquipment {
   };
 }
 
+function toCharacterNote(row: CharacterNoteRow): CharacterNote {
+  return {
+    authorUserId: row.author_user_id,
+    body: row.body,
+    createdAt: row.created_at,
+    id: row.id,
+    title: row.title,
+    updatedAt: row.updated_at,
+    visibility: row.visibility,
+  };
+}
+
 function toCampaignSummary(row: CampaignRow): CampaignSummary {
   return {
     gmUserId: row.gm_user_id,
@@ -1793,6 +2088,7 @@ function toCampaignWikiPage(row: CampaignWikiPageRow): CampaignWikiPage {
   return {
     bodyMarkdown: row.body_markdown,
     campaignId: row.campaign_id,
+    coverImageAssetId: row.cover_image_asset_id,
     id: row.id,
     pageType: row.page_type,
     slug: row.slug,
@@ -1814,6 +2110,7 @@ function toCampaignImageAsset(row: CampaignImageAssetRow): CampaignImageAsset {
     id: row.id,
     mimeType: row.mime_type,
     storageKey: row.storage_key,
+    title: row.title || row.alt_text,
     visibility: row.visibility,
     width: row.width,
   };
@@ -1823,12 +2120,14 @@ function toCampaignSessionRecord(row: CampaignSessionRecordRow): CampaignSession
   return {
     body: row.body,
     campaignId: row.campaign_id,
+    createdAt: row.created_at,
     createdByUserId: row.created_by_user_id,
     id: row.id,
     sessionDate: row.session_date,
     slug: row.slug,
     summary: row.summary,
     title: row.title,
+    updatedAt: row.updated_at,
     visibility: row.visibility,
   };
 }
@@ -1877,6 +2176,42 @@ function slugify(value: string) {
     .replace(/^_+|_+$/g, "");
 
   return slug || "custom";
+}
+
+function uniqueCampaignSessionSlug(database: Database, campaignId: string, title: string) {
+  const base = slugify(title).replaceAll("_", "-") || "session";
+  let slug = base;
+  let suffix = 2;
+  while (
+    database
+      .query<{ id: string }, [string, string]>(
+        "select id from campaign_sessions where campaign_id = ? and slug = ?",
+      )
+      .get(campaignId, slug)
+  ) {
+    slug = `${base}-${suffix}`;
+    suffix += 1;
+  }
+
+  return slug;
+}
+
+function uniqueCampaignWikiSlug(database: Database, campaignId: string, title: string) {
+  const base = slugify(title).replaceAll("_", "-") || "wiki-page";
+  let slug = base;
+  let suffix = 2;
+  while (
+    database
+      .query<{ id: string }, [string, string]>(
+        "select id from campaign_wiki_pages where campaign_id = ? and slug = ?",
+      )
+      .get(campaignId, slug)
+  ) {
+    slug = `${base}-${suffix}`;
+    suffix += 1;
+  }
+
+  return slug;
 }
 
 function ruleSourceId(sourceSlug: string) {

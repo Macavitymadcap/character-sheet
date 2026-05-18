@@ -20,6 +20,7 @@ type CampaignImageAssetSeed = [
   string,
   string,
   string,
+  string,
   number,
   number,
   number,
@@ -48,7 +49,9 @@ type CampaignWikiPageSeed = [
   string,
   string | null,
   string | null,
+  string | null,
 ];
+type CampaignWikiPageAssetSeed = [string, string, "gallery" | "inline", number];
 type CharacterFactionChoiceSeed = [string, string, string];
 type DefenceSeed = [string, string, string, string, number];
 type EquipmentSeed = [string, string, string, number, number, string];
@@ -494,6 +497,7 @@ const notes: NoteSeed[] = [
 const campaignImageAssets: CampaignImageAssetSeed[] = [
   [
     "asset_rovnost_cover",
+    "Campaign cover",
     "campaigns/rovnost-shadows/cover.png",
     "image/png",
     144000,
@@ -505,6 +509,7 @@ const campaignImageAssets: CampaignImageAssetSeed[] = [
   ],
   [
     "asset_magister_vallen",
+    "Magister Vallen portrait",
     "campaigns/rovnost-shadows/magister-vallen.png",
     "image/png",
     86000,
@@ -513,6 +518,42 @@ const campaignImageAssets: CampaignImageAssetSeed[] = [
     "Magister Vallen portrait",
     "Game Master reference portrait.",
     "game_master",
+  ],
+  [
+    "asset_rovnost_factions",
+    "Faction sigils",
+    "campaigns/rovnost-shadows/faction-sigils.png",
+    "image/png",
+    94000,
+    1200,
+    900,
+    "A sheet of Rovnost faction sigils",
+    "Player-facing sigil reference.",
+    "player",
+  ],
+  [
+    "asset_astril_map",
+    "Astril map",
+    "campaigns/rovnost-shadows/astril-map.webp",
+    "image/webp",
+    168000,
+    1600,
+    1000,
+    "Map of Astril and the trade routes around Rovnost",
+    "Regional map for travel planning.",
+    "player",
+  ],
+  [
+    "asset_skywright_sigil",
+    "Skywright sigil",
+    "campaigns/rovnost-shadows/skywright-sigil.png",
+    "image/png",
+    42000,
+    512,
+    512,
+    "Skywright guild sigil",
+    "Faction sigil for the Skywrights.",
+    "player",
   ],
 ];
 
@@ -524,9 +565,58 @@ const campaignWikiPages: CampaignWikiPageSeed[] = [
     "campaign",
     JSON.stringify(["overview", "player-facing"]),
     "player",
-    "Rovnost is a city of smoke, ambition, and hungry machinery.",
+    "# Rovnost Shadows\n\nRovnost is a city of smoke, ambition, and hungry machinery.\n\n**What everyone knows**\n\n- The rail syndicates own more streets than the council admits.\n- The Skywrights sell miracles by altitude and invoice.\n\n***\n\n_The city looks up when it is afraid._",
+    "asset_rovnost_cover",
     "Rovnost player blurb",
     "docs/rovnost/overview.md",
+  ],
+  [
+    "wiki_rovnost_factions",
+    "factions-guide",
+    "Factions Guide",
+    "faction",
+    JSON.stringify(["factions", "player-facing"]),
+    "player",
+    "# Factions Guide\n\n**The Skywrights**\n\n- Control the air docks above Astril Gate.\n- Mark their engines with a blue wing sigil.\n\n![Skywright sigil](asset:asset_skywright_sigil)\n\n---\n\n**The Ash Ledger**\n\nA banking house that prefers its debts hereditary.",
+    "asset_rovnost_factions",
+    "Rovnost factions guide",
+    "docs/rovnost/factions.md",
+  ],
+  [
+    "wiki_rovnost_opening_teaser",
+    "opening-teaser",
+    "Opening Teaser",
+    "lore",
+    JSON.stringify(["teaser", "player-facing"]),
+    "player",
+    "# Opening Teaser\n\n_The first explosion is polite enough to wait until after the speech._\n\nA brass courier presses a sealed card into your hand as the station bells begin to stutter.",
+    null,
+    "Rovnost opening teaser",
+    "docs/rovnost/opening-teaser.md",
+  ],
+  [
+    "wiki_rovnost_session_zero",
+    "session-zero-kit",
+    "Session Zero Kit",
+    "session",
+    JSON.stringify(["session-zero", "safety"]),
+    "player",
+    "# Session Zero Kit\n\n**Campaign promises**\n\n- Intrigue in public places.\n- Consequences that follow the characters home.\n- Time for character ties before the blades come out.",
+    null,
+    "Rovnost session zero kit",
+    "docs/rovnost/session-zero-kit.md",
+  ],
+  [
+    "wiki_astril_map",
+    "astril-map",
+    "Astril Map",
+    "location",
+    JSON.stringify(["map", "astril"]),
+    "player",
+    "# Astril Map\n\nAstril sits east of Rovnost, where the river breaks into crane yards and slate-roofed counting houses.",
+    "asset_astril_map",
+    "Astril map",
+    "docs/rovnost/astril-map.md",
   ],
   [
     "wiki_rovnost_gm_dossier",
@@ -536,9 +626,16 @@ const campaignWikiPages: CampaignWikiPageSeed[] = [
     JSON.stringify(["gm", "secrets"]),
     "game_master",
     "Magister Vallen is watching the faction pressure build.",
+    "asset_magister_vallen",
     "Rovnost GM dossier",
     "docs/rovnost/gm-dossier.md",
   ],
+];
+
+const campaignWikiPageAssets: CampaignWikiPageAssetSeed[] = [
+  ["wiki_rovnost_factions", "asset_skywright_sigil", "inline", 10],
+  ["wiki_rovnost_factions", "asset_rovnost_factions", "gallery", 10],
+  ["wiki_astril_map", "asset_astril_map", "gallery", 10],
 ];
 
 const campaignSessions: CampaignSessionSeed[] = [
@@ -950,9 +1047,10 @@ export const seedDatabase = (database: Database) => {
 
   for (const asset of campaignImageAssets) {
     database.run(
-      `insert into campaign_image_assets (id, campaign_id, storage_key, mime_type, byte_size, width, height, alt_text, caption, visibility)
-       values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `insert into campaign_image_assets (id, campaign_id, title, storage_key, mime_type, byte_size, width, height, alt_text, caption, visibility)
+       values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
        on conflict(id) do update set
+         title = excluded.title,
          storage_key = excluded.storage_key,
          mime_type = excluded.mime_type,
          byte_size = excluded.byte_size,
@@ -968,8 +1066,8 @@ export const seedDatabase = (database: Database) => {
 
   for (const page of campaignWikiPages) {
     database.run(
-      `insert into campaign_wiki_pages (id, campaign_id, slug, title, page_type, tags_json, visibility, body_markdown, source_title, source_path)
-       values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `insert into campaign_wiki_pages (id, campaign_id, slug, title, page_type, tags_json, visibility, body_markdown, cover_image_asset_id, source_title, source_path)
+       values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
        on conflict(id) do update set
          slug = excluded.slug,
          title = excluded.title,
@@ -977,10 +1075,21 @@ export const seedDatabase = (database: Database) => {
          tags_json = excluded.tags_json,
          visibility = excluded.visibility,
          body_markdown = excluded.body_markdown,
+         cover_image_asset_id = excluded.cover_image_asset_id,
          source_title = excluded.source_title,
          source_path = excluded.source_path,
          updated_at = CURRENT_TIMESTAMP`,
       [page[0], "campaign_rovnost_shadows", ...page.slice(1)],
+    );
+  }
+
+  for (const attachment of campaignWikiPageAssets) {
+    database.run(
+      `insert into campaign_wiki_page_assets (wiki_page_id, image_asset_id, attachment_type, sort_order)
+       values (?, ?, ?, ?)
+       on conflict(wiki_page_id, image_asset_id, attachment_type) do update set
+         sort_order = excluded.sort_order`,
+      attachment,
     );
   }
 

@@ -8,9 +8,11 @@ let runtime: SqliteDatabaseRuntime | undefined;
 afterEach(() => {
   runtime?.close();
   runtime = undefined;
+  delete process.env.CHARACTER_SHEET_ASSET_ROOT;
 });
 
 const createTestApp = (appName = "Test Character Sheet") => {
+  process.env.CHARACTER_SHEET_ASSET_ROOT = "/private/tmp/character-sheet-test-assets";
   runtime = createSqliteDatabase({ path: ":memory:" });
   const passwordService = new PasswordService();
 
@@ -426,6 +428,8 @@ describe("createApp", () => {
       '<a class="popover-menu-item" href="/campaigns/rovnost-shadows" role="menuitem" aria-current="page">Campaign</a>',
     );
     expect(html).toContain('<h1 id="campaign-heading" class="panel-heading">Rovnost Shadows</h1>');
+    expect(html).toContain("Sessions");
+    expect(html).toContain("Session Zero");
   });
 
   test("creates player and Game Master roster characters", async () => {
@@ -578,19 +582,37 @@ describe("createApp", () => {
     const gmSession = sessionService.createSession("user_game_master");
 
     const playerUpdate = await app.request("/sheet/lynott/notes/note_lynott_player", {
-      body: new URLSearchParams({ body: "Smoke-tested player note." }),
+      body: new URLSearchParams({ body: "Smoke-tested player note.", title: "Player smoke" }),
       headers: formHeaders(playerSession.cookie),
       method: "PATCH",
     });
     const blockedGmUpdate = await app.request("/sheet/lynott/notes/note_lynott_gm", {
-      body: new URLSearchParams({ body: "This should not land." }),
+      body: new URLSearchParams({ body: "This should not land.", title: "Blocked" }),
       headers: formHeaders(playerSession.cookie),
       method: "PATCH",
     });
     const gmUpdate = await app.request("/sheet/lynott/notes/note_lynott_gm", {
-      body: new URLSearchParams({ body: "Smoke-tested Game Master note." }),
+      body: new URLSearchParams({ body: "Smoke-tested Game Master note.", title: "GM smoke" }),
       headers: formHeaders(gmSession.cookie),
       method: "PATCH",
+    });
+    const playerCreate = await app.request("/sheet/lynott/notes", {
+      body: new URLSearchParams({
+        body: "Fresh player-created note.",
+        title: "Fresh note",
+        visibility: "player",
+      }),
+      headers: formHeaders(playerSession.cookie),
+      method: "POST",
+    });
+    const blockedGmCreate = await app.request("/sheet/lynott/notes", {
+      body: new URLSearchParams({
+        body: "Player should not create this.",
+        title: "Forbidden GM note",
+        visibility: "game_master",
+      }),
+      headers: formHeaders(playerSession.cookie),
+      method: "POST",
     });
     const playerNotes = await app.request("/sheet/lynott/tabs/notes", {
       headers: { cookie: playerSession.cookie },
@@ -606,10 +628,187 @@ describe("createApp", () => {
     expect(blockedGmUpdate.status).toBe(404);
     expect(gmUpdate.status).toBe(200);
     expect(await gmUpdate.text()).toContain("Smoke-tested Game Master note.");
+    expect(playerCreate.status).toBe(200);
+    expect(await playerCreate.text()).toContain("Fresh player-created note.");
+    expect(blockedGmCreate.status).toBe(403);
     expect(playerHtml).toContain("Smoke-tested player note.");
+    expect(playerHtml).toContain("Fresh player-created note.");
     expect(playerHtml).not.toContain("Smoke-tested Game Master note.");
     expect(gmHtml).toContain("Smoke-tested player note.");
     expect(gmHtml).toContain("Smoke-tested Game Master note.");
+  });
+
+  test("lets Game Masters create, update, and delete campaign sessions", async () => {
+    const { app, sessionService } = createTestApp("Character Sheet");
+    const gmCookie = sessionService.createSession("user_game_master").cookie;
+    const playerCookie = sessionService.createSession("user_lynott_player").cookie;
+
+    const blockedPlayer = await app.request("/campaigns/rovnost-shadows/sessions", {
+      body: new URLSearchParams({
+        body: "Player cannot create this.",
+        summary: "Blocked",
+        title: "Blocked session",
+        visibility: "player",
+      }),
+      headers: formHeaders(playerCookie),
+      method: "POST",
+    });
+    const created = await app.request("/campaigns/rovnost-shadows/sessions", {
+      body: new URLSearchParams({
+        body: "Prep the faction pressure.",
+        sessionDate: "2026-05-20",
+        summary: "Opening moves.",
+        title: "First field session",
+        visibility: "game_master",
+      }),
+      headers: formHeaders(gmCookie),
+      method: "POST",
+    });
+    const campaign = await app.request("/campaigns/rovnost-shadows", {
+      headers: { cookie: gmCookie },
+    });
+    const campaignHtml = await campaign.text();
+    const createdId = runtime?.repositories.campaignContentRepository
+      .listSessionsForCampaign("campaign_rovnost_shadows", "game_master")
+      .find((session) => session.title === "First field session")?.id;
+    expect(createdId).toBeString();
+
+    const updated = await app.request(`/campaigns/rovnost-shadows/sessions/${createdId}`, {
+      body: new URLSearchParams({
+        body: "Updated prep notes.",
+        sessionDate: "2026-05-21",
+        summary: "Updated summary.",
+        title: "First field session updated",
+        visibility: "player",
+      }),
+      headers: formHeaders(gmCookie),
+      method: "POST",
+    });
+    const deleted = await app.request(`/campaigns/rovnost-shadows/sessions/${createdId}/delete`, {
+      headers: formHeaders(gmCookie),
+      method: "POST",
+    });
+
+    expect(blockedPlayer.status).toBe(403);
+    expect(created.status).toBe(303);
+    expect(created.headers.get("location")).toBe("/campaigns/rovnost-shadows");
+    expect(campaign.status).toBe(200);
+    expect(campaignHtml).toContain("First field session");
+    expect(campaignHtml).toContain("Prep the faction pressure.");
+    expect(updated.status).toBe(303);
+    expect(deleted.status).toBe(303);
+    expect(
+      runtime?.repositories.campaignContentRepository
+        .listSessionsForCampaign("campaign_rovnost_shadows", "game_master")
+        .some((session) => session.id === createdId),
+    ).toBe(false);
+  });
+
+  test("serves campaign wiki pages by visibility", async () => {
+    const { app, sessionService } = createTestApp("Character Sheet");
+    const playerCookie = sessionService.createSession("user_lynott_player").cookie;
+    const gmCookie = sessionService.createSession("user_game_master").cookie;
+
+    const playerPage = await app.request("/campaigns/rovnost-shadows/wiki/factions-guide", {
+      headers: { cookie: playerCookie },
+    });
+    const playerHtml = await playerPage.text();
+    const hiddenPage = await app.request("/campaigns/rovnost-shadows/wiki/gm-dossier", {
+      headers: { cookie: playerCookie },
+    });
+    const gmPage = await app.request("/campaigns/rovnost-shadows/wiki/gm-dossier", {
+      headers: { cookie: gmCookie },
+    });
+
+    expect(playerPage.status).toBe(200);
+    expect(playerHtml).toContain("<title>Factions Guide - Rovnost Shadows - Character Sheet</title>");
+    expect(playerHtml).toContain("<h2>Factions Guide</h2>");
+    expect(playerHtml).toContain('src="/campaigns/rovnost-shadows/assets/asset_skywright_sigil"');
+    expect(playerHtml).toContain('aria-label="Factions Guide gallery"');
+    expect(hiddenPage.status).toBe(404);
+    expect(gmPage.status).toBe(200);
+    expect(await gmPage.text()).toContain("Magister Vallen is watching");
+  });
+
+  test("lets Game Masters create wiki pages and image assets with protected reads", async () => {
+    const { app, sessionService } = createTestApp("Character Sheet");
+    const gmCookie = sessionService.createSession("user_game_master").cookie;
+    const playerCookie = sessionService.createSession("user_lynott_player").cookie;
+
+    const wikiCreate = await app.request("/campaigns/rovnost-shadows/wiki", {
+      body: new URLSearchParams({
+        bodyMarkdown: "# Brass Market\n\n**Known for**\n\n- Clockwork fruit sellers",
+        pageType: "location",
+        tags: "market, player-facing",
+        title: "Brass Market",
+        visibility: "player",
+      }),
+      headers: formHeaders(gmCookie),
+      method: "POST",
+    });
+    const wikiRead = await app.request("/campaigns/rovnost-shadows/wiki/brass-market", {
+      headers: { cookie: playerCookie },
+    });
+
+    const imageForm = new FormData();
+    imageForm.set("title", "Secret seal");
+    imageForm.set("altText", "A red wax seal marked with Vallen's signet");
+    imageForm.set("caption", "GM-only handout.");
+    imageForm.set("visibility", "game_master");
+    imageForm.set("width", "2");
+    imageForm.set("height", "2");
+    imageForm.set("image", new File([new Uint8Array([1, 2, 3, 4])], "seal.png", { type: "image/png" }));
+    const upload = await app.request("/campaigns/rovnost-shadows/assets", {
+      body: imageForm,
+      headers: { cookie: gmCookie },
+      method: "POST",
+    });
+    const asset = runtime?.repositories.campaignContentRepository
+      .listImageAssetsForCampaign("campaign_rovnost_shadows", "game_master")
+      .find((item) => item.title === "Secret seal");
+    expect(asset).toBeDefined();
+
+    const playerAsset = await app.request(`/campaigns/rovnost-shadows/assets/${asset?.id}`, {
+      headers: { cookie: playerCookie },
+    });
+    const gmAsset = await app.request(`/campaigns/rovnost-shadows/assets/${asset?.id}`, {
+      headers: { cookie: gmCookie },
+    });
+
+    expect(wikiCreate.status).toBe(303);
+    expect(wikiRead.status).toBe(200);
+    expect(await wikiRead.text()).toContain("<h2>Brass Market</h2>");
+    expect(upload.status).toBe(303);
+    expect(asset?.storageKey).not.toContain("seal.png");
+    expect(playerAsset.status).toBe(404);
+    expect(gmAsset.status).toBe(200);
+    expect(gmAsset.headers.get("content-type")).toContain("image/png");
+  });
+
+  test("rejects image uploads without alt text or with unsupported file types", async () => {
+    const { app, sessionService } = createTestApp("Character Sheet");
+    const gmCookie = sessionService.createSession("user_game_master").cookie;
+
+    const missingAlt = new FormData();
+    missingAlt.set("title", "Map");
+    missingAlt.set("visibility", "player");
+    missingAlt.set("image", new File([new Uint8Array([1])], "map.png", { type: "image/png" }));
+    const unsupported = new FormData();
+    unsupported.set("title", "Map");
+    unsupported.set("altText", "A map");
+    unsupported.set("visibility", "player");
+    unsupported.set("image", new File([new Uint8Array([1])], "map.gif", { type: "image/gif" }));
+
+    expect((await app.request("/campaigns/rovnost-shadows/assets", {
+      body: missingAlt,
+      headers: { cookie: gmCookie },
+      method: "POST",
+    })).status).toBe(400);
+    expect((await app.request("/campaigns/rovnost-shadows/assets", {
+      body: unsupported,
+      headers: { cookie: gmCookie },
+      method: "POST",
+    })).status).toBe(400);
   });
 
   test("smokes the seeded MVP workflow through login, sheet play, notes, roles, and logout", async () => {
@@ -623,7 +822,7 @@ describe("createApp", () => {
       method: "PATCH",
     });
     const note = await app.request("/sheet/lynott/notes/note_lynott_player", {
-      body: new URLSearchParams({ body: "MVP smoke note saved." }),
+      body: new URLSearchParams({ body: "MVP smoke note saved.", title: "Player notes" }),
       headers: formHeaders(playerCookie),
       method: "PATCH",
     });

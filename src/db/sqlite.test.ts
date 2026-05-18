@@ -437,7 +437,7 @@ describe("SQLite repositories", () => {
     runtime = createSqliteDatabase({ path: ":memory:" });
     const notes = runtime.repositories.notesRepository;
 
-    expect(notes.listNotesForCharacter("character_lynott_magulbisson", "player")).toEqual([
+    expect(notes.listNotesForCharacter("character_lynott_magulbisson", "player")).toMatchObject([
       {
         body: "Keep the false identities ready and weapons maintained.",
         id: "note_lynott_player",
@@ -445,7 +445,7 @@ describe("SQLite repositories", () => {
         visibility: "player",
       },
     ]);
-    expect(notes.listNotesForCharacter("character_lynott_magulbisson", "game_master")).toEqual([
+    expect(notes.listNotesForCharacter("character_lynott_magulbisson", "game_master")).toMatchObject([
       {
         body: "Keep the false identities ready and weapons maintained.",
         id: "note_lynott_player",
@@ -495,7 +495,7 @@ describe("SQLite repositories", () => {
       id: "note_lynott_gm",
       visibility: "game_master",
     });
-    expect(notes.listNotesForCharacter("character_lynott_magulbisson", "player")).toEqual([
+    expect(notes.listNotesForCharacter("character_lynott_magulbisson", "player")).toMatchObject([
       {
         body: "Updated from the MVP smoke path.",
         id: "note_lynott_player",
@@ -749,12 +749,23 @@ describe("SQLite repositories", () => {
     const content = runtime.repositories.campaignContentRepository;
     const campaignId = "campaign_rovnost_shadows";
 
-    expect(content.listWikiPagesForCampaign(campaignId, "player").map((page) => page.slug)).toEqual(
-      ["rovnost-shadows-overview"],
-    );
+    expect(content.listWikiPagesForCampaign(campaignId, "player").map((page) => page.slug)).toEqual([
+      "astril-map",
+      "factions-guide",
+      "opening-teaser",
+      "rovnost-shadows-overview",
+      "session-zero-kit",
+    ]);
     expect(
       content.listWikiPagesForCampaign(campaignId, "game_master").map((page) => page.slug),
-    ).toEqual(["rovnost-shadows-overview", "gm-dossier"]);
+    ).toEqual([
+      "astril-map",
+      "factions-guide",
+      "opening-teaser",
+      "rovnost-shadows-overview",
+      "session-zero-kit",
+      "gm-dossier",
+    ]);
     expect(content.getWikiPageBySlug(campaignId, "gm-dossier", "player")).toBeNull();
     expect(content.getWikiPageBySlug(campaignId, "gm-dossier", "game_master")).toMatchObject({
       sourceTitle: "Rovnost GM dossier",
@@ -764,13 +775,31 @@ describe("SQLite repositories", () => {
 
     expect(
       content.listImageAssetsForCampaign(campaignId, "player").map((asset) => asset.storageKey),
-    ).toEqual(["campaigns/rovnost-shadows/cover.png"]);
+    ).toEqual([
+      "campaigns/rovnost-shadows/astril-map.webp",
+      "campaigns/rovnost-shadows/cover.png",
+      "campaigns/rovnost-shadows/faction-sigils.png",
+      "campaigns/rovnost-shadows/skywright-sigil.png",
+    ]);
     expect(
       content.listImageAssetsForCampaign(campaignId, "game_master").map((asset) => asset.storageKey),
     ).toEqual([
+      "campaigns/rovnost-shadows/astril-map.webp",
       "campaigns/rovnost-shadows/cover.png",
+      "campaigns/rovnost-shadows/faction-sigils.png",
       "campaigns/rovnost-shadows/magister-vallen.png",
+      "campaigns/rovnost-shadows/skywright-sigil.png",
     ]);
+    expect(
+      content
+        .listImageAssetsForWikiPage(campaignId, "wiki_rovnost_factions", "inline", "player")
+        .map((asset) => asset.id),
+    ).toEqual(["asset_skywright_sigil"]);
+    expect(
+      content
+        .listImageAssetsForWikiPage(campaignId, "wiki_rovnost_factions", "gallery", "player")
+        .map((asset) => asset.id),
+    ).toEqual(["asset_rovnost_factions"]);
 
     expect(content.listSessionsForCampaign(campaignId, "player").map((session) => session.slug)).toEqual([
       "session-zero",

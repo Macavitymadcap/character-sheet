@@ -50,6 +50,7 @@ export interface AppDependencies {
   appName: string;
   authRepository: AuthRepository;
   authService: AuthService;
+  campaignContentRepository: CampaignContentRepository;
   campaignRepository: CampaignRepository;
   characterRepository: CharacterRepository;
   notesRepository: NotesRepository;
@@ -115,12 +116,21 @@ The MVP page set:
 - `/login` login form using the shared site shell.
 - `/logout` sign-out confirmation page using the shared site shell.
 - `POST /logout` logout route that clears the session and redirects to `/`.
-- `/campaigns/:campaignSlug` read-only Game Master campaign shell for the seeded campaign.
+- `/campaigns/:campaignSlug` campaign shell with player-visible wiki pages and Game Master-only management forms.
+- `/campaigns/:campaignSlug/wiki/:wikiSlug` campaign wiki detail page filtered by player or Game Master visibility.
+- `/campaigns/:campaignSlug/assets/:assetId` protected image asset route backed by app-managed local storage.
+- `POST /campaigns/:campaignSlug/wiki` Game Master wiki page creation route.
+- `POST /campaigns/:campaignSlug/assets` Game Master image upload route for PNG, JPEG, and WebP files.
+- `POST /campaigns/:campaignSlug/sessions` Game Master session creation route.
+- `POST /campaigns/:campaignSlug/sessions/:sessionId` Game Master session update route.
+- `POST /campaigns/:campaignSlug/sessions/:sessionId/delete` Game Master session delete route.
 - `/characters` signed-in player roster and manual character creation.
 - `/campaigns/:campaignSlug/characters` Game Master campaign roster and manual character creation for player members.
 - `/sheet/:characterId` character sheet page.
 - `/sheet/:characterId/tabs/:tabId` sheet tab panel fragment route for HTMX swaps.
-- `PATCH /sheet/:characterId/notes/:noteId` seeded note save route that returns the notes tab panel.
+- `POST /sheet/:characterId/notes` note creation route that returns the notes tab panel.
+- `PATCH /sheet/:characterId/notes/:noteId` note update route that returns the notes tab panel.
+- `POST /sheet/:characterId/notes/:noteId/delete` note delete route that returns the notes tab panel.
 - `/admin` admin shell with local invite creation.
 
 The site header is sticky and contains:
@@ -184,6 +194,8 @@ flowchart TD
 
 The database stores structured data for rules and sheet state. Markdown files in `docs/rules` are useful source material, but runtime reads should use SQLite read models. `bootstrapDatabase()` creates the MVP schema idempotently, `seedDatabase()` inserts local seed data, and repository interfaces keep route-facing contracts independent of SQLite.
 
+Campaign wiki pages store normalised Markdown and source metadata in SQLite. Rendered pages use a small safe Markdown renderer for the current Google Docs export shape: title lines, bold section headings, italic quotes, bullet lists, horizontal rules, and scene breaks. Image uploads are copied into app-managed storage under `data/assets` by default, or `CHARACTER_SHEET_ASSET_ROOT` when set for tests or local overrides. The database stores generated storage keys rather than raw local source paths, and asset routes enforce campaign membership and content visibility before reading files.
+
 ```mermaid
 erDiagram
     users ||--o{ sessions : owns
@@ -195,6 +207,8 @@ erDiagram
     campaigns ||--o{ campaign_sessions : records
     campaigns ||--o{ campaign_wiki_pages : documents
     campaigns ||--o{ campaign_image_assets : stores
+    campaign_wiki_pages ||--o{ campaign_wiki_page_assets : attaches
+    campaign_image_assets ||--o{ campaign_wiki_page_assets : appears_in
     campaigns ||--o{ campaign_factions : defines
     characters ||--o{ character_classes : has
     characters ||--o{ character_abilities : has
@@ -247,7 +261,7 @@ erDiagram
 | `rule_mechanics` | Structured mechanics such as uses, dice notation, DCs, ranges, durations, conditions, and scaling. |
 | `character_rule_links` | Character selections and granted rules, such as prepared spells and known infusions. |
 
-Some schema tables intentionally land before their full management UI. `sheet-0012` adds group-use read models for rosters, wiki pages, image assets, session records, factions, and faction choices; `sheet-0014` adds player and Game Master roster pages plus manual character creation. Character deletion, campaign session CRUD, note creation, and richer rules text rendering are follow-up work.
+Some schema tables intentionally land before their full management UI. `sheet-0012` adds group-use read models for rosters, wiki pages, image assets, session records, factions, and faction choices; `sheet-0014` adds player and Game Master roster pages plus manual character creation; `sheet-0016` adds note creation/update/delete flows and Game Master campaign session CRUD. Character deletion, wiki management UI, image upload UI, faction picking, and richer rules text rendering are follow-up work.
 
 ### Rules Data
 
