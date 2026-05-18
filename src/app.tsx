@@ -4,8 +4,10 @@ import { isRestType, planRestResourceUpdates } from "./characters/rests";
 import { AdminPage } from "./components/pages/Admin";
 import { CampaignPage } from "./components/pages/Campaign";
 import { HomePage } from "./components/pages/Home";
+import { InviteAcceptPage } from "./components/pages/InviteAccept";
 import { LoginPage } from "./components/pages/Login";
 import { LogoutPage } from "./components/pages/Logout";
+import { PasswordResetPage } from "./components/pages/PasswordReset";
 import { SheetPage } from "./components/pages/Sheet";
 import { SheetHeader } from "./components/organisms/SheetHeader";
 import { SheetTabPanel } from "./components/organisms/SheetTabPanel";
@@ -110,7 +112,15 @@ export const createApp = (dependencies: AppDependencies) => {
     if (guarded) return guarded;
     if (!session) return context.redirect("/login", 303);
 
-    return context.html(<AdminPage appName={dependencies.appName} user={session.user} />);
+    return context.html(
+      <AdminPage
+        appName={dependencies.appName}
+        invites={dependencies.authRepository.listInvites()}
+        resetTokens={dependencies.authRepository.listPasswordResetTokens()}
+        users={dependencies.authRepository.listUserSummaries()}
+        user={session.user}
+      />,
+    );
   });
 
   app.get("/campaigns/:campaignSlug", (context) => {
@@ -170,6 +180,21 @@ export const createApp = (dependencies: AppDependencies) => {
     );
   });
 
+  app.post("/admin/users/:userId/status", async (context) => {
+    const session = readSession(context.req.header("cookie"));
+    const guard = requireRole(session, ["admin"]);
+    const guarded = guardResponse(context, guard);
+    if (guarded) return guarded;
+
+    const body = await context.req.parseBody();
+    const status = String(body.status ?? "");
+    if (status !== "active" && status !== "disabled") return context.text("Invalid status", 400);
+
+    dependencies.authRepository.updateUserStatus(context.req.param("userId"), status);
+
+    return context.redirect("/admin", 303);
+  });
+
   app.get("/admin/invites/:token", (context) => {
     const session = readSession(context.req.header("cookie"));
     const guard = requireRole(session, ["admin"]);
@@ -221,6 +246,58 @@ export const createApp = (dependencies: AppDependencies) => {
       id: reset.id,
       userId: reset.userId,
     });
+  });
+
+  app.get("/invites/:token", (context) => {
+    const invite = dependencies.authService.readInvite(context.req.param("token"));
+    if (!invite) return context.text("Not found", 404);
+
+    return context.html(
+      <InviteAcceptPage
+        appName={dependencies.appName}
+        email={invite.email}
+        role={invite.role}
+        token={context.req.param("token")}
+      />,
+    );
+  });
+
+  app.post("/invites/:token", async (context) => {
+    const body = await context.req.parseBody();
+    const displayName = String(body.displayName ?? "");
+    const password = String(body.password ?? "");
+    if (!displayName.trim() || !password) return context.text("Missing fields", 400);
+
+    try {
+      dependencies.authService.acceptInvite({ displayName, password, token: context.req.param("token") });
+    } catch (error) {
+      return context.text(error instanceof Error ? error.message : "Unable to accept invite", 400);
+    }
+
+    return context.redirect("/login", 303);
+  });
+
+  app.get("/password-reset/:token", (context) => {
+    const reset = dependencies.authService.readPasswordResetToken(context.req.param("token"));
+    if (!reset) return context.text("Not found", 404);
+
+    return context.html(
+      <PasswordResetPage appName={dependencies.appName} token={context.req.param("token")} />,
+    );
+  });
+
+  app.post("/password-reset/:token", async (context) => {
+    const body = await context.req.parseBody();
+    const password = String(body.password ?? "");
+    if (!password) return context.text("Missing password", 400);
+
+    try {
+      dependencies.authService.usePasswordResetToken({ password, token: context.req.param("token") });
+    } catch (error) {
+      return context.text(error instanceof Error ? error.message : "Unable to reset password", 400);
+    }
+
+    return context.redirect("/login", 303);
   });
 
   app.get("/sheet/:characterRef", (context) => {

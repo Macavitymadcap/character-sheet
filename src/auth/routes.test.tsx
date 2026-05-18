@@ -225,4 +225,52 @@ describe("admin and sheet guards", () => {
       userId: "user_lynott_player",
     });
   });
+
+  test("lets invited users accept local invites", async () => {
+    const adminCookie = await login("admin@example.local");
+    const inviteResponse = await postForm(
+      "/admin/invites",
+      { email: "new.player@example.local", role: "player" },
+      adminCookie,
+    );
+    const invite = (await inviteResponse.json()) as { token: string };
+
+    const accept = await postForm(`/invites/${invite.token}`, {
+      displayName: "New Player",
+      password: "new-password",
+    });
+
+    expect(accept.status).toBe(303);
+    expect(accept.headers.get("location")).toBe("/login");
+
+    const loginResponse = await postForm("/login", {
+      email: "new.player@example.local",
+      password: "new-password",
+    });
+
+    expect(loginResponse.status).toBe(303);
+    expect(loginResponse.headers.get("set-cookie")).toContain("character_sheet_session=");
+  });
+
+  test("lets password reset token holders set a new password", async () => {
+    const adminCookie = await login("admin@example.local");
+    const resetResponse = await app.request("/admin/users/user_lynott_player/password-reset", {
+      headers: { cookie: adminCookie },
+      method: "POST",
+    });
+    const reset = (await resetResponse.json()) as { token: string };
+
+    const useToken = await postForm(`/password-reset/${reset.token}`, { password: "new-password" });
+
+    expect(useToken.status).toBe(303);
+    expect(useToken.headers.get("location")).toBe("/login");
+
+    const loginResponse = await postForm("/login", {
+      email: "lynott@example.local",
+      password: "new-password",
+    });
+
+    expect(loginResponse.status).toBe(303);
+    expect(loginResponse.headers.get("set-cookie")).toContain("character_sheet_session=");
+  });
 });

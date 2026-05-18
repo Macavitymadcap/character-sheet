@@ -2,6 +2,7 @@ import { Database } from "bun:sqlite";
 import type {
   AbilityName,
   ArmourClassSource,
+  AdminUserSummary,
   AuthRepository,
   AuthUser,
   AuthUserWithPassword,
@@ -38,6 +39,7 @@ import type {
   StoredSession,
   UpsertedRuleEntity,
   UserRole,
+  UserStatus,
   WikiPageType,
 } from "./model";
 import { bootstrapDatabase } from "./schema";
@@ -49,7 +51,12 @@ interface UserRow {
   id: string;
   password_hash?: string;
   role: UserRole;
-  status: AuthUser["status"];
+  status: UserStatus;
+}
+
+interface UserSummaryRow extends UserRow {
+  campaign_count: number | null;
+  character_count: number | null;
 }
 
 interface StoredSessionRow {
@@ -341,6 +348,28 @@ export const createSqliteRepositories = (database: Database): SqliteRepositories
 class SqliteAuthRepository implements AuthRepository {
   constructor(private readonly database: Database) {}
 
+  acceptInvite(inviteId: string, acceptedAt: Date): void {
+    this.database.run("update invites set accepted_at = ? where id = ?", [
+      toSqlDate(acceptedAt),
+      inviteId,
+    ]);
+  }
+
+  createUser(user: AuthUserWithPassword): AuthUser {
+    this.database.run(
+      "insert into users (id, email, display_name, role, password_hash, status) values (?, ?, ?, ?, ?, ?)",
+      [user.id, user.email, user.displayName, user.role, user.passwordHash, user.status],
+    );
+
+    return {
+      displayName: user.displayName,
+      email: user.email,
+      id: user.id,
+      role: user.role,
+      status: user.status,
+    };
+  }
+
   createInvite(invite: LocalInvite): LocalInvite {
     this.database.run(
       "insert into invites (id, email, role, token_hash, created_by_user_id, expires_at, accepted_at) values (?, ?, ?, ?, ?, ?, ?)",
@@ -489,6 +518,84 @@ class SqliteAuthRepository implements AuthRepository {
       )
       .all()
       .map(toAuthUser);
+  }
+
+  listInvites(): LocalInvite[] {
+    return this.database
+      .query<LocalInviteRow, []>(
+        `select id, email, role, token_hash, created_by_user_id, expires_at, accepted_at
+         from invites
+         order by created_at desc, email`,
+      )
+      .all()
+      .map((row) => ({
+        acceptedAt: row.accepted_at ? new Date(row.accepted_at) : null,
+        createdByUserId: row.created_by_user_id,
+        email: row.email,
+        expiresAt: new Date(row.expires_at),
+        id: row.id,
+        role: row.role,
+        tokenHash: row.token_hash,
+      }));
+  }
+
+  listPasswordResetTokens(): PasswordResetToken[] {
+    return this.database
+      .query<PasswordResetTokenRow, []>(
+        `select id, user_id, token_hash, created_by_user_id, expires_at, used_at
+         from password_reset_tokens
+         order by created_at desc`,
+      )
+      .all()
+      .map((row) => ({
+        createdByUserId: row.created_by_user_id,
+        expiresAt: new Date(row.expires_at),
+        id: row.id,
+        tokenHash: row.token_hash,
+        usedAt: row.used_at ? new Date(row.used_at) : null,
+        userId: row.user_id,
+      }));
+  }
+
+  listUserSummaries(): AdminUserSummary[] {
+    return this.database
+      .query<
+        UserSummaryRow,
+        []
+      >(
+        `select users.id, users.email, users.display_name, users.role, users.status,
+          (select count(1) from campaign_members where campaign_members.user_id = users.id) as campaign_count,
+          (select count(1) from characters where characters.owner_user_id = users.id) as character_count
+         from users
+         order by users.email`,
+      )
+      .all()
+      .map((row) => ({
+        campaignCount: row.campaign_count ?? 0,
+        characterCount: row.character_count ?? 0,
+        displayName: row.display_name,
+        email: row.email,
+        id: row.id,
+        role: row.role,
+        status: row.status,
+      }));
+  }
+
+  updateUserPasswordHash(userId: string, passwordHash: string): void {
+    this.database.run("update users set password_hash = ? where id = ?", [passwordHash, userId]);
+  }
+
+  updateUserStatus(userId: string, status: UserStatus): AuthUser | null {
+    this.database.run("update users set status = ? where id = ?", [status, userId]);
+
+    return this.findUserById(userId);
+  }
+
+  usePasswordResetToken(tokenId: string, usedAt: Date): void {
+    this.database.run("update password_reset_tokens set used_at = ? where id = ?", [
+      toSqlDate(usedAt),
+      tokenId,
+    ]);
   }
 }
 

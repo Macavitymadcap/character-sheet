@@ -13,4 +13,12 @@ export const adminStyles = /* css */ `
   line-height: 1.1;
   margin: 0;
 }
+
+.admin-inline-form {
+  display: inline;
+}
+
+.admin-inline-form + .admin-inline-form {
+  margin-left: 0.5rem;
+}
 `;
