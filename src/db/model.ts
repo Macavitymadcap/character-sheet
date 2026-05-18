@@ -314,14 +314,31 @@ export interface CharacterSkill {
 }
 
 export interface CharacterNote {
+  authorUserId?: string;
   body: string;
+  createdAt?: string;
   id: string;
   title: string;
+  updatedAt?: string;
   visibility: NoteVisibility;
 }
 
 export interface NotesRepository {
+  createNote(input: {
+    authorUserId: string;
+    body: string;
+    characterId: string;
+    title: string;
+    visibility: NoteVisibility;
+  }): CharacterNote;
+  deleteNote(characterId: string, noteId: string, viewerRole: UserRole): boolean;
   listNotesForCharacter(characterId: string, viewerRole: UserRole): CharacterNote[];
+  updateNote(
+    characterId: string,
+    noteId: string,
+    viewerRole: UserRole,
+    patch: { body: string; title: string },
+  ): CharacterNote | null;
   updateNoteBody(
     characterId: string,
     noteId: string,
@@ -359,12 +376,14 @@ export interface CampaignImageAsset {
 export interface CampaignSessionRecord {
   body: string;
   campaignId: string;
+  createdAt?: string;
   createdByUserId: string | null;
   id: string;
   sessionDate: string | null;
   slug: string;
   summary: string;
   title: string;
+  updatedAt?: string;
   visibility: CampaignContentVisibility;
 }
 
@@ -389,12 +408,23 @@ export interface CharacterFactionChoice {
 }
 
 export interface CampaignContentRepository {
+  createSession(input: {
+    body: string;
+    campaignId: string;
+    createdByUserId: string;
+    sessionDate: string | null;
+    summary: string;
+    title: string;
+    visibility: CampaignContentVisibility;
+  }): CampaignSessionRecord;
+  deleteSession(campaignId: string, sessionId: string): boolean;
   getCharacterFactionChoice(characterId: string): CharacterFactionChoice | null;
   getWikiPageBySlug(
     campaignId: string,
     slug: string,
     viewerRole: UserRole,
   ): CampaignWikiPage | null;
+  getSessionBySlug(campaignId: string, slug: string, viewerRole: UserRole): CampaignSessionRecord | null;
   listFactionsForCampaign(campaignId: string): CampaignFaction[];
   listImageAssetsForCampaign(
     campaignId: string,
@@ -405,6 +435,17 @@ export interface CampaignContentRepository {
     viewerRole: UserRole,
   ): CampaignSessionRecord[];
   listWikiPagesForCampaign(campaignId: string, viewerRole: UserRole): CampaignWikiPage[];
+  updateSession(
+    campaignId: string,
+    sessionId: string,
+    patch: {
+      body: string;
+      sessionDate: string | null;
+      summary: string;
+      title: string;
+      visibility: CampaignContentVisibility;
+    },
+  ): CampaignSessionRecord | null;
 }
 
 export interface CharacterRuleLink {

@@ -115,12 +115,17 @@ The MVP page set:
 - `/login` login form using the shared site shell.
 - `/logout` sign-out confirmation page using the shared site shell.
 - `POST /logout` logout route that clears the session and redirects to `/`.
-- `/campaigns/:campaignSlug` read-only Game Master campaign shell for the seeded campaign.
+- `/campaigns/:campaignSlug` Game Master campaign shell with session record management for the seeded campaign.
+- `POST /campaigns/:campaignSlug/sessions` Game Master session creation route.
+- `POST /campaigns/:campaignSlug/sessions/:sessionId` Game Master session update route.
+- `POST /campaigns/:campaignSlug/sessions/:sessionId/delete` Game Master session delete route.
 - `/characters` signed-in player roster and manual character creation.
 - `/campaigns/:campaignSlug/characters` Game Master campaign roster and manual character creation for player members.
 - `/sheet/:characterId` character sheet page.
 - `/sheet/:characterId/tabs/:tabId` sheet tab panel fragment route for HTMX swaps.
-- `PATCH /sheet/:characterId/notes/:noteId` seeded note save route that returns the notes tab panel.
+- `POST /sheet/:characterId/notes` note creation route that returns the notes tab panel.
+- `PATCH /sheet/:characterId/notes/:noteId` note update route that returns the notes tab panel.
+- `POST /sheet/:characterId/notes/:noteId/delete` note delete route that returns the notes tab panel.
 - `/admin` admin shell with local invite creation.
 
 The site header is sticky and contains:
@@ -247,7 +252,7 @@ erDiagram
 | `rule_mechanics` | Structured mechanics such as uses, dice notation, DCs, ranges, durations, conditions, and scaling. |
 | `character_rule_links` | Character selections and granted rules, such as prepared spells and known infusions. |
 
-Some schema tables intentionally land before their full management UI. `sheet-0012` adds group-use read models for rosters, wiki pages, image assets, session records, factions, and faction choices; `sheet-0014` adds player and Game Master roster pages plus manual character creation. Character deletion, campaign session CRUD, note creation, and richer rules text rendering are follow-up work.
+Some schema tables intentionally land before their full management UI. `sheet-0012` adds group-use read models for rosters, wiki pages, image assets, session records, factions, and faction choices; `sheet-0014` adds player and Game Master roster pages plus manual character creation; `sheet-0016` adds note creation/update/delete flows and Game Master campaign session CRUD. Character deletion, wiki management UI, image upload UI, faction picking, and richer rules text rendering are follow-up work.
 
 ### Rules Data
 
