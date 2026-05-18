@@ -27,3 +27,11 @@ Extend the local SQLite model, repository contracts, and permission guards so la
 - Permission guards centralise campaign, character, wiki, and asset access decisions.
 - Seed data includes a small multi-user campaign shape without changing Lynott's current sheet behaviour.
 - Docs describe the delivered data and permission foundations accurately.
+
+## Implementation Notes
+
+- `characters` now use campaign-unique slugs so later campaign roster routes can create local names without global collisions.
+- `campaign_wiki_pages`, `campaign_image_assets`, `campaign_factions`, and `character_faction_choices` provide the first group-use content tables.
+- `campaign_sessions` and `character_notes` carry the timestamp and visibility foundations later creation/editing routes need.
+- `CampaignContentRepository` owns wiki, asset, session, faction, and faction-choice read models; `CharacterRepository` owns player and Game Master roster read models.
+- Campaign guards now centralise membership, Game Master management, character ownership, and player-visible versus Game-Master-only content checks.

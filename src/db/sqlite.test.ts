@@ -30,6 +30,13 @@ describe("SQLite repositories", () => {
         status: "active",
       },
       {
+        displayName: "Mira Player",
+        email: "mira@example.local",
+        id: "user_mira_player",
+        role: "player",
+        status: "active",
+      },
+      {
         displayName: "Site Admin",
         email: "admin@example.local",
         id: "user_site_admin",
@@ -579,5 +586,93 @@ describe("SQLite repositories", () => {
         sourceName: "Player's Handbook",
       },
     ]);
+  });
+
+  test("lists group-use character rosters for players and Game Masters", () => {
+    runtime = createSqliteDatabase({ path: ":memory:" });
+    const characters = runtime.repositories.characterRepository;
+
+    expect(characters.listCharactersForPlayer("user_lynott_player")).toEqual([
+      expect.objectContaining({
+        campaignId: "campaign_rovnost_shadows",
+        campaignName: "Rovnost Shadows",
+        campaignSlug: "rovnost-shadows",
+        factionName: "Discontents",
+        id: "character_lynott_magulbisson",
+        name: "Lynott Magulbisson",
+        ownerDisplayName: "Lynott Player",
+        ownerUserId: "user_lynott_player",
+        slug: "lynott",
+      }),
+    ]);
+    expect(characters.listCharactersForPlayer("user_mira_player")).toEqual([
+      expect.objectContaining({
+        classSummary: "Cleric 1",
+        factionName: "Skywright Guild",
+        id: "character_mira_voss",
+        name: "Mira Voss",
+        ownerDisplayName: "Mira Player",
+        slug: "mira-voss",
+      }),
+    ]);
+    expect(characters.listCharactersForCampaign("campaign_rovnost_shadows")).toEqual([
+      expect.objectContaining({ id: "character_lynott_magulbisson", name: "Lynott Magulbisson" }),
+      expect.objectContaining({ id: "character_mira_voss", name: "Mira Voss" }),
+    ]);
+  });
+
+  test("filters seeded wiki pages, image assets, sessions, and factions by campaign visibility", () => {
+    runtime = createSqliteDatabase({ path: ":memory:" });
+    const content = runtime.repositories.campaignContentRepository;
+    const campaignId = "campaign_rovnost_shadows";
+
+    expect(content.listWikiPagesForCampaign(campaignId, "player").map((page) => page.slug)).toEqual(
+      ["rovnost-shadows-overview"],
+    );
+    expect(
+      content.listWikiPagesForCampaign(campaignId, "game_master").map((page) => page.slug),
+    ).toEqual(["rovnost-shadows-overview", "gm-dossier"]);
+    expect(content.getWikiPageBySlug(campaignId, "gm-dossier", "player")).toBeNull();
+    expect(content.getWikiPageBySlug(campaignId, "gm-dossier", "game_master")).toMatchObject({
+      sourceTitle: "Rovnost GM dossier",
+      tags: ["gm", "secrets"],
+      visibility: "game_master",
+    });
+
+    expect(
+      content.listImageAssetsForCampaign(campaignId, "player").map((asset) => asset.storageKey),
+    ).toEqual(["campaigns/rovnost-shadows/cover.png"]);
+    expect(
+      content.listImageAssetsForCampaign(campaignId, "game_master").map((asset) => asset.storageKey),
+    ).toEqual([
+      "campaigns/rovnost-shadows/cover.png",
+      "campaigns/rovnost-shadows/magister-vallen.png",
+    ]);
+
+    expect(content.listSessionsForCampaign(campaignId, "player").map((session) => session.slug)).toEqual([
+      "session-zero",
+    ]);
+    expect(
+      content.listSessionsForCampaign(campaignId, "game_master").map((session) => session.slug),
+    ).toEqual(["session-zero", "gm-fronts"]);
+
+    const factions = content.listFactionsForCampaign(campaignId);
+    expect(factions.map((faction) => faction.name)).toEqual([
+      "Council of Magisters",
+      "Steel Hand",
+      "Discontents",
+      "Black Market",
+      "Tidebound",
+      "Skywright Guild",
+    ]);
+    expect(factions.find((faction) => faction.slug === "discontents")).toMatchObject({
+      playerPrompt: "Who in the factory districts still trusts you?",
+      rumours: ["They can hide someone for a night, but not for free."],
+    });
+    expect(content.getCharacterFactionChoice("character_lynott_magulbisson")).toMatchObject({
+      characterId: "character_lynott_magulbisson",
+      factionName: "Discontents",
+      factionSlug: "discontents",
+    });
   });
 });

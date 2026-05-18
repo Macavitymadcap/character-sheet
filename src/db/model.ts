@@ -8,6 +8,8 @@ export type AbilityName =
   | "strength"
   | "wisdom";
 export type NoteVisibility = "game_master" | "player";
+export type CampaignContentVisibility = "game_master" | "player";
+export type WikiPageType = "campaign" | "faction" | "location" | "lore" | "npc" | "session";
 
 export interface AuthUser {
   displayName: string;
@@ -68,6 +70,7 @@ export interface CampaignSummary {
 }
 
 export interface CampaignRepository {
+  getCampaignById(id: string): CampaignSummary | null;
   getCampaignBySlug(slug: string): CampaignSummary | null;
   listMembers(campaignId: string): CampaignMember[];
 }
@@ -181,6 +184,8 @@ export interface CharacterRepository {
   getAccessContext(characterId: string): CharacterAccessContext | null;
   getSheetById(id: string): CharacterSheetReadModel | null;
   getSheetBySlug(slug: string): CharacterSheetReadModel | null;
+  listCharactersForCampaign(campaignId: string): CharacterRosterItem[];
+  listCharactersForPlayer(userId: string): CharacterRosterItem[];
   listBackgroundEntries(characterId: string): CharacterBackgroundEntry[];
   listEquipment(characterId: string): CharacterEquipment[];
   listResources(characterId: string): CharacterResource[];
@@ -201,6 +206,23 @@ export interface CharacterAccessContext {
   campaignId: string;
   id: string;
   ownerUserId: string;
+}
+
+export interface CharacterRosterItem {
+  background: string;
+  campaignId: string;
+  campaignName: string;
+  campaignSlug: string;
+  classSummary: string;
+  factionId: string | null;
+  factionName: string | null;
+  id: string;
+  level: number;
+  name: string;
+  ownerDisplayName: string;
+  ownerUserId: string;
+  slug: string;
+  species: string;
 }
 
 export interface CharacterSkill {
@@ -225,6 +247,83 @@ export interface NotesRepository {
     viewerRole: UserRole,
     body: string,
   ): CharacterNote | null;
+}
+
+export interface CampaignWikiPage {
+  bodyMarkdown: string;
+  campaignId: string;
+  id: string;
+  pageType: WikiPageType;
+  slug: string;
+  sourcePath: string | null;
+  sourceTitle: string | null;
+  tags: string[];
+  title: string;
+  visibility: CampaignContentVisibility;
+}
+
+export interface CampaignImageAsset {
+  altText: string;
+  byteSize: number;
+  campaignId: string;
+  caption: string;
+  height: number | null;
+  id: string;
+  mimeType: string;
+  storageKey: string;
+  visibility: CampaignContentVisibility;
+  width: number | null;
+}
+
+export interface CampaignSessionRecord {
+  body: string;
+  campaignId: string;
+  createdByUserId: string | null;
+  id: string;
+  sessionDate: string | null;
+  slug: string;
+  summary: string;
+  title: string;
+  visibility: CampaignContentVisibility;
+}
+
+export interface CampaignFaction {
+  campaignId: string;
+  id: string;
+  imageAssetId: string | null;
+  name: string;
+  playerPrompt: string;
+  publicReputation: string;
+  rumours: string[];
+  slug: string;
+  summary: string;
+}
+
+export interface CharacterFactionChoice {
+  characterId: string;
+  connectionNote: string;
+  factionId: string;
+  factionName: string;
+  factionSlug: string;
+}
+
+export interface CampaignContentRepository {
+  getCharacterFactionChoice(characterId: string): CharacterFactionChoice | null;
+  getWikiPageBySlug(
+    campaignId: string,
+    slug: string,
+    viewerRole: UserRole,
+  ): CampaignWikiPage | null;
+  listFactionsForCampaign(campaignId: string): CampaignFaction[];
+  listImageAssetsForCampaign(
+    campaignId: string,
+    viewerRole: UserRole,
+  ): CampaignImageAsset[];
+  listSessionsForCampaign(
+    campaignId: string,
+    viewerRole: UserRole,
+  ): CampaignSessionRecord[];
+  listWikiPagesForCampaign(campaignId: string, viewerRole: UserRole): CampaignWikiPage[];
 }
 
 export interface CharacterRuleLink {

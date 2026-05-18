@@ -4,6 +4,52 @@ import { PasswordService } from "../auth/password";
 type AbilitySeed = [string, number, number, number, number];
 type ArmourClassSourceSeed = [string, string, number, string, number];
 type BackgroundEntrySeed = [string, string, string, string, number];
+type CampaignFactionSeed = [
+  string,
+  string,
+  string,
+  string,
+  string,
+  string,
+  string,
+  string,
+  string | null,
+  number,
+];
+type CampaignImageAssetSeed = [
+  string,
+  string,
+  string,
+  number,
+  number,
+  number,
+  string,
+  string,
+  string,
+];
+type CampaignSessionSeed = [
+  string,
+  string,
+  string,
+  string | null,
+  string,
+  string,
+  string,
+  string,
+  string,
+];
+type CampaignWikiPageSeed = [
+  string,
+  string,
+  string,
+  string,
+  string,
+  string,
+  string,
+  string | null,
+  string | null,
+];
+type CharacterFactionChoiceSeed = [string, string, string];
 type DefenceSeed = [string, string, string, string, number];
 type EquipmentSeed = [string, string, string, number, number, string];
 type NoteSeed = [string, string, string, string, string];
@@ -28,6 +74,13 @@ const users = [
     "Campaign GM",
     "game_master",
     new PasswordService().hashPassword("password123", "seed-user-game-master"),
+  ],
+  [
+    "user_mira_player",
+    "mira@example.local",
+    "Mira Player",
+    "player",
+    new PasswordService().hashPassword("password123", "seed-user-mira-player"),
   ],
   [
     "user_site_admin",
@@ -438,6 +491,169 @@ const notes: NoteSeed[] = [
   ],
 ];
 
+const campaignImageAssets: CampaignImageAssetSeed[] = [
+  [
+    "asset_rovnost_cover",
+    "campaigns/rovnost-shadows/cover.png",
+    "image/png",
+    144000,
+    1200,
+    800,
+    "Shadows of Rovnost campaign cover",
+    "Campaign cover art for the local table.",
+    "player",
+  ],
+  [
+    "asset_magister_vallen",
+    "campaigns/rovnost-shadows/magister-vallen.png",
+    "image/png",
+    86000,
+    768,
+    768,
+    "Magister Vallen portrait",
+    "Game Master reference portrait.",
+    "game_master",
+  ],
+];
+
+const campaignWikiPages: CampaignWikiPageSeed[] = [
+  [
+    "wiki_rovnost_overview",
+    "rovnost-shadows-overview",
+    "Rovnost Shadows Overview",
+    "campaign",
+    JSON.stringify(["overview", "player-facing"]),
+    "player",
+    "Rovnost is a city of smoke, ambition, and hungry machinery.",
+    "Rovnost player blurb",
+    "docs/rovnost/overview.md",
+  ],
+  [
+    "wiki_rovnost_gm_dossier",
+    "gm-dossier",
+    "Rovnost GM Dossier",
+    "lore",
+    JSON.stringify(["gm", "secrets"]),
+    "game_master",
+    "Magister Vallen is watching the faction pressure build.",
+    "Rovnost GM dossier",
+    "docs/rovnost/gm-dossier.md",
+  ],
+];
+
+const campaignSessions: CampaignSessionSeed[] = [
+  [
+    "session_rovnost_zero",
+    "session-zero",
+    "Session Zero",
+    "2026-05-24",
+    "Agree table tone, character ties, and safety tools.",
+    "Review lines, veils, table logistics, and starting faction hooks.",
+    "player",
+    "user_game_master",
+    "",
+  ],
+  [
+    "session_rovnost_gm_fronts",
+    "gm-fronts",
+    "GM Fronts",
+    null,
+    "Private pressure map for the campaign opening.",
+    "Track faction clocks, the search for Lynott, and Magister Vallen's first move.",
+    "game_master",
+    "user_game_master",
+    "",
+  ],
+];
+
+const campaignFactions: CampaignFactionSeed[] = [
+  [
+    "faction_council_of_magisters",
+    "council-of-magisters",
+    "Council of Magisters",
+    "Arcane governors who keep Rovnost's industrial magic licensed and expensive.",
+    "Respectable, remote, and feared by anyone who has seen a licence revoked.",
+    "Which law have you bent to survive their scrutiny?",
+    JSON.stringify(["A junior magistrate is quietly selling stamped exemptions."]),
+    "",
+    null,
+    10,
+  ],
+  [
+    "faction_steel_hand",
+    "steel-hand",
+    "Steel Hand",
+    "Militarised industrial enforcers with contracts across the factory districts.",
+    "Orderly, brutal, and usually present before the smoke clears.",
+    "Who in the Steel Hand remembers your face?",
+    JSON.stringify(["They know every factory gate and every shift boss."]),
+    "",
+    null,
+    20,
+  ],
+  [
+    "faction_discontents",
+    "discontents",
+    "Discontents",
+    "Workers, deserters, and organisers trying to loosen the city's grip.",
+    "Dangerous agitators to the powerful; neighbours and cousins to everyone else.",
+    "Who in the factory districts still trusts you?",
+    JSON.stringify(["They can hide someone for a night, but not for free."]),
+    "",
+    null,
+    30,
+  ],
+  [
+    "faction_black_market",
+    "black-market",
+    "Black Market",
+    "Brokers of weapons, papers, medical favours, and things better left unnamed.",
+    "Useful until the debt is called in.",
+    "What did you buy that you could not get legally?",
+    JSON.stringify(["A forged recommendation can be traced if someone knows the paper stock."]),
+    "",
+    null,
+    40,
+  ],
+  [
+    "faction_tidebound",
+    "tidebound",
+    "Tidebound",
+    "Dockside crews, smugglers, fishers, and canal pilots who move what the city needs.",
+    "Rough, practical, and hard to police once the fog rolls in.",
+    "Who got you across the water when the streets were watched?",
+    JSON.stringify(["The canals have old maintenance routes below the official locks."]),
+    "",
+    null,
+    50,
+  ],
+  [
+    "faction_skywright_guild",
+    "skywright-guild",
+    "Skywright Guild",
+    "Artisans and engineers who build the lifts, cranes, and impossible roofs of Rovnost.",
+    "Brilliant, proud, and very aware that the city cannot rise without them.",
+    "What did you repair that should have stayed broken?",
+    JSON.stringify(["A guild surveyor saw something moving above the old observatory."]),
+    "",
+    null,
+    60,
+  ],
+];
+
+const characterFactionChoices: CharacterFactionChoiceSeed[] = [
+  [
+    "character_lynott_magulbisson",
+    "faction_discontents",
+    "Factory district sympathies make the Discontents the safest first whisper network.",
+  ],
+  [
+    "character_mira_voss",
+    "faction_skywright_guild",
+    "Mira owes the guild for access to rooftop shrines and lift machinery.",
+  ],
+];
+
 const sources: SourceSeed[] = [
   ["rules_source_phb", "players-handbook", "Player's Handbook", "PHB", 10],
   ["rules_source_xgte", "xanathars-guide-to-everything", "Xanathar's Guide to Everything", "XGtE", 15],
@@ -528,6 +744,7 @@ export const seedDatabase = (database: Database) => {
   for (const member of [
     ["campaign_rovnost_shadows", "user_game_master", "game_master"],
     ["campaign_rovnost_shadows", "user_lynott_player", "player"],
+    ["campaign_rovnost_shadows", "user_mira_player", "player"],
   ]) {
     database.run(
       "insert or ignore into campaign_members (campaign_id, user_id, role) values (?, ?, ?)",
@@ -573,6 +790,43 @@ export const seedDatabase = (database: Database) => {
   );
 
   database.run(
+    `insert into characters (id, slug, owner_user_id, campaign_id, name, species, background, alignment, level, proficiency_bonus, armour_class, initiative, speed_ft, hit_point_max, hit_point_current, temporary_hit_points)
+     values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+     on conflict(id) do update set
+       slug = excluded.slug,
+       owner_user_id = excluded.owner_user_id,
+       campaign_id = excluded.campaign_id,
+       name = excluded.name,
+       species = excluded.species,
+       background = excluded.background,
+       alignment = excluded.alignment,
+       level = excluded.level,
+       proficiency_bonus = excluded.proficiency_bonus,
+       armour_class = excluded.armour_class,
+       initiative = excluded.initiative,
+       speed_ft = excluded.speed_ft,
+       hit_point_max = excluded.hit_point_max`,
+    [
+      "character_mira_voss",
+      "mira-voss",
+      "user_mira_player",
+      "campaign_rovnost_shadows",
+      "Mira Voss",
+      "Human",
+      "Acolyte",
+      "Lawful Good",
+      1,
+      2,
+      12,
+      1,
+      30,
+      9,
+      9,
+      0,
+    ],
+  );
+
+  database.run(
     "insert or ignore into character_classes (id, character_id, class_name, subclass_name, level, hit_dice, spellcasting_ability) values (?, ?, ?, ?, ?, ?, ?)",
     [
       "class_lynott_artificer",
@@ -582,6 +836,19 @@ export const seedDatabase = (database: Database) => {
       4,
       "4d8",
       "intelligence",
+    ],
+  );
+
+  database.run(
+    "insert or ignore into character_classes (id, character_id, class_name, subclass_name, level, hit_dice, spellcasting_ability) values (?, ?, ?, ?, ?, ?, ?)",
+    [
+      "class_mira_cleric",
+      "character_mira_voss",
+      "Cleric",
+      null,
+      1,
+      "1d8",
+      "wisdom",
     ],
   );
 
@@ -678,6 +945,91 @@ export const seedDatabase = (database: Database) => {
     database.run(
       "insert or ignore into character_notes (id, character_id, author_user_id, visibility, title, body) values (?, ?, ?, ?, ?, ?)",
       [note[0], "character_lynott_magulbisson", ...note.slice(1)],
+    );
+  }
+
+  for (const asset of campaignImageAssets) {
+    database.run(
+      `insert into campaign_image_assets (id, campaign_id, storage_key, mime_type, byte_size, width, height, alt_text, caption, visibility)
+       values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       on conflict(id) do update set
+         storage_key = excluded.storage_key,
+         mime_type = excluded.mime_type,
+         byte_size = excluded.byte_size,
+         width = excluded.width,
+         height = excluded.height,
+         alt_text = excluded.alt_text,
+         caption = excluded.caption,
+         visibility = excluded.visibility,
+         updated_at = CURRENT_TIMESTAMP`,
+      [asset[0], "campaign_rovnost_shadows", ...asset.slice(1)],
+    );
+  }
+
+  for (const page of campaignWikiPages) {
+    database.run(
+      `insert into campaign_wiki_pages (id, campaign_id, slug, title, page_type, tags_json, visibility, body_markdown, source_title, source_path)
+       values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       on conflict(id) do update set
+         slug = excluded.slug,
+         title = excluded.title,
+         page_type = excluded.page_type,
+         tags_json = excluded.tags_json,
+         visibility = excluded.visibility,
+         body_markdown = excluded.body_markdown,
+         source_title = excluded.source_title,
+         source_path = excluded.source_path,
+         updated_at = CURRENT_TIMESTAMP`,
+      [page[0], "campaign_rovnost_shadows", ...page.slice(1)],
+    );
+  }
+
+  for (const session of campaignSessions) {
+    database.run(
+      `insert into campaign_sessions (id, campaign_id, slug, title, session_date, summary, body, visibility, created_by_user_id, notes)
+       values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       on conflict(id) do update set
+         slug = excluded.slug,
+         title = excluded.title,
+         session_date = excluded.session_date,
+         summary = excluded.summary,
+         body = excluded.body,
+         visibility = excluded.visibility,
+         created_by_user_id = excluded.created_by_user_id,
+         notes = excluded.notes,
+         updated_at = CURRENT_TIMESTAMP`,
+      [session[0], "campaign_rovnost_shadows", ...session.slice(1)],
+    );
+  }
+
+  for (const faction of campaignFactions) {
+    database.run(
+      `insert into campaign_factions (id, campaign_id, slug, name, summary, public_reputation, player_prompt, rumours_json, gm_notes, image_asset_id, sort_order)
+       values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       on conflict(id) do update set
+         slug = excluded.slug,
+         name = excluded.name,
+         summary = excluded.summary,
+         public_reputation = excluded.public_reputation,
+         player_prompt = excluded.player_prompt,
+         rumours_json = excluded.rumours_json,
+         gm_notes = excluded.gm_notes,
+         image_asset_id = excluded.image_asset_id,
+         sort_order = excluded.sort_order,
+         updated_at = CURRENT_TIMESTAMP`,
+      [faction[0], "campaign_rovnost_shadows", ...faction.slice(1)],
+    );
+  }
+
+  for (const choice of characterFactionChoices) {
+    database.run(
+      `insert into character_faction_choices (character_id, faction_id, connection_note)
+       values (?, ?, ?)
+       on conflict(character_id) do update set
+         faction_id = excluded.faction_id,
+         connection_note = excluded.connection_note,
+         updated_at = CURRENT_TIMESTAMP`,
+      choice,
     );
   }
 

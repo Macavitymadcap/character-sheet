@@ -55,18 +55,80 @@ CREATE TABLE IF NOT EXISTS campaign_members (
   PRIMARY KEY (campaign_id, user_id)
 );
 
+CREATE TABLE IF NOT EXISTS campaign_image_assets (
+  id TEXT PRIMARY KEY,
+  campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+  storage_key TEXT NOT NULL UNIQUE CHECK (
+    storage_key <> ''
+    AND storage_key NOT LIKE '/%'
+    AND storage_key NOT LIKE '%..%'
+    AND storage_key NOT LIKE '%:%'
+  ),
+  mime_type TEXT NOT NULL,
+  byte_size INTEGER NOT NULL DEFAULT 0 CHECK (byte_size >= 0),
+  width INTEGER CHECK (width IS NULL OR width > 0),
+  height INTEGER CHECK (height IS NULL OR height > 0),
+  alt_text TEXT NOT NULL,
+  caption TEXT NOT NULL DEFAULT '',
+  visibility TEXT NOT NULL DEFAULT 'player' CHECK (visibility IN ('player', 'game_master')),
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS campaign_sessions (
   id TEXT PRIMARY KEY,
   campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+  slug TEXT NOT NULL,
   title TEXT NOT NULL,
   session_date TEXT,
+  summary TEXT NOT NULL DEFAULT '',
+  body TEXT NOT NULL DEFAULT '',
   notes TEXT NOT NULL DEFAULT '',
-  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  visibility TEXT NOT NULL DEFAULT 'player' CHECK (visibility IN ('player', 'game_master')),
+  created_by_user_id TEXT REFERENCES users(id),
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (campaign_id, slug)
+);
+
+CREATE TABLE IF NOT EXISTS campaign_wiki_pages (
+  id TEXT PRIMARY KEY,
+  campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+  slug TEXT NOT NULL,
+  title TEXT NOT NULL,
+  page_type TEXT NOT NULL CHECK (
+    page_type IN ('campaign', 'faction', 'location', 'lore', 'npc', 'session')
+  ),
+  tags_json TEXT NOT NULL DEFAULT '[]',
+  visibility TEXT NOT NULL DEFAULT 'player' CHECK (visibility IN ('player', 'game_master')),
+  body_markdown TEXT NOT NULL,
+  source_title TEXT,
+  source_path TEXT,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (campaign_id, slug)
+);
+
+CREATE TABLE IF NOT EXISTS campaign_factions (
+  id TEXT PRIMARY KEY,
+  campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+  slug TEXT NOT NULL,
+  name TEXT NOT NULL,
+  summary TEXT NOT NULL DEFAULT '',
+  public_reputation TEXT NOT NULL DEFAULT '',
+  player_prompt TEXT NOT NULL DEFAULT '',
+  rumours_json TEXT NOT NULL DEFAULT '[]',
+  gm_notes TEXT NOT NULL DEFAULT '',
+  image_asset_id TEXT REFERENCES campaign_image_assets(id) ON DELETE SET NULL,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (campaign_id, slug)
 );
 
 CREATE TABLE IF NOT EXISTS characters (
   id TEXT PRIMARY KEY,
-  slug TEXT NOT NULL UNIQUE,
+  slug TEXT NOT NULL,
   owner_user_id TEXT NOT NULL REFERENCES users(id),
   campaign_id TEXT NOT NULL REFERENCES campaigns(id),
   name TEXT NOT NULL,
@@ -81,7 +143,8 @@ CREATE TABLE IF NOT EXISTS characters (
   hit_point_max INTEGER NOT NULL CHECK (hit_point_max >= 0),
   hit_point_current INTEGER NOT NULL CHECK (hit_point_current >= 0),
   temporary_hit_points INTEGER NOT NULL DEFAULT 0 CHECK (temporary_hit_points >= 0),
-  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (campaign_id, slug)
 );
 
 CREATE TABLE IF NOT EXISTS character_classes (
@@ -193,7 +256,16 @@ CREATE TABLE IF NOT EXISTS character_notes (
   visibility TEXT NOT NULL CHECK (visibility IN ('player', 'game_master')),
   title TEXT NOT NULL,
   body TEXT NOT NULL,
-  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS character_faction_choices (
+  character_id TEXT PRIMARY KEY REFERENCES characters(id) ON DELETE CASCADE,
+  faction_id TEXT NOT NULL REFERENCES campaign_factions(id) ON DELETE CASCADE,
+  connection_note TEXT NOT NULL DEFAULT '',
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS rules_sources (
@@ -232,7 +304,55 @@ CREATE TABLE IF NOT EXISTS character_rule_links (
 );
 `;
 
+const migrationStatements = [
+  "ALTER TABLE campaign_sessions ADD COLUMN slug TEXT NOT NULL DEFAULT ''",
+  "ALTER TABLE campaign_sessions ADD COLUMN summary TEXT NOT NULL DEFAULT ''",
+  "ALTER TABLE campaign_sessions ADD COLUMN body TEXT NOT NULL DEFAULT ''",
+  "ALTER TABLE campaign_sessions ADD COLUMN visibility TEXT NOT NULL DEFAULT 'player'",
+  "ALTER TABLE campaign_sessions ADD COLUMN created_by_user_id TEXT REFERENCES users(id)",
+  "ALTER TABLE campaign_sessions ADD COLUMN updated_at TEXT NOT NULL DEFAULT ''",
+  "ALTER TABLE character_notes ADD COLUMN updated_at TEXT NOT NULL DEFAULT ''",
+];
+
+const triggers = /* sql */ `
+CREATE TRIGGER IF NOT EXISTS character_faction_choices_campaign_insert
+BEFORE INSERT ON character_faction_choices
+FOR EACH ROW
+WHEN (
+  (SELECT campaign_id FROM characters WHERE id = NEW.character_id)
+  !=
+  (SELECT campaign_id FROM campaign_factions WHERE id = NEW.faction_id)
+)
+BEGIN
+  SELECT RAISE(ABORT, 'character and faction must belong to the same campaign');
+END;
+
+CREATE TRIGGER IF NOT EXISTS character_faction_choices_campaign_update
+BEFORE UPDATE OF faction_id ON character_faction_choices
+FOR EACH ROW
+WHEN (
+  (SELECT campaign_id FROM characters WHERE id = NEW.character_id)
+  !=
+  (SELECT campaign_id FROM campaign_factions WHERE id = NEW.faction_id)
+)
+BEGIN
+  SELECT RAISE(ABORT, 'character and faction must belong to the same campaign');
+END;
+`;
+
 export const bootstrapDatabase = (database: Database) => {
   database.run("PRAGMA foreign_keys = ON");
   database.exec(schema);
+  for (const statement of migrationStatements) {
+    try {
+      database.run(statement);
+    } catch (error) {
+      if (!isDuplicateColumnError(error)) throw error;
+    }
+  }
+  database.exec(triggers);
 };
+
+function isDuplicateColumnError(error: unknown) {
+  return error instanceof Error && error.message.includes("duplicate column name");
+}
