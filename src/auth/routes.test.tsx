@@ -72,7 +72,7 @@ describe("auth routes", () => {
     });
 
     expect(response.status).toBe(303);
-    expect(response.headers.get("location")).toBe("/sheet/lynott");
+    expect(response.headers.get("location")).toBe("/characters");
     expect(response.headers.get("set-cookie")).toContain("character_sheet_session=");
     expect(response.headers.get("set-cookie")).toContain("HttpOnly");
   });
@@ -97,7 +97,7 @@ describe("auth routes", () => {
     const afterLogoutHtml = await afterLogout.text();
 
     expect(home.status).toBe(200);
-    expect(homeHtml).toContain('<a class="action-link" href="/sheet/lynott">Continue</a>');
+    expect(homeHtml).toContain('<a class="action-link" href="/characters">Continue</a>');
     expect(logoutPage.status).toBe(200);
     expect(await logoutPage.text()).toContain("End the current session for Lynott Player.");
     expect(logout.status).toBe(303);

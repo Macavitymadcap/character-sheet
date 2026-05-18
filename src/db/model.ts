@@ -195,6 +195,7 @@ export interface CharacterSheetReadModel {
 }
 
 export interface CharacterRepository {
+  createCharacter(input: CreateCharacterInput): CharacterSheetReadModel;
   getAccessContext(characterId: string): CharacterAccessContext | null;
   getSheetById(id: string): CharacterSheetReadModel | null;
   getSheetBySlug(slug: string): CharacterSheetReadModel | null;
@@ -214,6 +215,18 @@ export interface CharacterRepository {
     current: number,
   ): CharacterResource | null;
   upsertConditionResource(characterId: string, label: string): CharacterResource;
+}
+
+export interface CreateCharacterInput {
+  background: string;
+  campaignId: string;
+  className: string;
+  hitPointMax: number;
+  level: number;
+  name: string;
+  ownerUserId: string;
+  species: string;
+  subclassName: string | null;
 }
 
 export interface CharacterAccessContext {

@@ -3,6 +3,7 @@ import { AuthService, requireCampaignAccess, requireRole, requireSheetAccess, Se
 import { isRestType, planRestResourceUpdates } from "./characters/rests";
 import { AdminPage } from "./components/pages/Admin";
 import { CampaignPage } from "./components/pages/Campaign";
+import { CharactersPage } from "./components/pages/Characters";
 import { HomePage } from "./components/pages/Home";
 import { InviteAcceptPage } from "./components/pages/InviteAccept";
 import { LoginPage } from "./components/pages/Login";
@@ -17,6 +18,7 @@ import type {
   AuthRepository,
   CampaignRepository,
   CharacterRepository,
+  CreateCharacterInput,
   NotesRepository,
   RulesRepository,
   UserRole,
@@ -45,7 +47,7 @@ export const createApp = (dependencies: AppDependencies) => {
     if (role === "admin") return "/admin";
     if (role === "game_master") return "/campaigns/rovnost-shadows";
 
-    return "/sheet/lynott";
+    return "/characters";
   };
 
   const getSheetByRef = (characterRef: string) =>
@@ -149,6 +151,117 @@ export const createApp = (dependencies: AppDependencies) => {
         user={session.user}
       />,
     );
+  });
+
+  app.get("/characters", (context) => {
+    const session = readSession(context.req.header("cookie"));
+    const guard = requireRole(session, ["player"]);
+    const guarded = guardResponse(context, guard);
+    if (guarded) return guarded;
+    if (!session) return context.redirect("/login", 303);
+
+    return context.html(
+      <CharactersPage
+        appName={dependencies.appName}
+        characters={dependencies.characterRepository.listCharactersForPlayer(session.user.id)}
+        mode="player"
+        user={session.user}
+      />,
+    );
+  });
+
+  app.post("/characters", async (context) => {
+    const session = readSession(context.req.header("cookie"));
+    const guard = requireRole(session, ["player"]);
+    const guarded = guardResponse(context, guard);
+    if (guarded) return guarded;
+    if (!session) return context.redirect("/login", 303);
+
+    const campaign = dependencies.campaignRepository
+      .listMembers("campaign_rovnost_shadows")
+      .find((member) => member.userId === session.user.id)
+      ? dependencies.campaignRepository.getCampaignById("campaign_rovnost_shadows")
+      : null;
+    if (!campaign) return context.text("Forbidden", 403);
+
+    const input = await parseCharacterCreateForm(context, {
+      campaignId: campaign.id,
+      ownerUserId: session.user.id,
+    });
+    if (!input.ok) return context.text(input.message, 400);
+
+    const sheet = dependencies.characterRepository.createCharacter(input.value);
+
+    return context.redirect(`/sheet/${sheet.slug}`, 303);
+  });
+
+  app.get("/campaigns/:campaignSlug/characters", (context) => {
+    const session = readSession(context.req.header("cookie"));
+    if (!session) return context.redirect("/login", 303);
+
+    const campaign = dependencies.campaignRepository.getCampaignBySlug(
+      context.req.param("campaignSlug"),
+    );
+    if (!campaign) return context.text("Not found", 404);
+
+    const guard = requireCampaignAccess({
+      campaignId: campaign.id,
+      campaignRepository: dependencies.campaignRepository,
+      permission: "manage",
+      session,
+    });
+    const guarded = guardResponse(context, guard);
+    if (guarded) return guarded;
+
+    return context.html(
+      <CharactersPage
+        appName={dependencies.appName}
+        campaign={campaign}
+        characters={dependencies.characterRepository.listCharactersForCampaign(campaign.id)}
+        members={membersWithDisplayNames(dependencies, campaign.id)}
+        mode="game_master"
+        user={session.user}
+      />,
+    );
+  });
+
+  app.post("/campaigns/:campaignSlug/characters", async (context) => {
+    const session = readSession(context.req.header("cookie"));
+    if (!session) return context.redirect("/login", 303);
+
+    const campaign = dependencies.campaignRepository.getCampaignBySlug(
+      context.req.param("campaignSlug"),
+    );
+    if (!campaign) return context.text("Not found", 404);
+
+    const guard = requireCampaignAccess({
+      campaignId: campaign.id,
+      campaignRepository: dependencies.campaignRepository,
+      permission: "manage",
+      session,
+    });
+    const guarded = guardResponse(context, guard);
+    if (guarded) return guarded;
+
+    const body = await context.req.parseBody();
+    const ownerUserId = parseFormText(body.ownerUserId);
+    const owner = ownerUserId
+      ? dependencies.campaignRepository
+          .listMembers(campaign.id)
+          .find((member) => member.userId === ownerUserId && member.role === "player")
+      : null;
+    if (!owner) return context.text("Invalid owner", 400);
+
+    const input = await parseCharacterCreateForm(context, {
+      body,
+      campaignId: campaign.id,
+      ownerUserId: owner.userId,
+    });
+    if (!input.ok) return context.text(input.message, 400);
+
+    const sheet = dependencies.characterRepository.createCharacter(input.value);
+
+    return context.redirect(`/sheet/${sheet.slug}`, 303);
   });
 
   app.post("/admin/invites", async (context) => {
@@ -685,6 +798,51 @@ export const createApp = (dependencies: AppDependencies) => {
 
 function isUserRole(role: string): role is UserRole {
   return role === "admin" || role === "game_master" || role === "player";
+}
+
+async function parseCharacterCreateForm(
+  context: Context,
+  options: {
+    body?: Awaited<ReturnType<Context["req"]["parseBody"]>>;
+    campaignId: string;
+    ownerUserId: string;
+  },
+): Promise<{ ok: true; value: CreateCharacterInput } | { ok: false; message: string }> {
+  const body = options.body ?? await context.req.parseBody();
+  const name = parseFormText(body.name);
+  const species = parseFormText(body.species);
+  const className = parseFormText(body.className);
+  const background = parseFormText(body.background);
+  const level = parseFormNumber(body.level);
+  const hitPointMax = parseFormNumber(body.hitPointMax);
+  if (!name || !species || !className || !background || level === null || hitPointMax === null) {
+    return { ok: false, message: "Missing character fields" };
+  }
+  if (level < 1 || hitPointMax < 1) {
+    return { ok: false, message: "Invalid character values" };
+  }
+
+  return {
+    ok: true,
+    value: {
+      background,
+      campaignId: options.campaignId,
+      className,
+      hitPointMax,
+      level,
+      name,
+      ownerUserId: options.ownerUserId,
+      species,
+      subclassName: parseFormString(body.subclassName) || null,
+    },
+  };
+}
+
+function membersWithDisplayNames(dependencies: AppDependencies, campaignId: string) {
+  return dependencies.campaignRepository.listMembers(campaignId).map((member) => ({
+    ...member,
+    displayName: dependencies.authRepository.findUserById(member.userId)?.displayName ?? member.userId,
+  }));
 }
 
 function parseFormNumber(value: unknown) {

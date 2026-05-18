@@ -1,4 +1,5 @@
 import { Database } from "bun:sqlite";
+import { randomUUID } from "node:crypto";
 import type {
   AbilityName,
   ArmourClassSource,
@@ -18,6 +19,7 @@ import type {
   CharacterAccessContext,
   CharacterAbility,
   CharacterBackgroundEntry,
+  CreateCharacterInput,
   CharacterDefence,
   CharacterEquipment,
   CharacterFactionChoice,
@@ -319,6 +321,36 @@ interface CreateSqliteDatabaseOptions {
   seed?: boolean;
 }
 
+const abilityNames: AbilityName[] = [
+  "strength",
+  "dexterity",
+  "constitution",
+  "intelligence",
+  "wisdom",
+  "charisma",
+];
+
+const defaultSkills: Array<{ ability: AbilityName; skill: string }> = [
+  { ability: "dexterity", skill: "acrobatics" },
+  { ability: "wisdom", skill: "animal handling" },
+  { ability: "intelligence", skill: "arcana" },
+  { ability: "strength", skill: "athletics" },
+  { ability: "charisma", skill: "deception" },
+  { ability: "intelligence", skill: "history" },
+  { ability: "wisdom", skill: "insight" },
+  { ability: "charisma", skill: "intimidation" },
+  { ability: "intelligence", skill: "investigation" },
+  { ability: "wisdom", skill: "medicine" },
+  { ability: "intelligence", skill: "nature" },
+  { ability: "wisdom", skill: "perception" },
+  { ability: "charisma", skill: "performance" },
+  { ability: "charisma", skill: "persuasion" },
+  { ability: "intelligence", skill: "religion" },
+  { ability: "dexterity", skill: "sleight of hand" },
+  { ability: "dexterity", skill: "stealth" },
+  { ability: "wisdom", skill: "survival" },
+];
+
 export const createSqliteDatabase = ({
   path = "character-sheet.sqlite3",
   seed = true,
@@ -612,6 +644,124 @@ class SqliteAuthRepository implements AuthRepository {
 class SqliteCharacterRepository implements CharacterRepository {
   constructor(private readonly database: Database) {}
 
+  createCharacter(input: CreateCharacterInput): CharacterSheetReadModel {
+    const name = input.name.trim();
+    const species = input.species.trim();
+    const background = input.background.trim();
+    const className = input.className.trim();
+    const subclassName = input.subclassName?.trim() || null;
+    const level = Math.max(1, Math.floor(input.level));
+    const hitPointMax = Math.max(1, Math.floor(input.hitPointMax));
+    const characterId = randomUUID();
+    const slug = this.nextSlug(input.campaignId, name);
+    const proficiencyBonus = Math.max(2, Math.ceil(level / 4) + 1);
+
+    const insert = this.database.transaction(() => {
+      this.database.run(
+        `insert into characters (
+          id, slug, owner_user_id, campaign_id, name, species, background, level,
+          proficiency_bonus, armour_class, initiative, speed_ft, hit_point_max,
+          hit_point_current, temporary_hit_points
+        ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, 10, 0, 30, ?, ?, 0)`,
+        [
+          characterId,
+          slug,
+          input.ownerUserId,
+          input.campaignId,
+          name,
+          species,
+          background,
+          level,
+          proficiencyBonus,
+          hitPointMax,
+          hitPointMax,
+        ],
+      );
+      this.database.run(
+        `insert into character_classes (
+          id, character_id, class_name, subclass_name, level, hit_dice, spellcasting_ability
+        ) values (?, ?, ?, ?, ?, '1d8', null)`,
+        [randomUUID(), characterId, className, subclassName, level],
+      );
+
+      for (const ability of abilityNames) {
+        this.database.run(
+          `insert into character_abilities (
+            character_id, ability, score, modifier, save_proficient, save_modifier
+          ) values (?, ?, 10, 0, 0, 0)`,
+          [characterId, ability],
+        );
+      }
+      for (const skill of defaultSkills) {
+        this.database.run(
+          `insert into character_skills (
+            character_id, skill, ability, proficiency_level, modifier
+          ) values (?, ?, ?, 0, 0)`,
+          [characterId, skill.skill, skill.ability],
+        );
+      }
+      this.database.run(
+        `insert into character_senses (id, character_id, label, value, sort_order)
+         values (?, ?, 'Passive perception', '10', 10)`,
+        [randomUUID(), characterId],
+      );
+      this.database.run(
+        `insert into character_armour_class_sources (id, character_id, label, value, notes, sort_order)
+         values (?, ?, 'Unarmoured base', 10, 'Manual character default.', 10)`,
+        [randomUUID(), characterId],
+      );
+
+      const defences: Array<[CharacterDefence["type"], string]> = [
+        ["armour", "Armour"],
+        ["resistance", "Resistances"],
+        ["immunity", "Immunities"],
+        ["condition_immunity", "Condition immunities"],
+      ];
+      defences.forEach(([type, label], index) => {
+        this.database.run(
+          `insert into character_defences (id, character_id, defence_type, label, detail, sort_order)
+           values (?, ?, ?, ?, 'None currently recorded.', ?)`,
+          [randomUUID(), characterId, type, label, index + 1],
+        );
+      });
+
+      this.database.run(
+        `insert into character_resources (id, character_id, resource_key, resource_type, label, current_value, max_value, sort_order)
+         values (?, ?, 'hit_points', 'hit_points', 'Hit points', ?, ?, 10)`,
+        [randomUUID(), characterId, hitPointMax, hitPointMax],
+      );
+      this.database.run(
+        `insert into character_resources (id, character_id, resource_key, resource_type, label, current_value, max_value, sort_order)
+         values (?, ?, 'temporary_hit_points', 'temporary_hit_points', 'Temporary hit points', 0, null, 20)`,
+        [randomUUID(), characterId],
+      );
+      this.database.run(
+        `insert into character_resources (id, character_id, resource_key, resource_type, label, current_value, max_value, sort_order)
+         values (?, ?, 'inspiration', 'inspiration', 'Inspiration', 0, 1, 30)`,
+        [randomUUID(), characterId],
+      );
+      this.database.run(
+        `insert into character_resources (id, character_id, resource_key, resource_type, label, current_value, max_value, sort_order)
+         values (?, ?, 'hit_dice_d8', 'hit_dice', 'Hit dice d8', ?, ?, 40)`,
+        [randomUUID(), characterId, level, level],
+      );
+      this.database.run(
+        `insert into character_equipment (id, character_id, name, category, quantity, equipped, notes)
+         values (?, ?, 'Coin purse', 'money', 0, 0, 'Starting money to be recorded.')`,
+        [randomUUID(), characterId],
+      );
+      this.database.run(
+        `insert into character_background_entries (id, character_id, category, title, body, sort_order)
+         values (?, ?, 'backstory', 'Starting notes', '', 10)`,
+        [randomUUID(), characterId],
+      );
+    });
+
+    insert();
+
+    return this.getSheetById(characterId)!;
+  }
+
   getAccessContext(characterId: string): CharacterAccessContext | null {
     const row = this.database
       .query<CharacterAccessRow, [string]>(
@@ -651,6 +801,24 @@ class SqliteCharacterRepository implements CharacterRepository {
 
   listCharactersForCampaign(campaignId: string): CharacterRosterItem[] {
     return this.listRoster("where characters.campaign_id = ?", [campaignId]);
+  }
+
+  private nextSlug(campaignId: string, name: string): string {
+    const base = slugify(name) || "character";
+    let candidate = base;
+    let suffix = 2;
+    while (
+      this.database
+        .query<{ id: string }, [string, string]>(
+          "select id from characters where campaign_id = ? and slug = ?",
+        )
+        .get(campaignId, candidate)
+    ) {
+      candidate = `${base}-${suffix}`;
+      suffix += 1;
+    }
+
+    return candidate;
   }
 
   private getSheetBy(field: "id" | "slug", value: string): CharacterSheetReadModel | null {

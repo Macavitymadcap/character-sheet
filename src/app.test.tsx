@@ -93,7 +93,7 @@ describe("createApp", () => {
     const adminHtml = await admin.text();
 
     expect(player.status).toBe(200);
-    expect(playerHtml).toContain('<a class="action-link" href="/sheet/lynott">Continue</a>');
+    expect(playerHtml).toContain('<a class="action-link" href="/characters">Continue</a>');
     expect(gm.status).toBe(200);
     expect(gmHtml).toContain('<a class="action-link" href="/campaigns/rovnost-shadows">Continue</a>');
     expect(admin.status).toBe(200);
@@ -373,6 +373,65 @@ describe("createApp", () => {
       '<a class="popover-menu-item" href="/campaigns/rovnost-shadows" role="menuitem" aria-current="page">Campaign</a>',
     );
     expect(html).toContain('<h1 id="campaign-heading" class="panel-heading">Rovnost Shadows</h1>');
+  });
+
+  test("creates player and Game Master roster characters", async () => {
+    const { app } = createTestApp("Character Sheet");
+    const playerCookie = await login(app, "mira@example.local");
+    const gmCookie = await login(app, "gm@example.local");
+
+    const playerRoster = await app.request("/characters", {
+      headers: { cookie: playerCookie },
+    });
+    const playerRosterHtml = await playerRoster.text();
+    const createdByPlayer = await app.request("/characters", {
+      body: new URLSearchParams({
+        background: "Guide",
+        className: "Ranger",
+        hitPointMax: "12",
+        level: "1",
+        name: "Ash Vale",
+        species: "Human",
+        subclassName: "",
+      }),
+      headers: formHeaders(playerCookie),
+      method: "POST",
+    });
+    const createdByGm = await app.request("/campaigns/rovnost-shadows/characters", {
+      body: new URLSearchParams({
+        background: "Sailor",
+        className: "Fighter",
+        hitPointMax: "14",
+        level: "1",
+        name: "Bran Dock",
+        ownerUserId: "user_mira_player",
+        species: "Dwarf",
+        subclassName: "",
+      }),
+      headers: formHeaders(gmCookie),
+      method: "POST",
+    });
+    const gmRoster = await app.request("/campaigns/rovnost-shadows/characters", {
+      headers: { cookie: gmCookie },
+    });
+    const gmRosterHtml = await gmRoster.text();
+    const newSheet = await app.request("/sheet/ash_vale/tabs/background", {
+      headers: { cookie: playerCookie },
+    });
+
+    expect(playerRoster.status).toBe(200);
+    expect(playerRosterHtml).toContain("Player roster");
+    expect(playerRosterHtml).toContain("Mira Voss");
+    expect(createdByPlayer.status).toBe(303);
+    expect(createdByPlayer.headers.get("location")).toBe("/sheet/ash_vale");
+    expect(createdByGm.status).toBe(303);
+    expect(createdByGm.headers.get("location")).toBe("/sheet/bran_dock");
+    expect(gmRoster.status).toBe(200);
+    expect(gmRosterHtml).toContain("Campaign roster");
+    expect(gmRosterHtml).toContain("Ash Vale");
+    expect(gmRosterHtml).toContain("Bran Dock");
+    expect(newSheet.status).toBe(200);
+    expect(await newSheet.text()).toContain("Starting notes");
   });
 
   test("serves database-backed core and skills tab fragments", async () => {

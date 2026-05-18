@@ -116,6 +116,8 @@ The MVP page set:
 - `/logout` sign-out confirmation page using the shared site shell.
 - `POST /logout` logout route that clears the session and redirects to `/`.
 - `/campaigns/:campaignSlug` read-only Game Master campaign shell for the seeded campaign.
+- `/characters` signed-in player roster and manual character creation.
+- `/campaigns/:campaignSlug/characters` Game Master campaign roster and manual character creation for player members.
 - `/sheet/:characterId` character sheet page.
 - `/sheet/:characterId/tabs/:tabId` sheet tab panel fragment route for HTMX swaps.
 - `PATCH /sheet/:characterId/notes/:noteId` seeded note save route that returns the notes tab panel.
@@ -160,9 +162,9 @@ The MVP has no more than ten users. It starts with four seeded users:
 
 | Role | Initial user | Permissions |
 | --- | --- | --- |
-| Player | Lynott player | Read Lynott's sheet and update table-use state such as resources, conditions, equipment, rests, rolls, and their existing player note. |
-| Player | Mira player | Seeded second player used to prove group roster, campaign membership, and faction-choice behaviour. |
-| Game Master | Campaign GM | Read and update Lynott's sheet state and existing player/Game Master notes, plus view the seeded campaign shell. |
+| Player | Lynott player | Manage their character roster, create manual campaign characters, read Lynott's sheet, and update table-use state such as resources, conditions, equipment, rests, rolls, and their existing player note. |
+| Player | Mira player | Seeded second player used to prove group roster, campaign membership, manual character creation, and faction-choice behaviour. |
+| Game Master | Campaign GM | Manage the campaign roster, create manual characters for player members, read and update sheet state and existing player/Game Master notes, plus view the seeded campaign shell. |
 | Admin | Site admin | Access the admin shell, create local invite tokens, and use local password-reset token routes by known user id. |
 
 Permission checks should live in shared guards, not scattered through components. Components may hide unavailable controls, but routes must enforce access. Campaign guards centralise membership checks, Game Master management checks, character ownership, and player-visible versus Game-Master-only campaign content.
@@ -245,7 +247,7 @@ erDiagram
 | `rule_mechanics` | Structured mechanics such as uses, dice notation, DCs, ranges, durations, conditions, and scaling. |
 | `character_rule_links` | Character selections and granted rules, such as prepared spells and known infusions. |
 
-Some schema tables intentionally land before their full management UI. `sheet-0012` adds group-use read models for rosters, wiki pages, image assets, session records, factions, and faction choices while later tickets add creation/editing routes. Full character CRUD, campaign session CRUD, note creation, admin read tables, and richer rules text rendering are follow-up work.
+Some schema tables intentionally land before their full management UI. `sheet-0012` adds group-use read models for rosters, wiki pages, image assets, session records, factions, and faction choices; `sheet-0014` adds player and Game Master roster pages plus manual character creation. Character deletion, campaign session CRUD, note creation, and richer rules text rendering are follow-up work.
 
 ### Rules Data
 

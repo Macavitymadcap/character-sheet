@@ -28,6 +28,7 @@ export type {
   CharacterSense,
   CharacterSheetReadModel,
   CharacterSkill,
+  CreateCharacterInput,
   LocalInvite,
   NotesRepository,
   PasswordResetToken,
