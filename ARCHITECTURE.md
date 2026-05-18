@@ -274,7 +274,10 @@ Rules import is local-first:
 5. Seed the local MVP corpus idempotently.
 6. Keep enough source metadata to audit where each imported rule came from.
 
-The importer lives behind `RulesImportService` and `RulesSeedRepository`, so live 5e.tools fetching can be added later without changing route code.
+The importer lives behind `RulesImportService` and `RulesSeedRepository`. The SRD 5.1 import
+contract in `docs/rules-srd-import.md` keeps the epic offline and local-first: full corpus files
+belong under `docs/rules/srd-5.1/`, contract fixtures live under
+`docs/rules/srd-5.1-fixtures/`, and unsupported files are reported without failing the import.
 
 ## Lynott MVP Coverage
 

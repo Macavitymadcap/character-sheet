@@ -12,24 +12,31 @@ import type {
 export interface RulesImportResult {
   entities: UpsertedRuleEntity[];
   imported: number;
+  skippedFiles: string[];
+  sourceCounts: Record<string, number>;
 }
 
 export class RulesImportService {
   constructor(private readonly repository: RulesSeedRepository) {}
 
   async importFromLocalSource(sourcePath: string): Promise<RulesImportResult> {
-    const files = await collectRuleFiles(sourcePath);
+    const { files, skippedFiles } = await collectRuleFiles(sourcePath);
     const entities: UpsertedRuleEntity[] = [];
+    const sourceCounts: Record<string, number> = {};
 
     for (const filePath of files) {
       for (const entity of await parseLocalRuleFile(filePath)) {
-        entities.push(this.repository.upsertRuleEntity(entity));
+        const upserted = this.repository.upsertRuleEntity(withImportProvenance(entity, filePath));
+        entities.push(upserted);
+        sourceCounts[upserted.source.slug] = (sourceCounts[upserted.source.slug] ?? 0) + 1;
       }
     }
 
     return {
       entities,
       imported: entities.length,
+      skippedFiles,
+      sourceCounts,
     };
   }
 }
@@ -100,6 +107,32 @@ function parseMechanic(
       subtitle: normaliseRuleText(readSubtitle(body) ?? ""),
     },
     mechanicType: entityType,
+  };
+}
+
+function withImportProvenance(
+  entity: RuleEntitySeedInput,
+  filePath: string,
+): RuleEntitySeedInput {
+  const sourcePath = normalisePath(filePath);
+  const srdVersion = sourcePath.includes("/srd-5.1/") || sourcePath.includes("/srd-5.1-fixtures/")
+    ? "5.1"
+    : undefined;
+
+  return {
+    ...entity,
+    mechanics: entity.mechanics.map((mechanic) => ({
+      ...mechanic,
+      data: {
+        ...mechanic.data,
+        provenance: {
+          originalPath: sourcePath,
+          ruleType: entity.entityType,
+          source: entity.source.abbreviation,
+          ...(srdVersion ? { srdVersion } : {}),
+        },
+      },
+    })),
   };
 }
 
@@ -244,6 +277,9 @@ function inferRulesSource(filePath: string): RulesSourceSeedInput {
   const normalisedPath = normalisePath(filePath);
   const fileName = basename(filePath, ".md");
 
+  if (normalisedPath.includes("/srd-5.1/") || normalisedPath.includes("/srd-5.1-fixtures/")) {
+    return sources.srd51;
+  }
   if (normalisedPath.includes("/backgrounds/special-ops.md")) return sources.local;
   if (normalisedPath.includes("/species/hobgoblin.md")) return sources.mpmotm;
   if (normalisedPath.includes("/classes/artificer/")) return sources.tcoe;
@@ -253,20 +289,38 @@ function inferRulesSource(filePath: string): RulesSourceSeedInput {
   return sources.phb;
 }
 
-async function collectRuleFiles(sourcePath: string): Promise<string[]> {
+interface CollectedRuleFiles {
+  files: string[];
+  skippedFiles: string[];
+}
+
+async function collectRuleFiles(sourcePath: string): Promise<CollectedRuleFiles> {
   const sourceStats = await stat(sourcePath);
-  if (sourceStats.isFile()) return isRuleFile(sourcePath) ? [sourcePath] : [];
+  if (sourceStats.isFile()) {
+    return isRuleFile(sourcePath)
+      ? { files: [sourcePath], skippedFiles: [] }
+      : { files: [], skippedFiles: [sourcePath] };
+  }
 
   const entries = await readdir(sourcePath, { withFileTypes: true });
   const files: string[] = [];
+  const skippedFiles: string[] = [];
 
   for (const entry of entries) {
     const childPath = join(sourcePath, entry.name);
-    if (entry.isDirectory()) files.push(...(await collectRuleFiles(childPath)));
+    if (entry.isDirectory()) {
+      const childFiles = await collectRuleFiles(childPath);
+      files.push(...childFiles.files);
+      skippedFiles.push(...childFiles.skippedFiles);
+    }
     if (entry.isFile() && isRuleFile(childPath)) files.push(childPath);
+    if (entry.isFile() && !isRuleFile(childPath)) skippedFiles.push(childPath);
   }
 
-  return files.sort();
+  return {
+    files: files.sort(),
+    skippedFiles: skippedFiles.sort(),
+  };
 }
 
 function isRuleFile(filePath: string) {
@@ -328,6 +382,13 @@ const replacements: Array<[RegExp, string]> = [
 ];
 
 const sources = {
+  srd51: {
+    abbreviation: "SRD 5.1",
+    id: "rules_source_srd_5_1",
+    name: "Systems Reference Document 5.1",
+    precedence: 15,
+    slug: "srd-5-1",
+  },
   local: {
     abbreviation: "Local",
     id: "rules_source_local",

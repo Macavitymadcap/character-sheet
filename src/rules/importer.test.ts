@@ -146,6 +146,7 @@ describe("rules importer", () => {
       "# Chromatic Widget\n\n*Level 1 Evocation*\n\n**Casting Time:** Action\n\n**Range:** 30 feet\n\n**Components:** V\n\n**Duration:** Instantaneous\n\nThe widget flashes gray colors.",
     );
     writeFileSync(join(equipmentDir, "field-kit.md"), "# Field Kit\n\nA traveler uses this kit.");
+    writeFileSync(join(root, "notes.txt"), "Not a rule file.");
 
     try {
       runtime = createSqliteDatabase({ path: ":memory:" });
@@ -157,10 +158,51 @@ describe("rules importer", () => {
         "chromatic-widget",
         "field-kit",
       ]);
+      expect(result.skippedFiles.map((filePath) => filePath.replace(root, ""))).toEqual([
+        "/notes.txt",
+      ]);
+      expect(result.sourceCounts).toEqual({ "players-handbook": 2 });
       const chromaticWidget = result.entities.find((entity) => entity.slug === "chromatic-widget");
       const fieldKit = result.entities.find((entity) => entity.slug === "field-kit");
       expect(chromaticWidget?.mechanics[0]?.data.description).toContain("grey colours");
+      expect(chromaticWidget?.mechanics[0]?.data.provenance).toMatchObject({
+        originalPath: join(spellDir, "chromatic-widget.md"),
+        ruleType: "spell",
+        source: "PHB",
+      });
       expect(fieldKit?.mechanics[0]?.data.description).toContain("traveller");
+    } finally {
+      runtime?.close();
+    }
+  });
+
+  test("reports the SRD 5.1 fixture source contract without importing the full corpus", async () => {
+    let runtime: SqliteDatabaseRuntime | undefined;
+
+    try {
+      runtime = createSqliteDatabase({ path: ":memory:" });
+      const importer = new RulesImportService(runtime.repositories.rulesSeedRepository);
+      const result = await importer.importFromLocalSource("docs/rules/srd-5.1-fixtures");
+
+      expect(result.imported).toBe(5);
+      expect(result.skippedFiles).toEqual(["docs/rules/srd-5.1-fixtures/README.txt"]);
+      expect(result.sourceCounts).toEqual({ "srd-5-1": 5 });
+      expect(result.entities.map((entity) => `${entity.entityType}:${entity.slug}`)).toEqual([
+        "background:acolyte",
+        "class_feature:action-surge",
+        "condition:grappled",
+        "equipment:longsword",
+        "spell:bless",
+      ]);
+      expect(result.entities.every((entity) => entity.source.abbreviation === "SRD 5.1")).toBe(
+        true,
+      );
+      expect(result.entities[0]?.mechanics[0]?.data.provenance).toMatchObject({
+        originalPath: "docs/rules/srd-5.1-fixtures/backgrounds/acolyte.md",
+        ruleType: "background",
+        source: "SRD 5.1",
+        srdVersion: "5.1",
+      });
     } finally {
       runtime?.close();
     }

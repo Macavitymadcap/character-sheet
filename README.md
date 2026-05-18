@@ -128,6 +128,8 @@ bun run protect:branches
 
 `import:rules` is intentionally local-first. It reads local markdown or JSON exports, transforms American English spellings to British English where safe, and seeds structured database tables. The next rules epic expands this boundary to the full SRD 5.1 local corpus rather than live-fetching from external rules sites.
 
+The SRD import contract is documented in [SRD 5.1 Rules Import Contract](./docs/rules-srd-import.md). `docs/rules/srd-5.1-fixtures/` contains small parser-contract fixtures only; the full SRD corpus should be added later under `docs/rules/srd-5.1/`.
+
 ## Deployment Readiness
 
 The current app is ready for fresh local checkout, seed, verification, and table-use rehearsal with SQLite and local asset storage. The roadmap now reserves `sheet-0020` for full SRD 5.1 rules and functionality, `sheet-0030` for Railway deployment with seeded hosted accounts/passwords, and `sheet-0040` for Hyper-Dank package adoption.
