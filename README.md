@@ -2,7 +2,7 @@
 
 A local-first D&D 5e character sheet app for Lynott Magulbisson, built as a Hono + HTMX + SQLite application.
 
-The first MVP focuses on a small table: one player character, one Game Master, and one admin. It runs locally with SQLite, uses server-rendered HTML fragments for sheet interactions, and stores D&D 2014 rules data in structured database tables rather than treating markdown as the runtime source of truth. The group-use campaign work now adds data foundations for multiple players, multiple campaign characters, wiki pages, image assets, factions, faction choices, and session records before the management UI lands.
+The first MVP focuses on a small table: one player character, one Game Master, and one admin. It runs locally with SQLite, uses server-rendered HTML fragments for sheet interactions, and stores D&D 2014 rules data in structured database tables rather than treating markdown as the runtime source of truth. The group-use campaign work now adds multiple players, multiple campaign characters, local character creation, wiki pages, image assets, factions, faction choices, and session records.
 
 For the architecture and data model, see [ARCHITECTURE.md](./ARCHITECTURE.md). For the contribution and ticket workflow, see [CONTRIBUTING.md](./CONTRIBUTING.md).
 
@@ -11,14 +11,14 @@ For the architecture and data model, see [ARCHITECTURE.md](./ARCHITECTURE.md). F
 - Local SQLite persistence with enough data to support Lynott, a second seeded player, a Game Master, and an admin.
 - Password-based local authentication with seeded users, sessions, admin invites, and admin-triggered password reset tokens.
 - Role-based access:
-  - The seeded player can read Lynott's sheet and update table-use state such as hit points, resources, conditions, equipment, rolls, rests, and their existing player note.
-  - The seeded Game Master can read and update Lynott's sheet state and existing player/Game Master notes, and can view the seeded campaign shell.
+  - Seeded players can manage their character roster, create manual campaign characters, read their own sheets, and update table-use state such as hit points, resources, conditions, equipment, rolls, rests, and their existing player note.
+  - The seeded Game Master can manage the campaign roster, create manual campaign characters for player members, read and update sheet state and existing player/Game Master notes, and view the seeded campaign shell.
   - The seeded admin can access the admin shell, create local invite tokens, and use the local password-reset token endpoint when a target user id is known.
 - A mobile-first sheet page with sticky site and character headers, compact combat/resource controls, dark mode, and tabbed sheet sections.
 - Structured D&D 2014 rules data seeded from local sources, normalised to the most recent 2014 official reprint where a rule appears in multiple books.
 - British English in product copy, docs, code naming, and CSS custom properties.
 
-The MVP remains intentionally local-first. Character creation/deletion UI, campaign session management UI, note creation beyond seeded notes, admin user/read tables, richer rule-mechanics rendering, Railway deployment, and migration from SQLite to Postgres are deferred to later tickets or epics. The current schema and repositories already include the group-use foundations those flows will need.
+The MVP remains intentionally local-first. Character deletion UI, campaign session management UI, note creation beyond seeded notes, richer rule-mechanics rendering, Railway deployment, and migration from SQLite to Postgres are deferred to later tickets or epics. The current schema and repositories already include the group-use foundations those flows will need.
 
 ## Stack
 
@@ -44,11 +44,13 @@ The development server should default to `http://localhost:3000`. The root page 
 
 | Role | Default route |
 | --- | --- |
-| Player | `/sheet/lynott` |
+| Player | `/characters` |
 | Game Master | `/campaigns/rovnost-shadows` |
 | Admin | `/admin` |
 
-After signing in as the seeded player, Lynott's sheet is available at
+After signing in as a seeded player, their roster and manual create-character form are available at `/characters`. Game Masters can manage the campaign roster and create characters for player members at `/campaigns/rovnost-shadows/characters`.
+
+After signing in as the seeded Lynott player, Lynott's sheet is available at
 `/sheet/lynott`. The sheet tab fragments are served from
 `/sheet/lynott/tabs/:tabId` for HTMX swaps. Those swaps target only the active panel, so the sticky tab strip keeps its scroll position while the active tab state stays aligned with the displayed content.
 

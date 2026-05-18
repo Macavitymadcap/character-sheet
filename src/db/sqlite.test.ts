@@ -621,6 +621,61 @@ describe("SQLite repositories", () => {
     ]);
   });
 
+  test("creates manual characters with stable slugs and renderable defaults", () => {
+    runtime = createSqliteDatabase({ path: ":memory:" });
+    const characters = runtime.repositories.characterRepository;
+    const first = characters.createCharacter({
+      background: "Guide",
+      campaignId: "campaign_rovnost_shadows",
+      className: "Ranger",
+      hitPointMax: 12,
+      level: 1,
+      name: "Ash Vale",
+      ownerUserId: "user_mira_player",
+      species: "Human",
+      subclassName: null,
+    });
+    const second = characters.createCharacter({
+      background: "Guide",
+      campaignId: "campaign_rovnost_shadows",
+      className: "Ranger",
+      hitPointMax: 12,
+      level: 1,
+      name: "Ash Vale",
+      ownerUserId: "user_mira_player",
+      species: "Human",
+      subclassName: "Gloom Stalker",
+    });
+
+    expect(first).toMatchObject({
+      armourClass: 10,
+      hitPoints: { current: 12, max: 12, temporary: 0 },
+      level: 1,
+      name: "Ash Vale",
+      slug: "ash_vale",
+    });
+    expect(second.slug).toBe("ash_vale-2");
+    expect(first.abilities).toHaveLength(6);
+    expect(first.skills).toHaveLength(18);
+    expect(first.classes).toEqual([
+      {
+        className: "Ranger",
+        hitDice: "1d8",
+        level: 1,
+        spellcastingAbility: null,
+        subclassName: null,
+      },
+    ]);
+    expect(characters.listResources(first.id).map((resource) => resource.key)).toEqual([
+      "hit_points",
+      "temporary_hit_points",
+      "inspiration",
+      "hit_dice_d8",
+    ]);
+    expect(characters.listCharactersForPlayer("user_mira_player").map((character) => character.slug))
+      .toContain("ash_vale");
+  });
+
   test("filters seeded wiki pages, image assets, sessions, and factions by campaign visibility", () => {
     runtime = createSqliteDatabase({ path: ":memory:" });
     const content = runtime.repositories.campaignContentRepository;

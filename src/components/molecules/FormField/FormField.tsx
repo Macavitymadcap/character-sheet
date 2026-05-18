@@ -5,7 +5,7 @@ interface FormFieldProps {
   label: string;
   name?: string;
   required?: boolean;
-  type?: "email" | "password" | "text";
+  type?: "email" | "number" | "password" | "text";
 }
 
 export const FormField = ({

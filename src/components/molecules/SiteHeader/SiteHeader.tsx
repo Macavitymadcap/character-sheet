@@ -2,7 +2,7 @@ import type { AuthUser } from "../../../db";
 import { PopoverMenu } from "../PopoverMenu";
 import { Switch } from "../../atoms/Switch";
 
-type SiteSection = "admin" | "campaign" | "home" | "login" | "logout" | "sheet";
+type SiteSection = "admin" | "campaign" | "characters" | "home" | "login" | "logout" | "sheet";
 
 interface SiteHeaderProps {
   appName: string;
@@ -61,10 +61,15 @@ function getMenuLinks(user: SiteHeaderProps["user"], currentSection: SiteSection
       href: "/campaigns/rovnost-shadows",
       label: "Campaign",
     });
+    links.push({
+      current: currentSection === "characters",
+      href: "/campaigns/rovnost-shadows/characters",
+      label: "Characters",
+    });
   }
 
   if (user.role === "player") {
-    links.push({ current: currentSection === "sheet", href: "/sheet/lynott", label: "Sheet" });
+    links.push({ current: currentSection === "characters", href: "/characters", label: "Characters" });
   }
 
   links.push({

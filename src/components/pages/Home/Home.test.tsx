@@ -36,7 +36,7 @@ describe("HomePage", () => {
       <HomePage appName="Character Sheet" user={{ displayName: "Admin", role: "admin" }} />,
     );
 
-    expect(player).toContain('<a class="action-link" href="/sheet/lynott">Continue</a>');
+    expect(player).toContain('<a class="action-link" href="/characters">Continue</a>');
     expect(gm).toContain('<a class="action-link" href="/campaigns/rovnost-shadows">Continue</a>');
     expect(admin).toContain('<a class="action-link" href="/admin">Continue</a>');
   });
