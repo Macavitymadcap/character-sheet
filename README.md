@@ -126,11 +126,11 @@ bun run protect:branches:bootstrap
 bun run protect:branches
 ```
 
-`import:rules` is intentionally local-first. It reads local markdown or JSON exports, transforms American English spellings to British English where safe, and seeds structured database tables. Direct fetching from 5e.tools can be added after the local importer boundary is stable.
+`import:rules` is intentionally local-first. It reads local markdown or JSON exports, transforms American English spellings to British English where safe, and seeds structured database tables. The next rules epic expands this boundary to the full SRD 5.1 local corpus rather than live-fetching from external rules sites.
 
 ## Deployment Readiness
 
-The current app is ready for fresh local checkout, seed, verification, and table-use rehearsal with SQLite and local asset storage. Railway hosting, production secret handling, Postgres migration, email delivery for invites/password resets, and any homebrew/SRD expansion are explicitly deferred to the next epic.
+The current app is ready for fresh local checkout, seed, verification, and table-use rehearsal with SQLite and local asset storage. The roadmap now reserves `sheet-0020` for full SRD 5.1 rules and functionality, `sheet-0030` for Railway deployment with seeded hosted accounts/passwords, and `sheet-0040` for Hyper-Dank package adoption.
 
 ## TDD Approach
 
@@ -164,3 +164,12 @@ Development tickets should be implemented tests first wherever the boundary is t
 - [Ticket sheet-0017](./docs/tickets/sheet-0017.md)
 - [Ticket sheet-0018](./docs/tickets/sheet-0018.md)
 - [Ticket sheet-0019](./docs/tickets/sheet-0019.md)
+- [Epic sheet-0020](./docs/epics/sheet-0020.md)
+- [Ticket sheet-0021](./docs/tickets/sheet-0021.md)
+- [Ticket sheet-0022](./docs/tickets/sheet-0022.md)
+- [Ticket sheet-0023](./docs/tickets/sheet-0023.md)
+- [Ticket sheet-0024](./docs/tickets/sheet-0024.md)
+- [Ticket sheet-0025](./docs/tickets/sheet-0025.md)
+- [Ticket sheet-0026](./docs/tickets/sheet-0026.md)
+- [Ticket sheet-0027](./docs/tickets/sheet-0027.md)
+- [Ticket sheet-0028](./docs/tickets/sheet-0028.md)
