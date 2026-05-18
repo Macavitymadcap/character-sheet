@@ -109,6 +109,9 @@ bun run screenshots:sheet
 ```
 
 For user-facing UI work, review the light and dark screenshots generated in `docs/pr-screenshots/`.
+The screenshot script also captures roster, campaign, wiki, faction, and edited-sheet states for group-use tickets.
+
+The smoke workflow is the local acceptance pass for the group-use MVP. It covers player and Game Master character creation, manual sheet editing, resources, notes, faction selection, sessions, wiki reads and writes, image assets, admin invite/password-reset preparation, and protected logout behaviour.
 
 For documentation-only work, check:
 

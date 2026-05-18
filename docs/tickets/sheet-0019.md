@@ -27,3 +27,11 @@ Complete the group-use MVP acceptance pass with updated docs, accessibility cove
 - `bun run verify` passes.
 - A fresh local checkout can seed and run the group-use MVP.
 - Docs explain the local group workflow and the remaining deployment/homebrew/SRD follow-up work.
+
+## Implementation Notes
+
+- Extended the smoke workflow to cover player and Game Master character creation, manual sheet editing, notes, faction selection, sessions, wiki reads and writes, image upload, and admin invite/password-reset preparation.
+- Extended Pa11y targets to cover public, player roster, sheet, wiki, logout, Game Master campaign and roster, and admin pages.
+- Extended screenshot targets to include roster, campaign, wiki-with-image, faction picker, and edited-sheet states.
+- Added documentation reference checks for local markdown links and documented package scripts.
+- Updated README, architecture, and contribution docs with the group-use local workflow and the explicit Railway/Postgres/secrets/email/homebrew/SRD deferrals.
