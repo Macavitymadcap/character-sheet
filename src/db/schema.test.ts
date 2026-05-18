@@ -30,6 +30,7 @@ describe("bootstrapDatabase", () => {
       "campaign_image_assets",
       "campaign_members",
       "campaign_sessions",
+      "campaign_wiki_page_assets",
       "campaign_wiki_pages",
       "campaigns",
       "character_abilities",

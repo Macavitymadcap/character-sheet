@@ -1,10 +1,12 @@
 import type {
   CharacterBackgroundEntry,
   CharacterEquipment,
+  CharacterFactionChoice,
   CharacterNote,
   CharacterResource,
   CharacterRuleLink,
   CharacterSheetReadModel,
+  CampaignFaction,
 } from "../../../db";
 import { Accordion, type AccordionItem } from "../../molecules/Accordion";
 import { CompactList, type CompactListItem } from "../../molecules/CompactList";
@@ -15,7 +17,9 @@ import { getSheetTab, type SheetTabId } from "../SheetTabs";
 
 interface SheetTabPanelProps {
   backgroundEntries: CharacterBackgroundEntry[];
+  campaignFactions: CampaignFaction[];
   equipment: CharacterEquipment[];
+  factionChoice: CharacterFactionChoice | null;
   notes: CharacterNote[];
   resources: CharacterResource[];
   ruleLinks: CharacterRuleLink[];
@@ -25,7 +29,9 @@ interface SheetTabPanelProps {
 
 export const SheetTabPanel = ({
   backgroundEntries,
+  campaignFactions,
   equipment,
+  factionChoice,
   notes,
   resources,
   ruleLinks,
@@ -48,7 +54,9 @@ export const SheetTabPanel = ({
       </div>
       {renderTabContent(tab.id, {
         backgroundEntries,
+        campaignFactions,
         equipment,
+        factionChoice,
         notes,
         resources,
         ruleLinks,
@@ -60,7 +68,9 @@ export const SheetTabPanel = ({
 
 interface TabContentData {
   backgroundEntries: CharacterBackgroundEntry[];
+  campaignFactions: CampaignFaction[];
   equipment: CharacterEquipment[];
+  factionChoice: CharacterFactionChoice | null;
   notes: CharacterNote[];
   resources: CharacterResource[];
   ruleLinks: CharacterRuleLink[];
@@ -186,22 +196,91 @@ const EquipmentTab = ({ data }: { data: TabContentData }) => {
 const BackgroundTab = ({ data }: { data: TabContentData }) => {
   const profileItems = data.backgroundEntries
     .filter((entry) => ["personality", "ideal", "bond", "flaw"].includes(entry.category))
-    .map(backgroundEntryToItem);
+    .map((entry) => backgroundEntryToItem(entry, data.sheet.slug));
   const backstoryItems = data.backgroundEntries
     .filter((entry) => entry.category === "backstory")
-    .map(backgroundEntryToItem);
+    .map((entry) => backgroundEntryToItem(entry, data.sheet.slug));
   const identityItems = data.backgroundEntries
     .filter((entry) => entry.category === "false_identity")
-    .map(backgroundEntryToItem);
+    .map((entry) => backgroundEntryToItem(entry, data.sheet.slug));
   const npcItems = data.backgroundEntries
     .filter((entry) => entry.category === "npc")
-    .map(backgroundEntryToItem);
+    .map((entry) => backgroundEntryToItem(entry, data.sheet.slug));
   const rankItems = data.backgroundEntries
     .filter((entry) => entry.category === "rank")
-    .map(backgroundEntryToItem);
+    .map((entry) => backgroundEntryToItem(entry, data.sheet.slug));
+  const selectedFaction = data.campaignFactions.find(
+    (faction) => faction.id === data.factionChoice?.factionId,
+  );
 
   return (
     <div class="tab-compact-grid">
+      <section class="tab-compact-section faction-picker-section" aria-labelledby="background-faction-heading">
+        <h3 id="background-faction-heading">Faction connection</h3>
+        <form
+          class="faction-picker"
+          hx-patch={`/sheet/${data.sheet.slug}/faction`}
+          hx-target="#sheet-tab-panel"
+          hx-swap="outerHTML"
+        >
+          <label for={`faction-choice-${slugify(data.sheet.id)}`}>
+            <strong>Primary faction</strong>
+            <span>Background context</span>
+          </label>
+          <select id={`faction-choice-${slugify(data.sheet.id)}`} name="factionId">
+            <option value="">Unaffiliated/Other</option>
+            {data.campaignFactions.map((faction) => (
+              <option value={faction.id} selected={faction.id === data.factionChoice?.factionId}>
+                {faction.name}
+              </option>
+            ))}
+          </select>
+          <label for={`faction-note-${slugify(data.sheet.id)}`}>
+            <strong>Connection note</strong>
+          </label>
+          <textarea id={`faction-note-${slugify(data.sheet.id)}`} name="connectionNote" rows={4}>
+            {data.factionChoice?.connectionNote ?? ""}
+          </textarea>
+          <button type="submit">Save faction</button>
+        </form>
+        {selectedFaction ? (
+          <article class="faction-summary-card">
+            <p class="faction-motto">{selectedFaction.motto}</p>
+            <h4>{selectedFaction.name}</h4>
+            <p>{selectedFaction.summary}</p>
+            <dl>
+              <div>
+                <dt>Public reputation</dt>
+                <dd>{selectedFaction.publicReputation}</dd>
+              </div>
+              <div>
+                <dt>Connection</dt>
+                <dd>{data.factionChoice?.connectionNote || selectedFaction.playerPrompt}</dd>
+              </div>
+            </dl>
+            {selectedFaction.wikiPageSlug ? (
+              <a href={`/campaigns/rovnost-shadows/wiki/${selectedFaction.wikiPageSlug}`}>
+                {selectedFaction.wikiPageTitle ?? "Faction wiki"}
+              </a>
+            ) : null}
+          </article>
+        ) : (
+          <p class="tab-empty-state">
+            {data.factionChoice?.connectionNote
+              ? `Unaffiliated/Other: ${data.factionChoice.connectionNote}`
+              : "No primary faction selected."}
+          </p>
+        )}
+      </section>
+      {renderCompactSection(
+        "background-faction-options-heading",
+        "Faction options",
+        data.campaignFactions.map((faction) => ({
+          label: faction.name,
+          meta: `${faction.publicReputation} ${faction.connections.length > 0 ? `Connections: ${faction.connections.join(", ")}` : ""}`,
+          value: faction.playerPrompt,
+        })),
+      )}
       {renderCompactSection("background-profile-heading", "Profile", profileItems)}
       {renderCompactSection("background-story-heading", "Backstory", backstoryItems)}
       {renderCompactSection("background-identities-heading", "False identities", identityItems)}
@@ -216,6 +295,30 @@ const NotesTab = ({ data }: { data: TabContentData }) => {
     <div class="tab-compact-stack">
       <section class="tab-compact-section" aria-labelledby="notes-list-heading">
         <h3 id="notes-list-heading">Notes</h3>
+        <form
+          class="note-editor note-editor-create"
+          hx-post={`/sheet/${data.sheet.slug}/notes`}
+          hx-target="#sheet-tab-panel"
+          hx-swap="outerHTML"
+        >
+          <label for={`note-title-new-${slugify(data.sheet.id)}`}>
+            <strong>New note</strong>
+            <span>Visibility</span>
+          </label>
+          <input
+            id={`note-title-new-${slugify(data.sheet.id)}`}
+            name="title"
+            placeholder="Title"
+            required
+            type="text"
+          />
+          <select name="visibility" aria-label="Note visibility">
+            <option value="player">Player</option>
+            <option value="game_master">Game Master</option>
+          </select>
+          <textarea name="body" rows={4} placeholder="Note body" aria-label="New note body"></textarea>
+          <button type="submit">Add note</button>
+        </form>
         {data.notes.length > 0 ? (
           <div class="note-editor-list">
             {data.notes.map((note) => (
@@ -229,10 +332,29 @@ const NotesTab = ({ data }: { data: TabContentData }) => {
                   <strong>{note.title}</strong>
                   <span>{note.visibility === "game_master" ? "Game Master" : "Player"}</span>
                 </label>
+                <input
+                  id={`note-title-${slugify(note.id)}`}
+                  name="title"
+                  aria-label={`${note.title} title`}
+                  type="text"
+                  value={note.title}
+                />
                 <textarea id={`note-body-${slugify(note.id)}`} name="body" rows={4}>
                   {note.body}
                 </textarea>
-                <button type="submit">Save note</button>
+                <div class="note-editor-actions">
+                  <button type="submit">Save note</button>
+                  <button
+                    type="submit"
+                    formaction={`/sheet/${data.sheet.slug}/notes/${note.id}/delete`}
+                    formmethod="post"
+                    hx-post={`/sheet/${data.sheet.slug}/notes/${note.id}/delete`}
+                    hx-target="#sheet-tab-panel"
+                    hx-swap="outerHTML"
+                  >
+                    Delete
+                  </button>
+                </div>
               </form>
             ))}
           </div>
@@ -501,12 +623,44 @@ function renderEquipmentControls(item: CharacterEquipment, characterSlug: string
           </button>
         </form>
       ) : null}
+      <details class="row-edit-disclosure">
+        <summary>Edit</summary>
+        <form class="sheet-edit-form row-edit-form" hx-patch={target} hx-target="#sheet-tab-panel" hx-swap="outerHTML">
+          <label>Name <input name="name" type="text" value={item.name} /></label>
+          <label>Category <input name="category" type="text" value={item.category} /></label>
+          <label>Quantity <input min="0" name="quantity" type="number" value={item.quantity} /></label>
+          <label>
+            Equipped
+            <select name="equipped">
+              <option value="1" selected={item.equipped}>Yes</option>
+              <option value="0" selected={!item.equipped}>No</option>
+            </select>
+          </label>
+          <label>Notes <input name="notes" type="text" value={item.notes} /></label>
+          <button type="submit">Save</button>
+        </form>
+      </details>
     </span>
   );
 }
 
-function backgroundEntryToItem(entry: CharacterBackgroundEntry): CompactListItem {
+function backgroundEntryToItem(entry: CharacterBackgroundEntry, characterSlug?: string): CompactListItem {
   return {
+    controls: characterSlug ? (
+      <details class="row-edit-disclosure">
+        <summary>Edit</summary>
+        <form
+          class="sheet-edit-form row-edit-form"
+          hx-patch={`/sheet/${characterSlug}/background/${entry.id}`}
+          hx-target="#sheet-tab-panel"
+          hx-swap="outerHTML"
+        >
+          <label>Title <input name="title" type="text" value={entry.title} /></label>
+          <label>Body <textarea name="body" rows={3}>{entry.body}</textarea></label>
+          <button type="submit">Save</button>
+        </form>
+      </details>
+    ) : undefined,
     label: formatWords(entry.category.replaceAll("_", " ")),
     meta: entry.body,
     value: entry.title,

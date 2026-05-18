@@ -133,6 +133,13 @@ export const sheetTabPanelStyles = /* css */ `
   padding-block-end: 0;
 }
 
+.note-editor-create {
+  background: var(--stat-background-colour);
+  border: 1px solid var(--border-colour);
+  border-radius: 0.45rem;
+  padding: 0.65rem;
+}
+
 .note-editor label {
   align-items: baseline;
   display: flex;
@@ -152,18 +159,29 @@ export const sheetTabPanelStyles = /* css */ `
   text-transform: uppercase;
 }
 
+.note-editor input,
+.note-editor select,
 .note-editor textarea {
   background: var(--stat-background-colour);
   border: 1px solid var(--border-colour);
   border-radius: 0.4rem;
   color: var(--heading-colour);
-  min-height: 5.5rem;
   padding: 0.5rem;
-  resize: vertical;
   transition:
     background-color var(--theme-transition),
     border-color var(--theme-transition),
     color var(--theme-text-transition);
+}
+
+.note-editor textarea {
+  min-height: 5.5rem;
+  resize: vertical;
+}
+
+.note-editor-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .note-editor button {
@@ -176,6 +194,79 @@ export const sheetTabPanelStyles = /* css */ `
   justify-self: start;
   min-height: 2rem;
   padding: 0.35rem 0.65rem;
+}
+
+.faction-picker-section {
+  grid-column: 1 / -1;
+}
+
+.faction-picker,
+.faction-summary-card {
+  background: var(--stat-background-colour);
+  border: 1px solid var(--border-colour);
+  border-radius: 0.45rem;
+  display: grid;
+  gap: 0.55rem;
+  padding: 0.65rem;
+}
+
+.faction-picker label {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.5rem;
+}
+
+.faction-picker label span,
+.faction-summary-card dt {
+  color: var(--muted-text-colour);
+  font-size: 0.78rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.faction-picker select,
+.faction-picker textarea {
+  background: var(--surface-colour);
+  border: 1px solid var(--border-colour);
+  border-radius: 0.4rem;
+  color: var(--heading-colour);
+  padding: 0.5rem;
+}
+
+.faction-picker textarea {
+  min-height: 5rem;
+  resize: vertical;
+}
+
+.faction-picker button {
+  background: var(--action-background-colour);
+  border: 1px solid var(--action-border-colour);
+  border-radius: 0.4rem;
+  color: var(--action-text-colour);
+  cursor: pointer;
+  font-weight: 850;
+  justify-self: start;
+  min-height: 2rem;
+  padding: 0.35rem 0.65rem;
+}
+
+.faction-summary-card h4,
+.faction-summary-card p,
+.faction-summary-card dl,
+.faction-summary-card dd {
+  margin: 0;
+}
+
+.faction-summary-card dl {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.faction-motto {
+  color: var(--muted-text-colour);
+  font-style: italic;
+  font-weight: 750;
 }
 
 @media (max-width: 760px) {

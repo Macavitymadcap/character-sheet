@@ -8,7 +8,7 @@ describe("SiteHeader", () => {
     const html = render(
       <SiteHeader
         appName="Character Sheet"
-        currentSection="sheet"
+        currentSection="characters"
         user={{ displayName: "Lynott Player", role: "player" }}
       />,
     );
@@ -19,7 +19,7 @@ describe("SiteHeader", () => {
     expect(html).toContain('popovertarget="site-menu-panel"');
     expect(html).toContain('<a class="popover-menu-item" href="/" role="menuitem">Home</a>');
     expect(html).toContain(
-      '<a class="popover-menu-item" href="/sheet/lynott" role="menuitem" aria-current="page">Sheet</a>',
+      '<a class="popover-menu-item" href="/characters" role="menuitem" aria-current="page">Characters</a>',
     );
     expect(html).toContain('id="theme-toggle"');
     expect(html).toContain('data-theme-toggle=""');
@@ -61,6 +61,9 @@ describe("SiteHeader", () => {
 
     expect(gm).toContain(
       '<a class="popover-menu-item" href="/campaigns/rovnost-shadows" role="menuitem" aria-current="page">Campaign</a>',
+    );
+    expect(gm).toContain(
+      '<a class="popover-menu-item" href="/campaigns/rovnost-shadows/characters" role="menuitem">Characters</a>',
     );
     expect(admin).toContain(
       '<a class="popover-menu-item" href="/admin" role="menuitem" aria-current="page">Admin</a>',

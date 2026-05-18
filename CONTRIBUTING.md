@@ -1,31 +1,34 @@
 # Contributing
 
-This repository uses a documentation-first, ticket-driven workflow. `main` is the stable branch. Accepted epic plans are reviewed as their own pull requests and then squash-merged into `main`; implementation tickets branch from the latest `main` unless the maintainer explicitly creates a temporary integration branch for a larger stack.
+This repository uses a documentation-first, ticket-driven workflow. `main` is the stable branch. Accepted epic plans are reviewed as their own pull requests into `main`; once accepted, implementation tickets branch from the active epic integration branch and open pull requests back into that epic branch. The epic branch is squash-merged into `main` after its ticket stack is accepted.
 
 ## Branch Flow
 
 1. Create the epic planning branch from the latest `main`, for example `sheet-0011`.
 2. Add or update the epic document and planned ticket documents.
 3. Open the planning pull request into `main`.
-4. Squash and merge the accepted planning branch after review and checks.
-5. Create each implementation ticket branch from the latest `main`, for example `sheet-0012`.
+4. After the plan is accepted, keep or recreate that branch as the epic integration branch.
+5. Create each implementation ticket branch from the latest epic branch, for example `sheet-0012`.
 6. Keep ticket work scoped to the current accepted ticket.
 7. Write or update tests before source code wherever the boundary is testable.
 8. Update every affected doc in the same pull request as the implementation change.
 9. Run the required verification commands.
-10. Open the ticket pull request into `main`.
-11. Squash and merge the accepted ticket branch after review and checks.
+10. Open the ticket pull request into the epic branch.
+11. Squash and merge the accepted ticket branch into the epic branch after review and checks.
+12. When every ticket in the epic is accepted, open the epic branch pull request into `main`.
 
-Do not rebase, reset, or discard commits on an existing branch unless the maintainer explicitly asks for it. If a temporary integration branch is deliberately created, ticket branches should target that branch and the integration branch should be deleted after it lands on `main`.
+Do not rebase, reset, or discard commits on an existing branch unless the maintainer explicitly asks for it. Ticket branches should target the active epic branch while the epic is open, and the epic branch should be deleted after it lands on `main`.
 
 ```mermaid
 flowchart TD
     A["main"] --> B["Epic planning branch"]
     B --> C["Planning PR into main"]
-    C --> D["Squash merge accepted plan"]
-    D --> E["Ticket branch from main"]
-    E --> F["Ticket PR into main"]
+    C --> D["Accepted epic integration branch"]
+    D --> E["Ticket branch from epic"]
+    E --> F["Ticket PR into epic"]
     F --> G["Squash merge accepted ticket"]
+    G --> D
+    D --> H["Epic PR into main"]
 ```
 
 ## Epic And Ticket Flow
@@ -43,7 +46,7 @@ The review loop is:
 3. If accepted, update any affected docs and move to the next document.
 4. If rejected, revise the document and repeat the review.
 
-Implementation follows the accepted ticket documents. Every accepted ticket is implemented on its own ticket branch and squash-merged into `main`, unless the maintainer has explicitly opened a temporary integration branch for that epic.
+Implementation follows the accepted ticket documents. Every accepted ticket is implemented on its own ticket branch and squash-merged into the active epic branch. The epic branch is merged into `main` only after the epic is complete and accepted.
 
 Epic documents live in `docs/epics/`. Ticket documents live in `docs/tickets/`.
 
@@ -106,6 +109,9 @@ bun run screenshots:sheet
 ```
 
 For user-facing UI work, review the light and dark screenshots generated in `docs/pr-screenshots/`.
+The screenshot script also captures roster, campaign, wiki, faction, and edited-sheet states for group-use tickets.
+
+The smoke workflow is the local acceptance pass for the group-use MVP. It covers player and Game Master character creation, manual sheet editing, resources, notes, faction selection, sessions, wiki reads and writes, image assets, admin invite/password-reset preparation, and protected logout behaviour.
 
 For documentation-only work, check:
 

@@ -1,1 +1,1 @@
-export { CampaignPage } from "./Campaign";
+export { CampaignPage, CampaignWikiDetailPage } from "./Campaign";

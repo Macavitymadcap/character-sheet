@@ -31,6 +31,7 @@ export const SkillsTrainingTab = ({ sheet }: SkillsTrainingTabProps) => {
                 <th scope="col">Mod</th>
                 <th scope="col">Prof</th>
                 <th scope="col">Roll</th>
+                <th scope="col">Edit</th>
               </tr>
             </thead>
             <tbody>
@@ -47,6 +48,27 @@ export const SkillsTrainingTab = ({ sheet }: SkillsTrainingTabProps) => {
                       id={`skill-${slugify(skill.skill)}`}
                       label={formatSkill(skill.skill)}
                     />
+                  </td>
+                  <td>
+                    <details class="row-edit-disclosure">
+                      <summary>Edit</summary>
+                      <form
+                        class="sheet-edit-form row-edit-form"
+                        hx-patch={`/sheet/${sheet.slug}/skills/${encodeURIComponent(skill.skill)}`}
+                        hx-target="#sheet-tab-panel"
+                        hx-swap="outerHTML"
+                      >
+                        <label>
+                          Training
+                          <select name="proficiencyLevel">
+                            <option value="0" selected={skill.proficiencyLevel === 0}>Untrained</option>
+                            <option value="1" selected={skill.proficiencyLevel === 1}>Proficient</option>
+                            <option value="2" selected={skill.proficiencyLevel === 2}>Expertise</option>
+                          </select>
+                        </label>
+                        <button type="submit">Save</button>
+                      </form>
+                    </details>
                   </td>
                 </tr>
               ))}
@@ -77,6 +99,21 @@ export const SkillsTrainingTab = ({ sheet }: SkillsTrainingTabProps) => {
                         />
                       ) : null}
                       {proficiency.detail ? <span>{proficiency.detail}</span> : null}
+                      {proficiency.id ? (
+                        <details class="row-edit-disclosure">
+                          <summary>Edit</summary>
+                          <form
+                            class="sheet-edit-form row-edit-form"
+                            hx-patch={`/sheet/${sheet.slug}/proficiencies/${proficiency.id}`}
+                            hx-target="#sheet-tab-panel"
+                            hx-swap="outerHTML"
+                          >
+                            <label>Name <input name="name" type="text" value={proficiency.name} /></label>
+                            <label>Detail <input name="detail" type="text" value={proficiency.detail} /></label>
+                            <button type="submit">Save</button>
+                          </form>
+                        </details>
+                      ) : null}
                     </li>
                   ))}
               </ul>

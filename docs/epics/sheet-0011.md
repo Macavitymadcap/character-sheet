@@ -90,9 +90,9 @@ Initial campaign source material includes the Rovnost blurb, factions guide, ope
 
 ## Branch Strategy
 
-`sheet-0011` landed as the accepted planning pull request into `main`, so there is no live remote integration branch for this epic. Each implementation ticket branch should branch from the latest `main`, open a pull request back into `main`, and be squash-merged after review and checks.
+`sheet-0011` is the active epic integration branch for this group-use campaign MVP. Ticket branches for `sheet-0012` through `sheet-0019` should branch from the latest `sheet-0011`, open pull requests back into `sheet-0011`, and be squash-merged after review and checks.
 
-If the maintainer deliberately restores a temporary integration branch for this epic, ticket branches should target that branch until it lands. Otherwise, `main` is the base for `sheet-0012` through `sheet-0019`.
+After all implementation tickets in this epic are accepted, open a final epic pull request from `sheet-0011` into `main`. `main` should receive the epic as one accepted slice rather than a sequence of partial ticket merges.
 
 ## Test And Verification Strategy
 

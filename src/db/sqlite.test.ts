@@ -140,17 +140,17 @@ describe("SQLite repositories", () => {
       { ability: "dexterity", modifier: 5, proficiencyLevel: 1, skill: "stealth" },
       { ability: "wisdom", modifier: 1, proficiencyLevel: 0, skill: "survival" },
     ]);
-    expect(sheet?.senses).toEqual([
+    expect(sheet?.senses).toMatchObject([
       { label: "Darkvision", value: "60 ft" },
       { label: "Passive perception", value: "13" },
       { label: "Passive investigation", value: "16" },
     ]);
-    expect(sheet?.armourClassBreakdown).toEqual([
+    expect(sheet?.armourClassBreakdown).toMatchObject([
       { label: "Breastplate", notes: "Medium armour base AC.", value: 14 },
       { label: "Dexterity bonus", notes: "Breastplate maximum Dexterity bonus.", value: 2 },
       { label: "Enhanced Defence", notes: "Active armour infusion.", value: 1 },
     ]);
-    expect(sheet?.defences).toEqual([
+    expect(sheet?.defences).toMatchObject([
       { detail: "Breastplate with Enhanced Defence infusion.", label: "Armour", type: "armour" },
       { detail: "None currently recorded.", label: "Resistances", type: "resistance" },
       { detail: "None currently recorded.", label: "Immunities", type: "immunity" },
@@ -160,7 +160,7 @@ describe("SQLite repositories", () => {
         type: "condition_immunity",
       },
     ]);
-    expect(sheet?.proficiencies).toEqual([
+    expect(sheet?.proficiencies).toMatchObject([
       { category: "armour", detail: "Artificer training.", name: "Light armour" },
       { category: "armour", detail: "Artificer training.", name: "Medium armour" },
       { category: "armour", detail: "Artificer training.", name: "Shields" },
@@ -346,6 +346,74 @@ describe("SQLite repositories", () => {
     expect(sheet?.hitPoints).toEqual({ current: 31, max: 31, temporary: 6 });
   });
 
+  test("updates manual sheet fields and recalculates derived values", () => {
+    runtime = createSqliteDatabase({ path: ":memory:" });
+    const characters = runtime.repositories.characterRepository;
+    const characterId = "character_lynott_magulbisson";
+
+    const summary = characters.updateSheetSummary(characterId, {
+      background: "Field Agent",
+      className: "Artificer",
+      hitPointMax: 28,
+      initiative: 2,
+      level: 5,
+      name: "Lynott Undercover",
+      proficiencyBonus: 3,
+      speedFeet: 35,
+      species: "Hobgoblin",
+      subclassName: "Artillerist",
+    });
+    const ability = characters.updateAbility(characterId, "intelligence", {
+      saveProficient: true,
+      score: 20,
+    });
+    const skill = characters.updateSkill(characterId, "arcana", { proficiencyLevel: 1 });
+    const armour = characters.updateArmourClassSource(characterId, "ac_lynott_enhanced_defence", {
+      label: "Enhanced Defence",
+      notes: "Improved infusion.",
+      value: 2,
+    });
+    const sense = characters.updateSense(characterId, "sense_lynott_darkvision", {
+      label: "Darkvision",
+      value: "90 ft",
+    });
+    const defence = characters.updateDefence(characterId, "defence_lynott_resistances", {
+      detail: "Fire while shielded.",
+      label: "Resistances",
+    });
+    const proficiency = characters.updateProficiency(
+      characterId,
+      "proficiency_lynott_disguise_kit",
+      {
+        detail: "Special Operations cover work.",
+        name: "Disguise kit",
+      },
+    );
+
+    expect(summary).toMatchObject({
+      background: "Field Agent",
+      hitPoints: { current: 28, max: 28 },
+      initiative: 2,
+      level: 5,
+      name: "Lynott Undercover",
+      proficiencyBonus: 3,
+      speedFeet: 35,
+    });
+    expect(ability?.abilities.find((candidate) => candidate.ability === "intelligence")).toMatchObject({
+      modifier: 5,
+      saveModifier: 8,
+      score: 20,
+    });
+    expect(skill?.skills.find((candidate) => candidate.skill === "arcana")).toMatchObject({
+      modifier: 8,
+      proficiencyLevel: 1,
+    });
+    expect(armour).toMatchObject({ armourClass: 18 });
+    expect(sense).toMatchObject({ value: "90 ft" });
+    expect(defence).toMatchObject({ detail: "Fire while shielded." });
+    expect(proficiency).toMatchObject({ detail: "Special Operations cover work." });
+  });
+
   test("adds and reactivates custom condition resources", () => {
     runtime = createSqliteDatabase({ path: ":memory:" });
     const characters = runtime.repositories.characterRepository;
@@ -369,7 +437,7 @@ describe("SQLite repositories", () => {
     runtime = createSqliteDatabase({ path: ":memory:" });
     const notes = runtime.repositories.notesRepository;
 
-    expect(notes.listNotesForCharacter("character_lynott_magulbisson", "player")).toEqual([
+    expect(notes.listNotesForCharacter("character_lynott_magulbisson", "player")).toMatchObject([
       {
         body: "Keep the false identities ready and weapons maintained.",
         id: "note_lynott_player",
@@ -377,7 +445,7 @@ describe("SQLite repositories", () => {
         visibility: "player",
       },
     ]);
-    expect(notes.listNotesForCharacter("character_lynott_magulbisson", "game_master")).toEqual([
+    expect(notes.listNotesForCharacter("character_lynott_magulbisson", "game_master")).toMatchObject([
       {
         body: "Keep the false identities ready and weapons maintained.",
         id: "note_lynott_player",
@@ -427,7 +495,7 @@ describe("SQLite repositories", () => {
       id: "note_lynott_gm",
       visibility: "game_master",
     });
-    expect(notes.listNotesForCharacter("character_lynott_magulbisson", "player")).toEqual([
+    expect(notes.listNotesForCharacter("character_lynott_magulbisson", "player")).toMatchObject([
       {
         body: "Updated from the MVP smoke path.",
         id: "note_lynott_player",
@@ -435,6 +503,51 @@ describe("SQLite repositories", () => {
         visibility: "player",
       },
     ]);
+  });
+
+  test("creates updates and deletes notes with role visibility", () => {
+    runtime = createSqliteDatabase({ path: ":memory:" });
+    const notes = runtime.repositories.notesRepository;
+
+    const created = notes.createNote({
+      authorUserId: "user_lynott_player",
+      body: "A new player note.",
+      characterId: "character_lynott_magulbisson",
+      title: "Field note",
+      visibility: "player",
+    });
+    const updated = notes.updateNote(
+      "character_lynott_magulbisson",
+      created.id,
+      "player",
+      { body: "Updated player note.", title: "Updated field note" },
+    );
+    const gmOnly = notes.createNote({
+      authorUserId: "user_game_master",
+      body: "GM-only note.",
+      characterId: "character_lynott_magulbisson",
+      title: "Private prep",
+      visibility: "game_master",
+    });
+    const blockedDelete = notes.deleteNote("character_lynott_magulbisson", gmOnly.id, "player");
+    const gmDelete = notes.deleteNote("character_lynott_magulbisson", gmOnly.id, "game_master");
+
+    expect(created).toMatchObject({
+      authorUserId: "user_lynott_player",
+      body: "A new player note.",
+      title: "Field note",
+      visibility: "player",
+    });
+    expect(updated).toMatchObject({
+      body: "Updated player note.",
+      title: "Updated field note",
+      visibility: "player",
+    });
+    expect(blockedDelete).toBeFalse();
+    expect(gmDelete).toBeTrue();
+    expect(notes.listNotesForCharacter("character_lynott_magulbisson", "player")).toContainEqual(
+      expect.objectContaining({ body: "Updated player note.", title: "Updated field note" }),
+    );
   });
 
   test("reads campaign and starter rules references", () => {
@@ -621,17 +734,83 @@ describe("SQLite repositories", () => {
     ]);
   });
 
+  test("creates manual characters with stable slugs and renderable defaults", () => {
+    runtime = createSqliteDatabase({ path: ":memory:" });
+    const characters = runtime.repositories.characterRepository;
+    const first = characters.createCharacter({
+      background: "Guide",
+      campaignId: "campaign_rovnost_shadows",
+      className: "Ranger",
+      hitPointMax: 12,
+      level: 1,
+      name: "Ash Vale",
+      ownerUserId: "user_mira_player",
+      species: "Human",
+      subclassName: null,
+    });
+    const second = characters.createCharacter({
+      background: "Guide",
+      campaignId: "campaign_rovnost_shadows",
+      className: "Ranger",
+      hitPointMax: 12,
+      level: 1,
+      name: "Ash Vale",
+      ownerUserId: "user_mira_player",
+      species: "Human",
+      subclassName: "Gloom Stalker",
+    });
+
+    expect(first).toMatchObject({
+      armourClass: 10,
+      hitPoints: { current: 12, max: 12, temporary: 0 },
+      level: 1,
+      name: "Ash Vale",
+      slug: "ash_vale",
+    });
+    expect(second.slug).toBe("ash_vale-2");
+    expect(first.abilities).toHaveLength(6);
+    expect(first.skills).toHaveLength(18);
+    expect(first.classes).toEqual([
+      {
+        className: "Ranger",
+        hitDice: "1d8",
+        level: 1,
+        spellcastingAbility: null,
+        subclassName: null,
+      },
+    ]);
+    expect(characters.listResources(first.id).map((resource) => resource.key)).toEqual([
+      "hit_points",
+      "temporary_hit_points",
+      "inspiration",
+      "hit_dice_d8",
+    ]);
+    expect(characters.listCharactersForPlayer("user_mira_player").map((character) => character.slug))
+      .toContain("ash_vale");
+  });
+
   test("filters seeded wiki pages, image assets, sessions, and factions by campaign visibility", () => {
     runtime = createSqliteDatabase({ path: ":memory:" });
     const content = runtime.repositories.campaignContentRepository;
     const campaignId = "campaign_rovnost_shadows";
 
-    expect(content.listWikiPagesForCampaign(campaignId, "player").map((page) => page.slug)).toEqual(
-      ["rovnost-shadows-overview"],
-    );
+    expect(content.listWikiPagesForCampaign(campaignId, "player").map((page) => page.slug)).toEqual([
+      "astril-map",
+      "factions-guide",
+      "opening-teaser",
+      "rovnost-shadows-overview",
+      "session-zero-kit",
+    ]);
     expect(
       content.listWikiPagesForCampaign(campaignId, "game_master").map((page) => page.slug),
-    ).toEqual(["rovnost-shadows-overview", "gm-dossier"]);
+    ).toEqual([
+      "astril-map",
+      "factions-guide",
+      "opening-teaser",
+      "rovnost-shadows-overview",
+      "session-zero-kit",
+      "gm-dossier",
+    ]);
     expect(content.getWikiPageBySlug(campaignId, "gm-dossier", "player")).toBeNull();
     expect(content.getWikiPageBySlug(campaignId, "gm-dossier", "game_master")).toMatchObject({
       sourceTitle: "Rovnost GM dossier",
@@ -641,13 +820,31 @@ describe("SQLite repositories", () => {
 
     expect(
       content.listImageAssetsForCampaign(campaignId, "player").map((asset) => asset.storageKey),
-    ).toEqual(["campaigns/rovnost-shadows/cover.png"]);
+    ).toEqual([
+      "campaigns/rovnost-shadows/astril-map.webp",
+      "campaigns/rovnost-shadows/cover.png",
+      "campaigns/rovnost-shadows/faction-sigils.png",
+      "campaigns/rovnost-shadows/skywright-sigil.png",
+    ]);
     expect(
       content.listImageAssetsForCampaign(campaignId, "game_master").map((asset) => asset.storageKey),
     ).toEqual([
+      "campaigns/rovnost-shadows/astril-map.webp",
       "campaigns/rovnost-shadows/cover.png",
+      "campaigns/rovnost-shadows/faction-sigils.png",
       "campaigns/rovnost-shadows/magister-vallen.png",
+      "campaigns/rovnost-shadows/skywright-sigil.png",
     ]);
+    expect(
+      content
+        .listImageAssetsForWikiPage(campaignId, "wiki_rovnost_factions", "inline", "player")
+        .map((asset) => asset.id),
+    ).toEqual(["asset_skywright_sigil"]);
+    expect(
+      content
+        .listImageAssetsForWikiPage(campaignId, "wiki_rovnost_factions", "gallery", "player")
+        .map((asset) => asset.id),
+    ).toEqual(["asset_rovnost_factions"]);
 
     expect(content.listSessionsForCampaign(campaignId, "player").map((session) => session.slug)).toEqual([
       "session-zero",
@@ -655,6 +852,40 @@ describe("SQLite repositories", () => {
     expect(
       content.listSessionsForCampaign(campaignId, "game_master").map((session) => session.slug),
     ).toEqual(["session-zero", "gm-fronts"]);
+
+    const createdSession = content.createSession({
+      body: "GM prep body.",
+      campaignId,
+      createdByUserId: "user_game_master",
+      sessionDate: "2026-05-20",
+      summary: "GM prep.",
+      title: "Planning Session",
+      visibility: "game_master",
+    });
+    const updatedSession = content.updateSession(campaignId, createdSession.id, {
+      body: "Player recap body.",
+      sessionDate: "2026-05-21",
+      summary: "Player recap.",
+      title: "Planning Session Recap",
+      visibility: "player",
+    });
+
+    expect(createdSession).toMatchObject({
+      createdByUserId: "user_game_master",
+      slug: "planning-session",
+      visibility: "game_master",
+    });
+    expect(updatedSession).toMatchObject({
+      body: "Player recap body.",
+      sessionDate: "2026-05-21",
+      summary: "Player recap.",
+      title: "Planning Session Recap",
+      visibility: "player",
+    });
+    expect(content.getSessionBySlug(campaignId, "planning-session", "player")).toMatchObject({
+      title: "Planning Session Recap",
+    });
+    expect(content.deleteSession(campaignId, createdSession.id)).toBeTrue();
 
     const factions = content.listFactionsForCampaign(campaignId);
     expect(factions.map((faction) => faction.name)).toEqual([
@@ -666,13 +897,70 @@ describe("SQLite repositories", () => {
       "Skywright Guild",
     ]);
     expect(factions.find((faction) => faction.slug === "discontents")).toMatchObject({
+      connections: ["Strike organiser", "Safehouse keeper", "Sympathetic courier"],
+      motto: "No city owns the hands that built it.",
       playerPrompt: "Who in the factory districts still trusts you?",
       rumours: ["They can hide someone for a night, but not for free."],
+      wikiPageSlug: "factions-guide",
     });
     expect(content.getCharacterFactionChoice("character_lynott_magulbisson")).toMatchObject({
       characterId: "character_lynott_magulbisson",
       factionName: "Discontents",
       factionSlug: "discontents",
     });
+    expect(
+      content.updateCharacterFactionChoice(
+        "character_lynott_magulbisson",
+        "faction_tidebound",
+        "The canal crews know Lynott's old routes.",
+      ),
+    ).toMatchObject({
+      connectionNote: "The canal crews know Lynott's old routes.",
+      factionName: "Tidebound",
+      factionSlug: "tidebound",
+    });
+    expect(
+      content.updateCharacterFactionChoice(
+        "character_lynott_magulbisson",
+        "missing_faction",
+        "Nope.",
+      ),
+    ).toBeNull();
+    runtime.database.run(
+      "insert into campaigns (id, slug, name, gm_user_id) values (?, ?, ?, ?)",
+      ["campaign_elsewhere", "elsewhere", "Elsewhere", "user_game_master"],
+    );
+    runtime.database.run(
+      "insert into campaign_factions (id, campaign_id, slug, name) values (?, ?, ?, ?)",
+      ["faction_elsewhere", "campaign_elsewhere", "elsewhere", "Elsewhere"],
+    );
+    expect(
+      content.updateCharacterFactionChoice(
+        "character_lynott_magulbisson",
+        "faction_elsewhere",
+        "Wrong campaign.",
+      ),
+    ).toBeNull();
+    expect(
+      content.updateCharacterFactionChoice(
+        "character_lynott_magulbisson",
+        null,
+        "Keeps contacts informal.",
+      ),
+    ).toEqual({
+      characterId: "character_lynott_magulbisson",
+      connectionNote: "Keeps contacts informal.",
+      factionId: null,
+      factionName: null,
+      factionSlug: null,
+    });
+    expect(content.getCharacterFactionChoice("character_lynott_magulbisson")).toEqual({
+      characterId: "character_lynott_magulbisson",
+      connectionNote: "Keeps contacts informal.",
+      factionId: null,
+      factionName: null,
+      factionSlug: null,
+    });
+    expect(content.updateCharacterFactionChoice("missing_character", null, "Nope.")).toBeNull();
   });
 });

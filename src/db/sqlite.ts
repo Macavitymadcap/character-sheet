@@ -1,4 +1,6 @@
 import { Database } from "bun:sqlite";
+import { randomUUID } from "node:crypto";
+import { abilityModifier, armourClassTotal, savingThrowModifier, skillModifier } from "../characters/calculations";
 import type {
   AbilityName,
   ArmourClassSource,
@@ -18,6 +20,7 @@ import type {
   CharacterAccessContext,
   CharacterAbility,
   CharacterBackgroundEntry,
+  CreateCharacterInput,
   CharacterDefence,
   CharacterEquipment,
   CharacterFactionChoice,
@@ -147,6 +150,7 @@ interface CharacterSkillRow {
 }
 
 interface ArmourClassSourceRow {
+  id: string;
   label: string;
   notes: string;
   value: number;
@@ -155,16 +159,19 @@ interface ArmourClassSourceRow {
 interface CharacterDefenceRow {
   defence_type: CharacterDefence["type"];
   detail: string;
+  id: string;
   label: string;
 }
 
 interface CharacterProficiencyRow {
   category: CharacterProficiency["category"];
   detail: string;
+  id: string;
   name: string;
 }
 
 interface CharacterSenseRow {
+  id: string;
   label: string;
   value: string;
 }
@@ -195,9 +202,12 @@ interface CharacterBackgroundEntryRow {
 }
 
 interface CharacterNoteRow {
+  author_user_id: string;
   body: string;
+  created_at: string;
   id: string;
   title: string;
+  updated_at: string;
   visibility: CharacterNote["visibility"];
 }
 
@@ -217,6 +227,7 @@ interface CampaignMemberRow {
 interface CampaignWikiPageRow {
   body_markdown: string;
   campaign_id: string;
+  cover_image_asset_id: string | null;
   id: string;
   page_type: WikiPageType;
   slug: string;
@@ -236,6 +247,7 @@ interface CampaignImageAssetRow {
   id: string;
   mime_type: string;
   storage_key: string;
+  title: string;
   visibility: CampaignContentVisibility;
   width: number | null;
 }
@@ -243,33 +255,39 @@ interface CampaignImageAssetRow {
 interface CampaignSessionRecordRow {
   body: string;
   campaign_id: string;
+  created_at: string;
   created_by_user_id: string | null;
   id: string;
   session_date: string | null;
   slug: string;
   summary: string;
   title: string;
+  updated_at: string;
   visibility: CampaignContentVisibility;
 }
 
 interface CampaignFactionRow {
   campaign_id: string;
+  connections_json: string;
   id: string;
   image_asset_id: string | null;
+  motto: string;
   name: string;
   player_prompt: string;
   public_reputation: string;
   rumours_json: string;
   slug: string;
   summary: string;
+  wiki_page_slug: string | null;
+  wiki_page_title: string | null;
 }
 
 interface CharacterFactionChoiceRow {
   character_id: string;
   connection_note: string;
-  faction_id: string;
-  faction_name: string;
-  faction_slug: string;
+  faction_id: string | null;
+  faction_name: string | null;
+  faction_slug: string | null;
 }
 
 interface RuleLinkRow {
@@ -318,6 +336,36 @@ interface CreateSqliteDatabaseOptions {
   path?: string;
   seed?: boolean;
 }
+
+const abilityNames: AbilityName[] = [
+  "strength",
+  "dexterity",
+  "constitution",
+  "intelligence",
+  "wisdom",
+  "charisma",
+];
+
+const defaultSkills: Array<{ ability: AbilityName; skill: string }> = [
+  { ability: "dexterity", skill: "acrobatics" },
+  { ability: "wisdom", skill: "animal handling" },
+  { ability: "intelligence", skill: "arcana" },
+  { ability: "strength", skill: "athletics" },
+  { ability: "charisma", skill: "deception" },
+  { ability: "intelligence", skill: "history" },
+  { ability: "wisdom", skill: "insight" },
+  { ability: "charisma", skill: "intimidation" },
+  { ability: "intelligence", skill: "investigation" },
+  { ability: "wisdom", skill: "medicine" },
+  { ability: "intelligence", skill: "nature" },
+  { ability: "wisdom", skill: "perception" },
+  { ability: "charisma", skill: "performance" },
+  { ability: "charisma", skill: "persuasion" },
+  { ability: "intelligence", skill: "religion" },
+  { ability: "dexterity", skill: "sleight of hand" },
+  { ability: "dexterity", skill: "stealth" },
+  { ability: "wisdom", skill: "survival" },
+];
 
 export const createSqliteDatabase = ({
   path = "character-sheet.sqlite3",
@@ -612,6 +660,124 @@ class SqliteAuthRepository implements AuthRepository {
 class SqliteCharacterRepository implements CharacterRepository {
   constructor(private readonly database: Database) {}
 
+  createCharacter(input: CreateCharacterInput): CharacterSheetReadModel {
+    const name = input.name.trim();
+    const species = input.species.trim();
+    const background = input.background.trim();
+    const className = input.className.trim();
+    const subclassName = input.subclassName?.trim() || null;
+    const level = Math.max(1, Math.floor(input.level));
+    const hitPointMax = Math.max(1, Math.floor(input.hitPointMax));
+    const characterId = randomUUID();
+    const slug = this.nextSlug(input.campaignId, name);
+    const proficiencyBonus = Math.max(2, Math.ceil(level / 4) + 1);
+
+    const insert = this.database.transaction(() => {
+      this.database.run(
+        `insert into characters (
+          id, slug, owner_user_id, campaign_id, name, species, background, level,
+          proficiency_bonus, armour_class, initiative, speed_ft, hit_point_max,
+          hit_point_current, temporary_hit_points
+        ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, 10, 0, 30, ?, ?, 0)`,
+        [
+          characterId,
+          slug,
+          input.ownerUserId,
+          input.campaignId,
+          name,
+          species,
+          background,
+          level,
+          proficiencyBonus,
+          hitPointMax,
+          hitPointMax,
+        ],
+      );
+      this.database.run(
+        `insert into character_classes (
+          id, character_id, class_name, subclass_name, level, hit_dice, spellcasting_ability
+        ) values (?, ?, ?, ?, ?, '1d8', null)`,
+        [randomUUID(), characterId, className, subclassName, level],
+      );
+
+      for (const ability of abilityNames) {
+        this.database.run(
+          `insert into character_abilities (
+            character_id, ability, score, modifier, save_proficient, save_modifier
+          ) values (?, ?, 10, 0, 0, 0)`,
+          [characterId, ability],
+        );
+      }
+      for (const skill of defaultSkills) {
+        this.database.run(
+          `insert into character_skills (
+            character_id, skill, ability, proficiency_level, modifier
+          ) values (?, ?, ?, 0, 0)`,
+          [characterId, skill.skill, skill.ability],
+        );
+      }
+      this.database.run(
+        `insert into character_senses (id, character_id, label, value, sort_order)
+         values (?, ?, 'Passive perception', '10', 10)`,
+        [randomUUID(), characterId],
+      );
+      this.database.run(
+        `insert into character_armour_class_sources (id, character_id, label, value, notes, sort_order)
+         values (?, ?, 'Unarmoured base', 10, 'Manual character default.', 10)`,
+        [randomUUID(), characterId],
+      );
+
+      const defences: Array<[CharacterDefence["type"], string]> = [
+        ["armour", "Armour"],
+        ["resistance", "Resistances"],
+        ["immunity", "Immunities"],
+        ["condition_immunity", "Condition immunities"],
+      ];
+      defences.forEach(([type, label], index) => {
+        this.database.run(
+          `insert into character_defences (id, character_id, defence_type, label, detail, sort_order)
+           values (?, ?, ?, ?, 'None currently recorded.', ?)`,
+          [randomUUID(), characterId, type, label, index + 1],
+        );
+      });
+
+      this.database.run(
+        `insert into character_resources (id, character_id, resource_key, resource_type, label, current_value, max_value, sort_order)
+         values (?, ?, 'hit_points', 'hit_points', 'Hit points', ?, ?, 10)`,
+        [randomUUID(), characterId, hitPointMax, hitPointMax],
+      );
+      this.database.run(
+        `insert into character_resources (id, character_id, resource_key, resource_type, label, current_value, max_value, sort_order)
+         values (?, ?, 'temporary_hit_points', 'temporary_hit_points', 'Temporary hit points', 0, null, 20)`,
+        [randomUUID(), characterId],
+      );
+      this.database.run(
+        `insert into character_resources (id, character_id, resource_key, resource_type, label, current_value, max_value, sort_order)
+         values (?, ?, 'inspiration', 'inspiration', 'Inspiration', 0, 1, 30)`,
+        [randomUUID(), characterId],
+      );
+      this.database.run(
+        `insert into character_resources (id, character_id, resource_key, resource_type, label, current_value, max_value, sort_order)
+         values (?, ?, 'hit_dice_d8', 'hit_dice', 'Hit dice d8', ?, ?, 40)`,
+        [randomUUID(), characterId, level, level],
+      );
+      this.database.run(
+        `insert into character_equipment (id, character_id, name, category, quantity, equipped, notes)
+         values (?, ?, 'Coin purse', 'money', 0, 0, 'Starting money to be recorded.')`,
+        [randomUUID(), characterId],
+      );
+      this.database.run(
+        `insert into character_background_entries (id, character_id, category, title, body, sort_order)
+         values (?, ?, 'backstory', 'Starting notes', '', 10)`,
+        [randomUUID(), characterId],
+      );
+    });
+
+    insert();
+
+    return this.getSheetById(characterId)!;
+  }
+
   getAccessContext(characterId: string): CharacterAccessContext | null {
     const row = this.database
       .query<CharacterAccessRow, [string]>(
@@ -651,6 +817,24 @@ class SqliteCharacterRepository implements CharacterRepository {
 
   listCharactersForCampaign(campaignId: string): CharacterRosterItem[] {
     return this.listRoster("where characters.campaign_id = ?", [campaignId]);
+  }
+
+  private nextSlug(campaignId: string, name: string): string {
+    const base = slugify(name) || "character";
+    let candidate = base;
+    let suffix = 2;
+    while (
+      this.database
+        .query<{ id: string }, [string, string]>(
+          "select id from characters where campaign_id = ? and slug = ?",
+        )
+        .get(campaignId, candidate)
+    ) {
+      candidate = `${base}-${suffix}`;
+      suffix += 1;
+    }
+
+    return candidate;
   }
 
   private getSheetBy(field: "id" | "slug", value: string): CharacterSheetReadModel | null {
@@ -805,6 +989,204 @@ class SqliteCharacterRepository implements CharacterRepository {
       }));
   }
 
+  updateSheetSummary(
+    characterId: string,
+    patch: {
+      background: string;
+      className: string;
+      hitPointMax: number;
+      initiative: number;
+      level: number;
+      name: string;
+      proficiencyBonus: number;
+      speedFeet: number;
+      species: string;
+      subclassName: string | null;
+    },
+  ): CharacterSheetReadModel | null {
+    const current = this.getSheetById(characterId);
+    if (!current) return null;
+
+    const level = Math.max(1, Math.floor(patch.level));
+    const hitPointMax = Math.max(1, Math.floor(patch.hitPointMax));
+    const proficiencyBonus = Math.max(0, Math.floor(patch.proficiencyBonus));
+    const currentHitPoints = Math.min(current.hitPoints.current, hitPointMax);
+
+    const update = this.database.transaction(() => {
+      this.database.run(
+        `update characters
+         set name = ?, species = ?, background = ?, level = ?, proficiency_bonus = ?,
+           initiative = ?, speed_ft = ?, hit_point_max = ?,
+           hit_point_current = ?
+         where id = ?`,
+        [
+          patch.name.trim(),
+          patch.species.trim(),
+          patch.background.trim(),
+          level,
+          proficiencyBonus,
+          Math.floor(patch.initiative),
+          Math.max(0, Math.floor(patch.speedFeet)),
+          hitPointMax,
+          currentHitPoints,
+          characterId,
+        ],
+      );
+      this.database.run(
+        `update character_resources
+         set max_value = ?, current_value = ?
+         where character_id = ? and resource_type = 'hit_points'`,
+        [hitPointMax, currentHitPoints, characterId],
+      );
+      this.database.run(
+        `update character_classes
+         set class_name = ?, subclass_name = ?, level = ?
+         where id = (
+           select id from character_classes where character_id = ? order by class_name limit 1
+         )`,
+        [patch.className.trim(), patch.subclassName?.trim() || null, level, characterId],
+      );
+      this.recalculateDerivedStats(characterId, proficiencyBonus);
+    });
+
+    update();
+
+    return this.getSheetById(characterId);
+  }
+
+  updateAbility(
+    characterId: string,
+    ability: AbilityName,
+    patch: { saveProficient: boolean; score: number },
+  ): CharacterSheetReadModel | null {
+    const sheet = this.getSheetById(characterId);
+    if (!sheet) return null;
+
+    const score = Math.max(1, Math.min(30, Math.floor(patch.score)));
+    const modifier = abilityModifier(score);
+    const saveModifier = savingThrowModifier({
+      modifier,
+      proficiencyBonus: sheet.proficiencyBonus,
+      proficient: patch.saveProficient,
+    });
+
+    this.database.run(
+      `update character_abilities
+       set score = ?, modifier = ?, save_proficient = ?, save_modifier = ?
+       where character_id = ? and ability = ?`,
+      [score, modifier, patch.saveProficient ? 1 : 0, saveModifier, characterId, ability],
+    );
+    this.recalculateSkillsForAbility(characterId, ability, modifier, sheet.proficiencyBonus);
+
+    return this.getSheetById(characterId);
+  }
+
+  updateSkill(
+    characterId: string,
+    skill: string,
+    patch: { proficiencyLevel: number },
+  ): CharacterSheetReadModel | null {
+    const sheet = this.getSheetById(characterId);
+    if (!sheet) return null;
+
+    const currentSkill = sheet.skills.find((candidate) => candidate.skill === skill);
+    if (!currentSkill) return null;
+
+    const ability = sheet.abilities.find((candidate) => candidate.ability === currentSkill.ability);
+    if (!ability) return null;
+
+    const proficiencyLevel = Math.max(0, Math.min(2, Math.floor(patch.proficiencyLevel)));
+    this.database.run(
+      `update character_skills
+       set proficiency_level = ?, modifier = ?
+       where character_id = ? and skill = ?`,
+      [
+        proficiencyLevel,
+        skillModifier({
+          modifier: ability.modifier,
+          proficiencyBonus: sheet.proficiencyBonus,
+          proficiencyLevel,
+        }),
+        characterId,
+        skill,
+      ],
+    );
+
+    return this.getSheetById(characterId);
+  }
+
+  updateSense(
+    characterId: string,
+    senseId: string,
+    patch: { label: string; value: string },
+  ): CharacterSense | null {
+    this.database.run(
+      "update character_senses set label = ?, value = ? where character_id = ? and id = ?",
+      [patch.label.trim(), patch.value.trim(), characterId, senseId],
+    );
+
+    return this.listSenses(characterId).find((sense) => sense.id === senseId) ?? null;
+  }
+
+  updateArmourClassSource(
+    characterId: string,
+    sourceId: string,
+    patch: { label: string; notes: string; value: number },
+  ): CharacterSheetReadModel | null {
+    const existing = this.listArmourClassBreakdown(characterId).find((source) => source.id === sourceId);
+    if (!existing) return null;
+
+    this.database.run(
+      `update character_armour_class_sources
+       set label = ?, value = ?, notes = ?
+       where character_id = ? and id = ?`,
+      [patch.label.trim(), Math.floor(patch.value), patch.notes.trim(), characterId, sourceId],
+    );
+    const total = armourClassTotal(this.listArmourClassBreakdown(characterId));
+    this.database.run("update characters set armour_class = ? where id = ?", [total, characterId]);
+
+    return this.getSheetById(characterId);
+  }
+
+  updateDefence(
+    characterId: string,
+    defenceId: string,
+    patch: { detail: string; label: string },
+  ): CharacterDefence | null {
+    this.database.run(
+      "update character_defences set label = ?, detail = ? where character_id = ? and id = ?",
+      [patch.label.trim(), patch.detail.trim(), characterId, defenceId],
+    );
+
+    return this.listDefences(characterId).find((defence) => defence.id === defenceId) ?? null;
+  }
+
+  updateProficiency(
+    characterId: string,
+    proficiencyId: string,
+    patch: { detail: string; name: string },
+  ): CharacterProficiency | null {
+    this.database.run(
+      "update character_proficiencies set name = ?, detail = ? where character_id = ? and id = ?",
+      [patch.name.trim(), patch.detail.trim(), characterId, proficiencyId],
+    );
+
+    return this.listProficiencies(characterId).find((proficiency) => proficiency.id === proficiencyId) ?? null;
+  }
+
+  updateBackgroundEntry(
+    characterId: string,
+    entryId: string,
+    patch: { body: string; title: string },
+  ): CharacterBackgroundEntry | null {
+    this.database.run(
+      "update character_background_entries set title = ?, body = ? where character_id = ? and id = ?",
+      [patch.title.trim(), patch.body.trim(), characterId, entryId],
+    );
+
+    return this.listBackgroundEntries(characterId).find((entry) => entry.id === entryId) ?? null;
+  }
+
   updateResourceCurrent(
     characterId: string,
     resourceId: string,
@@ -839,7 +1221,7 @@ class SqliteCharacterRepository implements CharacterRepository {
   updateEquipmentItem(
     characterId: string,
     equipmentId: string,
-    patch: { equipped?: boolean; quantity?: number },
+    patch: { category?: string; equipped?: boolean; name?: string; notes?: string; quantity?: number },
   ): CharacterEquipment | null {
     const equipment = this.getEquipment(characterId, equipmentId);
     if (!equipment) return null;
@@ -847,10 +1229,15 @@ class SqliteCharacterRepository implements CharacterRepository {
     const nextQuantity =
       patch.quantity === undefined ? equipment.quantity : Math.max(0, patch.quantity);
     const nextEquipped = patch.equipped === undefined ? equipment.equipped : patch.equipped;
+    const nextName = patch.name === undefined ? equipment.name : patch.name.trim();
+    const nextCategory = patch.category === undefined ? equipment.category : patch.category.trim();
+    const nextNotes = patch.notes === undefined ? equipment.notes : patch.notes.trim();
 
     this.database.run(
-      "update character_equipment set quantity = ?, equipped = ? where character_id = ? and id = ?",
-      [nextQuantity, nextEquipped ? 1 : 0, characterId, equipmentId],
+      `update character_equipment
+       set name = ?, category = ?, quantity = ?, equipped = ?, notes = ?
+       where character_id = ? and id = ?`,
+      [nextName, nextCategory, nextQuantity, nextEquipped ? 1 : 0, nextNotes, characterId, equipmentId],
     );
 
     return this.getEquipment(characterId, equipmentId);
@@ -957,13 +1344,14 @@ class SqliteCharacterRepository implements CharacterRepository {
   private listArmourClassBreakdown(characterId: string): ArmourClassSource[] {
     return this.database
       .query<ArmourClassSourceRow, [string]>(
-        `select label, value, notes
+        `select id, label, value, notes
          from character_armour_class_sources
          where character_id = ?
          order by sort_order, label`,
       )
       .all(characterId)
       .map((row) => ({
+        id: row.id,
         label: row.label,
         notes: row.notes,
         value: row.value,
@@ -973,7 +1361,7 @@ class SqliteCharacterRepository implements CharacterRepository {
   private listDefences(characterId: string): CharacterDefence[] {
     return this.database
       .query<CharacterDefenceRow, [string]>(
-        `select defence_type, label, detail
+        `select id, defence_type, label, detail
          from character_defences
          where character_id = ?
          order by sort_order, label`,
@@ -981,6 +1369,7 @@ class SqliteCharacterRepository implements CharacterRepository {
       .all(characterId)
       .map((row) => ({
         detail: row.detail,
+        id: row.id,
         label: row.label,
         type: row.defence_type,
       }));
@@ -989,7 +1378,7 @@ class SqliteCharacterRepository implements CharacterRepository {
   private listProficiencies(characterId: string): CharacterProficiency[] {
     return this.database
       .query<CharacterProficiencyRow, [string]>(
-        `select category, name, detail
+        `select id, category, name, detail
          from character_proficiencies
          where character_id = ?
          order by sort_order, name`,
@@ -998,6 +1387,7 @@ class SqliteCharacterRepository implements CharacterRepository {
       .map((row) => ({
         category: row.category,
         detail: row.detail,
+        id: row.id,
         name: row.name,
       }));
   }
@@ -1005,39 +1395,145 @@ class SqliteCharacterRepository implements CharacterRepository {
   private listSenses(characterId: string): CharacterSense[] {
     return this.database
       .query<CharacterSenseRow, [string]>(
-        `select label, value
+        `select id, label, value
          from character_senses
          where character_id = ?
          order by sort_order, label`,
       )
       .all(characterId)
       .map((row) => ({
+        id: row.id,
         label: row.label,
         value: row.value,
       }));
+  }
+
+  private recalculateDerivedStats(characterId: string, proficiencyBonus: number) {
+    for (const ability of this.listAbilities(characterId)) {
+      this.database.run(
+        "update character_abilities set save_modifier = ? where character_id = ? and ability = ?",
+        [
+          savingThrowModifier({
+            modifier: ability.modifier,
+            proficiencyBonus,
+            proficient: ability.saveProficient,
+          }),
+          characterId,
+          ability.ability,
+        ],
+      );
+      this.recalculateSkillsForAbility(characterId, ability.ability, ability.modifier, proficiencyBonus);
+    }
+  }
+
+  private recalculateSkillsForAbility(
+    characterId: string,
+    ability: AbilityName,
+    modifier: number,
+    proficiencyBonus: number,
+  ) {
+    const skills = this.listSkills(characterId).filter((skill) => skill.ability === ability);
+    for (const skill of skills) {
+      this.database.run(
+        "update character_skills set modifier = ? where character_id = ? and skill = ?",
+        [
+          skillModifier({
+            modifier,
+            proficiencyBonus,
+            proficiencyLevel: skill.proficiencyLevel,
+          }),
+          characterId,
+          skill.skill,
+        ],
+      );
+    }
   }
 }
 
 class SqliteNotesRepository implements NotesRepository {
   constructor(private readonly database: Database) {}
 
+  createNote(input: {
+    authorUserId: string;
+    body: string;
+    characterId: string;
+    title: string;
+    visibility: CharacterNote["visibility"];
+  }): CharacterNote {
+    const id = `note_${randomUUID()}`;
+    this.database
+      .query<never, [string, string, string, string, string, string]>(
+        `insert into character_notes (id, character_id, author_user_id, visibility, title, body)
+         values (?, ?, ?, ?, ?, ?)`,
+      )
+      .run(id, input.characterId, input.authorUserId, input.visibility, input.title, input.body);
+
+    const row = this.database
+      .query<CharacterNoteRow, [string, string]>(
+        `select id, author_user_id, title, body, visibility, created_at, updated_at
+         from character_notes
+         where character_id = ? and id = ?`,
+      )
+      .get(input.characterId, id);
+    if (!row) throw new Error(`Created note ${id} could not be read.`);
+
+    return toCharacterNote(row);
+  }
+
+  deleteNote(characterId: string, noteId: string, viewerRole: UserRole): boolean {
+    const result = this.database
+      .query<never, [string, string, UserRole]>(
+        `delete from character_notes
+         where character_id = ?
+           and id = ?
+           and (? != 'player' or visibility = 'player')`,
+      )
+      .run(characterId, noteId, viewerRole);
+
+    return result.changes > 0;
+  }
+
   listNotesForCharacter(characterId: string, viewerRole: UserRole): CharacterNote[] {
     const rows = this.database
       .query<CharacterNoteRow, [string, UserRole]>(
-        `select id, title, body, visibility
+        `select id, author_user_id, title, body, visibility, created_at, updated_at
          from character_notes
          where character_id = ?
            and (? != 'player' or visibility = 'player')
-         order by case visibility when 'player' then 1 else 2 end, title`,
+         order by created_at, case visibility when 'player' then 1 else 2 end, title`,
       )
       .all(characterId, viewerRole);
 
-    return rows.map((row) => ({
-      body: row.body,
-      id: row.id,
-      title: row.title,
-      visibility: row.visibility,
-    }));
+    return rows.map(toCharacterNote);
+  }
+
+  updateNote(
+    characterId: string,
+    noteId: string,
+    viewerRole: UserRole,
+    patch: { body: string; title: string },
+  ): CharacterNote | null {
+    this.database
+      .query<never, [string, string, string, string, UserRole]>(
+        `update character_notes
+         set title = ?, body = ?, updated_at = CURRENT_TIMESTAMP
+         where character_id = ?
+           and id = ?
+           and (? != 'player' or visibility = 'player')`,
+      )
+      .run(patch.title, patch.body, characterId, noteId, viewerRole);
+
+    const row = this.database
+      .query<CharacterNoteRow, [string, string, UserRole]>(
+        `select id, author_user_id, title, body, visibility, created_at, updated_at
+         from character_notes
+         where character_id = ?
+           and id = ?
+           and (? != 'player' or visibility = 'player')`,
+      )
+      .get(characterId, noteId, viewerRole);
+
+    return row ? toCharacterNote(row) : null;
   }
 
   updateNoteBody(
@@ -1046,45 +1542,153 @@ class SqliteNotesRepository implements NotesRepository {
     viewerRole: UserRole,
     body: string,
   ): CharacterNote | null {
-    this.database
-      .query<never, [string, string, string, UserRole]>(
-        `update character_notes
-         set body = ?
-         where character_id = ?
-           and id = ?
-           and (? != 'player' or visibility = 'player')`,
-      )
-      .run(body, characterId, noteId, viewerRole);
-
     const row = this.database
       .query<CharacterNoteRow, [string, string, UserRole]>(
-        `select id, title, body, visibility
+        `select id, author_user_id, title, body, visibility, created_at, updated_at
          from character_notes
          where character_id = ?
            and id = ?
            and (? != 'player' or visibility = 'player')`,
       )
       .get(characterId, noteId, viewerRole);
+    if (!row) return null;
 
-    return row
-      ? {
-          body: row.body,
-          id: row.id,
-          title: row.title,
-          visibility: row.visibility,
-        }
-      : null;
+    return this.updateNote(characterId, noteId, viewerRole, { body, title: row.title });
   }
 }
 
 class SqliteCampaignContentRepository implements CampaignContentRepository {
   constructor(private readonly database: Database) {}
 
+  createImageAsset(input: {
+    altText: string;
+    byteSize: number;
+    campaignId: string;
+    caption: string;
+    height: number | null;
+    mimeType: string;
+    storageKey: string;
+    title: string;
+    visibility: CampaignContentVisibility;
+    width: number | null;
+  }): CampaignImageAsset {
+    const id = `campaign_image_asset_${randomUUID()}`;
+    this.database
+      .query<never, [string, string, string, string, string, number, number | null, number | null, string, string, CampaignContentVisibility]>(
+        `insert into campaign_image_assets (
+          id, campaign_id, title, storage_key, mime_type, byte_size, width, height, alt_text, caption, visibility
+        ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .run(
+        id,
+        input.campaignId,
+        input.title,
+        input.storageKey,
+        input.mimeType,
+        input.byteSize,
+        input.width,
+        input.height,
+        input.altText,
+        input.caption,
+        input.visibility,
+      );
+
+    const asset = this.getImageAssetById(input.campaignId, id, "game_master");
+    if (!asset) throw new Error(`Created image asset ${id} could not be read.`);
+
+    return asset;
+  }
+
+  createWikiPage(input: {
+    bodyMarkdown: string;
+    campaignId: string;
+    coverImageAssetId: string | null;
+    pageType: WikiPageType;
+    sourcePath: string | null;
+    sourceTitle: string | null;
+    tags: string[];
+    title: string;
+    visibility: CampaignContentVisibility;
+  }): CampaignWikiPage {
+    const id = `campaign_wiki_${randomUUID()}`;
+    const slug = uniqueCampaignWikiSlug(this.database, input.campaignId, input.title);
+    this.database
+      .query<never, [string, string, string, string, WikiPageType, string, CampaignContentVisibility, string, string | null, string | null, string | null]>(
+        `insert into campaign_wiki_pages (
+          id, campaign_id, slug, title, page_type, tags_json, visibility, body_markdown,
+          cover_image_asset_id, source_title, source_path
+        ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .run(
+        id,
+        input.campaignId,
+        slug,
+        input.title,
+        input.pageType,
+        JSON.stringify(input.tags),
+        input.visibility,
+        input.bodyMarkdown,
+        input.coverImageAssetId,
+        input.sourceTitle,
+        input.sourcePath,
+      );
+
+    const page = this.getWikiPageBySlug(input.campaignId, slug, "game_master");
+    if (!page) throw new Error(`Created wiki page ${id} could not be read.`);
+
+    return page;
+  }
+
+  createSession(input: {
+    body: string;
+    campaignId: string;
+    createdByUserId: string;
+    sessionDate: string | null;
+    summary: string;
+    title: string;
+    visibility: CampaignContentVisibility;
+  }): CampaignSessionRecord {
+    const id = `campaign_session_${randomUUID()}`;
+    const slug = uniqueCampaignSessionSlug(this.database, input.campaignId, input.title);
+    this.database
+      .query<never, [string, string, string, string, string | null, string, string, string, string]>(
+        `insert into campaign_sessions (
+          id, campaign_id, slug, title, session_date, summary, body, visibility, created_by_user_id
+        ) values (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .run(
+        id,
+        input.campaignId,
+        slug,
+        input.title,
+        input.sessionDate,
+        input.summary,
+        input.body,
+        input.visibility,
+        input.createdByUserId,
+      );
+
+    const row = this.getSessionRowById(input.campaignId, id);
+    if (!row) throw new Error(`Created campaign session ${id} could not be read.`);
+
+    return toCampaignSessionRecord(row);
+  }
+
+  deleteSession(campaignId: string, sessionId: string): boolean {
+    const result = this.database
+      .query<never, [string, string]>(
+        "delete from campaign_sessions where campaign_id = ? and id = ?",
+      )
+      .run(campaignId, sessionId);
+
+    return result.changes > 0;
+  }
+
   listWikiPagesForCampaign(campaignId: string, viewerRole: UserRole): CampaignWikiPage[] {
     return this.database
       .query<CampaignWikiPageRow, [string, number]>(
         `select id, campaign_id, slug, title, page_type, tags_json, visibility, body_markdown,
-          source_title, source_path
+          cover_image_asset_id, source_title, source_path
          from campaign_wiki_pages
          where campaign_id = ?
            and (? = 1 or visibility = 'player')
@@ -1102,7 +1706,7 @@ class SqliteCampaignContentRepository implements CampaignContentRepository {
     const row = this.database
       .query<CampaignWikiPageRow, [string, string, number]>(
         `select id, campaign_id, slug, title, page_type, tags_json, visibility, body_markdown,
-          source_title, source_path
+          cover_image_asset_id, source_title, source_path
          from campaign_wiki_pages
          where campaign_id = ?
            and slug = ?
@@ -1119,7 +1723,7 @@ class SqliteCampaignContentRepository implements CampaignContentRepository {
   ): CampaignImageAsset[] {
     return this.database
       .query<CampaignImageAssetRow, [string, number]>(
-        `select id, campaign_id, storage_key, mime_type, byte_size, width, height, alt_text,
+        `select id, campaign_id, title, storage_key, mime_type, byte_size, width, height, alt_text,
           caption, visibility
          from campaign_image_assets
          where campaign_id = ?
@@ -1130,6 +1734,47 @@ class SqliteCampaignContentRepository implements CampaignContentRepository {
       .map(toCampaignImageAsset);
   }
 
+  getImageAssetById(
+    campaignId: string,
+    assetId: string,
+    viewerRole: UserRole,
+  ): CampaignImageAsset | null {
+    const row = this.database
+      .query<CampaignImageAssetRow, [string, string, number]>(
+        `select id, campaign_id, title, storage_key, mime_type, byte_size, width, height, alt_text,
+          caption, visibility
+         from campaign_image_assets
+         where campaign_id = ?
+           and id = ?
+           and (? = 1 or visibility = 'player')`,
+      )
+      .get(campaignId, assetId, canSeeGameMasterContent(viewerRole));
+
+    return row ? toCampaignImageAsset(row) : null;
+  }
+
+  listImageAssetsForWikiPage(
+    campaignId: string,
+    wikiPageId: string,
+    attachmentType: "gallery" | "inline",
+    viewerRole: UserRole,
+  ): CampaignImageAsset[] {
+    return this.database
+      .query<CampaignImageAssetRow, [string, string, string, number]>(
+        `select a.id, a.campaign_id, a.title, a.storage_key, a.mime_type, a.byte_size,
+          a.width, a.height, a.alt_text, a.caption, a.visibility
+         from campaign_wiki_page_assets wa
+         join campaign_image_assets a on a.id = wa.image_asset_id
+         where a.campaign_id = ?
+           and wa.wiki_page_id = ?
+           and wa.attachment_type = ?
+           and (? = 1 or a.visibility = 'player')
+         order by wa.sort_order, a.title`,
+      )
+      .all(campaignId, wikiPageId, attachmentType, canSeeGameMasterContent(viewerRole))
+      .map(toCampaignImageAsset);
+  }
+
   listSessionsForCampaign(
     campaignId: string,
     viewerRole: UserRole,
@@ -1137,7 +1782,7 @@ class SqliteCampaignContentRepository implements CampaignContentRepository {
     return this.database
       .query<CampaignSessionRecordRow, [string, number]>(
         `select id, campaign_id, slug, title, session_date, summary, body, visibility,
-          created_by_user_id
+          created_by_user_id, created_at, updated_at
          from campaign_sessions
          where campaign_id = ?
            and (? = 1 or visibility = 'player')
@@ -1147,14 +1792,80 @@ class SqliteCampaignContentRepository implements CampaignContentRepository {
       .map(toCampaignSessionRecord);
   }
 
+  getSessionBySlug(
+    campaignId: string,
+    slug: string,
+    viewerRole: UserRole,
+  ): CampaignSessionRecord | null {
+    const row = this.database
+      .query<CampaignSessionRecordRow, [string, string, number]>(
+        `select id, campaign_id, slug, title, session_date, summary, body, visibility,
+          created_by_user_id, created_at, updated_at
+         from campaign_sessions
+         where campaign_id = ?
+           and slug = ?
+           and (? = 1 or visibility = 'player')`,
+      )
+      .get(campaignId, slug, canSeeGameMasterContent(viewerRole));
+
+    return row ? toCampaignSessionRecord(row) : null;
+  }
+
+  updateSession(
+    campaignId: string,
+    sessionId: string,
+    patch: {
+      body: string;
+      sessionDate: string | null;
+      summary: string;
+      title: string;
+      visibility: CampaignContentVisibility;
+    },
+  ): CampaignSessionRecord | null {
+    this.database
+      .query<never, [string, string | null, string, string, CampaignContentVisibility, string, string]>(
+        `update campaign_sessions
+         set title = ?, session_date = ?, summary = ?, body = ?, visibility = ?,
+           updated_at = CURRENT_TIMESTAMP
+         where campaign_id = ? and id = ?`,
+      )
+      .run(
+        patch.title,
+        patch.sessionDate,
+        patch.summary,
+        patch.body,
+        patch.visibility,
+        campaignId,
+        sessionId,
+      );
+
+    const row = this.getSessionRowById(campaignId, sessionId);
+
+    return row ? toCampaignSessionRecord(row) : null;
+  }
+
+  private getSessionRowById(campaignId: string, sessionId: string) {
+    return this.database
+      .query<CampaignSessionRecordRow, [string, string]>(
+        `select id, campaign_id, slug, title, session_date, summary, body, visibility,
+          created_by_user_id, created_at, updated_at
+         from campaign_sessions
+         where campaign_id = ? and id = ?`,
+      )
+      .get(campaignId, sessionId);
+  }
+
   listFactionsForCampaign(campaignId: string): CampaignFaction[] {
     return this.database
       .query<CampaignFactionRow, [string]>(
-        `select id, campaign_id, slug, name, summary, public_reputation, player_prompt,
-          rumours_json, image_asset_id
-         from campaign_factions
-         where campaign_id = ?
-         order by sort_order, name`,
+        `select factions.id, factions.campaign_id, factions.slug, factions.name, factions.motto,
+          factions.summary, factions.public_reputation, factions.player_prompt,
+          factions.connections_json, factions.rumours_json, factions.image_asset_id,
+          wiki.slug as wiki_page_slug, wiki.title as wiki_page_title
+         from campaign_factions factions
+         left join campaign_wiki_pages wiki on wiki.id = factions.wiki_page_id
+         where factions.campaign_id = ?
+         order by factions.sort_order, factions.name`,
       )
       .all(campaignId)
       .map(toCampaignFaction);
@@ -1169,7 +1880,7 @@ class SqliteCampaignContentRepository implements CampaignContentRepository {
           factions.slug as faction_slug,
           factions.name as faction_name
          from character_faction_choices choices
-         inner join campaign_factions factions on factions.id = choices.faction_id
+         left join campaign_factions factions on factions.id = choices.faction_id
          where choices.character_id = ?`,
       )
       .get(characterId);
@@ -1183,6 +1894,43 @@ class SqliteCampaignContentRepository implements CampaignContentRepository {
           factionSlug: row.faction_slug,
         }
       : null;
+  }
+
+  updateCharacterFactionChoice(
+    characterId: string,
+    factionId: string | null,
+    connectionNote: string,
+  ): CharacterFactionChoice | null {
+    if (!this.database.query<{ id: string }, [string]>("select id from characters where id = ?").get(characterId)) {
+      return null;
+    }
+
+    if (factionId !== null) {
+      const faction = this.database
+        .query<{ id: string }, [string]>("select id from campaign_factions where id = ?")
+        .get(factionId);
+      if (!faction) return null;
+    }
+
+    try {
+      this.database
+        .query<never, [string, string | null, string]>(
+          `insert into character_faction_choices (character_id, faction_id, connection_note)
+           values (?, ?, ?)
+           on conflict(character_id) do update set
+             faction_id = excluded.faction_id,
+             connection_note = excluded.connection_note,
+             updated_at = CURRENT_TIMESTAMP`,
+        )
+        .run(characterId, factionId, connectionNote);
+    } catch (error) {
+      if (error instanceof Error && error.message.includes("character and faction must belong")) {
+        return null;
+      }
+      throw error;
+    }
+
+    return this.getCharacterFactionChoice(characterId);
   }
 }
 
@@ -1359,6 +2107,18 @@ function toCharacterEquipment(row: CharacterEquipmentRow): CharacterEquipment {
   };
 }
 
+function toCharacterNote(row: CharacterNoteRow): CharacterNote {
+  return {
+    authorUserId: row.author_user_id,
+    body: row.body,
+    createdAt: row.created_at,
+    id: row.id,
+    title: row.title,
+    updatedAt: row.updated_at,
+    visibility: row.visibility,
+  };
+}
+
 function toCampaignSummary(row: CampaignRow): CampaignSummary {
   return {
     gmUserId: row.gm_user_id,
@@ -1372,6 +2132,7 @@ function toCampaignWikiPage(row: CampaignWikiPageRow): CampaignWikiPage {
   return {
     bodyMarkdown: row.body_markdown,
     campaignId: row.campaign_id,
+    coverImageAssetId: row.cover_image_asset_id,
     id: row.id,
     pageType: row.page_type,
     slug: row.slug,
@@ -1393,6 +2154,7 @@ function toCampaignImageAsset(row: CampaignImageAssetRow): CampaignImageAsset {
     id: row.id,
     mimeType: row.mime_type,
     storageKey: row.storage_key,
+    title: row.title || row.alt_text,
     visibility: row.visibility,
     width: row.width,
   };
@@ -1402,12 +2164,14 @@ function toCampaignSessionRecord(row: CampaignSessionRecordRow): CampaignSession
   return {
     body: row.body,
     campaignId: row.campaign_id,
+    createdAt: row.created_at,
     createdByUserId: row.created_by_user_id,
     id: row.id,
     sessionDate: row.session_date,
     slug: row.slug,
     summary: row.summary,
     title: row.title,
+    updatedAt: row.updated_at,
     visibility: row.visibility,
   };
 }
@@ -1415,14 +2179,18 @@ function toCampaignSessionRecord(row: CampaignSessionRecordRow): CampaignSession
 function toCampaignFaction(row: CampaignFactionRow): CampaignFaction {
   return {
     campaignId: row.campaign_id,
+    connections: parseStringArray(row.connections_json),
     id: row.id,
     imageAssetId: row.image_asset_id,
+    motto: row.motto,
     name: row.name,
     playerPrompt: row.player_prompt,
     publicReputation: row.public_reputation,
     rumours: parseStringArray(row.rumours_json),
     slug: row.slug,
     summary: row.summary,
+    wikiPageSlug: row.wiki_page_slug,
+    wikiPageTitle: row.wiki_page_title,
   };
 }
 
@@ -1456,6 +2224,42 @@ function slugify(value: string) {
     .replace(/^_+|_+$/g, "");
 
   return slug || "custom";
+}
+
+function uniqueCampaignSessionSlug(database: Database, campaignId: string, title: string) {
+  const base = slugify(title).replaceAll("_", "-") || "session";
+  let slug = base;
+  let suffix = 2;
+  while (
+    database
+      .query<{ id: string }, [string, string]>(
+        "select id from campaign_sessions where campaign_id = ? and slug = ?",
+      )
+      .get(campaignId, slug)
+  ) {
+    slug = `${base}-${suffix}`;
+    suffix += 1;
+  }
+
+  return slug;
+}
+
+function uniqueCampaignWikiSlug(database: Database, campaignId: string, title: string) {
+  const base = slugify(title).replaceAll("_", "-") || "wiki-page";
+  let slug = base;
+  let suffix = 2;
+  while (
+    database
+      .query<{ id: string }, [string, string]>(
+        "select id from campaign_wiki_pages where campaign_id = ? and slug = ?",
+      )
+      .get(campaignId, slug)
+  ) {
+    slug = `${base}-${suffix}`;
+    suffix += 1;
+  }
+
+  return slug;
 }
 
 function ruleSourceId(sourceSlug: string) {

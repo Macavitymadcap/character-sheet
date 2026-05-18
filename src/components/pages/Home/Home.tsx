@@ -45,5 +45,5 @@ function getDestination(role: AuthUser["role"]) {
   if (role === "admin") return "/admin";
   if (role === "game_master") return "/campaigns/rovnost-shadows";
 
-  return "/sheet/lynott";
+  return "/characters";
 }

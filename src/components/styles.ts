@@ -17,6 +17,7 @@ import { sheetTabsStyles } from "./organisms/SheetTabs/SheetTabs.styles";
 import { skillsTrainingTabStyles } from "./organisms/SkillsTrainingTab/SkillsTrainingTab.styles";
 import { adminStyles } from "./pages/Admin/Admin.styles";
 import { campaignStyles } from "./pages/Campaign/Campaign.styles";
+import { charactersStyles } from "./pages/Characters/Characters.styles";
 import { homeStyles } from "./pages/Home/Home.styles";
 import { loginStyles } from "./pages/Login/Login.styles";
 import { sheetStyles } from "./pages/Sheet/Sheet.styles";
@@ -43,6 +44,7 @@ export const appStyles = [
   skillsTrainingTabStyles,
   homeStyles,
   campaignStyles,
+  charactersStyles,
   loginStyles,
   adminStyles,
   sheetStyles,

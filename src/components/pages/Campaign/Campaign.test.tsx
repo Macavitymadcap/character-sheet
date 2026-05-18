@@ -14,6 +14,8 @@ describe("CampaignPage", () => {
           name: "Rovnost Shadows",
           slug: "rovnost-shadows",
         }}
+        gameMasterDisplayName="Game Master"
+        imageAssets={[]}
         members={[
           {
             campaignId: "campaign_rovnost_shadows",
@@ -26,7 +28,9 @@ describe("CampaignPage", () => {
             userId: "user_lynott_player",
           },
         ]}
+        sessions={[]}
         user={{ displayName: "Game Master", role: "game_master" }}
+        wikiPages={[]}
       />,
     );
 

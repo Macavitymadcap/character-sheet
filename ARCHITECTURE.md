@@ -50,6 +50,7 @@ export interface AppDependencies {
   appName: string;
   authRepository: AuthRepository;
   authService: AuthService;
+  campaignContentRepository: CampaignContentRepository;
   campaignRepository: CampaignRepository;
   characterRepository: CharacterRepository;
   notesRepository: NotesRepository;
@@ -115,10 +116,21 @@ The MVP page set:
 - `/login` login form using the shared site shell.
 - `/logout` sign-out confirmation page using the shared site shell.
 - `POST /logout` logout route that clears the session and redirects to `/`.
-- `/campaigns/:campaignSlug` read-only Game Master campaign shell for the seeded campaign.
+- `/campaigns/:campaignSlug` campaign shell with player-visible wiki pages and Game Master-only management forms.
+- `/campaigns/:campaignSlug/wiki/:wikiSlug` campaign wiki detail page filtered by player or Game Master visibility.
+- `/campaigns/:campaignSlug/assets/:assetId` protected image asset route backed by app-managed local storage.
+- `POST /campaigns/:campaignSlug/wiki` Game Master wiki page creation route.
+- `POST /campaigns/:campaignSlug/assets` Game Master image upload route for PNG, JPEG, and WebP files.
+- `POST /campaigns/:campaignSlug/sessions` Game Master session creation route.
+- `POST /campaigns/:campaignSlug/sessions/:sessionId` Game Master session update route.
+- `POST /campaigns/:campaignSlug/sessions/:sessionId/delete` Game Master session delete route.
+- `/characters` signed-in player roster and manual character creation.
+- `/campaigns/:campaignSlug/characters` Game Master campaign roster and manual character creation for player members.
 - `/sheet/:characterId` character sheet page.
 - `/sheet/:characterId/tabs/:tabId` sheet tab panel fragment route for HTMX swaps.
-- `PATCH /sheet/:characterId/notes/:noteId` seeded note save route that returns the notes tab panel.
+- `POST /sheet/:characterId/notes` note creation route that returns the notes tab panel.
+- `PATCH /sheet/:characterId/notes/:noteId` note update route that returns the notes tab panel.
+- `POST /sheet/:characterId/notes/:noteId/delete` note delete route that returns the notes tab panel.
 - `/admin` admin shell with local invite creation.
 
 The site header is sticky and contains:
@@ -160,9 +172,9 @@ The MVP has no more than ten users. It starts with four seeded users:
 
 | Role | Initial user | Permissions |
 | --- | --- | --- |
-| Player | Lynott player | Read Lynott's sheet and update table-use state such as resources, conditions, equipment, rests, rolls, and their existing player note. |
-| Player | Mira player | Seeded second player used to prove group roster, campaign membership, and faction-choice behaviour. |
-| Game Master | Campaign GM | Read and update Lynott's sheet state and existing player/Game Master notes, plus view the seeded campaign shell. |
+| Player | Lynott player | Manage their character roster, create manual campaign characters, read Lynott's sheet, and update table-use state such as resources, conditions, equipment, rests, rolls, and their existing player note. |
+| Player | Mira player | Seeded second player used to prove group roster, campaign membership, manual character creation, and faction-choice behaviour. |
+| Game Master | Campaign GM | Manage the campaign roster, create manual characters for player members, read and update sheet state and existing player/Game Master notes, plus view the seeded campaign shell. |
 | Admin | Site admin | Access the admin shell, create local invite tokens, and use local password-reset token routes by known user id. |
 
 Permission checks should live in shared guards, not scattered through components. Components may hide unavailable controls, but routes must enforce access. Campaign guards centralise membership checks, Game Master management checks, character ownership, and player-visible versus Game-Master-only campaign content.
@@ -182,6 +194,8 @@ flowchart TD
 
 The database stores structured data for rules and sheet state. Markdown files in `docs/rules` are useful source material, but runtime reads should use SQLite read models. `bootstrapDatabase()` creates the MVP schema idempotently, `seedDatabase()` inserts local seed data, and repository interfaces keep route-facing contracts independent of SQLite.
 
+Campaign wiki pages store normalised Markdown and source metadata in SQLite. Rendered pages use a small safe Markdown renderer for the current Google Docs export shape: title lines, bold section headings, italic quotes, bullet lists, horizontal rules, and scene breaks. Image uploads are copied into app-managed storage under `data/assets` by default, or `CHARACTER_SHEET_ASSET_ROOT` when set for tests or local overrides. The database stores generated storage keys rather than raw local source paths, and asset routes enforce campaign membership and content visibility before reading files.
+
 ```mermaid
 erDiagram
     users ||--o{ sessions : owns
@@ -193,6 +207,8 @@ erDiagram
     campaigns ||--o{ campaign_sessions : records
     campaigns ||--o{ campaign_wiki_pages : documents
     campaigns ||--o{ campaign_image_assets : stores
+    campaign_wiki_pages ||--o{ campaign_wiki_page_assets : attaches
+    campaign_image_assets ||--o{ campaign_wiki_page_assets : appears_in
     campaigns ||--o{ campaign_factions : defines
     characters ||--o{ character_classes : has
     characters ||--o{ character_abilities : has
@@ -226,7 +242,7 @@ erDiagram
 | `campaign_sessions` | Player-visible and Game-Master-only session records with title, slug, date, summary/body, author, and timestamps. |
 | `campaign_wiki_pages` | Campaign wiki Markdown pages with page type, tags, source metadata, and visibility. |
 | `campaign_image_assets` | App-managed image metadata with relative storage keys, dimensions, alt text, captions, and visibility. |
-| `campaign_factions` | Rovnost faction records with player prompts, reputation, rumours, and optional asset links. |
+| `campaign_factions` | Rovnost faction records with motto, overview, player prompts, reputation, possible connections, rumours, optional asset links, and wiki links. |
 | `characters` | Character identity, owner, campaign, campaign-unique slug, species, background, level, and summary stats. |
 | `character_classes` | Class and subclass levels, hit dice, and spellcasting ability. |
 | `character_abilities` | Ability scores, modifiers, saving throw proficiency, and derived save values. |
@@ -245,7 +261,7 @@ erDiagram
 | `rule_mechanics` | Structured mechanics such as uses, dice notation, DCs, ranges, durations, conditions, and scaling. |
 | `character_rule_links` | Character selections and granted rules, such as prepared spells and known infusions. |
 
-Some schema tables intentionally land before their full management UI. `sheet-0012` adds group-use read models for rosters, wiki pages, image assets, session records, factions, and faction choices while later tickets add creation/editing routes. Full character CRUD, campaign session CRUD, note creation, admin read tables, and richer rules text rendering are follow-up work.
+Some schema tables intentionally land before their full management UI. `sheet-0012` adds group-use read models for rosters, wiki pages, image assets, session records, factions, and faction choices; `sheet-0014` adds player and Game Master roster pages plus manual character creation; `sheet-0016` adds note creation/update/delete flows and Game Master campaign session CRUD; `sheet-0018` adds the Background tab faction picker and selected faction summary. Character deletion, wiki management UI, image upload UI, faction-management UI, and richer rules text rendering are follow-up work.
 
 ### Rules Data
 
@@ -304,9 +320,9 @@ Development should be tests first where practical:
 - Service tests cover password hashing, session handling, rule normalisation, source precedence, resource mutation, and permission decisions.
 - Route tests call `app.request()` and assert status codes, redirects, session cookies, role enforcement, validation failures, full pages, and HTMX fragments.
 - Component tests render JSX to strings and assert semantic HTML, labels, headings, ARIA, HTMX attributes, and empty states.
-- Accessibility tests run Pa11y against key pages once a runnable app exists.
-- Screenshot tests capture the sheet in light and dark states for user-facing UI changes.
-- MVP smoke tests exercise seeded login, sheet navigation, resource mutation, note saving, role pages, and logout.
+- Accessibility tests run Pa11y against public, player, Game Master, wiki, roster, sheet, logout, and admin pages once a runnable app exists.
+- Screenshot tests capture sheet, roster, campaign, wiki, faction, and edited-sheet states for user-facing UI changes.
+- MVP smoke tests exercise seeded login, player and Game Master character creation, sheet navigation, manual edits, resource mutation, note saving, faction selection, session records, wiki reads and writes, image assets, role pages, admin account preparation, and logout.
 
 The minimum verification before a source-code ticket is complete:
 
@@ -314,27 +330,27 @@ The minimum verification before a source-code ticket is complete:
 bun run verify
 ```
 
-The accessibility script currently checks public `/`, `/login`, authenticated `/sheet/lynott`, authenticated `/logout`, authenticated `/campaigns/rovnost-shadows`, and authenticated `/admin`. The MVP smoke script renders every sheet tab fragment directly. The screenshot script captures Lynott's sheet in light and dark mode to `docs/pr-screenshots/` by default.
+The accessibility script currently checks public `/` and `/login`, player `/characters`, `/sheet/lynott`, `/campaigns/rovnost-shadows/wiki/factions-guide`, and `/logout`, Game Master `/campaigns/rovnost-shadows` and `/campaigns/rovnost-shadows/characters`, and admin `/admin`. The MVP smoke script renders every sheet tab fragment directly and walks the group-use flows for character creation, manual edits, notes, faction choice, sessions, wiki, assets, and admin account preparation. The screenshot script captures sheet, roster, campaign, wiki, faction, and edited-sheet states to `docs/pr-screenshots/` by default.
 
 ## Pipeline
 
-The repository uses a documentation-first ticket flow. Epic planning branches land the accepted roadmap documents on `main`; implementation ticket branches then start from the latest `main` and open pull requests back into `main`. A temporary integration branch can still be used for a deliberate stack, but it should be explicit and short-lived.
+The repository uses a documentation-first ticket flow. Epic planning branches open against `main` for roadmap review, then remain as active epic integration branches once accepted. Implementation ticket branches start from the latest epic branch and open pull requests back into that epic branch. The epic branch opens a final pull request into `main` after its ticket stack is accepted.
 
 ```mermaid
 flowchart LR
     A["main"] --> B["Epic planning branch"]
     B --> C["Planning PR"]
-    C --> D["Squash merge plan"]
-    D --> E["Ticket branch from main"]
-    E --> F["Ticket PR"]
+    C --> D["Accepted epic branch"]
+    D --> E["Ticket branch from epic"]
+    E --> F["Ticket PR into epic"]
     F --> G["Checks, review, docs"]
-    G --> H["Squash merge ticket"]
+    G --> H["Squash merge ticket into epic"]
     H --> I{"More tickets?"}
     I -- "Yes" --> E
-    I -- "No" --> J["Epic complete on main"]
+    I -- "No" --> J["Epic PR into main"]
 ```
 
-Release automation can be added after the MVP scaffold exists. Railway and Postgres deployment remain a later epic.
+Release automation can be added after the MVP scaffold exists. The group-use MVP is ready for local checkout, seed, verification, and table rehearsal. Railway hosting, production secret handling, Postgres deployment, email delivery, and homebrew/SRD expansion remain a later epic.
 
 ## Design Decisions
 
@@ -344,6 +360,6 @@ Release automation can be added after the MVP scaffold exists. Railway and Postg
 - Local password auth is in scope now; external identity providers are not.
 - Admin invite and password reset flows are local workflows without email delivery in this epic.
 - Live 5e.tools fetching is deferred behind the importer boundary; local imports are available through `bun run import:rules`.
-- Full group character management, campaign/session records, note creation, admin read tables, and deployment are deferred to later epics.
+- Character deletion, wiki-management polish, image-management polish, faction-management UI, deployment, production secrets, Postgres, email delivery, and homebrew/SRD expansion are deferred to later epics.
 - British English is required across copy, docs, code naming, and CSS variables.
 - The first implementation sequence is documentation and tickets, then source code through accepted tickets.

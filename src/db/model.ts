@@ -147,6 +147,7 @@ export interface CharacterBackgroundEntry {
 }
 
 export interface ArmourClassSource {
+  id?: string;
   label: string;
   notes: string;
   value: number;
@@ -154,6 +155,7 @@ export interface ArmourClassSource {
 
 export interface CharacterDefence {
   detail: string;
+  id?: string;
   label: string;
   type: "armour" | "condition_immunity" | "immunity" | "resistance";
 }
@@ -161,10 +163,12 @@ export interface CharacterDefence {
 export interface CharacterProficiency {
   category: "armour" | "language" | "tool" | "weapon";
   detail: string;
+  id?: string;
   name: string;
 }
 
 export interface CharacterSense {
+  id?: string;
   label: string;
   value: string;
 }
@@ -195,6 +199,7 @@ export interface CharacterSheetReadModel {
 }
 
 export interface CharacterRepository {
+  createCharacter(input: CreateCharacterInput): CharacterSheetReadModel;
   getAccessContext(characterId: string): CharacterAccessContext | null;
   getSheetById(id: string): CharacterSheetReadModel | null;
   getSheetBySlug(slug: string): CharacterSheetReadModel | null;
@@ -203,17 +208,79 @@ export interface CharacterRepository {
   listBackgroundEntries(characterId: string): CharacterBackgroundEntry[];
   listEquipment(characterId: string): CharacterEquipment[];
   listResources(characterId: string): CharacterResource[];
+  updateAbility(
+    characterId: string,
+    ability: AbilityName,
+    patch: { saveProficient: boolean; score: number },
+  ): CharacterSheetReadModel | null;
+  updateArmourClassSource(
+    characterId: string,
+    sourceId: string,
+    patch: { label: string; notes: string; value: number },
+  ): CharacterSheetReadModel | null;
+  updateBackgroundEntry(
+    characterId: string,
+    entryId: string,
+    patch: { body: string; title: string },
+  ): CharacterBackgroundEntry | null;
+  updateDefence(
+    characterId: string,
+    defenceId: string,
+    patch: { detail: string; label: string },
+  ): CharacterDefence | null;
   updateEquipmentItem(
     characterId: string,
     equipmentId: string,
-    patch: { equipped?: boolean; quantity?: number },
+    patch: { category?: string; equipped?: boolean; name?: string; notes?: string; quantity?: number },
   ): CharacterEquipment | null;
+  updateProficiency(
+    characterId: string,
+    proficiencyId: string,
+    patch: { detail: string; name: string },
+  ): CharacterProficiency | null;
   updateResourceCurrent(
     characterId: string,
     resourceId: string,
     current: number,
   ): CharacterResource | null;
+  updateSense(
+    characterId: string,
+    senseId: string,
+    patch: { label: string; value: string },
+  ): CharacterSense | null;
+  updateSheetSummary(
+    characterId: string,
+    patch: {
+      background: string;
+      className: string;
+      hitPointMax: number;
+      initiative: number;
+      level: number;
+      name: string;
+      proficiencyBonus: number;
+      speedFeet: number;
+      species: string;
+      subclassName: string | null;
+    },
+  ): CharacterSheetReadModel | null;
+  updateSkill(
+    characterId: string,
+    skill: string,
+    patch: { proficiencyLevel: number },
+  ): CharacterSheetReadModel | null;
   upsertConditionResource(characterId: string, label: string): CharacterResource;
+}
+
+export interface CreateCharacterInput {
+  background: string;
+  campaignId: string;
+  className: string;
+  hitPointMax: number;
+  level: number;
+  name: string;
+  ownerUserId: string;
+  species: string;
+  subclassName: string | null;
 }
 
 export interface CharacterAccessContext {
@@ -247,14 +314,31 @@ export interface CharacterSkill {
 }
 
 export interface CharacterNote {
+  authorUserId?: string;
   body: string;
+  createdAt?: string;
   id: string;
   title: string;
+  updatedAt?: string;
   visibility: NoteVisibility;
 }
 
 export interface NotesRepository {
+  createNote(input: {
+    authorUserId: string;
+    body: string;
+    characterId: string;
+    title: string;
+    visibility: NoteVisibility;
+  }): CharacterNote;
+  deleteNote(characterId: string, noteId: string, viewerRole: UserRole): boolean;
   listNotesForCharacter(characterId: string, viewerRole: UserRole): CharacterNote[];
+  updateNote(
+    characterId: string,
+    noteId: string,
+    viewerRole: UserRole,
+    patch: { body: string; title: string },
+  ): CharacterNote | null;
   updateNoteBody(
     characterId: string,
     noteId: string,
@@ -266,6 +350,7 @@ export interface NotesRepository {
 export interface CampaignWikiPage {
   bodyMarkdown: string;
   campaignId: string;
+  coverImageAssetId: string | null;
   id: string;
   pageType: WikiPageType;
   slug: string;
@@ -285,6 +370,7 @@ export interface CampaignImageAsset {
   id: string;
   mimeType: string;
   storageKey: string;
+  title: string;
   visibility: CampaignContentVisibility;
   width: number | null;
 }
@@ -292,45 +378,96 @@ export interface CampaignImageAsset {
 export interface CampaignSessionRecord {
   body: string;
   campaignId: string;
+  createdAt?: string;
   createdByUserId: string | null;
   id: string;
   sessionDate: string | null;
   slug: string;
   summary: string;
   title: string;
+  updatedAt?: string;
   visibility: CampaignContentVisibility;
 }
 
 export interface CampaignFaction {
   campaignId: string;
+  connections: string[];
   id: string;
   imageAssetId: string | null;
+  motto: string;
   name: string;
   playerPrompt: string;
   publicReputation: string;
   rumours: string[];
   slug: string;
   summary: string;
+  wikiPageSlug: string | null;
+  wikiPageTitle: string | null;
 }
 
 export interface CharacterFactionChoice {
   characterId: string;
   connectionNote: string;
-  factionId: string;
-  factionName: string;
-  factionSlug: string;
+  factionId: string | null;
+  factionName: string | null;
+  factionSlug: string | null;
 }
 
 export interface CampaignContentRepository {
+  createImageAsset(input: {
+    altText: string;
+    byteSize: number;
+    campaignId: string;
+    caption: string;
+    height: number | null;
+    mimeType: string;
+    storageKey: string;
+    title: string;
+    visibility: CampaignContentVisibility;
+    width: number | null;
+  }): CampaignImageAsset;
+  createWikiPage(input: {
+    bodyMarkdown: string;
+    campaignId: string;
+    coverImageAssetId: string | null;
+    pageType: WikiPageType;
+    sourcePath: string | null;
+    sourceTitle: string | null;
+    tags: string[];
+    title: string;
+    visibility: CampaignContentVisibility;
+  }): CampaignWikiPage;
+  createSession(input: {
+    body: string;
+    campaignId: string;
+    createdByUserId: string;
+    sessionDate: string | null;
+    summary: string;
+    title: string;
+    visibility: CampaignContentVisibility;
+  }): CampaignSessionRecord;
+  deleteSession(campaignId: string, sessionId: string): boolean;
   getCharacterFactionChoice(characterId: string): CharacterFactionChoice | null;
   getWikiPageBySlug(
     campaignId: string,
     slug: string,
     viewerRole: UserRole,
   ): CampaignWikiPage | null;
+  getImageAssetById(
+    campaignId: string,
+    assetId: string,
+    viewerRole: UserRole,
+  ): CampaignImageAsset | null;
+  getSessionBySlug(campaignId: string, slug: string, viewerRole: UserRole): CampaignSessionRecord | null;
   listFactionsForCampaign(campaignId: string): CampaignFaction[];
   listImageAssetsForCampaign(
     campaignId: string,
+    viewerRole: UserRole,
+  ): CampaignImageAsset[];
+  listImageAssetsForWikiPage(
+    campaignId: string,
+    wikiPageId: string,
+    attachmentType: "gallery" | "inline",
     viewerRole: UserRole,
   ): CampaignImageAsset[];
   listSessionsForCampaign(
@@ -338,6 +475,22 @@ export interface CampaignContentRepository {
     viewerRole: UserRole,
   ): CampaignSessionRecord[];
   listWikiPagesForCampaign(campaignId: string, viewerRole: UserRole): CampaignWikiPage[];
+  updateSession(
+    campaignId: string,
+    sessionId: string,
+    patch: {
+      body: string;
+      sessionDate: string | null;
+      summary: string;
+      title: string;
+      visibility: CampaignContentVisibility;
+    },
+  ): CampaignSessionRecord | null;
+  updateCharacterFactionChoice(
+    characterId: string,
+    factionId: string | null,
+    connectionNote: string,
+  ): CharacterFactionChoice | null;
 }
 
 export interface CharacterRuleLink {
