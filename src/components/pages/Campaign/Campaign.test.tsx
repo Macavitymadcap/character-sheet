@@ -26,6 +26,7 @@ describe("CampaignPage", () => {
             userId: "user_lynott_player",
           },
         ]}
+        sessions={[]}
         user={{ displayName: "Game Master", role: "game_master" }}
       />,
     );

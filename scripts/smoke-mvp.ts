@@ -36,7 +36,7 @@ export async function runMvpSmoke() {
     assertBody("damage hit points", hp.body, "28 / 31");
 
     const note = await requestText(`${baseUrl}/sheet/lynott/notes/note_lynott_player`, {
-      body: new URLSearchParams({ body: "MVP smoke note saved." }),
+      body: new URLSearchParams({ body: "MVP smoke note saved.", title: "Player notes" }),
       cookie: playerCookie,
       method: "PATCH",
     });

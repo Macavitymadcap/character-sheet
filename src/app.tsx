@@ -17,6 +17,8 @@ import { isSheetTabId } from "./components/organisms/SheetTabs";
 import type {
   AuthRepository,
   AbilityName,
+  CampaignContentRepository,
+  CampaignContentVisibility,
   CampaignRepository,
   CharacterRepository,
   CreateCharacterInput,
@@ -29,6 +31,7 @@ export interface AppDependencies {
   appName: string;
   authRepository: AuthRepository;
   authService: AuthService;
+  campaignContentRepository: CampaignContentRepository;
   campaignRepository: CampaignRepository;
   characterRepository: CharacterRepository;
   notesRepository: NotesRepository;
@@ -149,9 +152,100 @@ export const createApp = (dependencies: AppDependencies) => {
         appName={dependencies.appName}
         campaign={campaign}
         members={dependencies.campaignRepository.listMembers(campaign.id)}
+        sessions={dependencies.campaignContentRepository.listSessionsForCampaign(campaign.id, session.user.role)}
         user={session.user}
       />,
     );
+  });
+
+  app.post("/campaigns/:campaignSlug/sessions", async (context) => {
+    const session = readSession(context.req.header("cookie"));
+    if (!session) return context.redirect("/login", 303);
+
+    const campaign = dependencies.campaignRepository.getCampaignBySlug(
+      context.req.param("campaignSlug"),
+    );
+    if (!campaign) return context.text("Not found", 404);
+
+    const guard = requireCampaignAccess({
+      campaignId: campaign.id,
+      campaignRepository: dependencies.campaignRepository,
+      permission: "manage",
+      session,
+    });
+    const guarded = guardResponse(context, guard);
+    if (guarded) return guarded;
+
+    const body = await context.req.parseBody();
+    const parsed = parseCampaignSessionForm(body);
+    if (!parsed.ok) return context.text(parsed.message, 400);
+
+    dependencies.campaignContentRepository.createSession({
+      ...parsed.value,
+      campaignId: campaign.id,
+      createdByUserId: session.user.id,
+    });
+
+    return context.redirect(`/campaigns/${campaign.slug}`, 303);
+  });
+
+  app.post("/campaigns/:campaignSlug/sessions/:sessionId", async (context) => {
+    const session = readSession(context.req.header("cookie"));
+    if (!session) return context.redirect("/login", 303);
+
+    const campaign = dependencies.campaignRepository.getCampaignBySlug(
+      context.req.param("campaignSlug"),
+    );
+    if (!campaign) return context.text("Not found", 404);
+
+    const guard = requireCampaignAccess({
+      campaignId: campaign.id,
+      campaignRepository: dependencies.campaignRepository,
+      permission: "manage",
+      session,
+    });
+    const guarded = guardResponse(context, guard);
+    if (guarded) return guarded;
+
+    const body = await context.req.parseBody();
+    const parsed = parseCampaignSessionForm(body);
+    if (!parsed.ok) return context.text(parsed.message, 400);
+
+    const updated = dependencies.campaignContentRepository.updateSession(
+      campaign.id,
+      context.req.param("sessionId"),
+      parsed.value,
+    );
+    if (!updated) return context.text("Not found", 404);
+
+    return context.redirect(`/campaigns/${campaign.slug}`, 303);
+  });
+
+  app.post("/campaigns/:campaignSlug/sessions/:sessionId/delete", (context) => {
+    const session = readSession(context.req.header("cookie"));
+    if (!session) return context.redirect("/login", 303);
+
+    const campaign = dependencies.campaignRepository.getCampaignBySlug(
+      context.req.param("campaignSlug"),
+    );
+    if (!campaign) return context.text("Not found", 404);
+
+    const guard = requireCampaignAccess({
+      campaignId: campaign.id,
+      campaignRepository: dependencies.campaignRepository,
+      permission: "manage",
+      session,
+    });
+    const guarded = guardResponse(context, guard);
+    if (guarded) return guarded;
+
+    const deleted = dependencies.campaignContentRepository.deleteSession(
+      campaign.id,
+      context.req.param("sessionId"),
+    );
+    if (!deleted) return context.text("Not found", 404);
+
+    return context.redirect(`/campaigns/${campaign.slug}`, 303);
   });
 
   app.get("/characters", (context) => {
@@ -826,13 +920,14 @@ export const createApp = (dependencies: AppDependencies) => {
 
     const body = await context.req.parseBody();
     const noteBody = parseFormString(body.body);
-    if (noteBody === null) return context.text("Invalid note", 400);
+    const noteTitle = parseFormText(body.title);
+    if (noteBody === null || !noteTitle) return context.text("Invalid note", 400);
 
-    const note = dependencies.notesRepository.updateNoteBody(
+    const note = dependencies.notesRepository.updateNote(
       sheet.id,
       context.req.param("noteId"),
       session.user.role,
-      noteBody,
+      { body: noteBody, title: noteTitle },
     );
     if (!note) return context.text("Not found", 404);
 
@@ -850,6 +945,76 @@ export const createApp = (dependencies: AppDependencies) => {
         tabId="notes"
       />,
     );
+  });
+
+  app.post("/sheet/:characterRef/notes", async (context) => {
+    const session = readSession(context.req.header("cookie"));
+    if (!session) return context.redirect("/login", 303);
+
+    const sheet = getSheetByRef(context.req.param("characterRef"));
+    if (!sheet) return context.text("Not found", 404);
+
+    const guard = requireSheetAccess({
+      campaignRepository: dependencies.campaignRepository,
+      characterId: sheet.id,
+      characterRepository: dependencies.characterRepository,
+      permission: "write",
+      session,
+    });
+    const guarded = guardResponse(context, guard);
+    if (guarded) return guarded;
+
+    const body = await context.req.parseBody();
+    const title = parseFormText(body.title);
+    const noteBody = parseFormString(body.body);
+    const visibility = parseNoteVisibility(body.visibility);
+    if (!title || noteBody === null || !visibility) return context.text("Invalid note", 400);
+    if (session.user.role === "player" && visibility === "game_master") {
+      return context.text("Forbidden", 403);
+    }
+
+    dependencies.notesRepository.createNote({
+      authorUserId: session.user.id,
+      body: noteBody,
+      characterId: sheet.id,
+      title,
+      visibility,
+    });
+
+    const updatedSheet = dependencies.characterRepository.getSheetById(sheet.id);
+    if (!updatedSheet) return context.text("Not found", 404);
+
+    return renderSheetTabPanel(context, dependencies, updatedSheet, session.user.role, "notes");
+  });
+
+  app.post("/sheet/:characterRef/notes/:noteId/delete", async (context) => {
+    const session = readSession(context.req.header("cookie"));
+    if (!session) return context.redirect("/login", 303);
+
+    const sheet = getSheetByRef(context.req.param("characterRef"));
+    if (!sheet) return context.text("Not found", 404);
+
+    const guard = requireSheetAccess({
+      campaignRepository: dependencies.campaignRepository,
+      characterId: sheet.id,
+      characterRepository: dependencies.characterRepository,
+      permission: "write",
+      session,
+    });
+    const guarded = guardResponse(context, guard);
+    if (guarded) return guarded;
+
+    const deleted = dependencies.notesRepository.deleteNote(
+      sheet.id,
+      context.req.param("noteId"),
+      session.user.role,
+    );
+    if (!deleted) return context.text("Not found", 404);
+
+    const updatedSheet = dependencies.characterRepository.getSheetById(sheet.id);
+    if (!updatedSheet) return context.text("Not found", 404);
+
+    return renderSheetTabPanel(context, dependencies, updatedSheet, session.user.role, "notes");
   });
 
   app.post("/sheet/:characterRef/conditions", async (context) => {
@@ -1183,6 +1348,43 @@ function parseFormText(value: unknown) {
 
 function parseFormString(value: unknown) {
   return typeof value === "string" ? value.trim() : null;
+}
+
+function parseNoteVisibility(value: unknown) {
+  return value === "player" || value === "game_master" ? value : null;
+}
+
+function parseCampaignSessionForm(
+  body: Awaited<ReturnType<Context["req"]["parseBody"]>>,
+): {
+  ok: true;
+  value: {
+    body: string;
+    sessionDate: string | null;
+    summary: string;
+    title: string;
+    visibility: CampaignContentVisibility;
+  };
+} | { ok: false; message: string } {
+  const title = parseFormText(body.title);
+  const sessionDate = parseFormString(body.sessionDate);
+  const summary = parseFormString(body.summary);
+  const textBody = parseFormString(body.body);
+  const visibility = parseNoteVisibility(body.visibility);
+  if (!title || summary === null || textBody === null || !visibility) {
+    return { ok: false, message: "Invalid session" };
+  }
+
+  return {
+    ok: true,
+    value: {
+      body: textBody,
+      sessionDate: sessionDate || null,
+      summary,
+      title,
+      visibility,
+    },
+  };
 }
 
 function parseSheetTabId(value: unknown) {

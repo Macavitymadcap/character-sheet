@@ -216,6 +216,30 @@ const NotesTab = ({ data }: { data: TabContentData }) => {
     <div class="tab-compact-stack">
       <section class="tab-compact-section" aria-labelledby="notes-list-heading">
         <h3 id="notes-list-heading">Notes</h3>
+        <form
+          class="note-editor note-editor-create"
+          hx-post={`/sheet/${data.sheet.slug}/notes`}
+          hx-target="#sheet-tab-panel"
+          hx-swap="outerHTML"
+        >
+          <label for={`note-title-new-${slugify(data.sheet.id)}`}>
+            <strong>New note</strong>
+            <span>Visibility</span>
+          </label>
+          <input
+            id={`note-title-new-${slugify(data.sheet.id)}`}
+            name="title"
+            placeholder="Title"
+            required
+            type="text"
+          />
+          <select name="visibility" aria-label="Note visibility">
+            <option value="player">Player</option>
+            <option value="game_master">Game Master</option>
+          </select>
+          <textarea name="body" rows={4} placeholder="Note body"></textarea>
+          <button type="submit">Add note</button>
+        </form>
         {data.notes.length > 0 ? (
           <div class="note-editor-list">
             {data.notes.map((note) => (
@@ -229,10 +253,28 @@ const NotesTab = ({ data }: { data: TabContentData }) => {
                   <strong>{note.title}</strong>
                   <span>{note.visibility === "game_master" ? "Game Master" : "Player"}</span>
                 </label>
+                <input
+                  id={`note-title-${slugify(note.id)}`}
+                  name="title"
+                  type="text"
+                  value={note.title}
+                />
                 <textarea id={`note-body-${slugify(note.id)}`} name="body" rows={4}>
                   {note.body}
                 </textarea>
-                <button type="submit">Save note</button>
+                <div class="note-editor-actions">
+                  <button type="submit">Save note</button>
+                  <button
+                    type="submit"
+                    formaction={`/sheet/${data.sheet.slug}/notes/${note.id}/delete`}
+                    formmethod="post"
+                    hx-post={`/sheet/${data.sheet.slug}/notes/${note.id}/delete`}
+                    hx-target="#sheet-tab-panel"
+                    hx-swap="outerHTML"
+                  >
+                    Delete
+                  </button>
+                </div>
               </form>
             ))}
           </div>

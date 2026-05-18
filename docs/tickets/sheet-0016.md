@@ -24,3 +24,10 @@ Expand notes from seeded note editing into real note creation, and add Game Mast
 - Game Masters can create and edit Game Master notes and campaign session records.
 - Players cannot read Game Master-only notes or sessions.
 - Existing seeded notes migrate into the same behaviour.
+
+## Implementation Notes
+
+- `NotesRepository` now supports creating, updating, deleting, and role-filtered listing of character notes with author and timestamp metadata.
+- The sheet Notes tab includes an HTMX create form plus per-note update/delete controls; player sessions are blocked from creating or mutating Game-Master-only notes.
+- `CampaignContentRepository` now supports campaign session creation, update, deletion, slug lookup, and role-filtered listing.
+- The Game Master campaign page renders seeded and newly created session records with local create/edit/delete forms under `/campaigns/:campaignSlug`.
