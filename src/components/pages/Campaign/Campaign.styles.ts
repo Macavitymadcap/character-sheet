@@ -137,6 +137,92 @@ export const campaignStyles = /* css */ `
   margin: 0;
 }
 
+.campaign-wiki-grid,
+.campaign-asset-list {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+}
+
+.campaign-wiki-card,
+.campaign-asset-list figure {
+  border: 1px solid var(--border-colour);
+  border-radius: 0.4rem;
+  margin: 0;
+  overflow: hidden;
+}
+
+.campaign-wiki-cover,
+.campaign-asset-list img,
+.campaign-wiki-hero {
+  aspect-ratio: 16 / 9;
+  background: var(--stat-background-colour);
+  display: block;
+  object-fit: cover;
+  width: 100%;
+}
+
+.campaign-wiki-card-body,
+.campaign-asset-list figcaption {
+  display: grid;
+  gap: 0.4rem;
+  padding: 0.75rem;
+}
+
+.campaign-wiki-card h3 {
+  font-size: 1rem;
+  margin: 0;
+}
+
+.campaign-wiki-card a {
+  color: var(--heading-colour);
+}
+
+.campaign-tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.campaign-tag-list span {
+  background: var(--stat-background-colour);
+  border: 1px solid var(--border-colour);
+  border-radius: 999px;
+  color: var(--muted-text-colour);
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 0.15rem 0.5rem;
+}
+
+.campaign-markdown {
+  color: var(--body-text-colour);
+  display: grid;
+  gap: 0.75rem;
+}
+
+.campaign-markdown h2,
+.campaign-markdown h3,
+.campaign-markdown p,
+.campaign-markdown ul {
+  margin: 0;
+}
+
+.campaign-markdown hr {
+  border: 0;
+  border-block-start: 1px solid var(--border-colour);
+  width: 100%;
+}
+
+.campaign-markdown-asset {
+  margin: 0;
+}
+
+.campaign-markdown-asset img {
+  border: 1px solid var(--border-colour);
+  border-radius: 0.4rem;
+  max-width: min(100%, 24rem);
+}
+
 @media (max-width: 560px) {
   .campaign-session-form,
   .campaign-summary-list {

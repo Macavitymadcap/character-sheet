@@ -142,7 +142,10 @@ describe("admin and sheet guards", () => {
     expect(gmAdminPage.status).toBe(403);
     expect(gmCampaignPage.status).toBe(200);
     expect(await gmCampaignPage.text()).toContain("Rovnost Shadows");
-    expect(playerCampaignPage.status).toBe(403);
+    expect(playerCampaignPage.status).toBe(200);
+    const playerCampaignHtml = await playerCampaignPage.text();
+    expect(playerCampaignHtml).toContain("Factions Guide");
+    expect(playerCampaignHtml).not.toContain("Add wiki page");
     expect(gmSheetWrite.status).toBe(200);
     expect(adminSheetWrite.status).toBe(403);
   });

@@ -8,9 +8,11 @@ let runtime: SqliteDatabaseRuntime | undefined;
 afterEach(() => {
   runtime?.close();
   runtime = undefined;
+  delete process.env.CHARACTER_SHEET_ASSET_ROOT;
 });
 
 const createTestApp = (appName = "Test Character Sheet") => {
+  process.env.CHARACTER_SHEET_ASSET_ROOT = "/private/tmp/character-sheet-test-assets";
   runtime = createSqliteDatabase({ path: ":memory:" });
   const passwordService = new PasswordService();
 
@@ -700,6 +702,113 @@ describe("createApp", () => {
         .listSessionsForCampaign("campaign_rovnost_shadows", "game_master")
         .some((session) => session.id === createdId),
     ).toBe(false);
+  });
+
+  test("serves campaign wiki pages by visibility", async () => {
+    const { app, sessionService } = createTestApp("Character Sheet");
+    const playerCookie = sessionService.createSession("user_lynott_player").cookie;
+    const gmCookie = sessionService.createSession("user_game_master").cookie;
+
+    const playerPage = await app.request("/campaigns/rovnost-shadows/wiki/factions-guide", {
+      headers: { cookie: playerCookie },
+    });
+    const playerHtml = await playerPage.text();
+    const hiddenPage = await app.request("/campaigns/rovnost-shadows/wiki/gm-dossier", {
+      headers: { cookie: playerCookie },
+    });
+    const gmPage = await app.request("/campaigns/rovnost-shadows/wiki/gm-dossier", {
+      headers: { cookie: gmCookie },
+    });
+
+    expect(playerPage.status).toBe(200);
+    expect(playerHtml).toContain("<title>Factions Guide - Rovnost Shadows - Character Sheet</title>");
+    expect(playerHtml).toContain("<h2>Factions Guide</h2>");
+    expect(playerHtml).toContain('src="/campaigns/rovnost-shadows/assets/asset_skywright_sigil"');
+    expect(playerHtml).toContain('aria-label="Factions Guide gallery"');
+    expect(hiddenPage.status).toBe(404);
+    expect(gmPage.status).toBe(200);
+    expect(await gmPage.text()).toContain("Magister Vallen is watching");
+  });
+
+  test("lets Game Masters create wiki pages and image assets with protected reads", async () => {
+    const { app, sessionService } = createTestApp("Character Sheet");
+    const gmCookie = sessionService.createSession("user_game_master").cookie;
+    const playerCookie = sessionService.createSession("user_lynott_player").cookie;
+
+    const wikiCreate = await app.request("/campaigns/rovnost-shadows/wiki", {
+      body: new URLSearchParams({
+        bodyMarkdown: "# Brass Market\n\n**Known for**\n\n- Clockwork fruit sellers",
+        pageType: "location",
+        tags: "market, player-facing",
+        title: "Brass Market",
+        visibility: "player",
+      }),
+      headers: formHeaders(gmCookie),
+      method: "POST",
+    });
+    const wikiRead = await app.request("/campaigns/rovnost-shadows/wiki/brass-market", {
+      headers: { cookie: playerCookie },
+    });
+
+    const imageForm = new FormData();
+    imageForm.set("title", "Secret seal");
+    imageForm.set("altText", "A red wax seal marked with Vallen's signet");
+    imageForm.set("caption", "GM-only handout.");
+    imageForm.set("visibility", "game_master");
+    imageForm.set("width", "2");
+    imageForm.set("height", "2");
+    imageForm.set("image", new File([new Uint8Array([1, 2, 3, 4])], "seal.png", { type: "image/png" }));
+    const upload = await app.request("/campaigns/rovnost-shadows/assets", {
+      body: imageForm,
+      headers: { cookie: gmCookie },
+      method: "POST",
+    });
+    const asset = runtime?.repositories.campaignContentRepository
+      .listImageAssetsForCampaign("campaign_rovnost_shadows", "game_master")
+      .find((item) => item.title === "Secret seal");
+    expect(asset).toBeDefined();
+
+    const playerAsset = await app.request(`/campaigns/rovnost-shadows/assets/${asset?.id}`, {
+      headers: { cookie: playerCookie },
+    });
+    const gmAsset = await app.request(`/campaigns/rovnost-shadows/assets/${asset?.id}`, {
+      headers: { cookie: gmCookie },
+    });
+
+    expect(wikiCreate.status).toBe(303);
+    expect(wikiRead.status).toBe(200);
+    expect(await wikiRead.text()).toContain("<h2>Brass Market</h2>");
+    expect(upload.status).toBe(303);
+    expect(asset?.storageKey).not.toContain("seal.png");
+    expect(playerAsset.status).toBe(404);
+    expect(gmAsset.status).toBe(200);
+    expect(gmAsset.headers.get("content-type")).toContain("image/png");
+  });
+
+  test("rejects image uploads without alt text or with unsupported file types", async () => {
+    const { app, sessionService } = createTestApp("Character Sheet");
+    const gmCookie = sessionService.createSession("user_game_master").cookie;
+
+    const missingAlt = new FormData();
+    missingAlt.set("title", "Map");
+    missingAlt.set("visibility", "player");
+    missingAlt.set("image", new File([new Uint8Array([1])], "map.png", { type: "image/png" }));
+    const unsupported = new FormData();
+    unsupported.set("title", "Map");
+    unsupported.set("altText", "A map");
+    unsupported.set("visibility", "player");
+    unsupported.set("image", new File([new Uint8Array([1])], "map.gif", { type: "image/gif" }));
+
+    expect((await app.request("/campaigns/rovnost-shadows/assets", {
+      body: missingAlt,
+      headers: { cookie: gmCookie },
+      method: "POST",
+    })).status).toBe(400);
+    expect((await app.request("/campaigns/rovnost-shadows/assets", {
+      body: unsupported,
+      headers: { cookie: gmCookie },
+      method: "POST",
+    })).status).toBe(400);
   });
 
   test("smokes the seeded MVP workflow through login, sheet play, notes, roles, and logout", async () => {

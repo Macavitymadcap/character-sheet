@@ -1,8 +1,9 @@
 import { Hono, type Context } from "hono";
 import { AuthService, requireCampaignAccess, requireRole, requireSheetAccess, SessionService } from "./auth";
+import { isCampaignWikiPageType, normaliseGoogleDocsMarkdown } from "./campaigns/wiki";
 import { isRestType, planRestResourceUpdates } from "./characters/rests";
 import { AdminPage } from "./components/pages/Admin";
-import { CampaignPage } from "./components/pages/Campaign";
+import { CampaignPage, CampaignWikiDetailPage } from "./components/pages/Campaign";
 import { CharactersPage } from "./components/pages/Characters";
 import { HomePage } from "./components/pages/Home";
 import { InviteAcceptPage } from "./components/pages/InviteAccept";
@@ -25,6 +26,7 @@ import type {
   NotesRepository,
   RulesRepository,
   UserRole,
+  WikiPageType,
 } from "./db";
 
 export interface AppDependencies {
@@ -141,7 +143,7 @@ export const createApp = (dependencies: AppDependencies) => {
     const guard = requireCampaignAccess({
       campaignId: campaign.id,
       campaignRepository: dependencies.campaignRepository,
-      permission: "manage",
+      permission: "read",
       session,
     });
     const guarded = guardResponse(context, guard);
@@ -151,11 +153,154 @@ export const createApp = (dependencies: AppDependencies) => {
       <CampaignPage
         appName={dependencies.appName}
         campaign={campaign}
+        imageAssets={dependencies.campaignContentRepository.listImageAssetsForCampaign(campaign.id, session.user.role)}
         members={dependencies.campaignRepository.listMembers(campaign.id)}
         sessions={dependencies.campaignContentRepository.listSessionsForCampaign(campaign.id, session.user.role)}
         user={session.user}
+        wikiPages={dependencies.campaignContentRepository.listWikiPagesForCampaign(campaign.id, session.user.role)}
       />,
     );
+  });
+
+  app.get("/campaigns/:campaignSlug/wiki/:wikiSlug", (context) => {
+    const session = readSession(context.req.header("cookie"));
+    if (!session) return context.redirect("/login", 303);
+
+    const campaign = dependencies.campaignRepository.getCampaignBySlug(
+      context.req.param("campaignSlug"),
+    );
+    if (!campaign) return context.text("Not found", 404);
+
+    const guard = requireCampaignAccess({
+      campaignId: campaign.id,
+      campaignRepository: dependencies.campaignRepository,
+      permission: "read",
+      session,
+    });
+    const guarded = guardResponse(context, guard);
+    if (guarded) return guarded;
+
+    const page = dependencies.campaignContentRepository.getWikiPageBySlug(
+      campaign.id,
+      context.req.param("wikiSlug"),
+      session.user.role,
+    );
+    if (!page) return context.text("Not found", 404);
+
+    const cover = page.coverImageAssetId
+      ? dependencies.campaignContentRepository.getImageAssetById(
+          campaign.id,
+          page.coverImageAssetId,
+          session.user.role,
+        )
+      : null;
+
+    return context.html(
+      <CampaignWikiDetailPage
+        appName={dependencies.appName}
+        campaign={campaign}
+        cover={cover}
+        galleryAssets={dependencies.campaignContentRepository.listImageAssetsForWikiPage(
+          campaign.id,
+          page.id,
+          "gallery",
+          session.user.role,
+        )}
+        inlineAssets={dependencies.campaignContentRepository.listImageAssetsForWikiPage(
+          campaign.id,
+          page.id,
+          "inline",
+          session.user.role,
+        )}
+        page={page}
+        user={session.user}
+      />,
+    );
+  });
+
+  app.get("/campaigns/:campaignSlug/assets/:assetId", async (context) => {
+    const session = readSession(context.req.header("cookie"));
+    if (!session) return context.redirect("/login", 303);
+
+    const campaign = dependencies.campaignRepository.getCampaignBySlug(
+      context.req.param("campaignSlug"),
+    );
+    if (!campaign) return context.text("Not found", 404);
+
+    const asset = dependencies.campaignContentRepository.getImageAssetById(
+      campaign.id,
+      context.req.param("assetId"),
+      session.user.role,
+    );
+    if (!asset) return context.text("Not found", 404);
+
+    const file = Bun.file(`${assetStorageRoot()}/${asset.storageKey}`);
+    if (!(await file.exists())) return context.text("Not found", 404);
+
+    return new Response(file, {
+      headers: {
+        "Cache-Control": "private, max-age=3600",
+        "Content-Type": asset.mimeType,
+      },
+    });
+  });
+
+  app.post("/campaigns/:campaignSlug/wiki", async (context) => {
+    const session = readSession(context.req.header("cookie"));
+    if (!session) return context.redirect("/login", 303);
+
+    const campaign = dependencies.campaignRepository.getCampaignBySlug(
+      context.req.param("campaignSlug"),
+    );
+    if (!campaign) return context.text("Not found", 404);
+
+    const guard = requireCampaignAccess({
+      campaignId: campaign.id,
+      campaignRepository: dependencies.campaignRepository,
+      permission: "manage",
+      session,
+    });
+    const guarded = guardResponse(context, guard);
+    if (guarded) return guarded;
+
+    const parsed = parseCampaignWikiForm(await context.req.parseBody());
+    if (!parsed.ok) return context.text(parsed.message, 400);
+
+    dependencies.campaignContentRepository.createWikiPage({
+      ...parsed.value,
+      campaignId: campaign.id,
+    });
+
+    return context.redirect(`/campaigns/${campaign.slug}`, 303);
+  });
+
+  app.post("/campaigns/:campaignSlug/assets", async (context) => {
+    const session = readSession(context.req.header("cookie"));
+    if (!session) return context.redirect("/login", 303);
+
+    const campaign = dependencies.campaignRepository.getCampaignBySlug(
+      context.req.param("campaignSlug"),
+    );
+    if (!campaign) return context.text("Not found", 404);
+
+    const guard = requireCampaignAccess({
+      campaignId: campaign.id,
+      campaignRepository: dependencies.campaignRepository,
+      permission: "manage",
+      session,
+    });
+    const guarded = guardResponse(context, guard);
+    if (guarded) return guarded;
+
+    const parsed = await parseCampaignAssetForm(await context.req.parseBody(), campaign.slug);
+    if (!parsed.ok) return context.text(parsed.message, 400);
+
+    dependencies.campaignContentRepository.createImageAsset({
+      ...parsed.value,
+      campaignId: campaign.id,
+    });
+
+    return context.redirect(`/campaigns/${campaign.slug}`, 303);
   });
 
   app.post("/campaigns/:campaignSlug/sessions", async (context) => {
@@ -1385,6 +1530,123 @@ function parseCampaignSessionForm(
       visibility,
     },
   };
+}
+
+function parseCampaignWikiForm(
+  body: Awaited<ReturnType<Context["req"]["parseBody"]>>,
+): {
+  ok: true;
+  value: {
+    bodyMarkdown: string;
+    coverImageAssetId: string | null;
+    pageType: WikiPageType;
+    sourcePath: string | null;
+    sourceTitle: string | null;
+    tags: string[];
+    title: string;
+    visibility: CampaignContentVisibility;
+  };
+} | { ok: false; message: string } {
+  const title = parseFormText(body.title);
+  const bodyMarkdown = parseFormText(body.bodyMarkdown);
+  const pageType = parseCampaignWikiPageType(body.pageType);
+  const visibility = parseNoteVisibility(body.visibility);
+  if (!title || !bodyMarkdown || !pageType || !visibility) {
+    return { ok: false, message: "Invalid wiki page" };
+  }
+
+  return {
+    ok: true,
+    value: {
+      bodyMarkdown: normaliseGoogleDocsMarkdown(bodyMarkdown),
+      coverImageAssetId: parseFormString(body.coverImageAssetId) || null,
+      pageType,
+      sourcePath: null,
+      sourceTitle: parseFormString(body.sourceTitle) || null,
+      tags: parseTags(body.tags),
+      title,
+      visibility,
+    },
+  };
+}
+
+async function parseCampaignAssetForm(
+  body: Awaited<ReturnType<Context["req"]["parseBody"]>>,
+  campaignSlug: string,
+): Promise<{
+  ok: true;
+  value: {
+    altText: string;
+    byteSize: number;
+    caption: string;
+    height: number | null;
+    mimeType: string;
+    storageKey: string;
+    title: string;
+    visibility: CampaignContentVisibility;
+    width: number | null;
+  };
+} | { ok: false; message: string }> {
+  const title = parseFormText(body.title);
+  const altText = parseFormText(body.altText);
+  const caption = parseFormString(body.caption);
+  const visibility = parseNoteVisibility(body.visibility);
+  const image = body.image;
+  if (!title || !altText || caption === null || !visibility || !(image instanceof File)) {
+    return { ok: false, message: "Invalid image asset" };
+  }
+  const extension = imageExtensionForMimeType(image.type);
+  if (!extension) return { ok: false, message: "Unsupported image type" };
+
+  const bytes = new Uint8Array(await image.arrayBuffer());
+  const storageKey = `campaigns/${campaignSlug}/${crypto.randomUUID()}.${extension}`;
+  await Bun.write(`${assetStorageRoot()}/${storageKey}`, bytes);
+
+  return {
+    ok: true,
+    value: {
+      altText,
+      byteSize: bytes.byteLength,
+      caption,
+      height: parsePositiveInteger(body.height),
+      mimeType: image.type,
+      storageKey,
+      title,
+      visibility,
+      width: parsePositiveInteger(body.width),
+    },
+  };
+}
+
+function parseCampaignWikiPageType(value: unknown) {
+  return isCampaignWikiPageType(value) ? value : null;
+}
+
+function parseTags(value: unknown) {
+  if (typeof value !== "string") return [];
+
+  return value
+    .split(",")
+    .map((tag) => tag.trim())
+    .filter(Boolean);
+}
+
+function parsePositiveInteger(value: unknown) {
+  const parsed = parseFormNumber(value);
+
+  return parsed && parsed > 0 ? Math.trunc(parsed) : null;
+}
+
+function imageExtensionForMimeType(mimeType: string) {
+  if (mimeType === "image/png") return "png";
+  if (mimeType === "image/jpeg") return "jpg";
+  if (mimeType === "image/webp") return "webp";
+
+  return null;
+}
+
+function assetStorageRoot() {
+  return process.env.CHARACTER_SHEET_ASSET_ROOT || "data/assets";
 }
 
 function parseSheetTabId(value: unknown) {

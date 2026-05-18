@@ -58,6 +58,7 @@ CREATE TABLE IF NOT EXISTS campaign_members (
 CREATE TABLE IF NOT EXISTS campaign_image_assets (
   id TEXT PRIMARY KEY,
   campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+  title TEXT NOT NULL DEFAULT '',
   storage_key TEXT NOT NULL UNIQUE CHECK (
     storage_key <> ''
     AND storage_key NOT LIKE '/%'
@@ -102,11 +103,20 @@ CREATE TABLE IF NOT EXISTS campaign_wiki_pages (
   tags_json TEXT NOT NULL DEFAULT '[]',
   visibility TEXT NOT NULL DEFAULT 'player' CHECK (visibility IN ('player', 'game_master')),
   body_markdown TEXT NOT NULL,
+  cover_image_asset_id TEXT REFERENCES campaign_image_assets(id) ON DELETE SET NULL,
   source_title TEXT,
   source_path TEXT,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   UNIQUE (campaign_id, slug)
+);
+
+CREATE TABLE IF NOT EXISTS campaign_wiki_page_assets (
+  wiki_page_id TEXT NOT NULL REFERENCES campaign_wiki_pages(id) ON DELETE CASCADE,
+  image_asset_id TEXT NOT NULL REFERENCES campaign_image_assets(id) ON DELETE CASCADE,
+  attachment_type TEXT NOT NULL CHECK (attachment_type IN ('inline', 'gallery')),
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (wiki_page_id, image_asset_id, attachment_type)
 );
 
 CREATE TABLE IF NOT EXISTS campaign_factions (
@@ -312,6 +322,8 @@ const migrationStatements = [
   "ALTER TABLE campaign_sessions ADD COLUMN created_by_user_id TEXT REFERENCES users(id)",
   "ALTER TABLE campaign_sessions ADD COLUMN updated_at TEXT NOT NULL DEFAULT ''",
   "ALTER TABLE character_notes ADD COLUMN updated_at TEXT NOT NULL DEFAULT ''",
+  "ALTER TABLE campaign_image_assets ADD COLUMN title TEXT NOT NULL DEFAULT ''",
+  "ALTER TABLE campaign_wiki_pages ADD COLUMN cover_image_asset_id TEXT REFERENCES campaign_image_assets(id) ON DELETE SET NULL",
 ];
 
 const triggers = /* sql */ `

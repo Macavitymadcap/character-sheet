@@ -350,6 +350,7 @@ export interface NotesRepository {
 export interface CampaignWikiPage {
   bodyMarkdown: string;
   campaignId: string;
+  coverImageAssetId: string | null;
   id: string;
   pageType: WikiPageType;
   slug: string;
@@ -369,6 +370,7 @@ export interface CampaignImageAsset {
   id: string;
   mimeType: string;
   storageKey: string;
+  title: string;
   visibility: CampaignContentVisibility;
   width: number | null;
 }
@@ -408,6 +410,29 @@ export interface CharacterFactionChoice {
 }
 
 export interface CampaignContentRepository {
+  createImageAsset(input: {
+    altText: string;
+    byteSize: number;
+    campaignId: string;
+    caption: string;
+    height: number | null;
+    mimeType: string;
+    storageKey: string;
+    title: string;
+    visibility: CampaignContentVisibility;
+    width: number | null;
+  }): CampaignImageAsset;
+  createWikiPage(input: {
+    bodyMarkdown: string;
+    campaignId: string;
+    coverImageAssetId: string | null;
+    pageType: WikiPageType;
+    sourcePath: string | null;
+    sourceTitle: string | null;
+    tags: string[];
+    title: string;
+    visibility: CampaignContentVisibility;
+  }): CampaignWikiPage;
   createSession(input: {
     body: string;
     campaignId: string;
@@ -424,10 +449,21 @@ export interface CampaignContentRepository {
     slug: string,
     viewerRole: UserRole,
   ): CampaignWikiPage | null;
+  getImageAssetById(
+    campaignId: string,
+    assetId: string,
+    viewerRole: UserRole,
+  ): CampaignImageAsset | null;
   getSessionBySlug(campaignId: string, slug: string, viewerRole: UserRole): CampaignSessionRecord | null;
   listFactionsForCampaign(campaignId: string): CampaignFaction[];
   listImageAssetsForCampaign(
     campaignId: string,
+    viewerRole: UserRole,
+  ): CampaignImageAsset[];
+  listImageAssetsForWikiPage(
+    campaignId: string,
+    wikiPageId: string,
+    attachmentType: "gallery" | "inline",
     viewerRole: UserRole,
   ): CampaignImageAsset[];
   listSessionsForCampaign(

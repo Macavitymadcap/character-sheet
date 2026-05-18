@@ -227,6 +227,7 @@ interface CampaignMemberRow {
 interface CampaignWikiPageRow {
   body_markdown: string;
   campaign_id: string;
+  cover_image_asset_id: string | null;
   id: string;
   page_type: WikiPageType;
   slug: string;
@@ -246,6 +247,7 @@ interface CampaignImageAssetRow {
   id: string;
   mime_type: string;
   storage_key: string;
+  title: string;
   visibility: CampaignContentVisibility;
   width: number | null;
 }
@@ -1554,6 +1556,85 @@ class SqliteNotesRepository implements NotesRepository {
 class SqliteCampaignContentRepository implements CampaignContentRepository {
   constructor(private readonly database: Database) {}
 
+  createImageAsset(input: {
+    altText: string;
+    byteSize: number;
+    campaignId: string;
+    caption: string;
+    height: number | null;
+    mimeType: string;
+    storageKey: string;
+    title: string;
+    visibility: CampaignContentVisibility;
+    width: number | null;
+  }): CampaignImageAsset {
+    const id = `campaign_image_asset_${randomUUID()}`;
+    this.database
+      .query<never, [string, string, string, string, string, number, number | null, number | null, string, string, CampaignContentVisibility]>(
+        `insert into campaign_image_assets (
+          id, campaign_id, title, storage_key, mime_type, byte_size, width, height, alt_text, caption, visibility
+        ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .run(
+        id,
+        input.campaignId,
+        input.title,
+        input.storageKey,
+        input.mimeType,
+        input.byteSize,
+        input.width,
+        input.height,
+        input.altText,
+        input.caption,
+        input.visibility,
+      );
+
+    const asset = this.getImageAssetById(input.campaignId, id, "game_master");
+    if (!asset) throw new Error(`Created image asset ${id} could not be read.`);
+
+    return asset;
+  }
+
+  createWikiPage(input: {
+    bodyMarkdown: string;
+    campaignId: string;
+    coverImageAssetId: string | null;
+    pageType: WikiPageType;
+    sourcePath: string | null;
+    sourceTitle: string | null;
+    tags: string[];
+    title: string;
+    visibility: CampaignContentVisibility;
+  }): CampaignWikiPage {
+    const id = `campaign_wiki_${randomUUID()}`;
+    const slug = uniqueCampaignWikiSlug(this.database, input.campaignId, input.title);
+    this.database
+      .query<never, [string, string, string, string, WikiPageType, string, CampaignContentVisibility, string, string | null, string | null, string | null]>(
+        `insert into campaign_wiki_pages (
+          id, campaign_id, slug, title, page_type, tags_json, visibility, body_markdown,
+          cover_image_asset_id, source_title, source_path
+        ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .run(
+        id,
+        input.campaignId,
+        slug,
+        input.title,
+        input.pageType,
+        JSON.stringify(input.tags),
+        input.visibility,
+        input.bodyMarkdown,
+        input.coverImageAssetId,
+        input.sourceTitle,
+        input.sourcePath,
+      );
+
+    const page = this.getWikiPageBySlug(input.campaignId, slug, "game_master");
+    if (!page) throw new Error(`Created wiki page ${id} could not be read.`);
+
+    return page;
+  }
+
   createSession(input: {
     body: string;
     campaignId: string;
@@ -1603,7 +1684,7 @@ class SqliteCampaignContentRepository implements CampaignContentRepository {
     return this.database
       .query<CampaignWikiPageRow, [string, number]>(
         `select id, campaign_id, slug, title, page_type, tags_json, visibility, body_markdown,
-          source_title, source_path
+          cover_image_asset_id, source_title, source_path
          from campaign_wiki_pages
          where campaign_id = ?
            and (? = 1 or visibility = 'player')
@@ -1621,7 +1702,7 @@ class SqliteCampaignContentRepository implements CampaignContentRepository {
     const row = this.database
       .query<CampaignWikiPageRow, [string, string, number]>(
         `select id, campaign_id, slug, title, page_type, tags_json, visibility, body_markdown,
-          source_title, source_path
+          cover_image_asset_id, source_title, source_path
          from campaign_wiki_pages
          where campaign_id = ?
            and slug = ?
@@ -1638,7 +1719,7 @@ class SqliteCampaignContentRepository implements CampaignContentRepository {
   ): CampaignImageAsset[] {
     return this.database
       .query<CampaignImageAssetRow, [string, number]>(
-        `select id, campaign_id, storage_key, mime_type, byte_size, width, height, alt_text,
+        `select id, campaign_id, title, storage_key, mime_type, byte_size, width, height, alt_text,
           caption, visibility
          from campaign_image_assets
          where campaign_id = ?
@@ -1646,6 +1727,47 @@ class SqliteCampaignContentRepository implements CampaignContentRepository {
          order by storage_key`,
       )
       .all(campaignId, canSeeGameMasterContent(viewerRole))
+      .map(toCampaignImageAsset);
+  }
+
+  getImageAssetById(
+    campaignId: string,
+    assetId: string,
+    viewerRole: UserRole,
+  ): CampaignImageAsset | null {
+    const row = this.database
+      .query<CampaignImageAssetRow, [string, string, number]>(
+        `select id, campaign_id, title, storage_key, mime_type, byte_size, width, height, alt_text,
+          caption, visibility
+         from campaign_image_assets
+         where campaign_id = ?
+           and id = ?
+           and (? = 1 or visibility = 'player')`,
+      )
+      .get(campaignId, assetId, canSeeGameMasterContent(viewerRole));
+
+    return row ? toCampaignImageAsset(row) : null;
+  }
+
+  listImageAssetsForWikiPage(
+    campaignId: string,
+    wikiPageId: string,
+    attachmentType: "gallery" | "inline",
+    viewerRole: UserRole,
+  ): CampaignImageAsset[] {
+    return this.database
+      .query<CampaignImageAssetRow, [string, string, string, number]>(
+        `select a.id, a.campaign_id, a.title, a.storage_key, a.mime_type, a.byte_size,
+          a.width, a.height, a.alt_text, a.caption, a.visibility
+         from campaign_wiki_page_assets wa
+         join campaign_image_assets a on a.id = wa.image_asset_id
+         where a.campaign_id = ?
+           and wa.wiki_page_id = ?
+           and wa.attachment_type = ?
+           and (? = 1 or a.visibility = 'player')
+         order by wa.sort_order, a.title`,
+      )
+      .all(campaignId, wikiPageId, attachmentType, canSeeGameMasterContent(viewerRole))
       .map(toCampaignImageAsset);
   }
 
@@ -1966,6 +2088,7 @@ function toCampaignWikiPage(row: CampaignWikiPageRow): CampaignWikiPage {
   return {
     bodyMarkdown: row.body_markdown,
     campaignId: row.campaign_id,
+    coverImageAssetId: row.cover_image_asset_id,
     id: row.id,
     pageType: row.page_type,
     slug: row.slug,
@@ -1987,6 +2110,7 @@ function toCampaignImageAsset(row: CampaignImageAssetRow): CampaignImageAsset {
     id: row.id,
     mimeType: row.mime_type,
     storageKey: row.storage_key,
+    title: row.title || row.alt_text,
     visibility: row.visibility,
     width: row.width,
   };
@@ -2062,6 +2186,24 @@ function uniqueCampaignSessionSlug(database: Database, campaignId: string, title
     database
       .query<{ id: string }, [string, string]>(
         "select id from campaign_sessions where campaign_id = ? and slug = ?",
+      )
+      .get(campaignId, slug)
+  ) {
+    slug = `${base}-${suffix}`;
+    suffix += 1;
+  }
+
+  return slug;
+}
+
+function uniqueCampaignWikiSlug(database: Database, campaignId: string, title: string) {
+  const base = slugify(title).replaceAll("_", "-") || "wiki-page";
+  let slug = base;
+  let suffix = 2;
+  while (
+    database
+      .query<{ id: string }, [string, string]>(
+        "select id from campaign_wiki_pages where campaign_id = ? and slug = ?",
       )
       .get(campaignId, slug)
   ) {
