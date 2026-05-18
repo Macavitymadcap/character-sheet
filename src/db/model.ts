@@ -70,6 +70,7 @@ export interface AuthRepository {
   listPasswordResetTokens(): PasswordResetToken[];
   listUserSummaries(): AdminUserSummary[];
   listUsers(): AuthUser[];
+  countActiveAdmins(): number;
   updateUserPasswordHash(userId: string, passwordHash: string): void;
   updateUserStatus(userId: string, status: UserStatus): AuthUser | null;
   usePasswordResetToken(tokenId: string, usedAt: Date): void;

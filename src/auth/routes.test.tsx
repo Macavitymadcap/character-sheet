@@ -226,6 +226,38 @@ describe("admin and sheet guards", () => {
     });
   });
 
+  test("keeps admins from disabling themselves while allowing other admin status changes", async () => {
+    const adminCookie = await login("admin@example.local");
+
+    const selfDisable = await postForm(
+      "/admin/users/user_site_admin/status",
+      { status: "disabled" },
+      adminCookie,
+    );
+    expect(selfDisable.status).toBe(400);
+    expect(await selfDisable.text()).toBe("Cannot disable your own account");
+
+    runtime.repositories.authRepository.createUser({
+      displayName: "Backup Admin",
+      email: "backup.admin@example.local",
+      id: "user_backup_admin",
+      passwordHash: new PasswordService().hashPassword("password123", "backup-admin"),
+      role: "admin",
+      status: "active",
+    });
+    const backupAdminCookie = await login("backup.admin@example.local");
+
+    const disableOriginalAdmin = await postForm(
+      "/admin/users/user_site_admin/status",
+      { status: "disabled" },
+      backupAdminCookie,
+    );
+    expect(disableOriginalAdmin.status).toBe(303);
+    expect(runtime.repositories.authRepository.findUserById("user_site_admin")?.status).toBe(
+      "disabled",
+    );
+  });
+
   test("lets invited users accept local invites", async () => {
     const adminCookie = await login("admin@example.local");
     const inviteResponse = await postForm(

@@ -413,6 +413,16 @@ class SqliteAuthRepository implements AuthRepository {
     return session;
   }
 
+  countActiveAdmins(): number {
+    const row = this.database
+      .query<{ count: number }, []>(
+        "select count(1) as count from users where role = 'admin' and status = 'active'",
+      )
+      .get();
+
+    return row?.count ?? 0;
+  }
+
   deleteSession(sessionId: string): void {
     this.database.run("delete from sessions where id = ?", [sessionId]);
   }

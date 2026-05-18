@@ -190,7 +190,21 @@ export const createApp = (dependencies: AppDependencies) => {
     const status = String(body.status ?? "");
     if (status !== "active" && status !== "disabled") return context.text("Invalid status", 400);
 
-    dependencies.authRepository.updateUserStatus(context.req.param("userId"), status);
+    const targetUser = dependencies.authRepository.findUserById(context.req.param("userId"));
+    if (!targetUser) return context.text("Not found", 404);
+    if (targetUser.id === session?.user.id && status === "disabled") {
+      return context.text("Cannot disable your own account", 400);
+    }
+    if (
+      targetUser.role === "admin" &&
+      targetUser.status === "active" &&
+      status === "disabled" &&
+      dependencies.authRepository.countActiveAdmins() <= 1
+    ) {
+      return context.text("Cannot disable the last active admin", 400);
+    }
+
+    dependencies.authRepository.updateUserStatus(targetUser.id, status);
 
     return context.redirect("/admin", 303);
   });
