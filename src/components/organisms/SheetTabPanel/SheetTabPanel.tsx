@@ -237,7 +237,7 @@ const NotesTab = ({ data }: { data: TabContentData }) => {
             <option value="player">Player</option>
             <option value="game_master">Game Master</option>
           </select>
-          <textarea name="body" rows={4} placeholder="Note body"></textarea>
+          <textarea name="body" rows={4} placeholder="Note body" aria-label="New note body"></textarea>
           <button type="submit">Add note</button>
         </form>
         {data.notes.length > 0 ? (
@@ -256,6 +256,7 @@ const NotesTab = ({ data }: { data: TabContentData }) => {
                 <input
                   id={`note-title-${slugify(note.id)}`}
                   name="title"
+                  aria-label={`${note.title} title`}
                   type="text"
                   value={note.title}
                 />
