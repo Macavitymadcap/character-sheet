@@ -11,6 +11,7 @@ Extend the local SQLite model, repository contracts, and permission guards so la
 - Add shared permission helpers for campaign membership, Game Master ownership, character ownership, wiki visibility, and asset visibility.
 - Keep storage local-first. Image assets store metadata and an app-managed relative storage key, never an absolute local source path.
 - Keep route-facing contracts database-agnostic enough for a later Postgres adapter.
+- Update architecture and README documentation for the new schema groups, permission helpers, seed shape, and any deliberate divergence from the current `pace-calculator` Hyper-Dank package baseline.
 
 ## Tests First
 
@@ -25,3 +26,4 @@ Extend the local SQLite model, repository contracts, and permission guards so la
 - New table groups support later tickets without adding route-specific SQL to route handlers.
 - Permission guards centralise campaign, character, wiki, and asset access decisions.
 - Seed data includes a small multi-user campaign shape without changing Lynott's current sheet behaviour.
+- Docs describe the delivered data and permission foundations accurately.
