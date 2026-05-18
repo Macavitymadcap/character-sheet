@@ -11,14 +11,14 @@ For the architecture and data model, see [ARCHITECTURE.md](./ARCHITECTURE.md). F
 - Local SQLite persistence with enough data to support Lynott, a second seeded player, a Game Master, and an admin.
 - Password-based local authentication with seeded users, sessions, admin invites, and admin-triggered password reset tokens.
 - Role-based access:
-  - Seeded players can manage their character roster, create manual campaign characters, read their own sheets, and update table-use state such as hit points, resources, conditions, equipment, rolls, rests, and their existing player note.
-  - The seeded Game Master can manage the campaign roster, create manual campaign characters for player members, read and update sheet state and existing player/Game Master notes, and view the seeded campaign shell.
+  - Seeded players can manage their character roster, create manual campaign characters, read their own sheets, and update table-use state such as hit points, resources, conditions, equipment, rolls, rests, and player-visible notes.
+  - The seeded Game Master can manage the campaign roster, create manual campaign characters for player members, read and update sheet state, manage player/Game Master notes, and maintain campaign session records.
   - The seeded admin can access the admin shell, create local invite tokens, and use the local password-reset token endpoint when a target user id is known.
 - A mobile-first sheet page with sticky site and character headers, compact combat/resource controls, dark mode, and tabbed sheet sections.
 - Structured D&D 2014 rules data seeded from local sources, normalised to the most recent 2014 official reprint where a rule appears in multiple books.
 - British English in product copy, docs, code naming, and CSS custom properties.
 
-The MVP remains intentionally local-first. Character deletion UI, campaign session management UI, note creation beyond seeded notes, richer rule-mechanics rendering, Railway deployment, and migration from SQLite to Postgres are deferred to later tickets or epics. The current schema and repositories already include the group-use foundations those flows will need.
+The MVP remains intentionally local-first. Character deletion UI, richer rule-mechanics rendering, Railway deployment, and migration from SQLite to Postgres are deferred to later tickets or epics. The current schema and repositories already include the group-use foundations those flows will need.
 
 ## Stack
 
@@ -58,7 +58,9 @@ The background tab is backed by structured `character_background_entries` rows s
 
 The sheet header includes HTMX-backed hit point controls for current and temporary HP, condition chips with an add/remove popover, and an inspiration switch. Abilities, skills, tools, and attacks expose compact d20 popovers that can roll normal, advantage, or disadvantage with extra modifiers. Action, spellcasting, feature, and equipment resources use small HTMX controls so the active tab can refresh without replacing the sticky sheet tabs. Long rests recover hit points, spell slots, feature uses, and hit dice through a workspace-level HTMX swap so the compact header and active tab stay in sync. These flows mutate `character_resources` or `character_equipment`, refresh the relevant compact fragment, and keep the character summary hit point fields in sync.
 
-The notes tab saves visible player or Game Master notes through HTMX panel refreshes. Player users can edit their player-visible note; Game Masters can edit both player and Game Master notes for the campaign sheet.
+The notes tab creates, updates, and deletes visible player or Game Master notes through HTMX panel refreshes. Player users can manage player-visible notes for their own characters; Game Masters can manage both player and Game Master notes for campaign characters.
+
+The Game Master campaign page lists campaign session records and includes local forms for creating, updating, and deleting table prep or recap entries with player-visible or Game-Master-only visibility.
 
 Current environment variables:
 
@@ -104,7 +106,7 @@ bun run verify
 
 `bun run test:a11y` starts an in-memory app on an available local port and runs Pa11y against public `/`, `/login`, authenticated `/sheet/lynott`, authenticated `/logout`, authenticated `/campaigns/rovnost-shadows`, and authenticated `/admin`.
 
-`bun run smoke:mvp` starts an in-memory app and walks the seeded local workflow: login as Lynott, open the sheet, mutate hit points, save a seeded player note, render every sheet tab fragment, logout, verify the protected sheet redirects, then login as Game Master and admin to check their role pages.
+`bun run smoke:mvp` starts an in-memory app and walks the seeded local workflow: login as Lynott, open the sheet, mutate hit points, save a player note, render every sheet tab fragment, logout, verify the protected sheet redirects, then login as Game Master and admin to check their role pages.
 
 `bun run screenshots:sheet` captures Lynott's sheet in light and dark mode. Screenshots are written to `docs/pr-screenshots/` by default, which is ignored by Git. Set `SCREENSHOT_DIR` to write them elsewhere.
 

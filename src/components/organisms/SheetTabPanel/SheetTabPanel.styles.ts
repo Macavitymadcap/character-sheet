@@ -133,6 +133,13 @@ export const sheetTabPanelStyles = /* css */ `
   padding-block-end: 0;
 }
 
+.note-editor-create {
+  background: var(--stat-background-colour);
+  border: 1px solid var(--border-colour);
+  border-radius: 0.45rem;
+  padding: 0.65rem;
+}
+
 .note-editor label {
   align-items: baseline;
   display: flex;
@@ -152,18 +159,29 @@ export const sheetTabPanelStyles = /* css */ `
   text-transform: uppercase;
 }
 
+.note-editor input,
+.note-editor select,
 .note-editor textarea {
   background: var(--stat-background-colour);
   border: 1px solid var(--border-colour);
   border-radius: 0.4rem;
   color: var(--heading-colour);
-  min-height: 5.5rem;
   padding: 0.5rem;
-  resize: vertical;
   transition:
     background-color var(--theme-transition),
     border-color var(--theme-transition),
     color var(--theme-text-transition);
+}
+
+.note-editor textarea {
+  min-height: 5.5rem;
+  resize: vertical;
+}
+
+.note-editor-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .note-editor button {

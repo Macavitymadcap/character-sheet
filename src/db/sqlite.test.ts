@@ -505,6 +505,51 @@ describe("SQLite repositories", () => {
     ]);
   });
 
+  test("creates updates and deletes notes with role visibility", () => {
+    runtime = createSqliteDatabase({ path: ":memory:" });
+    const notes = runtime.repositories.notesRepository;
+
+    const created = notes.createNote({
+      authorUserId: "user_lynott_player",
+      body: "A new player note.",
+      characterId: "character_lynott_magulbisson",
+      title: "Field note",
+      visibility: "player",
+    });
+    const updated = notes.updateNote(
+      "character_lynott_magulbisson",
+      created.id,
+      "player",
+      { body: "Updated player note.", title: "Updated field note" },
+    );
+    const gmOnly = notes.createNote({
+      authorUserId: "user_game_master",
+      body: "GM-only note.",
+      characterId: "character_lynott_magulbisson",
+      title: "Private prep",
+      visibility: "game_master",
+    });
+    const blockedDelete = notes.deleteNote("character_lynott_magulbisson", gmOnly.id, "player");
+    const gmDelete = notes.deleteNote("character_lynott_magulbisson", gmOnly.id, "game_master");
+
+    expect(created).toMatchObject({
+      authorUserId: "user_lynott_player",
+      body: "A new player note.",
+      title: "Field note",
+      visibility: "player",
+    });
+    expect(updated).toMatchObject({
+      body: "Updated player note.",
+      title: "Updated field note",
+      visibility: "player",
+    });
+    expect(blockedDelete).toBeFalse();
+    expect(gmDelete).toBeTrue();
+    expect(notes.listNotesForCharacter("character_lynott_magulbisson", "player")).toContainEqual(
+      expect.objectContaining({ body: "Updated player note.", title: "Updated field note" }),
+    );
+  });
+
   test("reads campaign and starter rules references", () => {
     runtime = createSqliteDatabase({ path: ":memory:" });
 
@@ -807,6 +852,40 @@ describe("SQLite repositories", () => {
     expect(
       content.listSessionsForCampaign(campaignId, "game_master").map((session) => session.slug),
     ).toEqual(["session-zero", "gm-fronts"]);
+
+    const createdSession = content.createSession({
+      body: "GM prep body.",
+      campaignId,
+      createdByUserId: "user_game_master",
+      sessionDate: "2026-05-20",
+      summary: "GM prep.",
+      title: "Planning Session",
+      visibility: "game_master",
+    });
+    const updatedSession = content.updateSession(campaignId, createdSession.id, {
+      body: "Player recap body.",
+      sessionDate: "2026-05-21",
+      summary: "Player recap.",
+      title: "Planning Session Recap",
+      visibility: "player",
+    });
+
+    expect(createdSession).toMatchObject({
+      createdByUserId: "user_game_master",
+      slug: "planning-session",
+      visibility: "game_master",
+    });
+    expect(updatedSession).toMatchObject({
+      body: "Player recap body.",
+      sessionDate: "2026-05-21",
+      summary: "Player recap.",
+      title: "Planning Session Recap",
+      visibility: "player",
+    });
+    expect(content.getSessionBySlug(campaignId, "planning-session", "player")).toMatchObject({
+      title: "Planning Session Recap",
+    });
+    expect(content.deleteSession(campaignId, createdSession.id)).toBeTrue();
 
     const factions = content.listFactionsForCampaign(campaignId);
     expect(factions.map((faction) => faction.name)).toEqual([
