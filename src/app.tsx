@@ -16,6 +16,7 @@ import { SheetTabWorkspace } from "./components/organisms/SheetTabWorkspace";
 import { isSheetTabId } from "./components/organisms/SheetTabs";
 import type {
   AuthRepository,
+  AbilityName,
   CampaignRepository,
   CharacterRepository,
   CreateCharacterInput,
@@ -495,6 +496,181 @@ export const createApp = (dependencies: AppDependencies) => {
     );
   });
 
+  app.patch("/sheet/:characterRef/summary", async (context) => {
+    const session = readSession(context.req.header("cookie"));
+    if (!session) return context.redirect("/login", 303);
+
+    const sheet = getSheetByRef(context.req.param("characterRef"));
+    if (!sheet) return context.text("Not found", 404);
+
+    const guard = requireSheetAccess({
+      campaignRepository: dependencies.campaignRepository,
+      characterId: sheet.id,
+      characterRepository: dependencies.characterRepository,
+      permission: "write",
+      session,
+    });
+    const guarded = guardResponse(context, guard);
+    if (guarded) return guarded;
+
+    const body = await context.req.parseBody();
+    const summary = parseSheetSummaryForm(body, sheet);
+    if (!summary.ok) return context.text(summary.message, 400);
+
+    const updatedSheet = dependencies.characterRepository.updateSheetSummary(sheet.id, summary.value);
+    if (!updatedSheet) return context.text("Not found", 404);
+
+    return context.html(
+      <SheetHeader
+        resources={dependencies.characterRepository.listResources(sheet.id)}
+        sheet={updatedSheet}
+      />,
+    );
+  });
+
+  app.patch("/sheet/:characterRef/abilities/:ability", async (context) => {
+    const session = readSession(context.req.header("cookie"));
+    if (!session) return context.redirect("/login", 303);
+
+    const sheet = getSheetByRef(context.req.param("characterRef"));
+    if (!sheet) return context.text("Not found", 404);
+    const guard = requireSheetAccess({
+      campaignRepository: dependencies.campaignRepository,
+      characterId: sheet.id,
+      characterRepository: dependencies.characterRepository,
+      permission: "write",
+      session,
+    });
+    const guarded = guardResponse(context, guard);
+    if (guarded) return guarded;
+
+    const ability = context.req.param("ability");
+    if (!isAbilityName(ability)) return context.text("Not found", 404);
+
+    const body = await context.req.parseBody();
+    const score = parseFormNumber(body.score);
+    const saveProficient = parseFormBoolean(body.saveProficient) ?? false;
+    if (score === null || score < 1 || score > 30) return context.text("Invalid ability", 400);
+
+    const updatedSheet = dependencies.characterRepository.updateAbility(sheet.id, ability, {
+      saveProficient,
+      score,
+    });
+    if (!updatedSheet) return context.text("Not found", 404);
+
+    return renderSheetTabPanel(context, dependencies, updatedSheet, session.user.role, "core");
+  });
+
+  app.patch("/sheet/:characterRef/skills/:skill", async (context) => {
+    const session = readSession(context.req.header("cookie"));
+    if (!session) return context.redirect("/login", 303);
+
+    const sheet = getSheetByRef(context.req.param("characterRef"));
+    if (!sheet) return context.text("Not found", 404);
+    const guard = requireSheetAccess({
+      campaignRepository: dependencies.campaignRepository,
+      characterId: sheet.id,
+      characterRepository: dependencies.characterRepository,
+      permission: "write",
+      session,
+    });
+    const guarded = guardResponse(context, guard);
+    if (guarded) return guarded;
+
+    const body = await context.req.parseBody();
+    const proficiencyLevel = parseFormNumber(body.proficiencyLevel);
+    if (proficiencyLevel === null || proficiencyLevel < 0 || proficiencyLevel > 2) {
+      return context.text("Invalid skill", 400);
+    }
+
+    const updatedSheet = dependencies.characterRepository.updateSkill(
+      sheet.id,
+      context.req.param("skill"),
+      { proficiencyLevel },
+    );
+    if (!updatedSheet) return context.text("Not found", 404);
+
+    return renderSheetTabPanel(context, dependencies, updatedSheet, session.user.role, "skills");
+  });
+
+  app.patch("/sheet/:characterRef/senses/:senseId", async (context) => {
+    const result = await updateSheetRow(context, dependencies, "core", async (sheet, body) => {
+      const label = parseFormText(body.label);
+      const value = parseFormText(body.value);
+      if (!label || !value) return false;
+
+      return dependencies.characterRepository.updateSense(
+        sheet.id,
+        context.req.param("senseId"),
+        { label, value },
+      );
+    });
+
+    return result;
+  });
+
+  app.patch("/sheet/:characterRef/armour/:sourceId", async (context) => {
+    const result = await updateSheetRow(context, dependencies, "core", async (sheet, body) => {
+      const label = parseFormText(body.label);
+      const value = parseFormNumber(body.value);
+      if (!label || value === null) return false;
+
+      return dependencies.characterRepository.updateArmourClassSource(
+        sheet.id,
+        context.req.param("sourceId"),
+        { label, notes: parseFormString(body.notes) ?? "", value },
+      );
+    });
+
+    return result;
+  });
+
+  app.patch("/sheet/:characterRef/defences/:defenceId", async (context) => {
+    const result = await updateSheetRow(context, dependencies, "core", async (sheet, body) => {
+      const label = parseFormText(body.label);
+      const detail = parseFormText(body.detail);
+      if (!label || !detail) return false;
+
+      return dependencies.characterRepository.updateDefence(
+        sheet.id,
+        context.req.param("defenceId"),
+        { detail, label },
+      );
+    });
+
+    return result;
+  });
+
+  app.patch("/sheet/:characterRef/proficiencies/:proficiencyId", async (context) => {
+    const result = await updateSheetRow(context, dependencies, "skills", async (sheet, body) => {
+      const name = parseFormText(body.name);
+      if (!name) return false;
+
+      return dependencies.characterRepository.updateProficiency(
+        sheet.id,
+        context.req.param("proficiencyId"),
+        { detail: parseFormString(body.detail) ?? "", name },
+      );
+    });
+
+    return result;
+  });
+
+  app.patch("/sheet/:characterRef/background/:entryId", async (context) => {
+    const result = await updateSheetRow(context, dependencies, "background", async (sheet, body) => {
+      const title = parseFormText(body.title);
+      if (!title) return false;
+
+      return dependencies.characterRepository.updateBackgroundEntry(
+        sheet.id,
+        context.req.param("entryId"),
+        { body: parseFormString(body.body) ?? "", title },
+      );
+    });
+
+    return result;
+  });
+
   app.patch("/sheet/:characterRef/resources/:resourceId", async (context) => {
     const session = readSession(context.req.header("cookie"));
     if (!session) return context.redirect("/login", 303);
@@ -587,14 +763,30 @@ export const createApp = (dependencies: AppDependencies) => {
     const quantity = parseFormNumber(body.quantity);
     const deltaQuantity = parseFormNumber(body.deltaQuantity);
     const equipped = parseFormBoolean(body.equipped);
-    if (quantity === null && deltaQuantity === null && equipped === null) {
+    const name = parseFormString(body.name);
+    const category = parseFormString(body.category);
+    const notes = parseFormString(body.notes);
+    if (
+      quantity === null &&
+      deltaQuantity === null &&
+      equipped === null &&
+      name === null &&
+      category === null &&
+      notes === null
+    ) {
+      return context.text("Invalid equipment update", 400);
+    }
+    if ((name !== null && !name) || (category !== null && !category)) {
       return context.text("Invalid equipment update", 400);
     }
 
     const nextQuantity =
       quantity ?? (deltaQuantity === null ? undefined : currentEquipment.quantity + deltaQuantity);
     const updated = dependencies.characterRepository.updateEquipmentItem(sheet.id, equipmentId, {
+      category: category ?? undefined,
       equipped: equipped ?? undefined,
+      name: name ?? undefined,
+      notes: notes ?? undefined,
       quantity: nextQuantity,
     });
     if (!updated) return context.text("Not found", 404);
@@ -843,6 +1035,132 @@ function membersWithDisplayNames(dependencies: AppDependencies, campaignId: stri
     ...member,
     displayName: dependencies.authRepository.findUserById(member.userId)?.displayName ?? member.userId,
   }));
+}
+
+function renderSheetTabPanel(
+  context: Context,
+  dependencies: AppDependencies,
+  sheet: NonNullable<ReturnType<CharacterRepository["getSheetById"]>>,
+  viewerRole: UserRole,
+  tabId: Parameters<typeof SheetTabPanel>[0]["tabId"],
+) {
+  return context.html(
+    <SheetTabPanel
+      backgroundEntries={dependencies.characterRepository.listBackgroundEntries(sheet.id)}
+      equipment={dependencies.characterRepository.listEquipment(sheet.id)}
+      notes={dependencies.notesRepository.listNotesForCharacter(sheet.id, viewerRole)}
+      resources={dependencies.characterRepository.listResources(sheet.id)}
+      ruleLinks={dependencies.rulesRepository.listRuleLinksForCharacter(sheet.id)}
+      sheet={sheet}
+      tabId={tabId}
+    />,
+  );
+}
+
+async function updateSheetRow(
+  context: Context,
+  dependencies: AppDependencies,
+  tabId: Parameters<typeof SheetTabPanel>[0]["tabId"],
+  update: (
+    sheet: NonNullable<ReturnType<CharacterRepository["getSheetById"]>>,
+    body: Awaited<ReturnType<Context["req"]["parseBody"]>>,
+  ) => unknown,
+) {
+  const session = dependencies.sessionService.readSession(context.req.header("cookie"));
+  if (!session) return context.redirect("/login", 303);
+
+  const characterRef = context.req.param("characterRef");
+  if (!characterRef) return context.text("Not found", 404);
+
+  const sheet =
+    dependencies.characterRepository.getSheetBySlug(characterRef) ??
+    dependencies.characterRepository.getSheetById(characterRef);
+  if (!sheet) return context.text("Not found", 404);
+
+  const guard = requireSheetAccess({
+    campaignRepository: dependencies.campaignRepository,
+    characterId: sheet.id,
+    characterRepository: dependencies.characterRepository,
+    permission: "write",
+    session,
+  });
+  if (!guard.ok) {
+    if (guard.reason === "unauthenticated") return context.redirect("/login", 303);
+    if (guard.reason === "not_found") return context.text("Not found", 404);
+
+    return context.text("Forbidden", 403);
+  }
+
+  const body = await context.req.parseBody();
+  const updated = await update(sheet, body);
+  if (updated === false) return context.text("Invalid sheet update", 400);
+
+  const updatedSheet = dependencies.characterRepository.getSheetById(sheet.id);
+  if (!updated || !updatedSheet) return context.text("Not found", 404);
+
+  return renderSheetTabPanel(context, dependencies, updatedSheet, session.user.role, tabId);
+}
+
+function parseSheetSummaryForm(
+  body: Awaited<ReturnType<Context["req"]["parseBody"]>>,
+  sheet: NonNullable<ReturnType<CharacterRepository["getSheetById"]>>,
+) {
+  const name = parseFormText(body.name);
+  const species = parseFormText(body.species);
+  const background = parseFormText(body.background);
+  const className = parseFormText(body.className);
+  const level = parseFormNumber(body.level);
+  const hitPointMax = parseFormNumber(body.hitPointMax);
+  const armourClass = parseFormNumber(body.armourClass);
+  const initiative = parseFormNumber(body.initiative);
+  const speedFeet = parseFormNumber(body.speedFeet);
+  const proficiencyBonus = parseFormNumber(body.proficiencyBonus);
+
+  if (
+    !name ||
+    !species ||
+    !background ||
+    !className ||
+    level === null ||
+    hitPointMax === null ||
+    armourClass === null ||
+    initiative === null ||
+    speedFeet === null ||
+    proficiencyBonus === null
+  ) {
+    return { ok: false as const, message: "Missing sheet fields" };
+  }
+  if (level < 1 || hitPointMax < 1 || armourClass < 0 || speedFeet < 0 || proficiencyBonus < 0) {
+    return { ok: false as const, message: "Invalid sheet values" };
+  }
+
+  return {
+    ok: true as const,
+    value: {
+      armourClass,
+      background,
+      className,
+      hitPointMax,
+      initiative,
+      level,
+      name,
+      proficiencyBonus,
+      speedFeet,
+      species,
+      subclassName: parseFormString(body.subclassName) ?? sheet.classes[0]?.subclassName ?? null,
+    },
+  };
+}
+
+function isAbilityName(value: string): value is AbilityName {
+  return (
+    value === "charisma" ||
+    value === "constitution" ||
+    value === "dexterity" ||
+    value === "intelligence" ||
+    value === "strength" ||
+    value === "wisdom"
+  );
 }
 
 function parseFormNumber(value: unknown) {

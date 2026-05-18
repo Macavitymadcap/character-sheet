@@ -140,17 +140,17 @@ describe("SQLite repositories", () => {
       { ability: "dexterity", modifier: 5, proficiencyLevel: 1, skill: "stealth" },
       { ability: "wisdom", modifier: 1, proficiencyLevel: 0, skill: "survival" },
     ]);
-    expect(sheet?.senses).toEqual([
+    expect(sheet?.senses).toMatchObject([
       { label: "Darkvision", value: "60 ft" },
       { label: "Passive perception", value: "13" },
       { label: "Passive investigation", value: "16" },
     ]);
-    expect(sheet?.armourClassBreakdown).toEqual([
+    expect(sheet?.armourClassBreakdown).toMatchObject([
       { label: "Breastplate", notes: "Medium armour base AC.", value: 14 },
       { label: "Dexterity bonus", notes: "Breastplate maximum Dexterity bonus.", value: 2 },
       { label: "Enhanced Defence", notes: "Active armour infusion.", value: 1 },
     ]);
-    expect(sheet?.defences).toEqual([
+    expect(sheet?.defences).toMatchObject([
       { detail: "Breastplate with Enhanced Defence infusion.", label: "Armour", type: "armour" },
       { detail: "None currently recorded.", label: "Resistances", type: "resistance" },
       { detail: "None currently recorded.", label: "Immunities", type: "immunity" },
@@ -160,7 +160,7 @@ describe("SQLite repositories", () => {
         type: "condition_immunity",
       },
     ]);
-    expect(sheet?.proficiencies).toEqual([
+    expect(sheet?.proficiencies).toMatchObject([
       { category: "armour", detail: "Artificer training.", name: "Light armour" },
       { category: "armour", detail: "Artificer training.", name: "Medium armour" },
       { category: "armour", detail: "Artificer training.", name: "Shields" },
@@ -344,6 +344,75 @@ describe("SQLite repositories", () => {
     expect(temporaryHitPoints?.current).toBe(6);
     expect(inspiration?.current).toBe(1);
     expect(sheet?.hitPoints).toEqual({ current: 31, max: 31, temporary: 6 });
+  });
+
+  test("updates manual sheet fields and recalculates derived values", () => {
+    runtime = createSqliteDatabase({ path: ":memory:" });
+    const characters = runtime.repositories.characterRepository;
+    const characterId = "character_lynott_magulbisson";
+
+    const summary = characters.updateSheetSummary(characterId, {
+      armourClass: 15,
+      background: "Field Agent",
+      className: "Artificer",
+      hitPointMax: 28,
+      initiative: 2,
+      level: 5,
+      name: "Lynott Undercover",
+      proficiencyBonus: 3,
+      speedFeet: 35,
+      species: "Hobgoblin",
+      subclassName: "Artillerist",
+    });
+    const ability = characters.updateAbility(characterId, "intelligence", {
+      saveProficient: true,
+      score: 20,
+    });
+    const skill = characters.updateSkill(characterId, "arcana", { proficiencyLevel: 1 });
+    const armour = characters.updateArmourClassSource(characterId, "ac_lynott_enhanced_defence", {
+      label: "Enhanced Defence",
+      notes: "Improved infusion.",
+      value: 2,
+    });
+    const sense = characters.updateSense(characterId, "sense_lynott_darkvision", {
+      label: "Darkvision",
+      value: "90 ft",
+    });
+    const defence = characters.updateDefence(characterId, "defence_lynott_resistances", {
+      detail: "Fire while shielded.",
+      label: "Resistances",
+    });
+    const proficiency = characters.updateProficiency(
+      characterId,
+      "proficiency_lynott_disguise_kit",
+      {
+        detail: "Special Operations cover work.",
+        name: "Disguise kit",
+      },
+    );
+
+    expect(summary).toMatchObject({
+      background: "Field Agent",
+      hitPoints: { current: 28, max: 28 },
+      initiative: 2,
+      level: 5,
+      name: "Lynott Undercover",
+      proficiencyBonus: 3,
+      speedFeet: 35,
+    });
+    expect(ability?.abilities.find((candidate) => candidate.ability === "intelligence")).toMatchObject({
+      modifier: 5,
+      saveModifier: 8,
+      score: 20,
+    });
+    expect(skill?.skills.find((candidate) => candidate.skill === "arcana")).toMatchObject({
+      modifier: 8,
+      proficiencyLevel: 1,
+    });
+    expect(armour).toMatchObject({ armourClass: 18 });
+    expect(sense).toMatchObject({ value: "90 ft" });
+    expect(defence).toMatchObject({ detail: "Fire while shielded." });
+    expect(proficiency).toMatchObject({ detail: "Special Operations cover work." });
   });
 
   test("adds and reactivates custom condition resources", () => {

@@ -1,5 +1,6 @@
 import { Database } from "bun:sqlite";
 import { randomUUID } from "node:crypto";
+import { abilityModifier, armourClassTotal, savingThrowModifier, skillModifier } from "../characters/calculations";
 import type {
   AbilityName,
   ArmourClassSource,
@@ -149,6 +150,7 @@ interface CharacterSkillRow {
 }
 
 interface ArmourClassSourceRow {
+  id: string;
   label: string;
   notes: string;
   value: number;
@@ -157,16 +159,19 @@ interface ArmourClassSourceRow {
 interface CharacterDefenceRow {
   defence_type: CharacterDefence["type"];
   detail: string;
+  id: string;
   label: string;
 }
 
 interface CharacterProficiencyRow {
   category: CharacterProficiency["category"];
   detail: string;
+  id: string;
   name: string;
 }
 
 interface CharacterSenseRow {
+  id: string;
   label: string;
   value: string;
 }
@@ -973,6 +978,206 @@ class SqliteCharacterRepository implements CharacterRepository {
       }));
   }
 
+  updateSheetSummary(
+    characterId: string,
+    patch: {
+      armourClass: number;
+      background: string;
+      className: string;
+      hitPointMax: number;
+      initiative: number;
+      level: number;
+      name: string;
+      proficiencyBonus: number;
+      speedFeet: number;
+      species: string;
+      subclassName: string | null;
+    },
+  ): CharacterSheetReadModel | null {
+    const current = this.getSheetById(characterId);
+    if (!current) return null;
+
+    const level = Math.max(1, Math.floor(patch.level));
+    const hitPointMax = Math.max(1, Math.floor(patch.hitPointMax));
+    const proficiencyBonus = Math.max(0, Math.floor(patch.proficiencyBonus));
+    const currentHitPoints = Math.min(current.hitPoints.current, hitPointMax);
+
+    const update = this.database.transaction(() => {
+      this.database.run(
+        `update characters
+         set name = ?, species = ?, background = ?, level = ?, proficiency_bonus = ?,
+           armour_class = ?, initiative = ?, speed_ft = ?, hit_point_max = ?,
+           hit_point_current = ?
+         where id = ?`,
+        [
+          patch.name.trim(),
+          patch.species.trim(),
+          patch.background.trim(),
+          level,
+          proficiencyBonus,
+          Math.max(0, Math.floor(patch.armourClass)),
+          Math.floor(patch.initiative),
+          Math.max(0, Math.floor(patch.speedFeet)),
+          hitPointMax,
+          currentHitPoints,
+          characterId,
+        ],
+      );
+      this.database.run(
+        `update character_resources
+         set max_value = ?, current_value = ?
+         where character_id = ? and resource_type = 'hit_points'`,
+        [hitPointMax, currentHitPoints, characterId],
+      );
+      this.database.run(
+        `update character_classes
+         set class_name = ?, subclass_name = ?, level = ?
+         where id = (
+           select id from character_classes where character_id = ? order by class_name limit 1
+         )`,
+        [patch.className.trim(), patch.subclassName?.trim() || null, level, characterId],
+      );
+      this.recalculateDerivedStats(characterId, proficiencyBonus);
+    });
+
+    update();
+
+    return this.getSheetById(characterId);
+  }
+
+  updateAbility(
+    characterId: string,
+    ability: AbilityName,
+    patch: { saveProficient: boolean; score: number },
+  ): CharacterSheetReadModel | null {
+    const sheet = this.getSheetById(characterId);
+    if (!sheet) return null;
+
+    const score = Math.max(1, Math.min(30, Math.floor(patch.score)));
+    const modifier = abilityModifier(score);
+    const saveModifier = savingThrowModifier({
+      modifier,
+      proficiencyBonus: sheet.proficiencyBonus,
+      proficient: patch.saveProficient,
+    });
+
+    this.database.run(
+      `update character_abilities
+       set score = ?, modifier = ?, save_proficient = ?, save_modifier = ?
+       where character_id = ? and ability = ?`,
+      [score, modifier, patch.saveProficient ? 1 : 0, saveModifier, characterId, ability],
+    );
+    this.recalculateSkillsForAbility(characterId, ability, modifier, sheet.proficiencyBonus);
+
+    return this.getSheetById(characterId);
+  }
+
+  updateSkill(
+    characterId: string,
+    skill: string,
+    patch: { proficiencyLevel: number },
+  ): CharacterSheetReadModel | null {
+    const sheet = this.getSheetById(characterId);
+    if (!sheet) return null;
+
+    const currentSkill = sheet.skills.find((candidate) => candidate.skill === skill);
+    if (!currentSkill) return null;
+
+    const ability = sheet.abilities.find((candidate) => candidate.ability === currentSkill.ability);
+    if (!ability) return null;
+
+    const proficiencyLevel = Math.max(0, Math.min(2, Math.floor(patch.proficiencyLevel)));
+    this.database.run(
+      `update character_skills
+       set proficiency_level = ?, modifier = ?
+       where character_id = ? and skill = ?`,
+      [
+        proficiencyLevel,
+        skillModifier({
+          modifier: ability.modifier,
+          proficiencyBonus: sheet.proficiencyBonus,
+          proficiencyLevel,
+        }),
+        characterId,
+        skill,
+      ],
+    );
+
+    return this.getSheetById(characterId);
+  }
+
+  updateSense(
+    characterId: string,
+    senseId: string,
+    patch: { label: string; value: string },
+  ): CharacterSense | null {
+    this.database.run(
+      "update character_senses set label = ?, value = ? where character_id = ? and id = ?",
+      [patch.label.trim(), patch.value.trim(), characterId, senseId],
+    );
+
+    return this.listSenses(characterId).find((sense) => sense.id === senseId) ?? null;
+  }
+
+  updateArmourClassSource(
+    characterId: string,
+    sourceId: string,
+    patch: { label: string; notes: string; value: number },
+  ): CharacterSheetReadModel | null {
+    const existing = this.listArmourClassBreakdown(characterId).find((source) => source.id === sourceId);
+    if (!existing) return null;
+
+    this.database.run(
+      `update character_armour_class_sources
+       set label = ?, value = ?, notes = ?
+       where character_id = ? and id = ?`,
+      [patch.label.trim(), Math.floor(patch.value), patch.notes.trim(), characterId, sourceId],
+    );
+    const total = armourClassTotal(this.listArmourClassBreakdown(characterId));
+    this.database.run("update characters set armour_class = ? where id = ?", [total, characterId]);
+
+    return this.getSheetById(characterId);
+  }
+
+  updateDefence(
+    characterId: string,
+    defenceId: string,
+    patch: { detail: string; label: string },
+  ): CharacterDefence | null {
+    this.database.run(
+      "update character_defences set label = ?, detail = ? where character_id = ? and id = ?",
+      [patch.label.trim(), patch.detail.trim(), characterId, defenceId],
+    );
+
+    return this.listDefences(characterId).find((defence) => defence.id === defenceId) ?? null;
+  }
+
+  updateProficiency(
+    characterId: string,
+    proficiencyId: string,
+    patch: { detail: string; name: string },
+  ): CharacterProficiency | null {
+    this.database.run(
+      "update character_proficiencies set name = ?, detail = ? where character_id = ? and id = ?",
+      [patch.name.trim(), patch.detail.trim(), characterId, proficiencyId],
+    );
+
+    return this.listProficiencies(characterId).find((proficiency) => proficiency.id === proficiencyId) ?? null;
+  }
+
+  updateBackgroundEntry(
+    characterId: string,
+    entryId: string,
+    patch: { body: string; title: string },
+  ): CharacterBackgroundEntry | null {
+    this.database.run(
+      "update character_background_entries set title = ?, body = ? where character_id = ? and id = ?",
+      [patch.title.trim(), patch.body.trim(), characterId, entryId],
+    );
+
+    return this.listBackgroundEntries(characterId).find((entry) => entry.id === entryId) ?? null;
+  }
+
   updateResourceCurrent(
     characterId: string,
     resourceId: string,
@@ -1007,7 +1212,7 @@ class SqliteCharacterRepository implements CharacterRepository {
   updateEquipmentItem(
     characterId: string,
     equipmentId: string,
-    patch: { equipped?: boolean; quantity?: number },
+    patch: { category?: string; equipped?: boolean; name?: string; notes?: string; quantity?: number },
   ): CharacterEquipment | null {
     const equipment = this.getEquipment(characterId, equipmentId);
     if (!equipment) return null;
@@ -1015,10 +1220,15 @@ class SqliteCharacterRepository implements CharacterRepository {
     const nextQuantity =
       patch.quantity === undefined ? equipment.quantity : Math.max(0, patch.quantity);
     const nextEquipped = patch.equipped === undefined ? equipment.equipped : patch.equipped;
+    const nextName = patch.name === undefined ? equipment.name : patch.name.trim();
+    const nextCategory = patch.category === undefined ? equipment.category : patch.category.trim();
+    const nextNotes = patch.notes === undefined ? equipment.notes : patch.notes.trim();
 
     this.database.run(
-      "update character_equipment set quantity = ?, equipped = ? where character_id = ? and id = ?",
-      [nextQuantity, nextEquipped ? 1 : 0, characterId, equipmentId],
+      `update character_equipment
+       set name = ?, category = ?, quantity = ?, equipped = ?, notes = ?
+       where character_id = ? and id = ?`,
+      [nextName, nextCategory, nextQuantity, nextEquipped ? 1 : 0, nextNotes, characterId, equipmentId],
     );
 
     return this.getEquipment(characterId, equipmentId);
@@ -1125,13 +1335,14 @@ class SqliteCharacterRepository implements CharacterRepository {
   private listArmourClassBreakdown(characterId: string): ArmourClassSource[] {
     return this.database
       .query<ArmourClassSourceRow, [string]>(
-        `select label, value, notes
+        `select id, label, value, notes
          from character_armour_class_sources
          where character_id = ?
          order by sort_order, label`,
       )
       .all(characterId)
       .map((row) => ({
+        id: row.id,
         label: row.label,
         notes: row.notes,
         value: row.value,
@@ -1141,7 +1352,7 @@ class SqliteCharacterRepository implements CharacterRepository {
   private listDefences(characterId: string): CharacterDefence[] {
     return this.database
       .query<CharacterDefenceRow, [string]>(
-        `select defence_type, label, detail
+        `select id, defence_type, label, detail
          from character_defences
          where character_id = ?
          order by sort_order, label`,
@@ -1149,6 +1360,7 @@ class SqliteCharacterRepository implements CharacterRepository {
       .all(characterId)
       .map((row) => ({
         detail: row.detail,
+        id: row.id,
         label: row.label,
         type: row.defence_type,
       }));
@@ -1157,7 +1369,7 @@ class SqliteCharacterRepository implements CharacterRepository {
   private listProficiencies(characterId: string): CharacterProficiency[] {
     return this.database
       .query<CharacterProficiencyRow, [string]>(
-        `select category, name, detail
+        `select id, category, name, detail
          from character_proficiencies
          where character_id = ?
          order by sort_order, name`,
@@ -1166,6 +1378,7 @@ class SqliteCharacterRepository implements CharacterRepository {
       .map((row) => ({
         category: row.category,
         detail: row.detail,
+        id: row.id,
         name: row.name,
       }));
   }
@@ -1173,16 +1386,58 @@ class SqliteCharacterRepository implements CharacterRepository {
   private listSenses(characterId: string): CharacterSense[] {
     return this.database
       .query<CharacterSenseRow, [string]>(
-        `select label, value
+        `select id, label, value
          from character_senses
          where character_id = ?
          order by sort_order, label`,
       )
       .all(characterId)
       .map((row) => ({
+        id: row.id,
         label: row.label,
         value: row.value,
       }));
+  }
+
+  private recalculateDerivedStats(characterId: string, proficiencyBonus: number) {
+    for (const ability of this.listAbilities(characterId)) {
+      this.database.run(
+        "update character_abilities set save_modifier = ? where character_id = ? and ability = ?",
+        [
+          savingThrowModifier({
+            modifier: ability.modifier,
+            proficiencyBonus,
+            proficient: ability.saveProficient,
+          }),
+          characterId,
+          ability.ability,
+        ],
+      );
+      this.recalculateSkillsForAbility(characterId, ability.ability, ability.modifier, proficiencyBonus);
+    }
+  }
+
+  private recalculateSkillsForAbility(
+    characterId: string,
+    ability: AbilityName,
+    modifier: number,
+    proficiencyBonus: number,
+  ) {
+    const skills = this.listSkills(characterId).filter((skill) => skill.ability === ability);
+    for (const skill of skills) {
+      this.database.run(
+        "update character_skills set modifier = ? where character_id = ? and skill = ?",
+        [
+          skillModifier({
+            modifier,
+            proficiencyBonus,
+            proficiencyLevel: skill.proficiencyLevel,
+          }),
+          characterId,
+          skill.skill,
+        ],
+      );
+    }
   }
 }
 

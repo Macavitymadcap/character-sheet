@@ -25,3 +25,10 @@ Let players and Game Masters edit the character sheet sections that the current 
 - A Game Master can edit any campaign character.
 - Invalid numeric values and unsupported section edits are rejected.
 - The UI remains table-friendly on mobile after edit controls are added.
+
+## Implementation Notes
+
+- `CharacterRepository` now exposes manual update methods for sheet summary fields, ability scores and saves, skill training, senses, armour sources, defences, proficiencies, equipment details, and background entries.
+- Ability, save, skill, hit point maximum, and armour class totals are recalculated server-side after manual edits.
+- Sheet write routes use the existing `requireSheetAccess(..., permission: "write")` guard, so players can edit owned sheets and Game Masters can edit campaign sheets.
+- HTMX edit controls return the smallest relevant fragment: the header for summary edits, and the active tab panel for row-level tab edits.

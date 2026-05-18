@@ -208,6 +208,60 @@ describe("createApp", () => {
     expect(sheetHtml).toContain('aria-checked="true"');
   });
 
+  test("updates manual sheet fields through HTMX fragments", async () => {
+    const { app, sessionService } = createTestApp("Character Sheet");
+    const cookie = sessionService.createSession("user_lynott_player").cookie;
+    const headers = formHeaders(cookie);
+
+    const summary = await app.request("/sheet/lynott/summary", {
+      body: new URLSearchParams({
+        armourClass: "15",
+        background: "Field Agent",
+        className: "Artificer",
+        hitPointMax: "28",
+        initiative: "2",
+        level: "5",
+        name: "Lynott Undercover",
+        proficiencyBonus: "3",
+        speedFeet: "35",
+        species: "Hobgoblin",
+        subclassName: "Artillerist",
+      }),
+      headers,
+      method: "PATCH",
+    });
+    const ability = await app.request("/sheet/lynott/abilities/intelligence", {
+      body: new URLSearchParams({ saveProficient: "1", score: "20" }),
+      headers,
+      method: "PATCH",
+    });
+    const skill = await app.request("/sheet/lynott/skills/arcana", {
+      body: new URLSearchParams({ proficiencyLevel: "1" }),
+      headers,
+      method: "PATCH",
+    });
+    const equipment = await app.request("/sheet/lynott/equipment/equipment_lynott_pistol", {
+      body: new URLSearchParams({
+        category: "weapon",
+        equipped: "1",
+        name: "Clockwork pistol",
+        notes: "Freshly calibrated.",
+        quantity: "1",
+      }),
+      headers,
+      method: "PATCH",
+    });
+
+    expect(summary.status).toBe(200);
+    expect(await summary.text()).toContain("Lynott Undercover");
+    expect(ability.status).toBe(200);
+    expect(await ability.text()).toContain("+8");
+    expect(skill.status).toBe(200);
+    expect(await skill.text()).toContain("Arcana");
+    expect(equipment.status).toBe(200);
+    expect(await equipment.text()).toContain("Clockwork pistol");
+  });
+
   test("adds custom conditions and returns dice roll fragments", async () => {
     const { app, sessionService } = createTestApp("Character Sheet");
     const session = sessionService.createSession("user_lynott_player");

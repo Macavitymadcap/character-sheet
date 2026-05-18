@@ -186,19 +186,19 @@ const EquipmentTab = ({ data }: { data: TabContentData }) => {
 const BackgroundTab = ({ data }: { data: TabContentData }) => {
   const profileItems = data.backgroundEntries
     .filter((entry) => ["personality", "ideal", "bond", "flaw"].includes(entry.category))
-    .map(backgroundEntryToItem);
+    .map((entry) => backgroundEntryToItem(entry, data.sheet.slug));
   const backstoryItems = data.backgroundEntries
     .filter((entry) => entry.category === "backstory")
-    .map(backgroundEntryToItem);
+    .map((entry) => backgroundEntryToItem(entry, data.sheet.slug));
   const identityItems = data.backgroundEntries
     .filter((entry) => entry.category === "false_identity")
-    .map(backgroundEntryToItem);
+    .map((entry) => backgroundEntryToItem(entry, data.sheet.slug));
   const npcItems = data.backgroundEntries
     .filter((entry) => entry.category === "npc")
-    .map(backgroundEntryToItem);
+    .map((entry) => backgroundEntryToItem(entry, data.sheet.slug));
   const rankItems = data.backgroundEntries
     .filter((entry) => entry.category === "rank")
-    .map(backgroundEntryToItem);
+    .map((entry) => backgroundEntryToItem(entry, data.sheet.slug));
 
   return (
     <div class="tab-compact-grid">
@@ -501,12 +501,44 @@ function renderEquipmentControls(item: CharacterEquipment, characterSlug: string
           </button>
         </form>
       ) : null}
+      <details class="row-edit-disclosure">
+        <summary>Edit</summary>
+        <form class="sheet-edit-form row-edit-form" hx-patch={target} hx-target="#sheet-tab-panel" hx-swap="outerHTML">
+          <label>Name <input name="name" type="text" value={item.name} /></label>
+          <label>Category <input name="category" type="text" value={item.category} /></label>
+          <label>Quantity <input min="0" name="quantity" type="number" value={item.quantity} /></label>
+          <label>
+            Equipped
+            <select name="equipped">
+              <option value="1" selected={item.equipped}>Yes</option>
+              <option value="0" selected={!item.equipped}>No</option>
+            </select>
+          </label>
+          <label>Notes <input name="notes" type="text" value={item.notes} /></label>
+          <button type="submit">Save</button>
+        </form>
+      </details>
     </span>
   );
 }
 
-function backgroundEntryToItem(entry: CharacterBackgroundEntry): CompactListItem {
+function backgroundEntryToItem(entry: CharacterBackgroundEntry, characterSlug?: string): CompactListItem {
   return {
+    controls: characterSlug ? (
+      <details class="row-edit-disclosure">
+        <summary>Edit</summary>
+        <form
+          class="sheet-edit-form row-edit-form"
+          hx-patch={`/sheet/${characterSlug}/background/${entry.id}`}
+          hx-target="#sheet-tab-panel"
+          hx-swap="outerHTML"
+        >
+          <label>Title <input name="title" type="text" value={entry.title} /></label>
+          <label>Body <textarea name="body" rows={3}>{entry.body}</textarea></label>
+          <button type="submit">Save</button>
+        </form>
+      </details>
+    ) : undefined,
     label: formatWords(entry.category.replaceAll("_", " ")),
     meta: entry.body,
     value: entry.title,
