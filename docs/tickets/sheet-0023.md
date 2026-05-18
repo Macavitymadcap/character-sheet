@@ -21,3 +21,12 @@ rule links.
 
 - Routes can read rules without knowing importer or SQLite details.
 - Search and filters remain deterministic across repeated imports.
+
+## Implementation Notes
+
+- Added `RulesRepository` read models for rule type counts, filtered summaries, detail lookup, and
+  enriched character rule links.
+- Added deterministic filtering by entity type, text query, spell level, source, and equipment
+  category.
+- Preserved route-facing isolation from SQLite by keeping JSON parsing and provenance handling in
+  the repository layer.

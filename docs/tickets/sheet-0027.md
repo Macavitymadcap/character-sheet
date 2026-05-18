@@ -20,3 +20,10 @@ Expand smoke, accessibility, screenshot, and documentation coverage for the SRD 
 ## Acceptance Criteria
 
 - `bun run verify` covers the player-facing SRD rules workflow.
+
+## Implementation Notes
+
+- Added smoke coverage for SRD fixture import, rules browsing, rule detail reads, and sheet rule
+  links.
+- Added Pa11y targets for the rules list and rule detail pages.
+- Added screenshot targets for the rules list and Bless detail page.

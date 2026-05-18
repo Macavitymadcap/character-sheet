@@ -12,6 +12,7 @@ import { InviteAcceptPage } from "./components/pages/InviteAccept";
 import { LoginPage } from "./components/pages/Login";
 import { LogoutPage } from "./components/pages/Logout";
 import { PasswordResetPage } from "./components/pages/PasswordReset";
+import { RulesDetailPage, RulesPage } from "./components/pages/Rules";
 import { SheetPage } from "./components/pages/Sheet";
 import { SheetHeader } from "./components/organisms/SheetHeader";
 import { SheetTabPanel } from "./components/organisms/SheetTabPanel";
@@ -26,6 +27,8 @@ import type {
   CharacterRepository,
   CreateCharacterInput,
   NotesRepository,
+  RuleEntityType,
+  RuleSearchFilters,
   RulesRepository,
   UserRole,
   WikiPageType,
@@ -81,6 +84,50 @@ export const createApp = (dependencies: AppDependencies) => {
     if (session) return context.redirect(defaultRouteForRole(session.user.role), 303);
 
     return context.html(<LoginPage appName={dependencies.appName} />);
+  });
+
+  app.get("/rules", (context) => {
+    const session = readSession(context.req.header("cookie"));
+    if (!session) return context.redirect("/login", 303);
+
+    const filters = parseRuleFilters(context);
+
+    return context.html(
+      <RulesPage
+        appName={dependencies.appName}
+        counts={dependencies.rulesRepository.listRuleEntityTypes()}
+        filters={filters}
+        rules={dependencies.rulesRepository.listRules(filters)}
+        user={session.user}
+      />,
+    );
+  });
+
+  app.get("/rules/:entityType/:slug", (context) => {
+    const session = readSession(context.req.header("cookie"));
+    if (!session) return context.redirect("/login", 303);
+
+    const entityType = parseRuleEntityType(context.req.param("entityType"));
+    if (!entityType) return context.text("Not found", 404);
+
+    const rule = dependencies.rulesRepository.getRuleDetail(entityType, context.req.param("slug"));
+    if (!rule) return context.text("Not found", 404);
+
+    return context.html(
+      <RulesDetailPage appName={dependencies.appName} rule={rule} user={session.user} />,
+    );
+  });
+
+  app.get("/rules/:entityType", (context) => {
+    const session = readSession(context.req.header("cookie"));
+    if (!session) return context.redirect("/login", 303);
+
+    const entityType = parseRuleEntityType(context.req.param("entityType"));
+    if (!entityType) return context.text("Not found", 404);
+
+    const query = new URLSearchParams(context.req.query()).toString();
+
+    return context.redirect(`/rules?type=${entityType}${query ? `&${query}` : ""}`, 303);
   });
 
   app.post("/login", async (context) => {
@@ -1416,6 +1463,43 @@ function campaignFactionsForSheet(dependencies: AppDependencies, characterId: st
   if (!access) return [];
 
   return dependencies.campaignContentRepository.listFactionsForCampaign(access.campaignId);
+}
+
+function parseRuleFilters(context: Context): RuleSearchFilters {
+  const entityType = parseRuleEntityType(context.req.query("type") ?? "");
+  const level = Number(context.req.query("level") ?? NaN);
+  const equipmentCategory = parseFormString(context.req.query("equipment"));
+  const query = parseFormString(context.req.query("q"));
+
+  return {
+    ...(entityType ? { entityType } : {}),
+    ...(equipmentCategory ? { equipmentCategory } : {}),
+    ...(Number.isInteger(level) ? { spellLevel: level } : {}),
+    ...(query ? { query } : {}),
+  };
+}
+
+function parseRuleEntityType(value: string): RuleEntityType | null {
+  const supported: RuleEntityType[] = [
+    "action",
+    "background",
+    "class",
+    "class_feature",
+    "condition",
+    "core_rule",
+    "equipment",
+    "feat",
+    "infusion",
+    "proficiency",
+    "sense",
+    "species",
+    "species_trait",
+    "subclass",
+    "subclass_feature",
+    "spell",
+  ];
+
+  return supported.includes(value as RuleEntityType) ? value as RuleEntityType : null;
 }
 
 function renderSheetTabPanel(

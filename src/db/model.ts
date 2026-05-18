@@ -495,15 +495,20 @@ export interface CampaignContentRepository {
 
 export interface CharacterRuleLink {
   entityName: string;
+  entitySlug: string;
   entityType: string;
   prepared: boolean;
   selected: boolean;
   selectionType: string;
   sourceName: string;
+  sourceSlug: string;
 }
 
 export interface RulesRepository {
+  getRuleDetail(entityType: RuleEntityType, slug: string): RuleDetail | null;
+  listRuleEntityTypes(): RuleEntityTypeCount[];
   listRuleLinksForCharacter(characterId: string): CharacterRuleLink[];
+  listRules(filters?: RuleSearchFilters): RuleSummary[];
 }
 
 export type RuleEntityType =
@@ -553,4 +558,44 @@ export interface UpsertedRuleEntity extends RuleEntitySeedInput {
 
 export interface RulesSeedRepository {
   upsertRuleEntity(entity: RuleEntitySeedInput): UpsertedRuleEntity;
+}
+
+export interface RuleSearchFilters {
+  entityType?: RuleEntityType;
+  equipmentCategory?: string;
+  query?: string;
+  sourceSlug?: string;
+  spellLevel?: number;
+}
+
+export interface RuleEntityTypeCount {
+  count: number;
+  entityType: RuleEntityType;
+}
+
+export interface RuleMechanicReadModel {
+  data: Record<string, unknown>;
+  mechanicType: string;
+}
+
+export interface RuleSummary {
+  description: string;
+  entityType: RuleEntityType;
+  id: string;
+  name: string;
+  slug: string;
+  sourceAbbreviation: string;
+  sourceName: string;
+  sourceSlug: string;
+  tags: string[];
+}
+
+export interface RuleDetail extends RuleSummary {
+  mechanics: RuleMechanicReadModel[];
+  provenance: {
+    originalPath?: string;
+    ruleType?: string;
+    source?: string;
+    srdVersion?: string;
+  } | null;
 }

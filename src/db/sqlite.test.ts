@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test";
+import { RulesImportService } from "../rules";
 import { createSqliteDatabase, type SqliteDatabaseRuntime } from "./sqlite";
 
 let runtime: SqliteDatabaseRuntime | undefined;
@@ -561,38 +562,46 @@ describe("SQLite repositories", () => {
     });
     expect(
       runtime.repositories.rulesRepository.listRuleLinksForCharacter("character_lynott_magulbisson"),
-    ).toEqual([
+    ).toMatchObject([
       {
         entityName: "Magical Tinkering",
+        entitySlug: "magical-tinkering",
         entityType: "class_feature",
         prepared: false,
         selected: true,
         selectionType: "class_feature",
         sourceName: "Tasha's Cauldron of Everything",
+        sourceSlug: "tashas-cauldron-of-everything",
       },
       {
         entityName: "Spellcasting",
+        entitySlug: "spellcasting",
         entityType: "class_feature",
         prepared: false,
         selected: true,
         selectionType: "class_feature",
         sourceName: "Tasha's Cauldron of Everything",
+        sourceSlug: "tashas-cauldron-of-everything",
       },
       {
         entityName: "Infuse Item",
+        entitySlug: "infuse-item",
         entityType: "class_feature",
         prepared: false,
         selected: true,
         selectionType: "class_feature",
         sourceName: "Tasha's Cauldron of Everything",
+        sourceSlug: "tashas-cauldron-of-everything",
       },
       {
         entityName: "The Right Tool for the Job",
+        entitySlug: "the-right-tool-for-the-job",
         entityType: "class_feature",
         prepared: false,
         selected: true,
         selectionType: "class_feature",
         sourceName: "Tasha's Cauldron of Everything",
+        sourceSlug: "tashas-cauldron-of-everything",
       },
       {
         entityName: "Eldritch Cannon",
@@ -699,6 +708,45 @@ describe("SQLite repositories", () => {
         sourceName: "Player's Handbook",
       },
     ]);
+  });
+
+  test("lists and filters imported SRD rules for browsing", async () => {
+    runtime = createSqliteDatabase({ path: ":memory:" });
+    const importer = new RulesImportService(runtime.repositories.rulesSeedRepository);
+    await importer.importFromLocalSource("docs/rules/srd-5.1-fixtures");
+    const rules = runtime.repositories.rulesRepository;
+
+    const entityTypeCounts = rules.listRuleEntityTypes();
+    expect(entityTypeCounts).toContainEqual({ count: 1, entityType: "action" });
+    expect(entityTypeCounts).toContainEqual({ count: 1, entityType: "species" });
+    expect(entityTypeCounts).toContainEqual({ count: 9, entityType: "spell" });
+    expect(rules.listRules({ entityType: "spell", spellLevel: 1 }).map((rule) => rule.slug)).toEqual([
+      "bless",
+    ]);
+    expect(rules.listRules({ entityType: "equipment", equipmentCategory: "armour" })).toEqual([
+      expect.objectContaining({
+        description: expect.stringContaining("Armour Class 16"),
+        name: "Chain Mail",
+        sourceSlug: "srd-5-1",
+        tags: expect.arrayContaining(["armour", "equipment"]),
+      }),
+    ]);
+    expect(rules.listRules({ query: "darkness" }).map((rule) => rule.slug)).toEqual([
+      "darkvision",
+    ]);
+    expect(rules.getRuleDetail("spell", "bless")).toMatchObject({
+      entityType: "spell",
+      mechanics: [
+        expect.objectContaining({
+          data: expect.objectContaining({ level: 1, school: "Enchantment" }),
+          mechanicType: "spell",
+        }),
+      ],
+      name: "Bless",
+      provenance: expect.objectContaining({ srdVersion: "5.1" }),
+      slug: "bless",
+    });
+    expect(rules.getRuleDetail("spell", "missing")).toBeNull();
   });
 
   test("lists group-use character rosters for players and Game Masters", () => {

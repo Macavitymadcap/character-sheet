@@ -278,6 +278,8 @@ The importer lives behind `RulesImportService` and `RulesSeedRepository`. The SR
 contract in `docs/rules-srd-import.md` keeps the epic offline and local-first: full corpus files
 belong under `docs/rules/srd-5.1/`, contract fixtures live under
 `docs/rules/srd-5.1-fixtures/`, and unsupported files are reported without failing the import.
+Runtime rules reads stay behind `RulesRepository`, which exposes type counts, filtered/searchable
+summaries, detail lookups, and character rule links for route and sheet rendering.
 
 ## Lynott MVP Coverage
 
@@ -323,9 +325,9 @@ Development should be tests first where practical:
 - Service tests cover password hashing, session handling, rule normalisation, source precedence, resource mutation, and permission decisions.
 - Route tests call `app.request()` and assert status codes, redirects, session cookies, role enforcement, validation failures, full pages, and HTMX fragments.
 - Component tests render JSX to strings and assert semantic HTML, labels, headings, ARIA, HTMX attributes, and empty states.
-- Accessibility tests run Pa11y against public, player, Game Master, wiki, roster, sheet, logout, and admin pages once a runnable app exists.
-- Screenshot tests capture sheet, roster, campaign, wiki, faction, and edited-sheet states for user-facing UI changes.
-- MVP smoke tests exercise seeded login, player and Game Master character creation, sheet navigation, manual edits, resource mutation, note saving, faction selection, session records, wiki reads and writes, image assets, role pages, admin account preparation, and logout.
+- Accessibility tests run Pa11y against public, player, Game Master, wiki, roster, sheet, rules, logout, and admin pages once a runnable app exists.
+- Screenshot tests capture sheet, roster, campaign, rules, wiki, faction, and edited-sheet states for user-facing UI changes.
+- MVP smoke tests exercise seeded login, player and Game Master character creation, sheet navigation, manual edits, resource mutation, note saving, faction selection, SRD fixture imports, rules browsing, sheet rule links, session records, wiki reads and writes, image assets, role pages, admin account preparation, and logout.
 
 The minimum verification before a source-code ticket is complete:
 
@@ -333,7 +335,7 @@ The minimum verification before a source-code ticket is complete:
 bun run verify
 ```
 
-The accessibility script currently checks public `/` and `/login`, player `/characters`, `/sheet/lynott`, `/campaigns/rovnost-shadows/wiki/factions-guide`, and `/logout`, Game Master `/campaigns/rovnost-shadows` and `/campaigns/rovnost-shadows/characters`, and admin `/admin`. The MVP smoke script renders every sheet tab fragment directly and walks the group-use flows for character creation, manual edits, notes, faction choice, sessions, wiki, assets, and admin account preparation. The screenshot script captures sheet, roster, campaign, wiki, faction, and edited-sheet states to `docs/pr-screenshots/` by default.
+The accessibility script currently checks public `/` and `/login`, player `/characters`, `/sheet/lynott`, `/rules`, `/rules/spell/bless`, `/campaigns/rovnost-shadows/wiki/factions-guide`, and `/logout`, Game Master `/campaigns/rovnost-shadows` and `/campaigns/rovnost-shadows/characters`, and admin `/admin`. The MVP smoke script renders every sheet tab fragment directly and walks the group-use flows for character creation, manual edits, notes, faction choice, SRD fixture import, rules browsing, sheet rule links, sessions, wiki, assets, and admin account preparation. The screenshot script captures sheet, roster, campaign, rules, wiki, faction, and edited-sheet states to `docs/pr-screenshots/` by default.
 
 ## Pipeline
 
