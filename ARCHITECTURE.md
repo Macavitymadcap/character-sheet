@@ -318,20 +318,20 @@ The accessibility script currently checks public `/`, `/login`, authenticated `/
 
 ## Pipeline
 
-The repository uses a documentation-first ticket flow. Epic planning branches land the accepted roadmap documents on `main`; implementation ticket branches then start from the latest `main` and open pull requests back into `main`. A temporary integration branch can still be used for a deliberate stack, but it should be explicit and short-lived.
+The repository uses a documentation-first ticket flow. Epic planning branches open against `main` for roadmap review, then remain as active epic integration branches once accepted. Implementation ticket branches start from the latest epic branch and open pull requests back into that epic branch. The epic branch opens a final pull request into `main` after its ticket stack is accepted.
 
 ```mermaid
 flowchart LR
     A["main"] --> B["Epic planning branch"]
     B --> C["Planning PR"]
-    C --> D["Squash merge plan"]
-    D --> E["Ticket branch from main"]
-    E --> F["Ticket PR"]
+    C --> D["Accepted epic branch"]
+    D --> E["Ticket branch from epic"]
+    E --> F["Ticket PR into epic"]
     F --> G["Checks, review, docs"]
-    G --> H["Squash merge ticket"]
+    G --> H["Squash merge ticket into epic"]
     H --> I{"More tickets?"}
     I -- "Yes" --> E
-    I -- "No" --> J["Epic complete on main"]
+    I -- "No" --> J["Epic PR into main"]
 ```
 
 Release automation can be added after the MVP scaffold exists. Railway and Postgres deployment remain a later epic.
