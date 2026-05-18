@@ -1,10 +1,12 @@
 import type {
   CharacterBackgroundEntry,
   CharacterEquipment,
+  CharacterFactionChoice,
   CharacterNote,
   CharacterResource,
   CharacterRuleLink,
   CharacterSheetReadModel,
+  CampaignFaction,
 } from "../../../db";
 import { Accordion, type AccordionItem } from "../../molecules/Accordion";
 import { CompactList, type CompactListItem } from "../../molecules/CompactList";
@@ -15,7 +17,9 @@ import { getSheetTab, type SheetTabId } from "../SheetTabs";
 
 interface SheetTabPanelProps {
   backgroundEntries: CharacterBackgroundEntry[];
+  campaignFactions: CampaignFaction[];
   equipment: CharacterEquipment[];
+  factionChoice: CharacterFactionChoice | null;
   notes: CharacterNote[];
   resources: CharacterResource[];
   ruleLinks: CharacterRuleLink[];
@@ -25,7 +29,9 @@ interface SheetTabPanelProps {
 
 export const SheetTabPanel = ({
   backgroundEntries,
+  campaignFactions,
   equipment,
+  factionChoice,
   notes,
   resources,
   ruleLinks,
@@ -48,7 +54,9 @@ export const SheetTabPanel = ({
       </div>
       {renderTabContent(tab.id, {
         backgroundEntries,
+        campaignFactions,
         equipment,
+        factionChoice,
         notes,
         resources,
         ruleLinks,
@@ -60,7 +68,9 @@ export const SheetTabPanel = ({
 
 interface TabContentData {
   backgroundEntries: CharacterBackgroundEntry[];
+  campaignFactions: CampaignFaction[];
   equipment: CharacterEquipment[];
+  factionChoice: CharacterFactionChoice | null;
   notes: CharacterNote[];
   resources: CharacterResource[];
   ruleLinks: CharacterRuleLink[];
@@ -199,9 +209,78 @@ const BackgroundTab = ({ data }: { data: TabContentData }) => {
   const rankItems = data.backgroundEntries
     .filter((entry) => entry.category === "rank")
     .map((entry) => backgroundEntryToItem(entry, data.sheet.slug));
+  const selectedFaction = data.campaignFactions.find(
+    (faction) => faction.id === data.factionChoice?.factionId,
+  );
 
   return (
     <div class="tab-compact-grid">
+      <section class="tab-compact-section faction-picker-section" aria-labelledby="background-faction-heading">
+        <h3 id="background-faction-heading">Faction connection</h3>
+        <form
+          class="faction-picker"
+          hx-patch={`/sheet/${data.sheet.slug}/faction`}
+          hx-target="#sheet-tab-panel"
+          hx-swap="outerHTML"
+        >
+          <label for={`faction-choice-${slugify(data.sheet.id)}`}>
+            <strong>Primary faction</strong>
+            <span>Background context</span>
+          </label>
+          <select id={`faction-choice-${slugify(data.sheet.id)}`} name="factionId">
+            <option value="">Unaffiliated/Other</option>
+            {data.campaignFactions.map((faction) => (
+              <option value={faction.id} selected={faction.id === data.factionChoice?.factionId}>
+                {faction.name}
+              </option>
+            ))}
+          </select>
+          <label for={`faction-note-${slugify(data.sheet.id)}`}>
+            <strong>Connection note</strong>
+          </label>
+          <textarea id={`faction-note-${slugify(data.sheet.id)}`} name="connectionNote" rows={4}>
+            {data.factionChoice?.connectionNote ?? ""}
+          </textarea>
+          <button type="submit">Save faction</button>
+        </form>
+        {selectedFaction ? (
+          <article class="faction-summary-card">
+            <p class="faction-motto">{selectedFaction.motto}</p>
+            <h4>{selectedFaction.name}</h4>
+            <p>{selectedFaction.summary}</p>
+            <dl>
+              <div>
+                <dt>Public reputation</dt>
+                <dd>{selectedFaction.publicReputation}</dd>
+              </div>
+              <div>
+                <dt>Connection</dt>
+                <dd>{data.factionChoice?.connectionNote || selectedFaction.playerPrompt}</dd>
+              </div>
+            </dl>
+            {selectedFaction.wikiPageSlug ? (
+              <a href={`/campaigns/rovnost-shadows/wiki/${selectedFaction.wikiPageSlug}`}>
+                {selectedFaction.wikiPageTitle ?? "Faction wiki"}
+              </a>
+            ) : null}
+          </article>
+        ) : (
+          <p class="tab-empty-state">
+            {data.factionChoice?.connectionNote
+              ? `Unaffiliated/Other: ${data.factionChoice.connectionNote}`
+              : "No primary faction selected."}
+          </p>
+        )}
+      </section>
+      {renderCompactSection(
+        "background-faction-options-heading",
+        "Faction options",
+        data.campaignFactions.map((faction) => ({
+          label: faction.name,
+          meta: `${faction.publicReputation} ${faction.connections.length > 0 ? `Connections: ${faction.connections.join(", ")}` : ""}`,
+          value: faction.playerPrompt,
+        })),
+      )}
       {renderCompactSection("background-profile-heading", "Profile", profileItems)}
       {renderCompactSection("background-story-heading", "Backstory", backstoryItems)}
       {renderCompactSection("background-identities-heading", "False identities", identityItems)}

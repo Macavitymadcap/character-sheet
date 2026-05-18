@@ -268,22 +268,26 @@ interface CampaignSessionRecordRow {
 
 interface CampaignFactionRow {
   campaign_id: string;
+  connections_json: string;
   id: string;
   image_asset_id: string | null;
+  motto: string;
   name: string;
   player_prompt: string;
   public_reputation: string;
   rumours_json: string;
   slug: string;
   summary: string;
+  wiki_page_slug: string | null;
+  wiki_page_title: string | null;
 }
 
 interface CharacterFactionChoiceRow {
   character_id: string;
   connection_note: string;
-  faction_id: string;
-  faction_name: string;
-  faction_slug: string;
+  faction_id: string | null;
+  faction_name: string | null;
+  faction_slug: string | null;
 }
 
 interface RuleLinkRow {
@@ -1854,11 +1858,14 @@ class SqliteCampaignContentRepository implements CampaignContentRepository {
   listFactionsForCampaign(campaignId: string): CampaignFaction[] {
     return this.database
       .query<CampaignFactionRow, [string]>(
-        `select id, campaign_id, slug, name, summary, public_reputation, player_prompt,
-          rumours_json, image_asset_id
-         from campaign_factions
-         where campaign_id = ?
-         order by sort_order, name`,
+        `select factions.id, factions.campaign_id, factions.slug, factions.name, factions.motto,
+          factions.summary, factions.public_reputation, factions.player_prompt,
+          factions.connections_json, factions.rumours_json, factions.image_asset_id,
+          wiki.slug as wiki_page_slug, wiki.title as wiki_page_title
+         from campaign_factions factions
+         left join campaign_wiki_pages wiki on wiki.id = factions.wiki_page_id
+         where factions.campaign_id = ?
+         order by factions.sort_order, factions.name`,
       )
       .all(campaignId)
       .map(toCampaignFaction);
@@ -1873,7 +1880,7 @@ class SqliteCampaignContentRepository implements CampaignContentRepository {
           factions.slug as faction_slug,
           factions.name as faction_name
          from character_faction_choices choices
-         inner join campaign_factions factions on factions.id = choices.faction_id
+         left join campaign_factions factions on factions.id = choices.faction_id
          where choices.character_id = ?`,
       )
       .get(characterId);
@@ -1887,6 +1894,43 @@ class SqliteCampaignContentRepository implements CampaignContentRepository {
           factionSlug: row.faction_slug,
         }
       : null;
+  }
+
+  updateCharacterFactionChoice(
+    characterId: string,
+    factionId: string | null,
+    connectionNote: string,
+  ): CharacterFactionChoice | null {
+    if (!this.database.query<{ id: string }, [string]>("select id from characters where id = ?").get(characterId)) {
+      return null;
+    }
+
+    if (factionId !== null) {
+      const faction = this.database
+        .query<{ id: string }, [string]>("select id from campaign_factions where id = ?")
+        .get(factionId);
+      if (!faction) return null;
+    }
+
+    try {
+      this.database
+        .query<never, [string, string | null, string]>(
+          `insert into character_faction_choices (character_id, faction_id, connection_note)
+           values (?, ?, ?)
+           on conflict(character_id) do update set
+             faction_id = excluded.faction_id,
+             connection_note = excluded.connection_note,
+             updated_at = CURRENT_TIMESTAMP`,
+        )
+        .run(characterId, factionId, connectionNote);
+    } catch (error) {
+      if (error instanceof Error && error.message.includes("character and faction must belong")) {
+        return null;
+      }
+      throw error;
+    }
+
+    return this.getCharacterFactionChoice(characterId);
   }
 }
 
@@ -2135,14 +2179,18 @@ function toCampaignSessionRecord(row: CampaignSessionRecordRow): CampaignSession
 function toCampaignFaction(row: CampaignFactionRow): CampaignFaction {
   return {
     campaignId: row.campaign_id,
+    connections: parseStringArray(row.connections_json),
     id: row.id,
     imageAssetId: row.image_asset_id,
+    motto: row.motto,
     name: row.name,
     playerPrompt: row.player_prompt,
     publicReputation: row.public_reputation,
     rumours: parseStringArray(row.rumours_json),
     slug: row.slug,
     summary: row.summary,
+    wikiPageSlug: row.wiki_page_slug,
+    wikiPageTitle: row.wiki_page_title,
   };
 }
 

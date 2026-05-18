@@ -196,6 +196,79 @@ export const sheetTabPanelStyles = /* css */ `
   padding: 0.35rem 0.65rem;
 }
 
+.faction-picker-section {
+  grid-column: 1 / -1;
+}
+
+.faction-picker,
+.faction-summary-card {
+  background: var(--stat-background-colour);
+  border: 1px solid var(--border-colour);
+  border-radius: 0.45rem;
+  display: grid;
+  gap: 0.55rem;
+  padding: 0.65rem;
+}
+
+.faction-picker label {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.5rem;
+}
+
+.faction-picker label span,
+.faction-summary-card dt {
+  color: var(--muted-text-colour);
+  font-size: 0.78rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.faction-picker select,
+.faction-picker textarea {
+  background: var(--surface-colour);
+  border: 1px solid var(--border-colour);
+  border-radius: 0.4rem;
+  color: var(--heading-colour);
+  padding: 0.5rem;
+}
+
+.faction-picker textarea {
+  min-height: 5rem;
+  resize: vertical;
+}
+
+.faction-picker button {
+  background: var(--action-background-colour);
+  border: 1px solid var(--action-border-colour);
+  border-radius: 0.4rem;
+  color: var(--action-text-colour);
+  cursor: pointer;
+  font-weight: 850;
+  justify-self: start;
+  min-height: 2rem;
+  padding: 0.35rem 0.65rem;
+}
+
+.faction-summary-card h4,
+.faction-summary-card p,
+.faction-summary-card dl,
+.faction-summary-card dd {
+  margin: 0;
+}
+
+.faction-summary-card dl {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.faction-motto {
+  color: var(--muted-text-colour);
+  font-style: italic;
+  font-weight: 750;
+}
+
 @media (max-width: 760px) {
   .tab-compact-grid {
     grid-template-columns: 1fr;

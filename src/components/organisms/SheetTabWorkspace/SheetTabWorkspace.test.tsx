@@ -31,7 +31,9 @@ describe("SheetTabWorkspace", () => {
       <SheetTabWorkspace
         activeTab="skills"
         backgroundEntries={[]}
+        campaignFactions={[]}
         equipment={[]}
+        factionChoice={null}
         notes={[]}
         resources={[]}
         ruleLinks={[]}

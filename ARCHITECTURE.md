@@ -242,7 +242,7 @@ erDiagram
 | `campaign_sessions` | Player-visible and Game-Master-only session records with title, slug, date, summary/body, author, and timestamps. |
 | `campaign_wiki_pages` | Campaign wiki Markdown pages with page type, tags, source metadata, and visibility. |
 | `campaign_image_assets` | App-managed image metadata with relative storage keys, dimensions, alt text, captions, and visibility. |
-| `campaign_factions` | Rovnost faction records with player prompts, reputation, rumours, and optional asset links. |
+| `campaign_factions` | Rovnost faction records with motto, overview, player prompts, reputation, possible connections, rumours, optional asset links, and wiki links. |
 | `characters` | Character identity, owner, campaign, campaign-unique slug, species, background, level, and summary stats. |
 | `character_classes` | Class and subclass levels, hit dice, and spellcasting ability. |
 | `character_abilities` | Ability scores, modifiers, saving throw proficiency, and derived save values. |
@@ -261,7 +261,7 @@ erDiagram
 | `rule_mechanics` | Structured mechanics such as uses, dice notation, DCs, ranges, durations, conditions, and scaling. |
 | `character_rule_links` | Character selections and granted rules, such as prepared spells and known infusions. |
 
-Some schema tables intentionally land before their full management UI. `sheet-0012` adds group-use read models for rosters, wiki pages, image assets, session records, factions, and faction choices; `sheet-0014` adds player and Game Master roster pages plus manual character creation; `sheet-0016` adds note creation/update/delete flows and Game Master campaign session CRUD. Character deletion, wiki management UI, image upload UI, faction picking, and richer rules text rendering are follow-up work.
+Some schema tables intentionally land before their full management UI. `sheet-0012` adds group-use read models for rosters, wiki pages, image assets, session records, factions, and faction choices; `sheet-0014` adds player and Game Master roster pages plus manual character creation; `sheet-0016` adds note creation/update/delete flows and Game Master campaign session CRUD; `sheet-0018` adds the Background tab faction picker and selected faction summary. Character deletion, wiki management UI, image upload UI, faction-management UI, and richer rules text rendering are follow-up work.
 
 ### Rules Data
 
@@ -330,7 +330,7 @@ The minimum verification before a source-code ticket is complete:
 bun run verify
 ```
 
-The accessibility script currently checks public `/`, `/login`, authenticated `/sheet/lynott`, authenticated `/logout`, authenticated `/campaigns/rovnost-shadows`, and authenticated `/admin`. The MVP smoke script renders every sheet tab fragment directly. The screenshot script captures Lynott's sheet in light and dark mode to `docs/pr-screenshots/` by default.
+The accessibility script currently checks public `/`, `/login`, authenticated `/sheet/lynott`, authenticated `/logout`, authenticated `/campaigns/rovnost-shadows`, and authenticated `/admin`. The MVP smoke script renders every sheet tab fragment directly. The screenshot script captures Lynott's sheet in light and dark mode plus the Background tab faction picker to `docs/pr-screenshots/` by default.
 
 ## Pipeline
 
