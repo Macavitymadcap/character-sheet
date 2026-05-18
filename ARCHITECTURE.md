@@ -156,15 +156,16 @@ The current tab navigation swaps only `#sheet-tab-panel`; the sticky `SheetHeade
 
 ## Roles And Permissions
 
-The MVP has no more than ten users. It starts with three seeded users:
+The MVP has no more than ten users. It starts with four seeded users:
 
 | Role | Initial user | Permissions |
 | --- | --- | --- |
 | Player | Lynott player | Read Lynott's sheet and update table-use state such as resources, conditions, equipment, rests, rolls, and their existing player note. |
+| Player | Mira player | Seeded second player used to prove group roster, campaign membership, and faction-choice behaviour. |
 | Game Master | Campaign GM | Read and update Lynott's sheet state and existing player/Game Master notes, plus view the seeded campaign shell. |
 | Admin | Site admin | Access the admin shell, create local invite tokens, and use local password-reset token routes by known user id. |
 
-Permission checks should live in shared guards, not scattered through components. Components may hide unavailable controls, but routes must enforce access.
+Permission checks should live in shared guards, not scattered through components. Components may hide unavailable controls, but routes must enforce access. Campaign guards centralise membership checks, Game Master management checks, character ownership, and player-visible versus Game-Master-only campaign content.
 
 Local authentication uses PBKDF2 password hashes, SQLite-backed sessions, and HTTP-only signed cookies. Seeded development users share the local-only password documented in `README.md`; production-grade password rotation and external identity providers remain out of scope for this MVP.
 
@@ -190,6 +191,9 @@ erDiagram
     campaigns ||--o{ campaign_members : has
     users ||--o{ campaign_members : joins
     campaigns ||--o{ campaign_sessions : records
+    campaigns ||--o{ campaign_wiki_pages : documents
+    campaigns ||--o{ campaign_image_assets : stores
+    campaigns ||--o{ campaign_factions : defines
     characters ||--o{ character_classes : has
     characters ||--o{ character_abilities : has
     characters ||--o{ character_senses : has
@@ -200,7 +204,10 @@ erDiagram
     characters ||--o{ character_equipment : owns
     characters ||--o{ character_background_entries : describes
     characters ||--o{ character_notes : owns
+    characters ||--o| character_faction_choices : chooses
     characters ||--o{ character_rule_links : references
+    campaign_factions ||--o{ character_faction_choices : selected_by
+    campaign_image_assets ||--o{ campaign_factions : illustrates
     rules_sources ||--o{ rules_entities : provides
     rules_entities ||--o{ rule_mechanics : describes
     rules_entities ||--o{ character_rule_links : selected_by
@@ -216,8 +223,11 @@ erDiagram
 | `password_reset_tokens` | Admin-triggered local password reset tokens. |
 | `campaigns` | Campaign records owned by a Game Master. |
 | `campaign_members` | User membership and role within a campaign. |
-| `campaign_sessions` | Schema foundation for later Game Master session records and campaign notes. |
-| `characters` | Character identity, owner, campaign, species, background, level, and summary stats. |
+| `campaign_sessions` | Player-visible and Game-Master-only session records with title, slug, date, summary/body, author, and timestamps. |
+| `campaign_wiki_pages` | Campaign wiki Markdown pages with page type, tags, source metadata, and visibility. |
+| `campaign_image_assets` | App-managed image metadata with relative storage keys, dimensions, alt text, captions, and visibility. |
+| `campaign_factions` | Rovnost faction records with player prompts, reputation, rumours, and optional asset links. |
+| `characters` | Character identity, owner, campaign, campaign-unique slug, species, background, level, and summary stats. |
 | `character_classes` | Class and subclass levels, hit dice, and spellcasting ability. |
 | `character_abilities` | Ability scores, modifiers, saving throw proficiency, and derived save values. |
 | `character_skills` | Skill ability, proficiency level, expertise, and derived values. |
@@ -229,12 +239,13 @@ erDiagram
 | `character_equipment` | Inventory, equipped items, attunement, and active item modifiers. |
 | `character_background_entries` | Structured personality, backstory, false identities, NPCs, and rank structure rows for the background tab. |
 | `character_notes` | Player-visible and Game Master-only notes. |
+| `character_faction_choices` | One primary faction connection per character, constrained to the character's campaign. |
 | `rules_sources` | Source metadata such as Tasha's Cauldron of Everything and source precedence. |
 | `rules_entities` | Spells, class features, species traits, backgrounds, equipment, infusions, and conditions. |
 | `rule_mechanics` | Structured mechanics such as uses, dice notation, DCs, ranges, durations, conditions, and scaling. |
 | `character_rule_links` | Character selections and granted rules, such as prepared spells and known infusions. |
 
-Some schema tables intentionally land before their full management UI. `sheet-0001` uses that foundation for seeded local data and targeted sheet mutations; full character CRUD, campaign session CRUD, note creation, admin read tables, and richer rules text rendering are follow-up work.
+Some schema tables intentionally land before their full management UI. `sheet-0012` adds group-use read models for rosters, wiki pages, image assets, session records, factions, and faction choices while later tickets add creation/editing routes. Full character CRUD, campaign session CRUD, note creation, admin read tables, and richer rules text rendering are follow-up work.
 
 ### Rules Data
 
@@ -307,20 +318,20 @@ The accessibility script currently checks public `/`, `/login`, authenticated `/
 
 ## Pipeline
 
-The repository should use an epic integration branch between ticket work and `main`. Ticket branches are created from the active epic branch and squash-merged back into it. When all tickets are accepted, the epic branch is opened as the pull request to `main`.
+The repository uses a documentation-first ticket flow. Epic planning branches land the accepted roadmap documents on `main`; implementation ticket branches then start from the latest `main` and open pull requests back into `main`. A temporary integration branch can still be used for a deliberate stack, but it should be explicit and short-lived.
 
 ```mermaid
 flowchart LR
-    A["main"] --> B["Epic branch"]
-    B --> C["Ticket branch"]
-    C --> D["Ticket PR"]
-    D --> E["Checks and review"]
-    E --> F["Squash merge into epic"]
-    F --> G{"More tickets?"}
-    G -- "Yes" --> C
-    G -- "No" --> H["Epic PR"]
-    H --> I["Checks and review"]
-    I --> J["Merge epic to main"]
+    A["main"] --> B["Epic planning branch"]
+    B --> C["Planning PR"]
+    C --> D["Squash merge plan"]
+    D --> E["Ticket branch from main"]
+    E --> F["Ticket PR"]
+    F --> G["Checks, review, docs"]
+    G --> H["Squash merge ticket"]
+    H --> I{"More tickets?"}
+    I -- "Yes" --> E
+    I -- "No" --> J["Epic complete on main"]
 ```
 
 Release automation can be added after the MVP scaffold exists. Railway and Postgres deployment remain a later epic.

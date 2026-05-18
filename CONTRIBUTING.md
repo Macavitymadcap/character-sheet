@@ -1,30 +1,31 @@
 # Contributing
 
-This repository uses a documentation-first, ticket-driven workflow. `main` is the stable branch. Each epic gets an integration branch, such as `sheet-0001`, and each ticket gets its own short-lived branch from that epic branch.
+This repository uses a documentation-first, ticket-driven workflow. `main` is the stable branch. Accepted epic plans are reviewed as their own pull requests and then squash-merged into `main`; implementation tickets branch from the latest `main` unless the maintainer explicitly creates a temporary integration branch for a larger stack.
 
 ## Branch Flow
 
-1. Create the epic branch from the latest `main`, for example `sheet-0001`.
-2. Create each ticket branch from the current epic branch, for example `sheet-0002`.
-3. Keep ticket work scoped to the current accepted ticket.
-4. Write or update tests before source code wherever the boundary is testable.
-5. Run the required verification commands.
-6. Open the ticket pull request into the epic branch, not `main`.
-7. Squash and merge the accepted ticket branch into the epic branch.
-8. Repeat until all tickets for the epic are included.
-9. Open the epic branch pull request into `main`.
-10. Merge the epic branch only after the whole epic is accepted and checks pass.
+1. Create the epic planning branch from the latest `main`, for example `sheet-0011`.
+2. Add or update the epic document and planned ticket documents.
+3. Open the planning pull request into `main`.
+4. Squash and merge the accepted planning branch after review and checks.
+5. Create each implementation ticket branch from the latest `main`, for example `sheet-0012`.
+6. Keep ticket work scoped to the current accepted ticket.
+7. Write or update tests before source code wherever the boundary is testable.
+8. Update every affected doc in the same pull request as the implementation change.
+9. Run the required verification commands.
+10. Open the ticket pull request into `main`.
+11. Squash and merge the accepted ticket branch after review and checks.
 
-Do not rebase, reset, or discard commits on an existing epic branch unless the maintainer explicitly asks for it.
+Do not rebase, reset, or discard commits on an existing branch unless the maintainer explicitly asks for it. If a temporary integration branch is deliberately created, ticket branches should target that branch and the integration branch should be deleted after it lands on `main`.
 
 ```mermaid
 flowchart TD
-    A["main"] --> B["Epic branch: sheet-0001"]
-    B --> C["Ticket branch: sheet-0002"]
-    B --> D["Ticket branch: sheet-0003"]
-    C --> E["Squash merge into sheet-0001"]
-    D --> E
-    E --> F["Epic PR into main"]
+    A["main"] --> B["Epic planning branch"]
+    B --> C["Planning PR into main"]
+    C --> D["Squash merge accepted plan"]
+    D --> E["Ticket branch from main"]
+    E --> F["Ticket PR into main"]
+    F --> G["Squash merge accepted ticket"]
 ```
 
 ## Epic And Ticket Flow
@@ -42,7 +43,7 @@ The review loop is:
 3. If accepted, update any affected docs and move to the next document.
 4. If rejected, revise the document and repeat the review.
 
-Implementation follows the same branch structure: every accepted ticket is implemented on its own ticket branch and squash-merged into the active epic branch. The epic branch accumulates the reviewed ticket work and is merged to `main` as the complete epic.
+Implementation follows the accepted ticket documents. Every accepted ticket is implemented on its own ticket branch and squash-merged into `main`, unless the maintainer has explicitly opened a temporary integration branch for that epic.
 
 Epic documents live in `docs/epics/`. Ticket documents live in `docs/tickets/`.
 
@@ -56,7 +57,7 @@ Use TDD where the implementation boundary can be exercised by tests:
 - Components start with JSX render tests for semantic HTML, labels, headings, ARIA, HTMX attributes, empty states, and errors.
 - User-facing UI changes add accessibility checks and screenshots after lower-level tests pass.
 
-Some documentation-only tickets may not have automated tests. In those cases, verify links, numbering, internal consistency, and British English.
+Some documentation-only tickets may not have automated tests. In those cases, verify links, numbering, internal consistency, and British English. For source-code tickets, update README, architecture, ticket, or epic docs whenever the implementation changes behaviour, workflow, data shape, verification, or known follow-up scope.
 
 ## Conventional Commits
 
@@ -116,7 +117,7 @@ For documentation-only work, check:
 
 ## Branch Protection
 
-`main` and the active epic branch should be protected. Protection requires pull requests, one approval, fresh approval after the latest push, resolved conversations, linear history, and no force pushes or branch deletions.
+`main` should be protected. A temporary integration branch should also be protected if the maintainer creates one for an active stack. Protection requires pull requests, one approval, resolved conversations, linear history, and no force pushes or branch deletions.
 
 When the CI workflow is not present on a protected branch yet, use the bootstrap configuration:
 

@@ -26,8 +26,11 @@ describe("bootstrapDatabase", () => {
     bootstrapDatabase(database);
 
     expect(tableNames()).toEqual([
+      "campaign_factions",
+      "campaign_image_assets",
       "campaign_members",
       "campaign_sessions",
+      "campaign_wiki_pages",
       "campaigns",
       "character_abilities",
       "character_armour_class_sources",
@@ -35,6 +38,7 @@ describe("bootstrapDatabase", () => {
       "character_classes",
       "character_defences",
       "character_equipment",
+      "character_faction_choices",
       "character_notes",
       "character_proficiencies",
       "character_resources",
@@ -132,6 +136,190 @@ describe("bootstrapDatabase", () => {
       database.run(
         "insert into character_background_entries (id, character_id, category, title, body) values (?, ?, ?, ?, ?)",
         ["background_1", "character_2", "rumour", "Rumour", "Unsupported category."],
+      ),
+    ).toThrow();
+  });
+
+  test("enforces group-use campaign constraints", () => {
+    bootstrapDatabase(database);
+    for (const user of [
+      ["user_gm", "gm@example.test", "GM", "game_master"],
+      ["user_player", "player@example.test", "Player", "player"],
+    ]) {
+      database.run(
+        "insert into users (id, email, display_name, role, password_hash) values (?, ?, ?, ?, 'hash')",
+        user,
+      );
+    }
+    for (const campaign of [
+      ["campaign_1", "campaign-one", "Campaign One", "user_gm"],
+      ["campaign_2", "campaign-two", "Campaign Two", "user_gm"],
+    ]) {
+      database.run(
+        "insert into campaigns (id, slug, name, gm_user_id) values (?, ?, ?, ?)",
+        campaign,
+      );
+    }
+    database.run(
+      "insert into characters (id, slug, owner_user_id, campaign_id, name, species, background, level, proficiency_bonus, armour_class, initiative, speed_ft, hit_point_max, hit_point_current) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [
+        "character_1",
+        "shared-slug",
+        "user_player",
+        "campaign_1",
+        "One",
+        "Human",
+        "Acolyte",
+        1,
+        2,
+        12,
+        1,
+        30,
+        9,
+        9,
+      ],
+    );
+    expect(() =>
+      database.run(
+        "insert into characters (id, slug, owner_user_id, campaign_id, name, species, background, level, proficiency_bonus, armour_class, initiative, speed_ft, hit_point_max, hit_point_current) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        [
+          "character_2",
+          "shared-slug",
+          "user_player",
+          "campaign_2",
+          "Two",
+          "Human",
+          "Acolyte",
+          1,
+          2,
+          12,
+          1,
+          30,
+          9,
+          9,
+        ],
+      ),
+    ).not.toThrow();
+    expect(() =>
+      database.run(
+        "insert into characters (id, slug, owner_user_id, campaign_id, name, species, background, level, proficiency_bonus, armour_class, initiative, speed_ft, hit_point_max, hit_point_current) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        [
+          "character_3",
+          "shared-slug",
+          "user_player",
+          "campaign_1",
+          "Three",
+          "Human",
+          "Acolyte",
+          1,
+          2,
+          12,
+          1,
+          30,
+          9,
+          9,
+        ],
+      ),
+    ).toThrow();
+
+    expect(() =>
+      database.run(
+        "insert into campaign_image_assets (id, campaign_id, storage_key, mime_type, byte_size, width, height, alt_text, visibility) values (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        [
+          "asset_bad_path",
+          "campaign_1",
+          "/Users/dank/source-map.png",
+          "image/png",
+          1024,
+          640,
+          480,
+          "Absolute path",
+          "player",
+        ],
+      ),
+    ).toThrow();
+    database.run(
+      "insert into campaign_image_assets (id, campaign_id, storage_key, mime_type, byte_size, width, height, alt_text, visibility) values (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [
+        "asset_1",
+        "campaign_1",
+        "campaigns/campaign-one/map.png",
+        "image/png",
+        1024,
+        640,
+        480,
+        "Campaign map",
+        "player",
+      ],
+    );
+
+    database.run(
+      "insert into campaign_wiki_pages (id, campaign_id, slug, title, page_type, tags_json, visibility, body_markdown, source_title) values (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [
+        "wiki_1",
+        "campaign_1",
+        "overview",
+        "Overview",
+        "campaign",
+        '["overview"]',
+        "player",
+        "# Overview",
+        "Overview source",
+      ],
+    );
+    expect(() =>
+      database.run(
+        "insert into campaign_wiki_pages (id, campaign_id, slug, title, page_type, tags_json, visibility, body_markdown) values (?, ?, ?, ?, ?, ?, ?, ?)",
+        [
+          "wiki_duplicate",
+          "campaign_1",
+          "overview",
+          "Duplicate",
+          "campaign",
+          "[]",
+          "player",
+          "# Duplicate",
+        ],
+      ),
+    ).toThrow();
+    expect(() =>
+      database.run(
+        "insert into campaign_wiki_pages (id, campaign_id, slug, title, page_type, tags_json, visibility, body_markdown) values (?, ?, ?, ?, ?, ?, ?, ?)",
+        [
+          "wiki_bad_visibility",
+          "campaign_1",
+          "secret",
+          "Secret",
+          "campaign",
+          "[]",
+          "public",
+          "# Secret",
+        ],
+      ),
+    ).toThrow();
+
+    database.run(
+      "insert into campaign_factions (id, campaign_id, slug, name, summary, public_reputation, player_prompt, rumours_json, image_asset_id) values (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [
+        "faction_1",
+        "campaign_1",
+        "steel-hand",
+        "Steel Hand",
+        "Industrial enforcers.",
+        "Feared.",
+        "Who do you owe?",
+        '["They know every factory gate."]',
+        "asset_1",
+      ],
+    );
+    database.run(
+      "insert into character_faction_choices (character_id, faction_id, connection_note) values (?, ?, ?)",
+      ["character_1", "faction_1", "Old trouble."],
+    );
+    expect(() =>
+      database.run(
+        "insert into character_faction_choices (character_id, faction_id, connection_note) values (?, ?, ?)",
+        ["character_1", "faction_1", "Second primary choice."],
       ),
     ).toThrow();
   });

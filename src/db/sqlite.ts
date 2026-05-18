@@ -5,19 +5,27 @@ import type {
   AuthRepository,
   AuthUser,
   AuthUserWithPassword,
+  CampaignContentRepository,
+  CampaignContentVisibility,
+  CampaignFaction,
+  CampaignImageAsset,
   CampaignMember,
   CampaignRepository,
+  CampaignSessionRecord,
   CampaignSummary,
+  CampaignWikiPage,
   CharacterAccessContext,
   CharacterAbility,
   CharacterBackgroundEntry,
   CharacterDefence,
   CharacterEquipment,
+  CharacterFactionChoice,
   CharacterNote,
   CharacterProficiency,
   CharacterRepository,
   CharacterResource,
   CharacterRuleLink,
+  CharacterRosterItem,
   CharacterSense,
   CharacterSheetReadModel,
   CharacterSkill,
@@ -30,6 +38,7 @@ import type {
   StoredSession,
   UpsertedRuleEntity,
   UserRole,
+  WikiPageType,
 } from "./model";
 import { bootstrapDatabase } from "./schema";
 import { seedDatabase } from "./seed";
@@ -82,6 +91,23 @@ interface CharacterRow {
   species: string;
   speed_ft: number;
   temporary_hit_points: number;
+}
+
+interface CharacterRosterRow {
+  background: string;
+  campaign_id: string;
+  campaign_name: string;
+  campaign_slug: string;
+  class_summary: string | null;
+  faction_id: string | null;
+  faction_name: string | null;
+  id: string;
+  level: number;
+  name: string;
+  owner_display_name: string;
+  owner_user_id: string;
+  slug: string;
+  species: string;
 }
 
 interface CharacterAccessRow {
@@ -181,6 +207,64 @@ interface CampaignMemberRow {
   user_id: string;
 }
 
+interface CampaignWikiPageRow {
+  body_markdown: string;
+  campaign_id: string;
+  id: string;
+  page_type: WikiPageType;
+  slug: string;
+  source_path: string | null;
+  source_title: string | null;
+  tags_json: string;
+  title: string;
+  visibility: CampaignContentVisibility;
+}
+
+interface CampaignImageAssetRow {
+  alt_text: string;
+  byte_size: number;
+  campaign_id: string;
+  caption: string;
+  height: number | null;
+  id: string;
+  mime_type: string;
+  storage_key: string;
+  visibility: CampaignContentVisibility;
+  width: number | null;
+}
+
+interface CampaignSessionRecordRow {
+  body: string;
+  campaign_id: string;
+  created_by_user_id: string | null;
+  id: string;
+  session_date: string | null;
+  slug: string;
+  summary: string;
+  title: string;
+  visibility: CampaignContentVisibility;
+}
+
+interface CampaignFactionRow {
+  campaign_id: string;
+  id: string;
+  image_asset_id: string | null;
+  name: string;
+  player_prompt: string;
+  public_reputation: string;
+  rumours_json: string;
+  slug: string;
+  summary: string;
+}
+
+interface CharacterFactionChoiceRow {
+  character_id: string;
+  connection_note: string;
+  faction_id: string;
+  faction_name: string;
+  faction_slug: string;
+}
+
 interface RuleLinkRow {
   entity_name: string;
   entity_type: string;
@@ -208,6 +292,7 @@ interface RuleEntityRow {
 
 export interface SqliteRepositories {
   authRepository: AuthRepository;
+  campaignContentRepository: CampaignContentRepository;
   campaignRepository: CampaignRepository;
   characterRepository: CharacterRepository;
   notesRepository: NotesRepository;
@@ -245,6 +330,7 @@ export const createSqliteDatabase = ({
 
 export const createSqliteRepositories = (database: Database): SqliteRepositories => ({
   authRepository: new SqliteAuthRepository(database),
+  campaignContentRepository: new SqliteCampaignContentRepository(database),
   campaignRepository: new SqliteCampaignRepository(database),
   characterRepository: new SqliteCharacterRepository(database),
   notesRepository: new SqliteNotesRepository(database),
@@ -396,8 +482,9 @@ class SqliteAuthRepository implements AuthRepository {
          order by case id
            when 'user_lynott_player' then 1
            when 'user_game_master' then 2
-           when 'user_site_admin' then 3
-           else 4
+           when 'user_mira_player' then 3
+           when 'user_site_admin' then 4
+           else 5
          end, email`,
       )
       .all()
@@ -430,6 +517,23 @@ class SqliteCharacterRepository implements CharacterRepository {
 
   getSheetBySlug(slug: string): CharacterSheetReadModel | null {
     return this.getSheetBy("slug", slug);
+  }
+
+  listCharactersForPlayer(userId: string): CharacterRosterItem[] {
+    return this.listRoster(
+      `where characters.owner_user_id = ?
+         and exists (
+           select 1
+           from campaign_members members
+           where members.campaign_id = characters.campaign_id
+             and members.user_id = characters.owner_user_id
+         )`,
+      [userId],
+    );
+  }
+
+  listCharactersForCampaign(campaignId: string): CharacterRosterItem[] {
+    return this.listRoster("where characters.campaign_id = ?", [campaignId]);
   }
 
   private getSheetBy(field: "id" | "slug", value: string): CharacterSheetReadModel | null {
@@ -483,6 +587,57 @@ class SqliteCharacterRepository implements CharacterRepository {
       species: character.species,
       speedFeet: character.speed_ft,
     };
+  }
+
+  private listRoster(whereClause: string, parameters: [string]): CharacterRosterItem[] {
+    return this.database
+      .query<CharacterRosterRow, [string]>(
+        `select characters.id,
+          characters.slug,
+          characters.owner_user_id,
+          owners.display_name as owner_display_name,
+          characters.campaign_id,
+          campaigns.slug as campaign_slug,
+          campaigns.name as campaign_name,
+          characters.name,
+          characters.species,
+          characters.background,
+          characters.level,
+          (
+            select group_concat(class_name || ' ' || level, ', ')
+            from character_classes
+            where character_classes.character_id = characters.id
+            order by class_name
+          ) as class_summary,
+          factions.id as faction_id,
+          factions.name as faction_name
+         from characters
+         inner join users owners on owners.id = characters.owner_user_id
+         inner join campaigns on campaigns.id = characters.campaign_id
+         left join character_faction_choices faction_choices
+           on faction_choices.character_id = characters.id
+         left join campaign_factions factions
+           on factions.id = faction_choices.faction_id
+         ${whereClause}
+         order by campaigns.name, owners.display_name, characters.name`,
+      )
+      .all(...parameters)
+      .map((row) => ({
+        background: row.background,
+        campaignId: row.campaign_id,
+        campaignName: row.campaign_name,
+        campaignSlug: row.campaign_slug,
+        classSummary: row.class_summary ?? "",
+        factionId: row.faction_id,
+        factionName: row.faction_name,
+        id: row.id,
+        level: row.level,
+        name: row.name,
+        ownerDisplayName: row.owner_display_name,
+        ownerUserId: row.owner_user_id,
+        slug: row.slug,
+        species: row.species,
+      }));
   }
 
   listResources(characterId: string): CharacterResource[] {
@@ -805,8 +960,125 @@ class SqliteNotesRepository implements NotesRepository {
   }
 }
 
+class SqliteCampaignContentRepository implements CampaignContentRepository {
+  constructor(private readonly database: Database) {}
+
+  listWikiPagesForCampaign(campaignId: string, viewerRole: UserRole): CampaignWikiPage[] {
+    return this.database
+      .query<CampaignWikiPageRow, [string, number]>(
+        `select id, campaign_id, slug, title, page_type, tags_json, visibility, body_markdown,
+          source_title, source_path
+         from campaign_wiki_pages
+         where campaign_id = ?
+           and (? = 1 or visibility = 'player')
+         order by case visibility when 'player' then 1 else 2 end, title`,
+      )
+      .all(campaignId, canSeeGameMasterContent(viewerRole))
+      .map(toCampaignWikiPage);
+  }
+
+  getWikiPageBySlug(
+    campaignId: string,
+    slug: string,
+    viewerRole: UserRole,
+  ): CampaignWikiPage | null {
+    const row = this.database
+      .query<CampaignWikiPageRow, [string, string, number]>(
+        `select id, campaign_id, slug, title, page_type, tags_json, visibility, body_markdown,
+          source_title, source_path
+         from campaign_wiki_pages
+         where campaign_id = ?
+           and slug = ?
+           and (? = 1 or visibility = 'player')`,
+      )
+      .get(campaignId, slug, canSeeGameMasterContent(viewerRole));
+
+    return row ? toCampaignWikiPage(row) : null;
+  }
+
+  listImageAssetsForCampaign(
+    campaignId: string,
+    viewerRole: UserRole,
+  ): CampaignImageAsset[] {
+    return this.database
+      .query<CampaignImageAssetRow, [string, number]>(
+        `select id, campaign_id, storage_key, mime_type, byte_size, width, height, alt_text,
+          caption, visibility
+         from campaign_image_assets
+         where campaign_id = ?
+           and (? = 1 or visibility = 'player')
+         order by storage_key`,
+      )
+      .all(campaignId, canSeeGameMasterContent(viewerRole))
+      .map(toCampaignImageAsset);
+  }
+
+  listSessionsForCampaign(
+    campaignId: string,
+    viewerRole: UserRole,
+  ): CampaignSessionRecord[] {
+    return this.database
+      .query<CampaignSessionRecordRow, [string, number]>(
+        `select id, campaign_id, slug, title, session_date, summary, body, visibility,
+          created_by_user_id
+         from campaign_sessions
+         where campaign_id = ?
+           and (? = 1 or visibility = 'player')
+         order by case visibility when 'player' then 1 else 2 end, session_date, title`,
+      )
+      .all(campaignId, canSeeGameMasterContent(viewerRole))
+      .map(toCampaignSessionRecord);
+  }
+
+  listFactionsForCampaign(campaignId: string): CampaignFaction[] {
+    return this.database
+      .query<CampaignFactionRow, [string]>(
+        `select id, campaign_id, slug, name, summary, public_reputation, player_prompt,
+          rumours_json, image_asset_id
+         from campaign_factions
+         where campaign_id = ?
+         order by sort_order, name`,
+      )
+      .all(campaignId)
+      .map(toCampaignFaction);
+  }
+
+  getCharacterFactionChoice(characterId: string): CharacterFactionChoice | null {
+    const row = this.database
+      .query<CharacterFactionChoiceRow, [string]>(
+        `select choices.character_id,
+          choices.faction_id,
+          choices.connection_note,
+          factions.slug as faction_slug,
+          factions.name as faction_name
+         from character_faction_choices choices
+         inner join campaign_factions factions on factions.id = choices.faction_id
+         where choices.character_id = ?`,
+      )
+      .get(characterId);
+
+    return row
+      ? {
+          characterId: row.character_id,
+          connectionNote: row.connection_note,
+          factionId: row.faction_id,
+          factionName: row.faction_name,
+          factionSlug: row.faction_slug,
+        }
+      : null;
+  }
+}
+
 class SqliteCampaignRepository implements CampaignRepository {
   constructor(private readonly database: Database) {}
+
+  getCampaignById(id: string): CampaignSummary | null {
+    const row = this.database
+      .query<CampaignRow, [string]>("select id, slug, name, gm_user_id from campaigns where id = ?")
+      .get(id);
+
+    return row ? toCampaignSummary(row) : null;
+  }
 
   getCampaignBySlug(slug: string): CampaignSummary | null {
     const row = this.database
@@ -815,14 +1087,7 @@ class SqliteCampaignRepository implements CampaignRepository {
       )
       .get(slug);
 
-    return row
-      ? {
-          gmUserId: row.gm_user_id,
-          id: row.id,
-          name: row.name,
-          slug: row.slug,
-        }
-      : null;
+    return row ? toCampaignSummary(row) : null;
   }
 
   listMembers(campaignId: string): CampaignMember[] {
@@ -975,6 +1240,88 @@ function toCharacterEquipment(row: CharacterEquipmentRow): CharacterEquipment {
     notes: row.notes,
     quantity: row.quantity,
   };
+}
+
+function toCampaignSummary(row: CampaignRow): CampaignSummary {
+  return {
+    gmUserId: row.gm_user_id,
+    id: row.id,
+    name: row.name,
+    slug: row.slug,
+  };
+}
+
+function toCampaignWikiPage(row: CampaignWikiPageRow): CampaignWikiPage {
+  return {
+    bodyMarkdown: row.body_markdown,
+    campaignId: row.campaign_id,
+    id: row.id,
+    pageType: row.page_type,
+    slug: row.slug,
+    sourcePath: row.source_path,
+    sourceTitle: row.source_title,
+    tags: parseStringArray(row.tags_json),
+    title: row.title,
+    visibility: row.visibility,
+  };
+}
+
+function toCampaignImageAsset(row: CampaignImageAssetRow): CampaignImageAsset {
+  return {
+    altText: row.alt_text,
+    byteSize: row.byte_size,
+    campaignId: row.campaign_id,
+    caption: row.caption,
+    height: row.height,
+    id: row.id,
+    mimeType: row.mime_type,
+    storageKey: row.storage_key,
+    visibility: row.visibility,
+    width: row.width,
+  };
+}
+
+function toCampaignSessionRecord(row: CampaignSessionRecordRow): CampaignSessionRecord {
+  return {
+    body: row.body,
+    campaignId: row.campaign_id,
+    createdByUserId: row.created_by_user_id,
+    id: row.id,
+    sessionDate: row.session_date,
+    slug: row.slug,
+    summary: row.summary,
+    title: row.title,
+    visibility: row.visibility,
+  };
+}
+
+function toCampaignFaction(row: CampaignFactionRow): CampaignFaction {
+  return {
+    campaignId: row.campaign_id,
+    id: row.id,
+    imageAssetId: row.image_asset_id,
+    name: row.name,
+    playerPrompt: row.player_prompt,
+    publicReputation: row.public_reputation,
+    rumours: parseStringArray(row.rumours_json),
+    slug: row.slug,
+    summary: row.summary,
+  };
+}
+
+function canSeeGameMasterContent(viewerRole: UserRole) {
+  return viewerRole === "game_master" ? 1 : 0;
+}
+
+function parseStringArray(json: string) {
+  try {
+    const parsed = JSON.parse(json);
+    return Array.isArray(parsed)
+      ? parsed.filter((item): item is string => typeof item === "string")
+      : [];
+  } catch {
+    return [];
+  }
 }
 
 function clampResourceCurrent(resource: CharacterResource, current: number) {

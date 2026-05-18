@@ -1,5 +1,5 @@
 import { Hono, type Context } from "hono";
-import { AuthService, requireRole, requireSheetAccess, SessionService } from "./auth";
+import { AuthService, requireCampaignAccess, requireRole, requireSheetAccess, SessionService } from "./auth";
 import { isRestType, planRestResourceUpdates } from "./characters/rests";
 import { AdminPage } from "./components/pages/Admin";
 import { CampaignPage } from "./components/pages/Campaign";
@@ -115,15 +115,21 @@ export const createApp = (dependencies: AppDependencies) => {
 
   app.get("/campaigns/:campaignSlug", (context) => {
     const session = readSession(context.req.header("cookie"));
-    const guard = requireRole(session, ["game_master"]);
-    const guarded = guardResponse(context, guard);
-    if (guarded) return guarded;
     if (!session) return context.redirect("/login", 303);
 
     const campaign = dependencies.campaignRepository.getCampaignBySlug(
       context.req.param("campaignSlug"),
     );
     if (!campaign) return context.text("Not found", 404);
+
+    const guard = requireCampaignAccess({
+      campaignId: campaign.id,
+      campaignRepository: dependencies.campaignRepository,
+      permission: "manage",
+      session,
+    });
+    const guarded = guardResponse(context, guard);
+    if (guarded) return guarded;
 
     return context.html(
       <CampaignPage
@@ -226,6 +232,7 @@ export const createApp = (dependencies: AppDependencies) => {
     if (!sheet) return context.text("Not found", 404);
 
     const guard = requireSheetAccess({
+      campaignRepository: dependencies.campaignRepository,
       characterId: sheet.id,
       characterRepository: dependencies.characterRepository,
       permission: "read",
@@ -259,6 +266,7 @@ export const createApp = (dependencies: AppDependencies) => {
     if (!sheet) return context.text("Not found", 404);
 
     const guard = requireSheetAccess({
+      campaignRepository: dependencies.campaignRepository,
       characterId: sheet.id,
       characterRepository: dependencies.characterRepository,
       permission: "read",
@@ -291,6 +299,7 @@ export const createApp = (dependencies: AppDependencies) => {
     if (!sheet) return context.text("Not found", 404);
 
     const guard = requireSheetAccess({
+      campaignRepository: dependencies.campaignRepository,
       characterId: sheet.id,
       characterRepository: dependencies.characterRepository,
       permission: "write",
@@ -355,6 +364,7 @@ export const createApp = (dependencies: AppDependencies) => {
     if (!sheet) return context.text("Not found", 404);
 
     const guard = requireSheetAccess({
+      campaignRepository: dependencies.campaignRepository,
       characterId: sheet.id,
       characterRepository: dependencies.characterRepository,
       permission: "write",
@@ -409,6 +419,7 @@ export const createApp = (dependencies: AppDependencies) => {
     if (!sheet) return context.text("Not found", 404);
 
     const guard = requireSheetAccess({
+      campaignRepository: dependencies.campaignRepository,
       characterId: sheet.id,
       characterRepository: dependencies.characterRepository,
       permission: "write",
@@ -453,6 +464,7 @@ export const createApp = (dependencies: AppDependencies) => {
     if (!sheet) return context.text("Not found", 404);
 
     const guard = requireSheetAccess({
+      campaignRepository: dependencies.campaignRepository,
       characterId: sheet.id,
       characterRepository: dependencies.characterRepository,
       permission: "write",
@@ -485,6 +497,7 @@ export const createApp = (dependencies: AppDependencies) => {
     if (!sheet) return context.text("Not found", 404);
 
     const guard = requireSheetAccess({
+      campaignRepository: dependencies.campaignRepository,
       characterId: sheet.id,
       characterRepository: dependencies.characterRepository,
       permission: "read",
@@ -529,6 +542,7 @@ export const createApp = (dependencies: AppDependencies) => {
     if (!sheet) return context.text("Not found", 404);
 
     const guard = requireSheetAccess({
+      campaignRepository: dependencies.campaignRepository,
       characterId: sheet.id,
       characterRepository: dependencies.characterRepository,
       permission: "write",

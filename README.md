@@ -2,13 +2,13 @@
 
 A local-first D&D 5e character sheet app for Lynott Magulbisson, built as a Hono + HTMX + SQLite application.
 
-The first MVP focuses on a small table: one player character, one Game Master, and one admin. It will run locally with SQLite, use server-rendered HTML fragments for sheet interactions, and store D&D 2014 rules data in structured database tables rather than treating markdown as the runtime source of truth.
+The first MVP focuses on a small table: one player character, one Game Master, and one admin. It runs locally with SQLite, uses server-rendered HTML fragments for sheet interactions, and stores D&D 2014 rules data in structured database tables rather than treating markdown as the runtime source of truth. The group-use campaign work now adds data foundations for multiple players, multiple campaign characters, wiki pages, image assets, factions, faction choices, and session records before the management UI lands.
 
 For the architecture and data model, see [ARCHITECTURE.md](./ARCHITECTURE.md). For the contribution and ticket workflow, see [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## MVP Scope
 
-- Local SQLite persistence with enough data to support Lynott, a Game Master, and an admin.
+- Local SQLite persistence with enough data to support Lynott, a second seeded player, a Game Master, and an admin.
 - Password-based local authentication with seeded users, sessions, admin invites, and admin-triggered password reset tokens.
 - Role-based access:
   - The seeded player can read Lynott's sheet and update table-use state such as hit points, resources, conditions, equipment, rolls, rests, and their existing player note.
@@ -18,7 +18,7 @@ For the architecture and data model, see [ARCHITECTURE.md](./ARCHITECTURE.md). F
 - Structured D&D 2014 rules data seeded from local sources, normalised to the most recent 2014 official reprint where a rule appears in multiple books.
 - British English in product copy, docs, code naming, and CSS custom properties.
 
-The MVP is intentionally a seeded local sheet, not a full group-management app. Character creation/deletion, campaign session management, note creation beyond seeded notes, admin user/read tables, richer rule-mechanics rendering, Railway deployment, and migration from SQLite to Postgres are deferred to later epics.
+The MVP remains intentionally local-first. Character creation/deletion UI, campaign session management UI, note creation beyond seeded notes, admin user/read tables, richer rule-mechanics rendering, Railway deployment, and migration from SQLite to Postgres are deferred to later tickets or epics. The current schema and repositories already include the group-use foundations those flows will need.
 
 ## Stack
 
@@ -29,7 +29,7 @@ The MVP is intentionally a seeded local sheet, not a full group-management app. 
 - SQLite through Bun's SQLite APIs for local persistence.
 - Pa11y and screenshots for accessibility and visual review once the UI exists.
 
-The app follows the `pace-calculator` template: runtime setup stays separate from `createApp()`, repositories hide database details from routes and components, components own semantic markup, and HTMX attributes make browser interaction visible in HTML.
+The app follows the `pace-calculator` template: runtime setup stays separate from `createApp()`, repositories hide database details from routes and components, components own semantic markup, and HTMX attributes make browser interaction visible in HTML. The current `pace-calculator` Hyper-Dank packages remain a pattern reference rather than runtime dependencies for this app.
 
 ## Local Setup
 
@@ -74,8 +74,11 @@ Local seed users are available for development:
 | Role | Email | Password |
 | --- | --- | --- |
 | Player | `lynott@example.local` | `password123` |
+| Player | `mira@example.local` | `password123` |
 | Game Master | `gm@example.local` | `password123` |
 | Admin | `admin@example.local` | `password123` |
+
+The seeded Rovnost campaign also includes initial roster, wiki, image asset, session, faction, and character faction-choice records. Image assets store app-managed relative storage keys such as `campaigns/rovnost-shadows/cover.png`; absolute local source paths are rejected by the schema.
 
 ## Scripts
 

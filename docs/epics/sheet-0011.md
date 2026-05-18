@@ -6,6 +6,8 @@ Turn the seeded local sheet MVP into a usable local app for the current D&D grou
 
 This epic prioritises getting the table running quickly. Railway deployment, Postgres, full SRD expansion, broad homebrew workflows, and the latest `pace-calculator` developer-experience tooling remain follow-up work.
 
+The current `pace-calculator` baseline has landed its workspace split and release flow on `main` at `pace-calculator` 1.3.4, including private Hyper-Dank component, database, and HTTP packages with consumer compatibility coverage. Character Sheet should continue to follow those patterns during this epic, but it should not add runtime dependencies on the private workspace packages unless a ticket explicitly adds the consumption path and compatibility checks.
+
 ## Goals
 
 - Support multiple player accounts and multiple characters in the seeded Rovnost campaign.
@@ -88,7 +90,9 @@ Initial campaign source material includes the Rovnost blurb, factions guide, ope
 
 ## Branch Strategy
 
-`sheet-0011` is the epic integration branch. Each ticket branch should branch from `sheet-0011`, open a pull request back into `sheet-0011`, and be squash-merged after review. When tickets `sheet-0012` through `sheet-0019` are complete, the accumulated `sheet-0011` branch opens the epic pull request into `main`.
+`sheet-0011` landed as the accepted planning pull request into `main`, so there is no live remote integration branch for this epic. Each implementation ticket branch should branch from the latest `main`, open a pull request back into `main`, and be squash-merged after review and checks.
+
+If the maintainer deliberately restores a temporary integration branch for this epic, ticket branches should target that branch until it lands. Otherwise, `main` is the base for `sheet-0012` through `sheet-0019`.
 
 ## Test And Verification Strategy
 
@@ -98,6 +102,7 @@ Initial campaign source material includes the Rovnost blurb, factions guide, ope
 - Importer tests use fixtures modelled on the Rovnost Google Docs Markdown exports.
 - Accessibility and screenshot checks cover player roster, GM campaign, admin users, wiki page with images, faction page, and Background tab faction selection.
 - `bun run verify` remains the acceptance command for source-code tickets.
+- Each ticket updates affected README, architecture, epic, or ticket docs in the same pull request as the implementation.
 
 ## Acceptance Criteria
 
