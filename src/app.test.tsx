@@ -215,7 +215,6 @@ describe("createApp", () => {
 
     const summary = await app.request("/sheet/lynott/summary", {
       body: new URLSearchParams({
-        armourClass: "15",
         background: "Field Agent",
         className: "Artificer",
         hitPointMax: "28",

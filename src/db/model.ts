@@ -251,7 +251,6 @@ export interface CharacterRepository {
   updateSheetSummary(
     characterId: string,
     patch: {
-      armourClass: number;
       background: string;
       className: string;
       hitPointMax: number;

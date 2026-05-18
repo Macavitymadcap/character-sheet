@@ -352,7 +352,6 @@ describe("SQLite repositories", () => {
     const characterId = "character_lynott_magulbisson";
 
     const summary = characters.updateSheetSummary(characterId, {
-      armourClass: 15,
       background: "Field Agent",
       className: "Artificer",
       hitPointMax: 28,

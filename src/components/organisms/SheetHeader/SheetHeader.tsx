@@ -46,7 +46,6 @@ export const SheetHeader = ({ resources, sheet }: SheetHeaderProps) => {
             <label>Subclass <input name="subclassName" type="text" value={sheet.classes[0]?.subclassName ?? ""} /></label>
             <label>Background <input name="background" type="text" value={sheet.background} /></label>
             <label>Level <input min="1" name="level" type="number" value={sheet.level} /></label>
-            <label>AC <input min="0" name="armourClass" type="number" value={sheet.armourClass} /></label>
             <label>Initiative <input name="initiative" type="number" value={sheet.initiative} /></label>
             <label>Speed <input min="0" name="speedFeet" type="number" value={sheet.speedFeet} /></label>
             <label>Max HP <input min="1" name="hitPointMax" type="number" value={sheet.hitPoints.max} /></label>

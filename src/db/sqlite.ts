@@ -981,7 +981,6 @@ class SqliteCharacterRepository implements CharacterRepository {
   updateSheetSummary(
     characterId: string,
     patch: {
-      armourClass: number;
       background: string;
       className: string;
       hitPointMax: number;
@@ -1006,7 +1005,7 @@ class SqliteCharacterRepository implements CharacterRepository {
       this.database.run(
         `update characters
          set name = ?, species = ?, background = ?, level = ?, proficiency_bonus = ?,
-           armour_class = ?, initiative = ?, speed_ft = ?, hit_point_max = ?,
+           initiative = ?, speed_ft = ?, hit_point_max = ?,
            hit_point_current = ?
          where id = ?`,
         [
@@ -1015,7 +1014,6 @@ class SqliteCharacterRepository implements CharacterRepository {
           patch.background.trim(),
           level,
           proficiencyBonus,
-          Math.max(0, Math.floor(patch.armourClass)),
           Math.floor(patch.initiative),
           Math.max(0, Math.floor(patch.speedFeet)),
           hitPointMax,

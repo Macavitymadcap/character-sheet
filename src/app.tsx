@@ -1111,7 +1111,6 @@ function parseSheetSummaryForm(
   const className = parseFormText(body.className);
   const level = parseFormNumber(body.level);
   const hitPointMax = parseFormNumber(body.hitPointMax);
-  const armourClass = parseFormNumber(body.armourClass);
   const initiative = parseFormNumber(body.initiative);
   const speedFeet = parseFormNumber(body.speedFeet);
   const proficiencyBonus = parseFormNumber(body.proficiencyBonus);
@@ -1123,21 +1122,19 @@ function parseSheetSummaryForm(
     !className ||
     level === null ||
     hitPointMax === null ||
-    armourClass === null ||
     initiative === null ||
     speedFeet === null ||
     proficiencyBonus === null
   ) {
     return { ok: false as const, message: "Missing sheet fields" };
   }
-  if (level < 1 || hitPointMax < 1 || armourClass < 0 || speedFeet < 0 || proficiencyBonus < 0) {
+  if (level < 1 || hitPointMax < 1 || speedFeet < 0 || proficiencyBonus < 0) {
     return { ok: false as const, message: "Invalid sheet values" };
   }
 
   return {
     ok: true as const,
     value: {
-      armourClass,
       background,
       className,
       hitPointMax,
