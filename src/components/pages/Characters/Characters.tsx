@@ -26,6 +26,7 @@ export const CharactersPage = ({
   const action = mode === "game_master" && campaign
     ? `/campaigns/${campaign.slug}/characters`
     : "/characters";
+  const ownerChoices = members.filter((member) => member.role === "player");
 
   return (
     <Layout title={`${title} - ${appName}`}>
@@ -46,7 +47,7 @@ export const CharactersPage = ({
                 {mode === "game_master" ? (
                   <FormField id="character-owner" label="Owner">
                     <select id="character-owner" name="ownerUserId">
-                      {members.map((member) => (
+                      {ownerChoices.map((member) => (
                         <option value={member.userId}>{member.displayName}</option>
                       ))}
                     </select>

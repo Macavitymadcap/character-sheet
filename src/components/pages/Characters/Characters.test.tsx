@@ -52,6 +52,12 @@ describe("CharactersPage", () => {
         members={[
           {
             campaignId: "campaign_rovnost_shadows",
+            displayName: "Campaign GM",
+            role: "game_master",
+            userId: "user_game_master",
+          },
+          {
+            campaignId: "campaign_rovnost_shadows",
             displayName: "Mira Player",
             role: "player",
             userId: "user_mira_player",
@@ -65,6 +71,7 @@ describe("CharactersPage", () => {
     expect(html).toContain("Campaign roster");
     expect(html).toContain('action="/campaigns/rovnost-shadows/characters"');
     expect(html).toContain('<option value="user_mira_player">Mira Player</option>');
+    expect(html).not.toContain('<option value="user_game_master">Campaign GM</option>');
     expect(html).toContain('<a href="/sheet/ash_vale">Ash Vale</a>');
   });
 });
