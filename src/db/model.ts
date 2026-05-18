@@ -147,6 +147,7 @@ export interface CharacterBackgroundEntry {
 }
 
 export interface ArmourClassSource {
+  id?: string;
   label: string;
   notes: string;
   value: number;
@@ -154,6 +155,7 @@ export interface ArmourClassSource {
 
 export interface CharacterDefence {
   detail: string;
+  id?: string;
   label: string;
   type: "armour" | "condition_immunity" | "immunity" | "resistance";
 }
@@ -161,10 +163,12 @@ export interface CharacterDefence {
 export interface CharacterProficiency {
   category: "armour" | "language" | "tool" | "weapon";
   detail: string;
+  id?: string;
   name: string;
 }
 
 export interface CharacterSense {
+  id?: string;
   label: string;
   value: string;
 }
@@ -204,16 +208,66 @@ export interface CharacterRepository {
   listBackgroundEntries(characterId: string): CharacterBackgroundEntry[];
   listEquipment(characterId: string): CharacterEquipment[];
   listResources(characterId: string): CharacterResource[];
+  updateAbility(
+    characterId: string,
+    ability: AbilityName,
+    patch: { saveProficient: boolean; score: number },
+  ): CharacterSheetReadModel | null;
+  updateArmourClassSource(
+    characterId: string,
+    sourceId: string,
+    patch: { label: string; notes: string; value: number },
+  ): CharacterSheetReadModel | null;
+  updateBackgroundEntry(
+    characterId: string,
+    entryId: string,
+    patch: { body: string; title: string },
+  ): CharacterBackgroundEntry | null;
+  updateDefence(
+    characterId: string,
+    defenceId: string,
+    patch: { detail: string; label: string },
+  ): CharacterDefence | null;
   updateEquipmentItem(
     characterId: string,
     equipmentId: string,
-    patch: { equipped?: boolean; quantity?: number },
+    patch: { category?: string; equipped?: boolean; name?: string; notes?: string; quantity?: number },
   ): CharacterEquipment | null;
+  updateProficiency(
+    characterId: string,
+    proficiencyId: string,
+    patch: { detail: string; name: string },
+  ): CharacterProficiency | null;
   updateResourceCurrent(
     characterId: string,
     resourceId: string,
     current: number,
   ): CharacterResource | null;
+  updateSense(
+    characterId: string,
+    senseId: string,
+    patch: { label: string; value: string },
+  ): CharacterSense | null;
+  updateSheetSummary(
+    characterId: string,
+    patch: {
+      background: string;
+      className: string;
+      hitPointMax: number;
+      initiative: number;
+      level: number;
+      name: string;
+      proficiencyBonus: number;
+      speedFeet: number;
+      species: string;
+      subclassName: string | null;
+    },
+  ): CharacterSheetReadModel | null;
+  updateSkill(
+    characterId: string,
+    skill: string,
+    patch: { proficiencyLevel: number },
+  ): CharacterSheetReadModel | null;
   upsertConditionResource(characterId: string, label: string): CharacterResource;
 }
 

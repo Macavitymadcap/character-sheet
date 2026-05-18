@@ -22,6 +22,7 @@ export const CoreTab = ({ sheet }: CoreTabProps) => {
                 <th scope="col">Save</th>
                 <th scope="col">Prof</th>
                 <th scope="col">Roll</th>
+                <th scope="col">Edit</th>
               </tr>
             </thead>
             <tbody>
@@ -45,6 +46,30 @@ export const CoreTab = ({ sheet }: CoreTabProps) => {
                       label={formatAbility(ability.ability)}
                     />
                   </td>
+                  <td>
+                    <details class="row-edit-disclosure">
+                      <summary>Edit</summary>
+                      <form
+                        class="sheet-edit-form row-edit-form"
+                        hx-patch={`/sheet/${sheet.slug}/abilities/${ability.ability}`}
+                        hx-target="#sheet-tab-panel"
+                        hx-swap="outerHTML"
+                      >
+                        <label>
+                          Score
+                          <input min="1" max="30" name="score" type="number" value={ability.score} />
+                        </label>
+                        <label>
+                          Save proficient
+                          <select name="saveProficient">
+                            <option value="1" selected={ability.saveProficient}>Yes</option>
+                            <option value="0" selected={!ability.saveProficient}>No</option>
+                          </select>
+                        </label>
+                        <button type="submit">Save</button>
+                      </form>
+                    </details>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -62,7 +87,24 @@ export const CoreTab = ({ sheet }: CoreTabProps) => {
           {sheet.senses.map((sense) => (
             <div>
               <dt>{sense.label}</dt>
-              <dd>{sense.value}</dd>
+              <dd>
+                {sense.value}
+                {sense.id ? (
+                  <details class="row-edit-disclosure">
+                    <summary>Edit</summary>
+                    <form
+                      class="sheet-edit-form row-edit-form"
+                      hx-patch={`/sheet/${sheet.slug}/senses/${sense.id}`}
+                      hx-target="#sheet-tab-panel"
+                      hx-swap="outerHTML"
+                    >
+                      <label>Label <input name="label" type="text" value={sense.label} /></label>
+                      <label>Value <input name="value" type="text" value={sense.value} /></label>
+                      <button type="submit">Save</button>
+                    </form>
+                  </details>
+                ) : null}
+              </dd>
             </div>
           ))}
         </dl>
@@ -84,12 +126,53 @@ export const CoreTab = ({ sheet }: CoreTabProps) => {
               </span>
             </dd>
           </div>
+          {sheet.armourClassBreakdown.map((source) => (
+            <div>
+              <dt>{source.label}</dt>
+              <dd>
+                {source.value}
+                {source.id ? (
+                  <details class="row-edit-disclosure">
+                    <summary>Edit</summary>
+                    <form
+                      class="sheet-edit-form row-edit-form"
+                      hx-patch={`/sheet/${sheet.slug}/armour/${source.id}`}
+                      hx-target="#sheet-tab-panel"
+                      hx-swap="outerHTML"
+                    >
+                      <label>Label <input name="label" type="text" value={source.label} /></label>
+                      <label>Value <input name="value" type="number" value={source.value} /></label>
+                      <label>Notes <input name="notes" type="text" value={source.notes} /></label>
+                      <button type="submit">Save</button>
+                    </form>
+                  </details>
+                ) : null}
+              </dd>
+            </div>
+          ))}
           {sheet.defences
             .filter((defence) => defence.type !== "armour")
             .map((defence) => (
               <div>
                 <dt>{defence.label}</dt>
-                <dd>{formatDefenceDetail(defence.detail)}</dd>
+                <dd>
+                  {formatDefenceDetail(defence.detail)}
+                  {defence.id ? (
+                    <details class="row-edit-disclosure">
+                      <summary>Edit</summary>
+                      <form
+                        class="sheet-edit-form row-edit-form"
+                        hx-patch={`/sheet/${sheet.slug}/defences/${defence.id}`}
+                        hx-target="#sheet-tab-panel"
+                        hx-swap="outerHTML"
+                      >
+                        <label>Label <input name="label" type="text" value={defence.label} /></label>
+                        <label>Detail <input name="detail" type="text" value={defence.detail} /></label>
+                        <button type="submit">Save</button>
+                      </form>
+                    </details>
+                  ) : null}
+                </dd>
               </div>
             ))}
         </dl>
