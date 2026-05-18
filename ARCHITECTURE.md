@@ -320,9 +320,9 @@ Development should be tests first where practical:
 - Service tests cover password hashing, session handling, rule normalisation, source precedence, resource mutation, and permission decisions.
 - Route tests call `app.request()` and assert status codes, redirects, session cookies, role enforcement, validation failures, full pages, and HTMX fragments.
 - Component tests render JSX to strings and assert semantic HTML, labels, headings, ARIA, HTMX attributes, and empty states.
-- Accessibility tests run Pa11y against key pages once a runnable app exists.
-- Screenshot tests capture the sheet in light and dark states for user-facing UI changes.
-- MVP smoke tests exercise seeded login, sheet navigation, resource mutation, note saving, role pages, and logout.
+- Accessibility tests run Pa11y against public, player, Game Master, wiki, roster, sheet, logout, and admin pages once a runnable app exists.
+- Screenshot tests capture sheet, roster, campaign, wiki, faction, and edited-sheet states for user-facing UI changes.
+- MVP smoke tests exercise seeded login, player and Game Master character creation, sheet navigation, manual edits, resource mutation, note saving, faction selection, session records, wiki reads and writes, image assets, role pages, admin account preparation, and logout.
 
 The minimum verification before a source-code ticket is complete:
 
@@ -330,7 +330,7 @@ The minimum verification before a source-code ticket is complete:
 bun run verify
 ```
 
-The accessibility script currently checks public `/`, `/login`, authenticated `/sheet/lynott`, authenticated `/logout`, authenticated `/campaigns/rovnost-shadows`, and authenticated `/admin`. The MVP smoke script renders every sheet tab fragment directly. The screenshot script captures Lynott's sheet in light and dark mode plus the Background tab faction picker to `docs/pr-screenshots/` by default.
+The accessibility script currently checks public `/` and `/login`, player `/characters`, `/sheet/lynott`, `/campaigns/rovnost-shadows/wiki/factions-guide`, and `/logout`, Game Master `/campaigns/rovnost-shadows` and `/campaigns/rovnost-shadows/characters`, and admin `/admin`. The MVP smoke script renders every sheet tab fragment directly and walks the group-use flows for character creation, manual edits, notes, faction choice, sessions, wiki, assets, and admin account preparation. The screenshot script captures sheet, roster, campaign, wiki, faction, and edited-sheet states to `docs/pr-screenshots/` by default.
 
 ## Pipeline
 
@@ -350,7 +350,7 @@ flowchart LR
     I -- "No" --> J["Epic PR into main"]
 ```
 
-Release automation can be added after the MVP scaffold exists. Railway and Postgres deployment remain a later epic.
+Release automation can be added after the MVP scaffold exists. The group-use MVP is ready for local checkout, seed, verification, and table rehearsal. Railway hosting, production secret handling, Postgres deployment, email delivery, and homebrew/SRD expansion remain a later epic.
 
 ## Design Decisions
 
@@ -360,6 +360,6 @@ Release automation can be added after the MVP scaffold exists. Railway and Postg
 - Local password auth is in scope now; external identity providers are not.
 - Admin invite and password reset flows are local workflows without email delivery in this epic.
 - Live 5e.tools fetching is deferred behind the importer boundary; local imports are available through `bun run import:rules`.
-- Full group character management, campaign/session records, note creation, admin read tables, and deployment are deferred to later epics.
+- Character deletion, wiki-management polish, image-management polish, faction-management UI, deployment, production secrets, Postgres, email delivery, and homebrew/SRD expansion are deferred to later epics.
 - British English is required across copy, docs, code naming, and CSS variables.
 - The first implementation sequence is documentation and tickets, then source code through accepted tickets.

@@ -62,6 +62,8 @@ The notes tab creates, updates, and deletes visible player or Game Master notes 
 
 The Game Master campaign page lists campaign session records and includes local forms for creating, updating, and deleting table prep or recap entries with player-visible or Game-Master-only visibility.
 
+The local group-use workflow is ready for table rehearsal: seed the database, sign in as Lynott or Mira to create player-owned characters, use the Game Master account to manage the campaign roster, sessions, wiki pages, image assets, and faction context, and use the admin account to prepare invite and password-reset tokens. This remains a local MVP rather than a hosted deployment.
+
 Current environment variables:
 
 | Variable | Default | Purpose |
@@ -70,6 +72,7 @@ Current environment variables:
 | `HOST` | `0.0.0.0` | HTTP host used by Bun. |
 | `DB_PATH` | `character-sheet.sqlite3` | SQLite database file path. |
 | `SESSION_SECRET` | local development secret | Secret used for signed session cookies. |
+| `CHARACTER_SHEET_ASSET_ROOT` | `data/assets` | Local root for app-managed campaign image assets. |
 
 SQLite database files and sidecar files should remain ignored by Git.
 
@@ -102,13 +105,13 @@ bun run typecheck
 bun run verify
 ```
 
-`bun run verify` runs typecheck, component and route tests, accessibility checks, the MVP smoke workflow, and sheet screenshot capture in sequence.
+`bun run verify` runs typecheck, component and route tests, documentation reference checks, accessibility checks, the group-use MVP smoke workflow, and screenshot capture in sequence.
 
-`bun run test:a11y` starts an in-memory app on an available local port and runs Pa11y against public `/`, `/login`, authenticated `/sheet/lynott`, authenticated `/logout`, authenticated `/campaigns/rovnost-shadows`, and authenticated `/admin`.
+`bun run test:a11y` starts an in-memory app on an available local port and runs Pa11y against public `/` and `/login`, player `/characters`, `/sheet/lynott`, `/campaigns/rovnost-shadows/wiki/factions-guide`, and `/logout`, Game Master `/campaigns/rovnost-shadows` and `/campaigns/rovnost-shadows/characters`, and admin `/admin`.
 
-`bun run smoke:mvp` starts an in-memory app and walks the seeded local workflow: login as Lynott, open the sheet, mutate hit points, save a player note, render every sheet tab fragment, logout, verify the protected sheet redirects, then login as Game Master and admin to check their role pages.
+`bun run smoke:mvp` starts an in-memory app and walks the seeded group-use workflow: player login, roster character creation, manual sheet editing, resource mutation, player notes, faction selection, every sheet tab fragment, logout protection, Game Master roster creation, campaign session creation, wiki reads and writes, image upload, and admin invite/password-reset preparation.
 
-`bun run screenshots:sheet` captures Lynott's sheet in light and dark mode plus the Background tab faction picker. Screenshots are written to `docs/pr-screenshots/` by default, which is ignored by Git. Set `SCREENSHOT_DIR` to write them elsewhere.
+`bun run screenshots:sheet` captures Lynott's sheet in light and dark mode, the Background tab faction picker, the player roster, the Game Master campaign page, a wiki page with image references, and an edited sheet state. Screenshots are written to `docs/pr-screenshots/` by default, which is ignored by Git. Set `SCREENSHOT_DIR` to write them elsewhere.
 
 `bun run import:rules` imports local markdown or JSON rule files from `docs/rules` by default into the configured SQLite database. Pass a path to import one file or directory:
 
@@ -124,6 +127,10 @@ bun run protect:branches
 ```
 
 `import:rules` is intentionally local-first. It reads local markdown or JSON exports, transforms American English spellings to British English where safe, and seeds structured database tables. Direct fetching from 5e.tools can be added after the local importer boundary is stable.
+
+## Deployment Readiness
+
+The current app is ready for fresh local checkout, seed, verification, and table-use rehearsal with SQLite and local asset storage. Railway hosting, production secret handling, Postgres migration, email delivery for invites/password resets, and any homebrew/SRD expansion are explicitly deferred to the next epic.
 
 ## TDD Approach
 

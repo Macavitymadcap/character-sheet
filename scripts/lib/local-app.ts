@@ -6,6 +6,7 @@ import { AuthService, PasswordService, SessionService } from "../../src/auth";
 import { createSqliteDatabase } from "../../src/db";
 
 export function createInMemoryApp(appName = "Character Sheet", secret = "local-script-session-secret") {
+  process.env.CHARACTER_SHEET_ASSET_ROOT ??= "/private/tmp/character-sheet-script-assets";
   const databaseRuntime = createSqliteDatabase({ path: ":memory:" });
   const passwordService = new PasswordService();
   const sessionService = new SessionService({
@@ -123,16 +124,17 @@ export async function requestText(
     cookie,
     method = "GET",
   }: {
-    body?: URLSearchParams;
+    body?: FormData | URLSearchParams;
     cookie?: string;
     method?: string;
   } = {},
 ) {
+  const isUrlEncoded = body instanceof URLSearchParams;
   const response = await fetch(url, {
     body,
     headers: {
       ...(cookie ? { Cookie: cookie } : {}),
-      ...(body ? { "Content-Type": "application/x-www-form-urlencoded" } : {}),
+      ...(isUrlEncoded ? { "Content-Type": "application/x-www-form-urlencoded" } : {}),
     },
     method,
     redirect: "manual",
