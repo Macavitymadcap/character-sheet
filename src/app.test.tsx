@@ -940,15 +940,34 @@ describe("createApp", () => {
   test("serves a readable fallback for missing seeded campaign asset files", async () => {
     const { app, sessionService } = createTestApp("Character Sheet");
     const playerCookie = sessionService.createSession("user_lynott_player").cookie;
+    const quotedAsset = runtime?.repositories.campaignContentRepository.createImageAsset({
+      altText: "A missing asset with quote characters",
+      byteSize: 0,
+      campaignId: "campaign_rovnost_shadows",
+      caption: "Regression asset.",
+      height: null,
+      mimeType: "image/png",
+      storageKey: "campaigns/rovnost-shadows/missing-quoted-title.png",
+      title: `Vallen's "marked" seal`,
+      visibility: "player",
+      width: null,
+    });
     const response = await app.request("/campaigns/rovnost-shadows/assets/asset_skywright_sigil", {
       headers: { cookie: playerCookie },
     });
     const body = await response.text();
+    const quotedResponse = await app.request(`/campaigns/rovnost-shadows/assets/${quotedAsset?.id}`, {
+      headers: { cookie: playerCookie },
+    });
+    const quotedBody = await quotedResponse.text();
 
     expect(response.status).toBe(200);
     expect(response.headers.get("content-type")).toContain("image/svg+xml");
     expect(body).toContain("Skywright sigil");
     expect(body).toContain("Seeded campaign image unavailable locally");
+    expect(quotedResponse.status).toBe(200);
+    expect(quotedBody).toContain("Vallen&apos;s &quot;marked&quot; seal");
+    expect(quotedBody).not.toContain(`aria-label="Vallen's "marked" seal"`);
   });
 
   test("rejects image uploads without alt text or with unsupported file types", async () => {

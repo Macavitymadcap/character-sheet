@@ -1910,10 +1910,7 @@ function assetStorageRoot() {
 }
 
 function missingSeedAssetSvg(title: string) {
-  const safeTitle = title
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
+  const safeTitle = escapeSvgText(title);
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-label="${safeTitle}">
   <rect width="960" height="540" fill="#f5f1e8"/>
@@ -1921,6 +1918,15 @@ function missingSeedAssetSvg(title: string) {
   <text x="480" y="250" fill="#3b3126" font-family="Georgia, serif" font-size="42" font-weight="700" text-anchor="middle">${safeTitle}</text>
   <text x="480" y="310" fill="#6d5a43" font-family="system-ui, sans-serif" font-size="24" text-anchor="middle">Seeded campaign image unavailable locally</text>
 </svg>`;
+}
+
+function escapeSvgText(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
 }
 
 function parseSheetTabId(value: unknown) {
