@@ -22,6 +22,22 @@ export const sheetScreenshotTargets = [
     theme: "dark",
   },
   {
+    fileName: "lynott-skills-light.png",
+    label: "Lynott skills light",
+    path: "/sheet/lynott",
+    role: "player",
+    tabId: "skills",
+    theme: "light",
+  },
+  {
+    fileName: "lynott-skills-dark.png",
+    label: "Lynott skills dark",
+    path: "/sheet/lynott",
+    role: "player",
+    tabId: "skills",
+    theme: "dark",
+  },
+  {
     fileName: "lynott-background-faction.png",
     label: "Lynott background faction",
     path: "/sheet/lynott",
