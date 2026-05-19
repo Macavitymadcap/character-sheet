@@ -28,7 +28,7 @@ export const coreTabStyles = /* css */ `
 }
 
 .ability-table {
-  min-width: 34rem;
+  min-width: 0;
   table-layout: fixed;
 }
 
@@ -43,19 +43,14 @@ export const coreTabStyles = /* css */ `
 .ability-table td:nth-child(3),
 .ability-table th:nth-child(4),
 .ability-table td:nth-child(4),
-.ability-table th:last-child,
-.ability-table td:last-child {
-  width: 12%;
-}
-
 .ability-table th:nth-child(5),
 .ability-table td:nth-child(5) {
-  width: 10%;
+  width: 13%;
 }
 
-.ability-table th:nth-child(6),
-.ability-table td:nth-child(6) {
-  width: 20%;
+.ability-table th:last-child,
+.ability-table td:last-child {
+  width: 26%;
 }
 
 .sheet-table th,
@@ -80,6 +75,13 @@ export const coreTabStyles = /* css */ `
 .ability-table th:not(:first-child),
 .ability-table td:not(:first-child) {
   text-align: center;
+}
+
+.ability-action-cell {
+  align-items: center;
+  display: flex;
+  gap: 0.35rem;
+  justify-content: center;
 }
 
 .ability-short {
@@ -206,12 +208,43 @@ export const coreTabStyles = /* css */ `
 }
 
 @media (max-width: 520px) {
+  .ability-table {
+    min-width: 0;
+  }
+
+  .ability-table th,
+  .ability-table td {
+    padding-inline: 0.15rem;
+  }
+
+  .ability-table thead th {
+    font-size: 0.68rem;
+  }
+
   .ability-full {
     display: none;
   }
 
   .ability-short {
     display: inline;
+  }
+
+  .ability-action-cell {
+    gap: 0.25rem;
+  }
+
+  .ability-action-cell .dice-roller {
+    width: auto;
+  }
+
+  .ability-action-cell .dice-roller-trigger {
+    min-width: 2.2rem;
+    width: auto;
+  }
+
+  .ability-action-cell .row-edit-button {
+    min-width: 2.35rem;
+    padding-inline: 0.3rem;
   }
 }
 

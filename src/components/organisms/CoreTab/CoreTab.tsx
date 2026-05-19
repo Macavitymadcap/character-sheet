@@ -21,8 +21,7 @@ export const CoreTab = ({ sheet }: CoreTabProps) => {
                 <th scope="col">Mod</th>
                 <th scope="col">Save</th>
                 <th scope="col">Prof</th>
-                <th scope="col">Roll</th>
-                <th scope="col">Edit</th>
+                <th scope="col">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -154,15 +153,13 @@ export const AbilityReadRow = ({
     <td>{formatModifier(ability.modifier)}</td>
     <td>{formatModifier(ability.saveModifier)}</td>
     <td class="proficiency-icon-cell">{renderSaveProficiencyIcon(ability.saveProficient)}</td>
-    <td>
+    <td class="ability-action-cell">
       <DiceRoller
         characterSlug={sheet.slug}
         defaultModifier={ability.modifier}
         id={`ability-${ability.ability}`}
         label={formatAbility(ability.ability)}
       />
-    </td>
-    <td class="row-action-cell">
       <button
         class="row-edit-button"
         type="button"
@@ -186,7 +183,7 @@ export const AbilityEditRow = ({
 }) => (
   <tr id={abilityRowId(ability.ability)} class="inline-edit-row">
     <th scope="row">{formatAbility(ability.ability)}</th>
-    <td colSpan={6}>
+    <td colSpan={5}>
       <form
         class="sheet-edit-form row-edit-form row-edit-form-inline"
         hx-patch={`/sheet/${sheet.slug}/abilities/${ability.ability}`}
