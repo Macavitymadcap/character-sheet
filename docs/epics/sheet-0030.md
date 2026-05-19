@@ -54,3 +54,8 @@ Create `sheet-0030` from the latest `main`. Open the planning pull request into 
 - Deferred `sheet-0029` SRD/table-use hardening is implemented through `sheet-0031` before hosted rollout work begins.
 - Hosted asset behaviour is deterministic and does not depend on developer-machine file paths.
 - README and architecture docs clearly state that `sheet-0020` is complete, `sheet-0030` is active for deployment, and `sheet-0040` remains reserved for Hyper-Dank adoption.
+
+## Follow-Up Boundaries
+
+- `sheet-0037` captures campaign subpage splitting and management polish after the first hosted rehearsal.
+- `sheet-0040` remains reserved for Hyper-Dank package adoption.

@@ -17,4 +17,18 @@ describe("Pa11y targets", () => {
       { label: "admin", path: "/admin", role: "admin" },
     ]);
   });
+
+  test("covers hosted-ready role surfaces", () => {
+    expect(pa11yTargets.map((target) => target.label)).toEqual(expect.arrayContaining([
+      "admin",
+      "campaign",
+      "gm roster",
+      "login",
+      "player roster",
+      "rule detail",
+      "rules",
+      "sheet",
+      "wiki",
+    ]));
+  });
 });

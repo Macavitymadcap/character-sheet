@@ -16,6 +16,20 @@ export const mvpSmokeTabs = [
 
 export const operatorSmokePaths = ["/invites/<token>", "/password-reset/<token>"] as const;
 
+export const hostedRehearsalSmokeCoverage = [
+  "seeded sign-in",
+  "player roster character creation",
+  "sheet tabs",
+  "SRD rules browsing",
+  "campaign sessions",
+  "campaign wiki",
+  "protected seeded assets",
+  "image upload",
+  "admin invite handoff",
+  "admin password reset handoff",
+  "logout protection",
+] as const;
+
 if (import.meta.main) {
   await runMvpSmoke();
 }
