@@ -50,11 +50,15 @@ describe("documentation references", () => {
     const readme = await Bun.file("README.md").text();
 
     expect(packageJson.scripts.start).toBe("bun src/index.ts");
+    expect(packageJson.scripts["hosted:data"]).toBe("bun scripts/hosted-data.ts");
     expect(railway.deploy.startCommand).toBe("bun run start");
     expect(railway.deploy.healthcheckPath).toBe("/healthz");
     expect(railway.deploy.healthcheckTimeout).toBe(60);
     expect(railwayDocs).toContain("Start command | `bun run start`");
     expect(railwayDocs).toContain("Healthcheck path | `/healthz`");
+    expect(railwayDocs).toContain("bun run hosted:data -- prepare");
+    expect(railwayDocs).toContain("bun run hosted:data -- backup");
+    expect(railwayDocs).toContain("HOSTED_DATA_CONFIRM=replace");
     expect(railwayDocs).toContain("`DB_PATH`");
     expect(railwayDocs).toContain("`SESSION_SECRET`");
     expect(readme).toContain("[Railway Hosted Rehearsal](./docs/deployment/railway.md)");

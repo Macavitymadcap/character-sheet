@@ -6,6 +6,7 @@ import { resolveRuntimeConfig } from "./runtime";
 const runtimeConfig = resolveRuntimeConfig();
 const databaseRuntime = createSqliteDatabase({
   path: runtimeConfig.databasePath,
+  seed: false,
 });
 const passwordService = new PasswordService();
 const app = createApp({

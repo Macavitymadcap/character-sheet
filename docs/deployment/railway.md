@@ -26,11 +26,12 @@ Set these Railway variables for the rehearsal environment:
 | --- | --- | --- | --- |
 | `PORT` | Railway-provided | Use Railway default | Railway injects the public listener port. The app falls back to `3000` only for local development. |
 | `HOST` | Optional | `0.0.0.0` | The local default already binds all interfaces, which is suitable for Railway. |
-| `DB_PATH` | Required | `/data/character-sheet.sqlite3` | Use a persistent volume mount for `/data` once `sheet-0033` defines the hosted SQLite posture. Until then, treat hosted data as disposable rehearsal data. |
+| `DB_PATH` | Required | `/data/character-sheet.sqlite3` | Mount a persistent Railway volume at `/data` and keep the SQLite database there. |
 | `SESSION_SECRET` | Required | Generate a long random value | Do not use the local development fallback in Railway. Rotating this signs everyone out. |
 | `CHARACTER_SHEET_ASSET_ROOT` | Required when campaign images are used | `/data/assets` | Use the same persistent volume family as `DB_PATH`; `sheet-0035` will finalise hosted asset storage. |
+| `HOSTED_BACKUP_DIR` | Optional | `/data/backups` | Used by the hosted backup command. |
 
-Local development remains unchanged if these variables are omitted: `bun run dev` binds to `0.0.0.0:3000`, uses `character-sheet.sqlite3`, and stores assets under `data/assets`.
+Local development remains unchanged if these variables are omitted: `bun run dev` binds to `0.0.0.0:3000`, uses `character-sheet.sqlite3`, and stores assets under `data/assets`. App startup applies schema bootstrap only; seeding is an explicit operation.
 
 ## Bootstrap And Start
 
@@ -38,11 +39,42 @@ For the first rehearsal deploy:
 
 1. Attach or prepare the persistent storage path planned for `/data`.
 2. Set the variables above in Railway.
-3. Deploy the service from GitHub.
-4. Confirm Railway reports `/healthz` as healthy.
-5. Run the hosted seed/import workflow only after `sheet-0033` defines backup and reset rules.
+3. Run `bun run hosted:data -- prepare` once against an empty `DB_PATH` to create the schema and seed the group data.
+4. Deploy the service from GitHub.
+5. Confirm Railway reports `/healthz` as healthy.
 
-Do not run local seed commands blindly against an existing hosted database. The current `bun run seed` command is safe for local development, but hosted data preservation is owned by `sheet-0033`.
+Normal app startup does not seed data. This prevents a deployment restart from rewriting existing hosted records. Use `bun run hosted:data -- migrate` when you need to apply idempotent schema bootstrap without touching seed rows.
+
+## Backup And Restore
+
+Create a backup before any hosted seed, import, or manual recovery operation:
+
+```bash
+bun run hosted:data -- backup
+```
+
+By default backups are written under `HOSTED_BACKUP_DIR` or `data/backups` with a timestamped filename. On Railway, set `HOSTED_BACKUP_DIR=/data/backups` so backups stay on the attached volume.
+
+Restore from a named backup with an explicit replacement confirmation:
+
+```bash
+HOSTED_RESTORE_SOURCE=/data/backups/character-sheet-2026-05-19T193000Z.sqlite3 \
+HOSTED_DATA_CONFIRM=replace \
+bun run hosted:data -- restore
+```
+
+The restore command copies the backup to a temporary file and then renames it over `DB_PATH`. It refuses to run without `HOSTED_DATA_CONFIRM=replace`.
+
+## Reseeding Or Resetting
+
+`bun run hosted:data -- prepare` refuses to seed over a non-empty database by default. For a deliberate reset:
+
+1. Run `bun run hosted:data -- backup`.
+2. Confirm the backup file exists under `/data/backups`.
+3. Set `HOSTED_DATA_CONFIRM=seed-existing`.
+4. Run `bun run hosted:data -- prepare`.
+
+This reseeds the known baseline records and may update seeded users, characters, campaign wiki, sessions, factions, resources, and notes. Do not use it as part of normal deploy startup.
 
 ## Local Verification
 
@@ -63,6 +95,14 @@ The response should be:
 
 ```json
 {"ok":true}
+```
+
+For a local hosted-data rehearsal:
+
+```bash
+DB_PATH=/tmp/character-sheet-hosted.sqlite3 bun run hosted:data -- prepare
+DB_PATH=/tmp/character-sheet-hosted.sqlite3 HOSTED_BACKUP_DIR=/tmp/character-sheet-backups bun run hosted:data -- backup
+DB_PATH=/tmp/character-sheet-hosted.sqlite3 bun run hosted:data -- migrate
 ```
 
 ## References
