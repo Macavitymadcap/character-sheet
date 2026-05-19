@@ -33,7 +33,7 @@ describe("CharactersPage", () => {
       />,
     );
 
-    expect(html).toContain('<a class="action-link" href="/characters/new">Create character</a>');
+    expect(html).toContain('<a class="action-link character-create-link" href="/characters/new">Create character</a>');
     expect(html).not.toContain('name="hitPointMax"');
     expect(html).toContain("No characters yet.");
   });
@@ -90,11 +90,47 @@ describe("CharactersPage", () => {
     expect(html).toContain('action="/campaigns/rovnost-shadows/characters"');
     expect(html).toContain('<option value="user_mira_player">Mira Player</option>');
     expect(html).not.toContain('<option value="user_game_master">Campaign GM</option>');
-    expect(html).toContain('<a href="/sheet/ash_vale">Ash Vale</a>');
+    expect(html).toContain('<a class="character-roster-link" href="/sheet/ash_vale">Ash Vale</a>');
+  });
+
+  test("renders roster actions and links with focused styling hooks", () => {
+    const html = render(
+      <CharactersPage
+        appName="Character Sheet"
+        characters={[
+          {
+            background: "Guide",
+            campaignId: "campaign_rovnost_shadows",
+            campaignName: "Rovnost Shadows",
+            campaignSlug: "rovnost-shadows",
+            classSummary: "Ranger 1",
+            factionId: null,
+            factionName: null,
+            id: "character_ash_vale",
+            level: 1,
+            name: "Ash Vale",
+            ownerDisplayName: "Mira Player",
+            ownerUserId: "user_mira_player",
+            slug: "ash_vale",
+            species: "Human",
+          },
+        ]}
+        mode="player"
+        user={{ displayName: "Mira Player", id: "user_mira_player", role: "player" }}
+      />,
+    );
+
+    expect(html).toContain('<div class="character-create-actions">');
+    expect(html).toContain('<button class="button" data-variant="ghost" type="submit">Create character</button>');
+    expect(html).toContain('<a class="character-roster-link" href="/sheet/ash_vale">Ash Vale</a>');
   });
 
   test("keeps roster tables compressed and scrollable on mobile", () => {
-    expect(charactersStyles).toContain(".characters-table {\n  min-width: 38rem;");
+    expect(charactersStyles).toContain(".character-create-link");
+    expect(charactersStyles).toContain(".character-create-actions .button");
+    expect(charactersStyles).toContain("min-width: 38rem;");
+    expect(charactersStyles).toContain("border-collapse: separate;");
+    expect(charactersStyles).toContain(".character-roster-link");
     expect(charactersStyles).toContain("@media (max-width: 760px)");
     expect(charactersStyles).toContain(".characters-table {\n    min-width: 32rem;");
     expect(charactersStyles).toContain("overflow-wrap: anywhere;");

@@ -623,7 +623,7 @@ describe("createApp", () => {
 
     expect(playerRoster.status).toBe(200);
     expect(playerRosterHtml).toContain("Player roster");
-    expect(playerRosterHtml).toContain('<a class="action-link" href="/characters/new">Create character</a>');
+    expect(playerRosterHtml).toContain('<a class="action-link character-create-link" href="/characters/new">Create character</a>');
     expect(playerRosterHtml).not.toContain('name="hitPointMax"');
     expect(playerRosterHtml).toContain("Mira Voss");
     const playerCreate = await app.request("/characters/new", {

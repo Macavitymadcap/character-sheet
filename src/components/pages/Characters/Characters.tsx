@@ -43,7 +43,7 @@ export const CharactersPage = ({
               </h1>
               {!showCreateForm ? (
                 <a
-                  class="action-link"
+                  class="action-link character-create-link"
                   href={mode === "game_master" && campaign ? `/campaigns/${campaign.slug}/characters/new` : "/characters/new"}
                 >
                   Create character
@@ -71,7 +71,9 @@ export const CharactersPage = ({
                 <FormField id="character-background" label="Background" name="background" required />
                 <FormField id="character-level" label="Level" name="level" required type="number" />
                 <FormField id="character-hit-points" label="Hit point max" name="hitPointMax" required type="number" />
-                <Button type="submit">Create character</Button>
+                <div class="character-create-actions">
+                  <Button type="submit" variant="ghost">Create character</Button>
+                </div>
               </form>
             </section>
             ) : null}
@@ -97,7 +99,7 @@ export const CharactersPage = ({
                       {characters.map((character) => (
                         <tr>
                           <td>
-                            <a href={`/sheet/${character.slug}`}>{character.name}</a>
+                            <a class="character-roster-link" href={`/sheet/${character.slug}`}>{character.name}</a>
                           </td>
                           <td>{character.ownerDisplayName}</td>
                           <td>{character.level}</td>
