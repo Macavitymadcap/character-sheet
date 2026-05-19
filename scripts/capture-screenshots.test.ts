@@ -3,6 +3,7 @@ import { sheetScreenshotTargets } from "./capture-screenshots";
 
 describe("sheet screenshot targets", () => {
   test("captures sheet, group-use, wiki, and edited states", () => {
+    expect(sheetScreenshotTargets.every((target) => !("capture" in target))).toBe(true);
     expect(sheetScreenshotTargets).toEqual([
       {
         fileName: "lynott-sheet-light.png",
@@ -70,7 +71,6 @@ describe("sheet screenshot targets", () => {
       },
       {
         action: "roll-stealth",
-        capture: "viewport",
         fileName: "lynott-skills-roll-light.png",
         label: "Lynott skills roll light",
         path: "/sheet/lynott",
@@ -80,7 +80,6 @@ describe("sheet screenshot targets", () => {
       },
       {
         action: "roll-stealth",
-        capture: "viewport",
         fileName: "lynott-skills-roll-dark.png",
         label: "Lynott skills roll dark",
         path: "/sheet/lynott",

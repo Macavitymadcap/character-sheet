@@ -73,7 +73,6 @@ export const sheetScreenshotTargets = [
   },
   {
     action: "roll-stealth",
-    capture: "viewport",
     fileName: "lynott-skills-roll-light.png",
     label: "Lynott skills roll light",
     path: "/sheet/lynott",
@@ -83,7 +82,6 @@ export const sheetScreenshotTargets = [
   },
   {
     action: "roll-stealth",
-    capture: "viewport",
     fileName: "lynott-skills-roll-dark.png",
     label: "Lynott skills roll dark",
     path: "/sheet/lynott",
@@ -189,6 +187,12 @@ export const sheetScreenshotTargets = [
   },
 ] as const;
 
+const targetViewport = {
+  deviceScaleFactor: 1,
+  height: 640,
+  width: 360,
+} as const;
+
 if (import.meta.main) {
   await captureSheetScreenshots();
 }
@@ -216,7 +220,7 @@ export async function captureSheetScreenshots(
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
     });
     const page = await browser.newPage();
-    await page.setViewport({ deviceScaleFactor: 1, height: 844, width: 390 });
+    await page.setViewport(targetViewport);
     await setSessionCookie(page, baseUrl, playerCookie);
 
     for (const target of sheetScreenshotTargets) {
@@ -242,7 +246,7 @@ export async function captureSheetScreenshots(
         await page.waitForSelector(`#sheet-tab-panel[data-tab-id="${target.tabId}"]`);
       }
       if ("action" in target) await runScreenshotAction(page, target.action);
-      await page.screenshot({ fullPage: !("capture" in target && target.capture === "viewport"), path });
+      await page.screenshot({ fullPage: false, path });
 
       console.log(`${target.label}: ${path}`);
     }
@@ -258,22 +262,33 @@ async function runScreenshotAction(
   action: "edit-stealth" | "edit-strength" | "roll-stealth",
 ) {
   if (action === "edit-strength") {
+    await scrollIntoView(page, "#ability-row-strength");
     await page.click('button[aria-label="Edit Strength score and save"]');
     await page.waitForSelector("#ability-row-strength form");
     return;
   }
 
   if (action === "edit-stealth") {
+    await scrollIntoView(page, "#skill-row-stealth");
     await page.click('button[aria-label="Edit Stealth training"]');
     await page.waitForSelector("#skill-row-stealth form");
     return;
   }
 
-  await page.click('button[aria-label="Roll Stealth"]');
+  await scrollIntoView(page, "#skill-row-stealth");
+  await page.click("#skill-row-stealth .dice-roller-trigger");
+  await page.evaluate(`document.querySelector("#skill-stealth-roller")?.showPopover?.()`);
   await page.waitForSelector("#skill-stealth-roller:popover-open");
   await page.click("#skill-stealth-roller button[type='submit']");
   await page.waitForFunction(
     `document.querySelector("#skill-stealth-result")?.textContent?.includes("Stealth: d20")`,
+  );
+}
+
+async function scrollIntoView(page: Page, selector: string) {
+  await page.waitForSelector(selector);
+  await page.evaluate(
+    `document.querySelector(${JSON.stringify(selector)})?.scrollIntoView({ block: "center", inline: "nearest" })`,
   );
 }
 
