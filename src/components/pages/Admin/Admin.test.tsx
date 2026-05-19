@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { AdminPage } from "./Admin";
+import { adminStyles } from "./Admin.styles";
 
 const render = (node: unknown): string => String(node);
 
@@ -41,7 +42,17 @@ describe("AdminPage", () => {
       '<button class="button" data-variant="primary" type="submit">Create invite</button>',
     );
     expect(html).toContain("Users");
+    expect(html).toContain('<table class="sheet-table admin-users-table">');
     expect(html).toContain("Invites");
+    expect(html).toContain('<table class="sheet-table admin-invites-table">');
     expect(html).toContain("Password reset tokens");
+    expect(html).toContain('<table class="sheet-table admin-reset-tokens-table">');
+  });
+
+  test("keeps admin tables compressed and scrollable on mobile", () => {
+    expect(adminStyles).toContain(".admin-users-table {\n  min-width: 44rem;");
+    expect(adminStyles).toContain("@media (max-width: 760px)");
+    expect(adminStyles).toContain(".admin-users-table {\n    min-width: 46rem;");
+    expect(adminStyles).toContain("white-space: nowrap;");
   });
 });

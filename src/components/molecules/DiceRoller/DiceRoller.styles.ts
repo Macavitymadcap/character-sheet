@@ -30,6 +30,7 @@ export const diceRollerStyles = /* css */ `
   margin: 0;
   min-width: min(18rem, calc(100vw - 1.5rem));
   padding: 0.7rem;
+  position-area: bottom center;
 }
 
 .dice-roller-panel:popover-open {
@@ -79,5 +80,30 @@ export const diceRollerStyles = /* css */ `
   display: block;
   font-weight: 900;
   padding: 0.45rem 0.55rem;
+}
+
+@media (max-width: 760px) {
+  .dice-roller {
+    width: 100%;
+  }
+
+  .dice-roller-trigger {
+    min-width: 2.6rem;
+    width: 100%;
+  }
+
+  .dice-roller-panel {
+    inset: auto 0.75rem 1rem 0.75rem;
+    margin: auto;
+    max-height: calc(100vh - 2rem);
+    min-width: 0;
+    overflow: auto;
+    position: fixed;
+    width: calc(100vw - 1.5rem);
+  }
+
+  .dice-roll-result {
+    text-align: center;
+  }
 }
 `;
