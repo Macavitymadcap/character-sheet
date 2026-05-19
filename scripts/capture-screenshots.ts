@@ -285,7 +285,7 @@ async function runScreenshotAction(
   }
 
   if (action === "scroll-rule-detail") {
-    await scrollIntoView(page, "#rule-detail-heading", -24);
+    await scrollIntoView(page, "#rule-detail-heading", -96);
     return;
   }
 
