@@ -5,6 +5,7 @@ const docs = [
   "README.md",
   "ARCHITECTURE.md",
   "CONTRIBUTING.md",
+  "docs/operations/hosted-account-runbook.md",
   "docs/deployment/railway.md",
   "docs/tickets/sheet-0019.md",
 ];
@@ -62,5 +63,17 @@ describe("documentation references", () => {
     expect(railwayDocs).toContain("`DB_PATH`");
     expect(railwayDocs).toContain("`SESSION_SECRET`");
     expect(readme).toContain("[Railway Hosted Rehearsal](./docs/deployment/railway.md)");
+  });
+
+  test("hosted account runbook documents manual token handoff", async () => {
+    const runbook = await Bun.file("docs/operations/hosted-account-runbook.md").text();
+    const readme = await Bun.file("README.md").text();
+
+    expect(readme).toContain("[Hosted Account Operator Runbook](./docs/operations/hosted-account-runbook.md)");
+    expect(runbook).toContain("The app does not send email.");
+    expect(runbook).toContain("/invites/<token>");
+    expect(runbook).toContain("/password-reset/<token>");
+    expect(runbook).toContain("The app prevents disabling the last active admin.");
+    expect(runbook).toContain("Admins can manage accounts, invites, and reset tokens, but they do not get sheet play-edit access by default.");
   });
 });
