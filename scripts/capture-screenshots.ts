@@ -73,6 +73,7 @@ export const sheetScreenshotTargets = [
   },
   {
     action: "roll-stealth",
+    capture: "viewport",
     fileName: "lynott-skills-roll-light.png",
     label: "Lynott skills roll light",
     path: "/sheet/lynott",
@@ -82,6 +83,7 @@ export const sheetScreenshotTargets = [
   },
   {
     action: "roll-stealth",
+    capture: "viewport",
     fileName: "lynott-skills-roll-dark.png",
     label: "Lynott skills roll dark",
     path: "/sheet/lynott",
@@ -240,7 +242,7 @@ export async function captureSheetScreenshots(
         await page.waitForSelector(`#sheet-tab-panel[data-tab-id="${target.tabId}"]`);
       }
       if ("action" in target) await runScreenshotAction(page, target.action);
-      await page.screenshot({ fullPage: true, path });
+      await page.screenshot({ fullPage: !("capture" in target && target.capture === "viewport"), path });
 
       console.log(`${target.label}: ${path}`);
     }

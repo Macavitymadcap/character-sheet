@@ -70,6 +70,7 @@ describe("sheet screenshot targets", () => {
       },
       {
         action: "roll-stealth",
+        capture: "viewport",
         fileName: "lynott-skills-roll-light.png",
         label: "Lynott skills roll light",
         path: "/sheet/lynott",
@@ -79,6 +80,7 @@ describe("sheet screenshot targets", () => {
       },
       {
         action: "roll-stealth",
+        capture: "viewport",
         fileName: "lynott-skills-roll-dark.png",
         label: "Lynott skills roll dark",
         path: "/sheet/lynott",
