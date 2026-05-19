@@ -1,8 +1,8 @@
 #!/usr/bin/env bun
 import { mkdir } from "node:fs/promises";
-import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import puppeteer, { type Browser, type Page } from "puppeteer";
+import { writeSeedAssetPlaceholders } from "../src/assets";
 import { RulesImportService } from "../src/rules";
 import { createInMemoryApp, login, startLocalServer, waitForHttp } from "./lib/local-app";
 
@@ -345,21 +345,4 @@ async function prepareEditedSheet(baseUrl: string, cookie: string) {
     method: "PATCH",
   });
   if (!response.ok) throw new Error(`Could not prepare edited sheet screenshot: ${response.status}`);
-}
-
-async function writeSeedAssetPlaceholders() {
-  const root = process.env.CHARACTER_SHEET_ASSET_ROOT ?? `${tmpdir()}/character-sheet-script-assets`;
-  const bytes = Uint8Array.from(atob("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII="), (char) => char.charCodeAt(0));
-  const storageKeys = [
-    "cover.png",
-    "magister-vallen.png",
-    "faction-sigils.png",
-    "astril-map.webp",
-    "skywright-sigil.png",
-  ];
-
-  await mkdir(`${root}/campaigns/rovnost-shadows`, { recursive: true });
-  for (const key of storageKeys) {
-    await Bun.write(`${root}/campaigns/rovnost-shadows/${key}`, bytes);
-  }
 }

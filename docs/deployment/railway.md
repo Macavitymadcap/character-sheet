@@ -28,10 +28,16 @@ Set these Railway variables for the rehearsal environment:
 | `HOST` | Optional | `0.0.0.0` | The local default already binds all interfaces, which is suitable for Railway. |
 | `DB_PATH` | Required | `/data/character-sheet.sqlite3` | Mount a persistent Railway volume at `/data` and keep the SQLite database there. |
 | `SESSION_SECRET` | Required | Generate a long random value | Do not use the local development fallback in Railway. Rotating this signs everyone out. |
-| `CHARACTER_SHEET_ASSET_ROOT` | Required when campaign images are used | `/data/assets` | Use the same persistent volume family as `DB_PATH`; `sheet-0035` will finalise hosted asset storage. |
+| `CHARACTER_SHEET_ASSET_ROOT` | Required | `/data/assets` | Stores app-managed campaign images on the persistent Railway volume. Keep it under `/data`, separate from `DB_PATH`. |
 | `HOSTED_BACKUP_DIR` | Optional | `/data/backups` | Used by the hosted backup command. |
 
 Local development remains unchanged if these variables are omitted: `bun run dev` binds to `0.0.0.0:3000`, uses `character-sheet.sqlite3`, and stores assets under `data/assets`. App startup applies schema bootstrap only; seeding is an explicit operation.
+
+## Asset Storage
+
+Hosted campaign images use the same Railway volume as the SQLite database, but a separate directory: set `CHARACTER_SHEET_ASSET_ROOT=/data/assets`. Uploaded files are copied into app-managed relative keys such as `campaigns/rovnost-shadows/<uuid>.png`; the database never stores a source-machine absolute path.
+
+The first rehearsal does not use object storage or an external CDN. This keeps the deployment small and makes backup expectations clear: back up `/data/character-sheet.sqlite3` and the `/data/assets` directory together. Seeded campaign image records are created by the database seed, and `bun run hosted:data -- prepare` also writes deterministic tiny placeholder files for those seeded keys so hosted pages render images even before final campaign art is uploaded. If a seeded file is missing, the protected asset route serves a readable SVG fallback instead of a broken image.
 
 ## Bootstrap And Start
 
@@ -39,11 +45,11 @@ For the first rehearsal deploy:
 
 1. Attach or prepare the persistent storage path planned for `/data`.
 2. Set the variables above in Railway.
-3. Run `bun run hosted:data -- prepare` once against an empty `DB_PATH` to create the schema and seed the group data.
+3. Run `bun run hosted:data -- prepare` once against an empty `DB_PATH` to create the schema, seed the group data, and write seeded campaign asset placeholders under `CHARACTER_SHEET_ASSET_ROOT`.
 4. Deploy the service from GitHub.
 5. Confirm Railway reports `/healthz` as healthy.
 
-Normal app startup does not seed data. This prevents a deployment restart from rewriting existing hosted records. Use `bun run hosted:data -- migrate` when you need to apply idempotent schema bootstrap without touching seed rows.
+Normal app startup does not seed data or rewrite asset files. This prevents a deployment restart from rewriting existing hosted records or uploaded images. Use `bun run hosted:data -- migrate` when you need to apply idempotent schema bootstrap without touching seed rows.
 
 ## Backup And Restore
 

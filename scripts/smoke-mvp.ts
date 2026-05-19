@@ -1,6 +1,5 @@
 #!/usr/bin/env bun
-import { mkdir } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { writeSeedAssetPlaceholders } from "../src/assets";
 import { RulesImportService } from "../src/rules";
 import { createInMemoryApp, login, requestText, startLocalServer, waitForHttp } from "./lib/local-app";
 
@@ -33,6 +32,7 @@ export async function runMvpSmoke() {
     if (rulesImport.imported !== 15) {
       throw new Error(`SRD fixture import expected 15 rules, imported ${rulesImport.imported}.`);
     }
+    await writeSeedAssetPlaceholders();
 
     const playerCookie = await login(baseUrl, "lynott@example.local");
     const miraCookie = await login(baseUrl, "mira@example.local");
@@ -169,6 +169,14 @@ export async function runMvpSmoke() {
     });
     assertResponse("gm session creation", session.response, 303);
     await assertContains("gm session appears", `${baseUrl}/campaigns/rovnost-shadows`, gmCookie, "Smoke Workflow Session");
+    const seededAsset = await requestText(`${baseUrl}/campaigns/rovnost-shadows/assets/asset_skywright_sigil`, {
+      cookie: returningPlayerCookie,
+    });
+    assertResponse("seeded campaign asset read", seededAsset.response, 200);
+    const assetContentType = seededAsset.response.headers.get("content-type") ?? "";
+    if (!assetContentType.includes("image/png")) {
+      throw new Error(`Seeded campaign asset used ${assetContentType}; expected image/png.`);
+    }
 
     const imageForm = new FormData();
     imageForm.set("title", "Smoke handout");
@@ -178,7 +186,6 @@ export async function runMvpSmoke() {
     imageForm.set("width", "1");
     imageForm.set("height", "1");
     imageForm.set("image", new File([new Uint8Array([137, 80, 78, 71])], "smoke.png", { type: "image/png" }));
-    await mkdir(process.env.CHARACTER_SHEET_ASSET_ROOT ?? `${tmpdir()}/character-sheet-script-assets`, { recursive: true });
     const assetUpload = await requestText(`${baseUrl}/campaigns/rovnost-shadows/assets`, {
       body: imageForm,
       cookie: gmCookie,

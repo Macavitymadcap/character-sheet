@@ -6,9 +6,9 @@ Configure and verify deterministic campaign asset behaviour for hosted rehearsal
 
 ## Implementation
 
-- Choose the hosted asset-storage approach for the first Railway deployment.
+- Choose the hosted asset-storage approach for the first Railway deployment. Use Railway persistent volume storage at `/data/assets`; defer object storage/CDN work.
 - Document `CHARACTER_SHEET_ASSET_ROOT` for hosted and local environments.
-- Ensure seeded campaign assets do not depend on developer-machine file paths.
+- Ensure seeded campaign assets do not depend on developer-machine file paths. Hosted preparation should write deterministic placeholder files for seeded campaign asset keys.
 - Preserve protected campaign asset routes and visibility checks.
 
 ## Tests First

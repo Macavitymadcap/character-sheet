@@ -2,12 +2,15 @@
 import { copyFile, mkdir, rename, stat } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { Database } from "bun:sqlite";
+import { assetStorageRoot, writeSeedAssetPlaceholders } from "../src/assets";
 import { createSqliteDatabase } from "../src/db";
 
 export interface HostedDataOptions {
+  assetRoot?: string;
   backupDir?: string;
   confirm?: string;
   databasePath?: string;
+  skipSeedAssets?: boolean;
   restoreSource?: string;
   timestamp?: Date;
 }
@@ -38,6 +41,9 @@ export async function prepareHostedData(options: HostedDataOptions = {}) {
   await ensureParentDirectory(databasePath);
   const runtime = createSqliteDatabase({ path: databasePath, seed: true });
   runtime.close();
+  if (!options.skipSeedAssets) {
+    await writeSeedAssetPlaceholders(options.assetRoot ?? assetStorageRoot());
+  }
 
   return databasePath;
 }
