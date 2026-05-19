@@ -15,6 +15,8 @@ export const mvpSmokeTabs = [
   "notes",
 ] as const;
 
+export const operatorSmokePaths = ["/invites/<token>", "/password-reset/<token>"] as const;
+
 if (import.meta.main) {
   await runMvpSmoke();
 }
@@ -208,6 +210,25 @@ export async function runMvpSmoke() {
     });
     assertResponse("admin invite creation", invite.response, 201);
     assertBody("admin invite creation", invite.body, "smoke-player@example.local");
+    const inviteJson = JSON.parse(invite.body) as { token: string };
+    await assertContains(
+      "operator invite handoff page",
+      `${baseUrl}/invites/${inviteJson.token}`,
+      "",
+      "Accept invite",
+    );
+    const inviteAccept = await requestText(`${baseUrl}/invites/${inviteJson.token}`, {
+      body: new URLSearchParams({
+        displayName: "Smoke Invited Player",
+        password: "smoke-invite-password",
+      }),
+      method: "POST",
+    });
+    assertResponse("operator invite acceptance", inviteAccept.response, 303);
+    if (inviteAccept.response.headers.get("location") !== "/login") {
+      throw new Error("Invite acceptance did not redirect to login.");
+    }
+    await login(baseUrl, "smoke-player@example.local", "smoke-invite-password");
 
     const reset = await requestText(`${baseUrl}/admin/users/user_mira_player/password-reset`, {
       cookie: adminCookie,
@@ -215,6 +236,22 @@ export async function runMvpSmoke() {
     });
     assertResponse("admin password reset preparation", reset.response, 201);
     assertBody("admin password reset preparation", reset.body, "user_mira_player");
+    const resetJson = JSON.parse(reset.body) as { token: string };
+    await assertContains(
+      "operator password reset handoff page",
+      `${baseUrl}/password-reset/${resetJson.token}`,
+      "",
+      "Reset password",
+    );
+    const resetUse = await requestText(`${baseUrl}/password-reset/${resetJson.token}`, {
+      body: new URLSearchParams({ password: "smoke-reset-password" }),
+      method: "POST",
+    });
+    assertResponse("operator password reset", resetUse.response, 303);
+    if (resetUse.response.headers.get("location") !== "/login") {
+      throw new Error("Password reset did not redirect to login.");
+    }
+    await login(baseUrl, "mira@example.local", "smoke-reset-password");
 
     console.log("MVP smoke workflow complete.");
   } finally {

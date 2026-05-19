@@ -41,7 +41,7 @@ src/
 └── test/                       # shared app and repository harnesses
 ```
 
-`src/index.ts` owns process setup through `resolveRuntimeConfig()`: host and port environment variables, the SQLite filename, repository construction, auth/session service construction, schema bootstrap, and the Bun `fetch` export. Startup deliberately does not seed mutable data. Railway-specific service configuration lives in [`railway.json`](./railway.json), and hosted seed, backup, restore, and migration operations are documented in [Railway Hosted Rehearsal](./docs/deployment/railway.md).
+`src/index.ts` owns process setup through `resolveRuntimeConfig()`: host and port environment variables, the SQLite filename, repository construction, auth/session service construction, schema bootstrap, and the Bun `fetch` export. Startup deliberately does not seed mutable data. Railway-specific service configuration lives in [`railway.json`](./railway.json), hosted seed, backup, restore, and migration operations are documented in [Railway Hosted Rehearsal](./docs/deployment/railway.md), and manual account handoff is documented in [Hosted Account Operator Runbook](./docs/operations/hosted-account-runbook.md).
 
 The runtime dependency boundary includes the app name, service contracts, and repository contracts:
 

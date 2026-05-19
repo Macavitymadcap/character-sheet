@@ -22,3 +22,10 @@ Prepare hosted account, invite, password-reset, and operator runbook flows for t
 - Password-reset and invite behaviour is clear without email delivery.
 - Hosted account setup does not bypass existing play permissions.
 - `bun run verify` passes.
+
+## Implementation Notes
+
+- Added `docs/operations/hosted-account-runbook.md` for seeded hosted users, first-login password-reset expectations, invite handoff, reset handoff, account status checks, and the explicit no-email boundary.
+- Linked the hosted account runbook from README and architecture docs.
+- Extended documentation checks to prove the runbook covers manual invite/reset token handoff and admin permission boundaries.
+- Extended the MVP smoke workflow to open the operator invite/reset pages, accept an invite, reset a seeded player's password, and log in with the resulting credentials.
