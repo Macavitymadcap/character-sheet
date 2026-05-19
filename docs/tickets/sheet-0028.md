@@ -1,8 +1,9 @@
-# Ticket sheet-0028: SRD Final Acceptance And Follow-Up Boundaries
+# Ticket sheet-0028: SRD Import Acceptance And Follow-Up Boundaries
 
 ## Summary
 
-Complete final SRD import verification, acceptance notes, and follow-up boundaries.
+Complete SRD import verification, acceptance notes, and follow-up boundaries before the final
+player-experience hardening pass in `sheet-0029`.
 
 ## Implementation
 
@@ -16,7 +17,8 @@ Complete final SRD import verification, acceptance notes, and follow-up boundari
 
 ## Acceptance Criteria
 
-- The SRD/rules epic is ready to land as the immediate player-value roadmap slice.
+- Full-corpus import verification has clear acceptance notes and known follow-up boundaries.
+- Any remaining player-facing SRD experience gaps are explicitly handed to `sheet-0029`.
 
 ## Implementation Notes
 
