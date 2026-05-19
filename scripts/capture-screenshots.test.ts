@@ -158,6 +158,7 @@ describe("sheet screenshot targets", () => {
         theme: "light",
       },
       {
+        action: "scroll-rules-results",
         fileName: "rules-spells.png",
         label: "Rules spell list",
         path: "/rules?type=spell&level=1",
@@ -165,6 +166,7 @@ describe("sheet screenshot targets", () => {
         theme: "light",
       },
       {
+        action: "scroll-rule-detail",
         fileName: "rules-bless.png",
         label: "Rules Bless detail",
         path: "/rules/spell/bless",

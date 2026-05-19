@@ -160,6 +160,7 @@ export const sheetScreenshotTargets = [
     theme: "light",
   },
   {
+    action: "scroll-rules-results",
     fileName: "rules-spells.png",
     label: "Rules spell list",
     path: "/rules?type=spell&level=1",
@@ -167,6 +168,7 @@ export const sheetScreenshotTargets = [
     theme: "light",
   },
   {
+    action: "scroll-rule-detail",
     fileName: "rules-bless.png",
     label: "Rules Bless detail",
     path: "/rules/spell/bless",
@@ -263,7 +265,14 @@ export async function captureSheetScreenshots(
 
 async function runScreenshotAction(
   page: Page,
-  action: "edit-stealth" | "edit-strength" | "roll-stealth" | "scroll-admin-users" | "scroll-roster-table",
+  action:
+    | "edit-stealth"
+    | "edit-strength"
+    | "roll-stealth"
+    | "scroll-admin-users"
+    | "scroll-roster-table"
+    | "scroll-rule-detail"
+    | "scroll-rules-results",
 ) {
   if (action === "scroll-admin-users") {
     await scrollIntoView(page, ".admin-users-table");
@@ -272,6 +281,16 @@ async function runScreenshotAction(
 
   if (action === "scroll-roster-table") {
     await scrollIntoView(page, ".characters-table");
+    return;
+  }
+
+  if (action === "scroll-rule-detail") {
+    await scrollIntoView(page, "#rule-detail-heading", -24);
+    return;
+  }
+
+  if (action === "scroll-rules-results") {
+    await scrollIntoView(page, "#rules-results-heading", -16);
     return;
   }
 
@@ -299,10 +318,10 @@ async function runScreenshotAction(
   );
 }
 
-async function scrollIntoView(page: Page, selector: string) {
+async function scrollIntoView(page: Page, selector: string, offset = -72) {
   await page.waitForSelector(selector);
   await page.evaluate(
-    `document.querySelector(${JSON.stringify(selector)})?.scrollIntoView({ block: "start", inline: "nearest" }); window.scrollBy(0, -72); window.scrollTo(0, window.scrollY)`,
+    `document.querySelector(${JSON.stringify(selector)})?.scrollIntoView({ block: "start", inline: "nearest" }); window.scrollBy(0, ${offset}); window.scrollTo(0, window.scrollY)`,
   );
 }
 
