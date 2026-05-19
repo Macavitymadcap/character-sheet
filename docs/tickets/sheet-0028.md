@@ -8,6 +8,8 @@ player-experience hardening pass in `sheet-0029`.
 ## Implementation
 
 - Run a final import against the full local SRD 5.1 corpus and record any deliberate limitations.
+- Fail the final acceptance review if the app is still using only `docs/rules/srd-5.1-fixtures/`
+  as the SRD corpus stand-in.
 - Confirm docs clearly defer Railway to `sheet-0030` and Hyper-Dank adoption to `sheet-0040`.
 - Tighten any acceptance gaps found by final smoke, accessibility, screenshots, and docs checks.
 
@@ -22,8 +24,9 @@ player-experience hardening pass in `sheet-0029`.
 
 ## Implementation Notes
 
-- Final verification uses the SRD fixture corpus as the acceptance stand-in until the full SRD 5.1
-  local corpus is added under `docs/rules/srd-5.1/`.
+- Final verification previously used the SRD fixture corpus as a parser-contract stand-in. That is
+  not sufficient for the epic merge to `main`; the actual local corpus must be added under
+  `docs/rules/srd-5.1/` and imported idempotently before this epic is accepted as full SRD.
 - README and architecture docs now describe rules browsing, sheet rule links, verification coverage,
   and the remaining full-corpus follow-up boundary.
 - Railway remains deferred to `sheet-0030`; Hyper-Dank adoption remains deferred to `sheet-0040`.

@@ -114,6 +114,7 @@ const notes: CharacterNote[] = [
 
 const ruleLinks: CharacterRuleLink[] = [
   {
+    contentCategory: "third_party",
     entityName: "Repeating Shot",
     entitySlug: "repeating-shot",
     entityType: "infusion",
@@ -124,6 +125,7 @@ const ruleLinks: CharacterRuleLink[] = [
     sourceSlug: "tashas-cauldron-of-everything",
   },
   {
+    contentCategory: "third_party",
     entityName: "Mage Hand",
     entitySlug: "mage-hand",
     entityType: "spell",

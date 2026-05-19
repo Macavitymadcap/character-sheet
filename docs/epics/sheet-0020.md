@@ -41,6 +41,9 @@ hosted asset storage, email delivery, and Hyper-Dank package adoption are delibe
 - Preserve `rules_sources`, `rules_entities`, `rule_mechanics`, and `character_rule_links` as the
   primary runtime tables; add only small metadata fields/tables when filtering or sheet linking
   needs them.
+- Classify rule sources by content category: SRD, local campaign material, or third-party
+  non-SRD material. Lynott's current Artificer, Hobgoblin, and local campaign rules must remain
+  visible as non-SRD/local content while SRD import work lands.
 - Add routes for rules browsing and details:
   - `/rules`
   - `/rules/:entityType`
@@ -63,6 +66,10 @@ hosted asset storage, email delivery, and Hyper-Dank package adoption are delibe
 | `sheet-0027` | Expand smoke, accessibility, screenshot, and documentation coverage for the rules experience. |
 | `sheet-0028` | Complete SRD import verification, acceptance notes, and follow-up boundaries. |
 | `sheet-0029` | Harden the SRD player experience across mobile sheets, rules details, seeded characters, and campaign surfaces. |
+
+`sheet-0029` also carries the final acceptance gate for this epic: the merge to `main` should not
+claim full SRD delivery until the actual local `docs/rules/srd-5.1/` corpus is present, imported,
+and verified. Fixture-only import remains a parser contract, not full SRD acceptance.
 
 ## Branch Strategy
 
@@ -93,6 +100,8 @@ Hyper-Dank platform adoption after the app has SRD functionality and a deploymen
 ## Acceptance Criteria
 
 - A fresh local checkout can import the full SRD 5.1 local corpus idempotently.
+- Lynott's existing non-SRD/local rules are preserved under non-SRD source categories rather than
+  being deleted or mislabelled as SRD.
 - Players and Game Masters can browse, search, filter, and read imported SRD rules in the app.
 - Character sheet tabs expose useful links to the rules that apply to the current character.
 - SRD-backed functionality improves table play without forcing a full guided builder.

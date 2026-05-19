@@ -49,6 +49,7 @@ export const RulesPage = ({ appName, counts, filters, rules, user }: RulesPagePr
                   </div>
                   <p>{summarise(rule.description)}</p>
                   <div class="rules-tag-list" aria-label={`${rule.name} metadata`}>
+                    <span>{formatContentCategory(rule.contentCategory)}</span>
                     <span>{rule.sourceAbbreviation}</span>
                     {rule.tags.slice(0, 4).map((tag) => <span>{formatWords(tag)}</span>)}
                   </div>
@@ -86,6 +87,7 @@ export const RulesDetailPage = ({ appName, counts, filters, rule, user }: RulesD
           <h1 id="rule-detail-heading" class="panel-heading">{rule.name}</h1>
           <div class="rules-tag-list">
             <Badge>{formatRuleType(rule.entityType)}</Badge>
+            <span>{formatContentCategory(rule.contentCategory)}</span>
             {rule.tags.map((tag) => <span>{formatWords(tag)}</span>)}
           </div>
           {rule.mechanics.map((mechanic) => (
@@ -185,6 +187,13 @@ function summarise(value: string) {
 
 function formatRuleType(value: RuleEntityType | string) {
   return formatWords(value.replace(/_/g, " "));
+}
+
+function formatContentCategory(value: string) {
+  if (value === "srd") return "SRD";
+  if (value === "local") return "Local";
+
+  return "Non-SRD";
 }
 
 function formatWords(value: string) {

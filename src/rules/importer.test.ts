@@ -70,7 +70,7 @@ describe("rules importer", () => {
       entityType: "spell",
       name: "Cure Wounds",
       slug: "cure-wounds",
-      source: { abbreviation: "PHB" },
+      source: { abbreviation: "PHB", contentCategory: "third_party" },
     });
     expect(cureWounds.mechanics[0]).toMatchObject({
       data: {
@@ -83,18 +83,18 @@ describe("rules importer", () => {
     });
     expect(repeatingShot).toMatchObject({
       entityType: "infusion",
-      source: { abbreviation: "TCoE" },
+      source: { abbreviation: "TCoE", contentCategory: "third_party" },
     });
     expect(repeatingShot.mechanics[0]!.data.requiresAttunement).toBe(true);
     expect(specialOps).toMatchObject({
       entityType: "background",
-      source: { abbreviation: "Local" },
+      source: { abbreviation: "Local", contentCategory: "local" },
     });
     expect(specialOps.mechanics[0]!.data.skillProficiencies).toEqual(["Stealth", "Deception"]);
     expect(specialOps.mechanics[0]!.data.equipment).toContain("traveller's clothes");
     expect(hobgoblin).toMatchObject({
       entityType: "species_trait",
-      source: { abbreviation: "MPMotM" },
+      source: { abbreviation: "MPMotM", contentCategory: "third_party" },
     });
     expect(JSON.stringify(hobgoblin.mechanics[0]!.data)).toContain("colours");
     expect(classFeature).toMatchObject({ entityType: "class_feature" });
@@ -207,6 +207,9 @@ describe("rules importer", () => {
       expect(result.entities.every((entity) => entity.source.abbreviation === "SRD 5.1")).toBe(
         true,
       );
+      expect(result.entities.every((entity) => entity.source.contentCategory === "srd")).toBe(
+        true,
+      );
       expect(result.entities[0]?.mechanics[0]?.data.provenance).toMatchObject({
         originalPath: "docs/rules/srd-5.1-fixtures/actions/dash.md",
         ruleType: "action",
@@ -246,7 +249,7 @@ describe("rules importer", () => {
 
     expect(bless).toMatchObject({
       entityType: "spell",
-      source: { abbreviation: "SRD 5.1" },
+      source: { abbreviation: "SRD 5.1", contentCategory: "srd" },
     });
     expect(bless.mechanics[0]?.data).toMatchObject({
       level: 1,

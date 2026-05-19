@@ -62,11 +62,18 @@ Imported mechanics include a `provenance` object in `data_json`:
 - `source`: the source abbreviation, such as `SRD 5.1`.
 - `srdVersion`: `5.1` for files imported from the SRD 5.1 source or fixture folders.
 
+Rule sources also carry a `contentCategory`:
+
+- `srd` for the SRD 5.1 corpus.
+- `local` for local campaign material.
+- `third_party` for non-SRD book material currently needed by Lynott.
+
 The SRD source is stored as:
 
 - `slug`: `srd-5-1`
 - `name`: `Systems Reference Document 5.1`
 - `abbreviation`: `SRD 5.1`
+- `contentCategory`: `srd`
 
 ## Import Result
 

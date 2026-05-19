@@ -494,6 +494,7 @@ export interface CampaignContentRepository {
 }
 
 export interface CharacterRuleLink {
+  contentCategory: RulesContentCategory;
   entityName: string;
   entitySlug: string;
   entityType: string;
@@ -531,6 +532,7 @@ export type RuleEntityType =
 
 export interface RulesSourceSeedInput {
   abbreviation: string;
+  contentCategory?: RulesContentCategory;
   id?: string;
   name: string;
   precedence: number;
@@ -553,8 +555,10 @@ export interface RuleEntitySeedInput {
 
 export interface UpsertedRuleEntity extends RuleEntitySeedInput {
   id: string;
-  source: RulesSourceSeedInput & { id: string };
+  source: RulesSourceSeedInput & { contentCategory: RulesContentCategory; id: string };
 }
+
+export type RulesContentCategory = "local" | "srd" | "third_party";
 
 export interface RulesSeedRepository {
   upsertRuleEntity(entity: RuleEntitySeedInput): UpsertedRuleEntity;
@@ -579,6 +583,7 @@ export interface RuleMechanicReadModel {
 }
 
 export interface RuleSummary {
+  contentCategory: RulesContentCategory;
   description: string;
   entityType: RuleEntityType;
   id: string;

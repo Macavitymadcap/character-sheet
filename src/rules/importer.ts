@@ -97,8 +97,8 @@ function parseMechanic(
   body: string,
 ): RuleMechanicSeedInput {
   if (entityType === "spell") return parseSpellMechanic(filePath, body);
-  if (entityType === "infusion") return parseInfusionMechanic(body);
-  if (entityType === "background") return parseBackgroundMechanic(body);
+  if (entityType === "infusion") return parseInfusionMechanic(filePath, body);
+  if (entityType === "background") return parseBackgroundMechanic(filePath, body);
   if (entityType === "equipment") return parseEquipmentMechanic(filePath, body);
 
   return {
@@ -164,13 +164,13 @@ function parseSpellMechanic(filePath: string, body: string): RuleMechanicSeedInp
   };
 }
 
-function parseInfusionMechanic(body: string): RuleMechanicSeedInput {
+function parseInfusionMechanic(filePath: string, body: string): RuleMechanicSeedInput {
   const subtitle = readSubtitle(body) ?? "";
 
   return {
     data: {
       description: normaliseRuleText(stripMetadata(body)),
-      ...parseCommonMetadata("infusion", "", body),
+      ...parseCommonMetadata("infusion", filePath, body),
       prerequisite: normaliseRuleText(subtitle),
       requiresAttunement: /requires attunement/i.test(subtitle),
     },
@@ -178,7 +178,7 @@ function parseInfusionMechanic(body: string): RuleMechanicSeedInput {
   };
 }
 
-function parseBackgroundMechanic(body: string): RuleMechanicSeedInput {
+function parseBackgroundMechanic(filePath: string, body: string): RuleMechanicSeedInput {
   const fields = readBoldFields(body);
   const sections = parseSections(body);
   const feature = sections.find((section) => section.title !== "Background Features");
@@ -188,7 +188,7 @@ function parseBackgroundMechanic(body: string): RuleMechanicSeedInput {
       description: normaliseRuleText(feature?.body ?? stripMetadata(body)),
       equipment: normaliseRuleText(fields.Equipment ?? ""),
       featureName: normaliseRuleText(feature?.title ?? ""),
-      ...parseCommonMetadata("background", "", body),
+      ...parseCommonMetadata("background", filePath, body),
       skillProficiencies: splitCsv(fields["Skill Proficiencies"]),
       toolProficiencies: splitCsv(fields["Tool Proficiencies"]),
     },
@@ -491,6 +491,7 @@ const replacements: Array<[RegExp, string]> = [
 const sources = {
   srd51: {
     abbreviation: "SRD 5.1",
+    contentCategory: "srd",
     id: "rules_source_srd_5_1",
     name: "Systems Reference Document 5.1",
     precedence: 15,
@@ -498,6 +499,7 @@ const sources = {
   },
   local: {
     abbreviation: "Local",
+    contentCategory: "local",
     id: "rules_source_local",
     name: "Local Campaign",
     precedence: 100,
@@ -505,6 +507,7 @@ const sources = {
   },
   mpmotm: {
     abbreviation: "MPMotM",
+    contentCategory: "third_party",
     id: "rules_source_mpmotm",
     name: "Mordenkainen Presents: Monsters of the Multiverse",
     precedence: 30,
@@ -512,6 +515,7 @@ const sources = {
   },
   phb: {
     abbreviation: "PHB",
+    contentCategory: "third_party",
     id: "rules_source_phb",
     name: "Player's Handbook",
     precedence: 10,
@@ -519,6 +523,7 @@ const sources = {
   },
   tcoe: {
     abbreviation: "TCoE",
+    contentCategory: "third_party",
     id: "rules_source_tcoe",
     name: "Tasha's Cauldron of Everything",
     precedence: 20,
@@ -526,6 +531,7 @@ const sources = {
   },
   xgte: {
     abbreviation: "XGtE",
+    contentCategory: "third_party",
     id: "rules_source_xgte",
     name: "Xanathar's Guide to Everything",
     precedence: 15,

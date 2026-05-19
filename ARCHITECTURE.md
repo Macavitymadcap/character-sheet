@@ -278,6 +278,8 @@ The importer lives behind `RulesImportService` and `RulesSeedRepository`. The SR
 contract in `docs/rules-srd-import.md` keeps the epic offline and local-first: full corpus files
 belong under `docs/rules/srd-5.1/`, contract fixtures live under
 `docs/rules/srd-5.1-fixtures/`, and unsupported files are reported without failing the import.
+Rule sources are categorised as `srd`, `local`, or `third_party` so the app can import SRD data
+without deleting or mislabelling Lynott's existing non-SRD rules.
 Runtime rules reads stay behind `RulesRepository`, which exposes type counts, filtered/searchable
 summaries, detail lookups, and character rule links for route and sheet rendering.
 

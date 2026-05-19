@@ -35,6 +35,10 @@ and obvious local setup gaps before the roadmap moves on to Railway deployment i
     and action rules.
   - If complete automatic grants are still outside scope, make the limitation explicit in seed data,
     UI copy, or docs so the sheet does not look accidentally wrong.
+- Preserve existing non-SRD table content:
+  - Keep Lynott's Artificer, Hobgoblin, and local campaign rules visible.
+  - Store SRD, local campaign, and third-party/non-SRD sources as distinct source categories.
+  - Do not relabel non-SRD content as SRD, and do not delete it while adding SRD coverage.
 - Refine `/rules` navigation and details:
   - Keep the rules filter/search form available across list and detail surfaces, with a clear reset
     or back path.
@@ -78,6 +82,7 @@ and obvious local setup gaps before the roadmap moves on to Railway deployment i
   desktop.
 - Sheet tabs have refreshable URLs and a visible path back to the characters list.
 - Mira's human cleric seed data is either SRD-credible or explicitly marked as intentionally partial.
+- Lynott's non-SRD/local rules remain visible and are clearly stored separately from SRD content.
 - Rules search and detail views keep players oriented and expose enough rule text and metadata for
   table use.
 - The SRD epic is ready to land as the player-value roadmap slice before `sheet-0030` begins.
@@ -94,6 +99,8 @@ and obvious local setup gaps before the roadmap moves on to Railway deployment i
   breadcrumb back to the rule type list.
 - Missing seeded campaign asset files now return a readable SVG fallback instead of a broken image
   response.
+- Rule sources now carry a content category (`srd`, `local`, or `third_party`) so SRD imports can
+  coexist with Lynott's current non-SRD rules without mislabelling or deleting them.
 - Full inline edit-form replacement, dice popover placement, campaign subpage splitting, and deeper
   Mira SRD automation remain implementation follow-ups if the review asks for a larger hardening
   slice before the epic lands.

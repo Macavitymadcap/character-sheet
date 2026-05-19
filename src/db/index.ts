@@ -38,6 +38,7 @@ export type {
   RuleEntityTypeCount,
   RuleDetail,
   RuleMechanicReadModel,
+  RulesContentCategory,
   RuleSearchFilters,
   RuleSummary,
   RuleEntityType,

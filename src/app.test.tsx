@@ -214,12 +214,14 @@ describe("createApp", () => {
     expect(listHtml).toContain("<h1 id=\"rules-heading\" class=\"panel-heading\">Rules</h1>");
     expect(listHtml).toContain("Bless");
     expect(listHtml).toContain("SRD 5.1");
+    expect(listHtml).toContain("SRD");
     expect(listHtml).not.toContain("Mage Hand");
     expect(detail.status).toBe(200);
     expect(detailHtml).toContain("<h1 id=\"rules-filter-heading\" class=\"panel-heading\">Rules</h1>");
     expect(detailHtml).toContain('<a class="rules-reset-link" href="/rules">Reset</a>');
     expect(detailHtml).toContain('<a href="/rules?type=spell">Rules</a>');
     expect(detailHtml).toContain("<h1 id=\"rule-detail-heading\" class=\"panel-heading\">Bless</h1>");
+    expect(detailHtml).toContain("SRD");
     expect(detailHtml).toContain("You bless up to three creatures");
     expect(detailHtml).toContain("docs/rules/srd-5.1-fixtures/spells/level-1/bless.md");
     expect(typeRedirect.status).toBe(303);

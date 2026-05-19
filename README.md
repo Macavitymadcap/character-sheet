@@ -128,7 +128,7 @@ bun run protect:branches
 
 `import:rules` is intentionally local-first. It reads local markdown or JSON exports, transforms American English spellings to British English where safe, and seeds structured database tables. The next rules epic expands this boundary to the full SRD 5.1 local corpus rather than live-fetching from external rules sites.
 
-The SRD import contract is documented in [SRD 5.1 Rules Import Contract](./docs/rules-srd-import.md). `docs/rules/srd-5.1-fixtures/` contains small parser-contract fixtures only; the full SRD corpus should be added later under `docs/rules/srd-5.1/`.
+The SRD import contract is documented in [SRD 5.1 Rules Import Contract](./docs/rules-srd-import.md). `docs/rules/srd-5.1-fixtures/` contains small parser-contract fixtures only; the full SRD corpus must live under `docs/rules/srd-5.1/` before the SRD epic can be accepted as complete. Existing Lynott rules from non-SRD sources remain supported as local or third-party rule-source categories.
 
 Signed-in users can browse imported rules at `/rules`, filter by type, spell level, equipment category, and search text, and open detail pages such as `/rules/spell/bless`. Sheet spell and feature entries link back to their rule detail pages where imported rule links exist.
 

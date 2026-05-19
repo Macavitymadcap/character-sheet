@@ -63,7 +63,7 @@ type ProficiencySeed = [string, string, string, string, number];
 type ResourceSeed = [string, string, string, string, number, number | null, number];
 type RuleLinkSeed = [string, string, string, number, number, number];
 type SenseSeed = [string, string, string, number];
-type SourceSeed = [string, string, string, string, number];
+type SourceSeed = [string, string, string, string, string, number];
 type StringSeed = string[];
 
 const users = [
@@ -773,14 +773,15 @@ const characterFactionChoices: CharacterFactionChoiceSeed[] = [
 ];
 
 const sources: SourceSeed[] = [
-  ["rules_source_phb", "players-handbook", "Player's Handbook", "PHB", 10],
-  ["rules_source_xgte", "xanathars-guide-to-everything", "Xanathar's Guide to Everything", "XGtE", 15],
-  ["rules_source_tcoe", "tashas-cauldron-of-everything", "Tasha's Cauldron of Everything", "TCoE", 20],
+  ["rules_source_phb", "players-handbook", "Player's Handbook", "PHB", "third_party", 10],
+  ["rules_source_xgte", "xanathars-guide-to-everything", "Xanathar's Guide to Everything", "XGtE", "third_party", 15],
+  ["rules_source_tcoe", "tashas-cauldron-of-everything", "Tasha's Cauldron of Everything", "TCoE", "third_party", 20],
   [
     "rules_source_mpmotm",
     "mordenkainen-presents-monsters-of-the-multiverse",
     "Mordenkainen Presents: Monsters of the Multiverse",
     "MPMotM",
+    "third_party",
     30,
   ],
 ];
@@ -1168,7 +1169,7 @@ export const seedDatabase = (database: Database) => {
 
   for (const source of sources) {
     database.run(
-      "insert or ignore into rules_sources (id, slug, name, abbreviation, precedence) values (?, ?, ?, ?, ?)",
+      "insert or ignore into rules_sources (id, slug, name, abbreviation, content_category, precedence) values (?, ?, ?, ?, ?, ?)",
       source,
     );
   }

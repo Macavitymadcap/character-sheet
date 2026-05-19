@@ -564,6 +564,7 @@ describe("SQLite repositories", () => {
       runtime.repositories.rulesRepository.listRuleLinksForCharacter("character_lynott_magulbisson"),
     ).toMatchObject([
       {
+        contentCategory: "third_party",
         entityName: "Magical Tinkering",
         entitySlug: "magical-tinkering",
         entityType: "class_feature",
@@ -612,6 +613,7 @@ describe("SQLite repositories", () => {
         sourceName: "Tasha's Cauldron of Everything",
       },
       {
+        contentCategory: "third_party",
         entityName: "Fey Gift",
         entityType: "species_trait",
         prepared: false,
@@ -725,6 +727,7 @@ describe("SQLite repositories", () => {
     ]);
     expect(rules.listRules({ entityType: "equipment", equipmentCategory: "armour" })).toEqual([
       expect.objectContaining({
+        contentCategory: "srd",
         description: expect.stringContaining("Armour Class 16"),
         name: "Chain Mail",
         sourceSlug: "srd-5-1",

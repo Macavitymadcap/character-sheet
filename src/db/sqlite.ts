@@ -37,6 +37,7 @@ import type {
   NotesRepository,
   PasswordResetToken,
   RulesRepository,
+  RulesContentCategory,
   RuleDetail,
   RulesSeedRepository,
   RuleEntitySeedInput,
@@ -297,6 +298,7 @@ interface CharacterFactionChoiceRow {
 }
 
 interface RuleLinkRow {
+  content_category: RulesContentCategory;
   entity_name: string;
   entity_slug: string;
   entity_type: string;
@@ -309,6 +311,7 @@ interface RuleLinkRow {
 
 interface RuleSourceRow {
   abbreviation: string;
+  content_category: RulesContentCategory;
   id: string;
   name: string;
   precedence: number;
@@ -324,6 +327,7 @@ interface RuleEntityRow {
 }
 
 interface RuleSummaryRow {
+  content_category: RulesContentCategory;
   data_json: string | null;
   entity_type: RuleEntityType;
   id: string;
@@ -2046,6 +2050,7 @@ class SqliteRulesRepository implements RulesRepository {
           links.prepared,
           links.selected,
           links.selection_type,
+          sources.content_category,
           sources.name as source_name,
           sources.slug as source_slug
         from character_rule_links links
@@ -2056,6 +2061,7 @@ class SqliteRulesRepository implements RulesRepository {
       )
       .all(characterId)
       .map((row) => ({
+        contentCategory: row.content_category,
         entityName: row.entity_name,
         entitySlug: row.entity_slug,
         entityType: row.entity_type,
@@ -2104,6 +2110,7 @@ class SqliteRulesRepository implements RulesRepository {
           sources.slug as source_slug,
           sources.name as source_name,
           sources.abbreviation as source_abbreviation,
+          sources.content_category,
           mechanics.mechanic_type,
           mechanics.data_json
         from rules_entities entities
@@ -2125,6 +2132,7 @@ function toRuleSummary(row: RuleSummaryRow): RuleSummary {
       : "";
 
   return {
+    contentCategory: row.content_category,
     description,
     entityType: row.entity_type,
     id: row.id,
@@ -2199,24 +2207,39 @@ class SqliteRulesSeedRepository implements RulesSeedRepository {
     const sourceId = source.id ?? ruleSourceId(source.slug);
 
     this.database.run(
-      `insert into rules_sources (id, slug, name, abbreviation, precedence)
-       values (?, ?, ?, ?, ?)
+      `insert into rules_sources (id, slug, name, abbreviation, content_category, precedence)
+       values (?, ?, ?, ?, ?, ?)
        on conflict(slug) do update set
          name = excluded.name,
          abbreviation = excluded.abbreviation,
+         content_category = excluded.content_category,
          precedence = excluded.precedence`,
-      [sourceId, source.slug, source.name, source.abbreviation, source.precedence],
+      [
+        sourceId,
+        source.slug,
+        source.name,
+        source.abbreviation,
+        source.contentCategory ?? "third_party",
+        source.precedence,
+      ],
     );
 
     const row = this.database
       .query<RuleSourceRow, [string]>(
-        "select id, slug, name, abbreviation, precedence from rules_sources where slug = ?",
+        "select id, slug, name, abbreviation, content_category, precedence from rules_sources where slug = ?",
       )
       .get(source.slug);
 
     if (!row) throw new Error(`Could not upsert rules source ${source.slug}`);
 
-    return row;
+    return {
+      abbreviation: row.abbreviation,
+      contentCategory: row.content_category,
+      id: row.id,
+      name: row.name,
+      precedence: row.precedence,
+      slug: row.slug,
+    };
   }
 
   private getEntityByNaturalKey(
