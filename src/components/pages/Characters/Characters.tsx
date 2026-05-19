@@ -82,7 +82,7 @@ export const CharactersPage = ({
                 <p class="empty-state">No characters yet.</p>
               ) : (
                 <div class="table-scroll">
-                  <table class="sheet-table">
+                  <table class="sheet-table characters-table">
                     <thead>
                       <tr>
                         <th scope="col">Name</th>

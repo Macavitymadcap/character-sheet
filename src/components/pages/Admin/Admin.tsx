@@ -69,7 +69,7 @@ export const AdminPage = ({ appName, invites, resetTokens, users, user }: AdminP
             <section aria-labelledby="users-heading">
               <h2 id="users-heading">Users</h2>
               <div class="table-scroll">
-                <table class="sheet-table">
+                <table class="sheet-table admin-users-table">
                   <thead>
                     <tr>
                       <th scope="col">Display name</th>
@@ -121,7 +121,7 @@ export const AdminPage = ({ appName, invites, resetTokens, users, user }: AdminP
             <section aria-labelledby="invites-heading">
               <h2 id="invites-heading">Invites</h2>
               <div class="table-scroll">
-                <table class="sheet-table">
+                <table class="sheet-table admin-invites-table">
                   <thead>
                     <tr>
                       <th scope="col">Email</th>
@@ -147,7 +147,7 @@ export const AdminPage = ({ appName, invites, resetTokens, users, user }: AdminP
             <section aria-labelledby="reset-tokens-heading">
               <h2 id="reset-tokens-heading">Password reset tokens</h2>
               <div class="table-scroll">
-                <table class="sheet-table">
+                <table class="sheet-table admin-reset-tokens-table">
                   <thead>
                     <tr>
                       <th scope="col">User</th>

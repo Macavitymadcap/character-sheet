@@ -16,7 +16,9 @@ export const coreTabStyles = /* css */ `
 }
 
 .table-scroll {
+  max-width: 100%;
   overflow-x: auto;
+  scrollbar-gutter: stable;
 }
 
 .sheet-table {
@@ -26,13 +28,13 @@ export const coreTabStyles = /* css */ `
 }
 
 .ability-table {
-  min-width: 0;
+  min-width: 34rem;
   table-layout: fixed;
 }
 
 .ability-table th:first-child,
 .ability-table td:first-child {
-  width: 28%;
+  width: 22%;
 }
 
 .ability-table th:nth-child(2),
@@ -43,7 +45,17 @@ export const coreTabStyles = /* css */ `
 .ability-table td:nth-child(4),
 .ability-table th:last-child,
 .ability-table td:last-child {
-  width: 14%;
+  width: 12%;
+}
+
+.ability-table th:nth-child(5),
+.ability-table td:nth-child(5) {
+  width: 10%;
+}
+
+.ability-table th:nth-child(6),
+.ability-table td:nth-child(6) {
+  width: 20%;
 }
 
 .sheet-table th,

@@ -5,7 +5,7 @@ export const skillsTrainingTabStyles = /* css */ `
 }
 
 .skills-table {
-  min-width: 0;
+  min-width: 38rem;
   table-layout: fixed;
 }
 
@@ -140,10 +140,6 @@ export const skillsTrainingTabStyles = /* css */ `
 }
 
 @media (max-width: 760px) {
-  .skills-table {
-    min-width: 34rem;
-  }
-
   .skills-table th:nth-child(2),
   .skills-table td:nth-child(2) {
     display: none;

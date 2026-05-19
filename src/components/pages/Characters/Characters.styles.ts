@@ -28,4 +28,8 @@ export const charactersStyles = /* css */ `
   color: var(--muted-text-colour);
   margin: 0;
 }
+
+.characters-table {
+  min-width: 48rem;
+}
 `;

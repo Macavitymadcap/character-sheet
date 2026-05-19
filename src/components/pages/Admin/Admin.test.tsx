@@ -41,7 +41,10 @@ describe("AdminPage", () => {
       '<button class="button" data-variant="primary" type="submit">Create invite</button>',
     );
     expect(html).toContain("Users");
+    expect(html).toContain('<table class="sheet-table admin-users-table">');
     expect(html).toContain("Invites");
+    expect(html).toContain('<table class="sheet-table admin-invites-table">');
     expect(html).toContain("Password reset tokens");
+    expect(html).toContain('<table class="sheet-table admin-reset-tokens-table">');
   });
 });

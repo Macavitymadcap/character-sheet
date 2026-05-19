@@ -40,6 +40,7 @@ describe("CoreTab", () => {
     const html = render(<CoreTab sheet={sheet} />);
 
     expect(html).toContain('<h3 id="abilities-heading">Abilities and saves</h3>');
+    expect(html).toContain('<table class="sheet-table ability-table">');
     expect(html).toContain('<span class="ability-full">Strength</span>');
     expect(html).toContain('<abbr class="ability-short" title="Constitution">CON</abbr>');
     expect(html).toContain("<td>-1</td>");

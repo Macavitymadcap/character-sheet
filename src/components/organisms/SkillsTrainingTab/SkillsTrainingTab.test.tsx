@@ -44,6 +44,7 @@ describe("SkillsTrainingTab", () => {
     const html = render(<SkillsTrainingTab sheet={sheet} />);
 
     expect(html).toContain('<h3 id="skills-heading">Skills</h3>');
+    expect(html).toContain('<table class="sheet-table skills-table">');
     expect(html).toContain("<th scope=\"row\">Stealth</th>");
     expect(html).toContain("<td>+5</td>");
     expect(html).toContain('aria-label="Roll Stealth"');

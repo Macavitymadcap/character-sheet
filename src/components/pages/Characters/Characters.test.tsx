@@ -85,6 +85,7 @@ describe("CharactersPage", () => {
     );
 
     expect(html).toContain("Campaign roster");
+    expect(html).toContain('<table class="sheet-table characters-table">');
     expect(html).toContain('action="/campaigns/rovnost-shadows/characters"');
     expect(html).toContain('<option value="user_mira_player">Mira Player</option>');
     expect(html).not.toContain('<option value="user_game_master">Campaign GM</option>');

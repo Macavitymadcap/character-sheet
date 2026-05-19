@@ -21,4 +21,16 @@ export const adminStyles = /* css */ `
 .admin-inline-form + .admin-inline-form {
   margin-left: 0.5rem;
 }
+
+.admin-users-table {
+  min-width: 56rem;
+}
+
+.admin-invites-table {
+  min-width: 38rem;
+}
+
+.admin-reset-tokens-table {
+  min-width: 32rem;
+}
 `;
