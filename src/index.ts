@@ -1,11 +1,11 @@
 import { createApp } from "./app";
 import { AuthService, PasswordService, SessionService } from "./auth";
 import { createSqliteDatabase } from "./db";
+import { resolveRuntimeConfig } from "./runtime";
 
-const port = Number(Bun.env.PORT ?? 3000);
-const hostname = Bun.env.HOST ?? "0.0.0.0";
+const runtimeConfig = resolveRuntimeConfig();
 const databaseRuntime = createSqliteDatabase({
-  path: Bun.env.DB_PATH ?? "character-sheet.sqlite3",
+  path: runtimeConfig.databasePath,
 });
 const passwordService = new PasswordService();
 const app = createApp({
@@ -16,13 +16,13 @@ const app = createApp({
   }),
   sessionService: new SessionService({
     authRepository: databaseRuntime.repositories.authRepository,
-    secret: Bun.env.SESSION_SECRET ?? "local-development-session-secret",
+    secret: runtimeConfig.sessionSecret,
   }),
   ...databaseRuntime.repositories,
 });
 
 export default {
   fetch: app.fetch,
-  hostname,
-  port,
+  hostname: runtimeConfig.hostname,
+  port: runtimeConfig.port,
 };

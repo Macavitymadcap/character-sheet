@@ -18,7 +18,7 @@ For the architecture and data model, see [ARCHITECTURE.md](./ARCHITECTURE.md). F
 - Structured D&D 2014 rules data seeded from local sources, normalised to the most recent 2014 official reprint where a rule appears in multiple books.
 - British English in product copy, docs, code naming, and CSS custom properties.
 
-The MVP remains intentionally local-first. Character deletion UI, richer rule-mechanics rendering, Railway deployment, and migration from SQLite to Postgres are deferred to later tickets or epics. The current schema and repositories already include the group-use foundations those flows will need.
+The MVP remains intentionally local-first in its data model, but `sheet-0030` now adds the first Railway hosted-rehearsal path. Character deletion UI, richer rule-mechanics rendering, hosted backup/reset automation, and migration from SQLite to Postgres are deferred to later tickets or epics. The current schema and repositories already include the group-use foundations those flows will need.
 
 ## Stack
 
@@ -62,7 +62,7 @@ The notes tab creates, updates, and deletes visible player or Game Master notes 
 
 The Game Master campaign page lists campaign session records and includes local forms for creating, updating, and deleting table prep or recap entries with player-visible or Game-Master-only visibility.
 
-The local group-use workflow is ready for table rehearsal: seed the database, sign in as Lynott or Mira to create player-owned characters, use the Game Master account to manage the campaign roster, sessions, wiki pages, image assets, and faction context, and use the admin account to prepare invite and password-reset tokens. This remains a local MVP rather than a hosted deployment.
+The local group-use workflow is ready for table rehearsal: seed the database, sign in as Lynott or Mira to create player-owned characters, use the Game Master account to manage the campaign roster, sessions, wiki pages, image assets, and faction context, and use the admin account to prepare invite and password-reset tokens. The hosted Railway work in `sheet-0030` rehearses that same MVP remotely without changing the local-first data model.
 
 Current environment variables:
 
@@ -75,6 +75,8 @@ Current environment variables:
 | `CHARACTER_SHEET_ASSET_ROOT` | `data/assets` | Local root for app-managed campaign image assets. |
 
 SQLite database files and sidecar files should remain ignored by Git.
+
+For Railway rehearsal setup, including hosted values for these variables, see [Railway Hosted Rehearsal](./docs/deployment/railway.md).
 
 Local seed users are available for development:
 
@@ -134,7 +136,7 @@ Signed-in users can browse imported rules at `/rules`, filter by type, spell lev
 
 ## Deployment Readiness
 
-The current app is ready for fresh local checkout, seed, verification, and table-use rehearsal with SQLite, local asset storage, and imported SRD 5.1 rules. `sheet-0020` completed the SRD rules roadmap slice. The roadmap now reserves `sheet-0030` for Railway deployment with seeded hosted accounts/passwords and `sheet-0040` for Hyper-Dank package adoption.
+The current app is ready for fresh local checkout, seed, verification, and table-use rehearsal with SQLite, local asset storage, and imported SRD 5.1 rules. `sheet-0020` completed the SRD rules roadmap slice. `sheet-0030` is active for Railway deployment and hosted rehearsal; the first runtime configuration lives in [`railway.json`](./railway.json), with service setup documented in [Railway Hosted Rehearsal](./docs/deployment/railway.md). The roadmap still reserves `sheet-0040` for Hyper-Dank package adoption.
 
 ## TDD Approach
 

@@ -1,7 +1,13 @@
 import { existsSync } from "node:fs";
 import { describe, expect, test } from "bun:test";
 
-const docs = ["README.md", "ARCHITECTURE.md", "CONTRIBUTING.md", "docs/tickets/sheet-0019.md"];
+const docs = [
+  "README.md",
+  "ARCHITECTURE.md",
+  "CONTRIBUTING.md",
+  "docs/deployment/railway.md",
+  "docs/tickets/sheet-0019.md",
+];
 
 describe("documentation references", () => {
   test("local markdown links point to existing files", async () => {
@@ -29,5 +35,28 @@ describe("documentation references", () => {
     const missing = documentedScripts.filter((script) => !(script in packageJson.scripts));
 
     expect(missing).toEqual([]);
+  });
+
+  test("Railway runtime docs match repository configuration", async () => {
+    const packageJson = await Bun.file("package.json").json() as { scripts: Record<string, string> };
+    const railway = await Bun.file("railway.json").json() as {
+      deploy: {
+        healthcheckPath: string;
+        healthcheckTimeout: number;
+        startCommand: string;
+      };
+    };
+    const railwayDocs = await Bun.file("docs/deployment/railway.md").text();
+    const readme = await Bun.file("README.md").text();
+
+    expect(packageJson.scripts.start).toBe("bun src/index.ts");
+    expect(railway.deploy.startCommand).toBe("bun run start");
+    expect(railway.deploy.healthcheckPath).toBe("/healthz");
+    expect(railway.deploy.healthcheckTimeout).toBe(60);
+    expect(railwayDocs).toContain("Start command | `bun run start`");
+    expect(railwayDocs).toContain("Healthcheck path | `/healthz`");
+    expect(railwayDocs).toContain("`DB_PATH`");
+    expect(railwayDocs).toContain("`SESSION_SECRET`");
+    expect(readme).toContain("[Railway Hosted Rehearsal](./docs/deployment/railway.md)");
   });
 });

@@ -4,7 +4,7 @@ Character Sheet is a local-first D&D 5e sheet app built with Hono, HTMX, Bun, Ty
 
 The first MVP supports a seeded local workflow for Lynott Magulbisson, one Game Master, and one admin. It is intentionally designed as a server-rendered application, not a static markdown viewer: the database stores both durable character state and structured rules data, routes own mutation and permission checks, JSX components own semantic markup, and HTMX owns focused fragment swaps.
 
-Deployment to Railway and a Postgres migration are out of scope for `sheet-0001`. The MVP should run locally with SQLite and keep the architecture compatible with a later database adapter.
+Railway deployment is active in `sheet-0030` as a hosted rehearsal of the existing SQLite app. A Postgres migration remains out of scope. The MVP should keep running locally with SQLite and keep the architecture compatible with a later database adapter.
 
 ## Goals
 
@@ -41,7 +41,7 @@ src/
 └── test/                       # shared app and repository harnesses
 ```
 
-`src/index.ts` owns process setup: host and port environment variables, the SQLite filename, repository construction, auth/session service construction, seed/bootstrap wiring, and the Bun `fetch` export.
+`src/index.ts` owns process setup through `resolveRuntimeConfig()`: host and port environment variables, the SQLite filename, repository construction, auth/session service construction, seed/bootstrap wiring, and the Bun `fetch` export. Railway-specific service configuration lives in [`railway.json`](./railway.json), and the hosted rehearsal setup is documented in [Railway Hosted Rehearsal](./docs/deployment/railway.md).
 
 The runtime dependency boundary includes the app name, service contracts, and repository contracts:
 
