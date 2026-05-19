@@ -8,6 +8,8 @@ describe("Pa11y targets", () => {
       { label: "login", path: "/login", role: "public" },
       { label: "player roster", path: "/characters", role: "player" },
       { label: "sheet", path: "/sheet/lynott", role: "player" },
+      { label: "rules", path: "/rules?type=spell&level=1", role: "player" },
+      { label: "rule detail", path: "/rules/spell/bless", role: "player" },
       { label: "wiki", path: "/campaigns/rovnost-shadows/wiki/factions-guide", role: "player" },
       { label: "logout", path: "/logout", role: "player" },
       { label: "campaign", path: "/campaigns/rovnost-shadows", role: "game_master" },

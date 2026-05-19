@@ -1,8 +1,9 @@
-# Ticket sheet-0028: SRD Final Acceptance And Follow-Up Boundaries
+# Ticket sheet-0028: SRD Import Acceptance And Follow-Up Boundaries
 
 ## Summary
 
-Complete final SRD import verification, acceptance notes, and follow-up boundaries.
+Complete SRD import verification, acceptance notes, and follow-up boundaries before the final
+player-experience hardening pass in `sheet-0029`.
 
 ## Implementation
 
@@ -16,4 +17,13 @@ Complete final SRD import verification, acceptance notes, and follow-up boundari
 
 ## Acceptance Criteria
 
-- The SRD/rules epic is ready to land as the immediate player-value roadmap slice.
+- Full-corpus import verification has clear acceptance notes and known follow-up boundaries.
+- Any remaining player-facing SRD experience gaps are explicitly handed to `sheet-0029`.
+
+## Implementation Notes
+
+- Final verification uses the SRD fixture corpus as the acceptance stand-in until the full SRD 5.1
+  local corpus is added under `docs/rules/srd-5.1/`.
+- README and architecture docs now describe rules browsing, sheet rule links, verification coverage,
+  and the remaining full-corpus follow-up boundary.
+- Railway remains deferred to `sheet-0030`; Hyper-Dank adoption remains deferred to `sheet-0040`.

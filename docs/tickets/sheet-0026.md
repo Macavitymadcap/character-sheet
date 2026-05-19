@@ -19,3 +19,9 @@ Use imported SRD data to improve table play without building a full guided chara
 ## Acceptance Criteria
 
 - SRD data improves active sheet use while preserving the manual character-management model.
+
+## Implementation Notes
+
+- Added SRD-backed rules lookup as the focused play workflow for this slice.
+- Kept character creation, levelling, automatic grants, and rule-derived resource mutation manual.
+- Used imported rule metadata for reading and linking rather than introducing a rules engine.

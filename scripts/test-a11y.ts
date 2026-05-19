@@ -1,6 +1,7 @@
 #!/usr/bin/env bun
 import { mkdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
+import { RulesImportService } from "../src/rules";
 import { createInMemoryApp, login, startLocalServer, waitForHttp } from "./lib/local-app";
 
 export const pa11yTargets = [
@@ -8,6 +9,8 @@ export const pa11yTargets = [
   { label: "login", path: "/login", role: "public" },
   { label: "player roster", path: "/characters", role: "player" },
   { label: "sheet", path: "/sheet/lynott", role: "player" },
+  { label: "rules", path: "/rules?type=spell&level=1", role: "player" },
+  { label: "rule detail", path: "/rules/spell/bless", role: "player" },
   { label: "wiki", path: "/campaigns/rovnost-shadows/wiki/factions-guide", role: "player" },
   { label: "logout", path: "/logout", role: "player" },
   { label: "campaign", path: "/campaigns/rovnost-shadows", role: "game_master" },
@@ -22,6 +25,8 @@ if (import.meta.main) {
 
   try {
     await waitForHttp(`${baseUrl}/healthz`);
+    await new RulesImportService(runtime.databaseRuntime.repositories.rulesSeedRepository)
+      .importFromLocalSource("docs/rules/srd-5.1-fixtures");
     await writeSeedAssetPlaceholders();
     const playerCookie = await login(baseUrl, "lynott@example.local");
     const gmCookie = await login(baseUrl, "gm@example.local");

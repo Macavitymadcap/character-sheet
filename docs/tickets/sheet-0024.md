@@ -20,3 +20,10 @@ Build accessible rules list and detail pages for imported SRD content.
 ## Acceptance Criteria
 
 - Signed-in users can browse, search, filter, and read SRD rules in the app.
+
+## Implementation Notes
+
+- Added authenticated `/rules`, `/rules/:entityType`, and `/rules/:entityType/:slug` route support.
+- Added compact rules list and detail pages with filters, metadata tags, provenance, and readable
+  mechanics.
+- Kept unauthenticated rules access redirected to login while preserving public-safe route shapes.

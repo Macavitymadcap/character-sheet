@@ -3,6 +3,7 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { createApp } from "./app";
 import { AuthService, PasswordService, SessionService } from "./auth";
 import { createSqliteDatabase, type SqliteDatabaseRuntime } from "./db";
+import { RulesImportService } from "./rules";
 
 let runtime: SqliteDatabaseRuntime | undefined;
 
@@ -162,6 +163,45 @@ describe("createApp", () => {
     expect(html).toContain("<h2>Spellcasting</h2>");
     expect(html).toContain("Mage Hand");
     expect(html).toContain("1st-level spell slots");
+    expect(html).toContain('href="/rules/spell/mage-hand"');
+  });
+
+  test("serves authenticated rules browsing and detail pages", async () => {
+    const { app, sessionService } = createTestApp("Character Sheet");
+    const session = sessionService.createSession("user_lynott_player");
+    const importer = new RulesImportService(runtime!.repositories.rulesSeedRepository);
+    await importer.importFromLocalSource("docs/rules/srd-5.1-fixtures");
+
+    const unauthenticated = await app.request("/rules");
+    const list = await app.request("/rules?type=spell&level=1&q=bless", {
+      headers: { cookie: session.cookie },
+    });
+    const listHtml = await list.text();
+    const detail = await app.request("/rules/spell/bless", {
+      headers: { cookie: session.cookie },
+    });
+    const detailHtml = await detail.text();
+    const typeRedirect = await app.request("/rules/spell", {
+      headers: { cookie: session.cookie },
+    });
+    const missing = await app.request("/rules/spell/missing", {
+      headers: { cookie: session.cookie },
+    });
+
+    expect(unauthenticated.status).toBe(303);
+    expect(unauthenticated.headers.get("location")).toBe("/login");
+    expect(list.status).toBe(200);
+    expect(listHtml).toContain("<h1 id=\"rules-heading\" class=\"panel-heading\">Rules</h1>");
+    expect(listHtml).toContain("Bless");
+    expect(listHtml).toContain("SRD 5.1");
+    expect(listHtml).not.toContain("Mage Hand");
+    expect(detail.status).toBe(200);
+    expect(detailHtml).toContain("<h1 id=\"rule-detail-heading\" class=\"panel-heading\">Bless</h1>");
+    expect(detailHtml).toContain("You bless up to three creatures");
+    expect(detailHtml).toContain("docs/rules/srd-5.1-fixtures/spells/level-1/bless.md");
+    expect(typeRedirect.status).toBe(303);
+    expect(typeRedirect.headers.get("location")).toBe("/rules?type=spell");
+    expect(missing.status).toBe(404);
   });
 
   test("updates header resources through HTMX fragments", async () => {

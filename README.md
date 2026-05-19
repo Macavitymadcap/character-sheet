@@ -107,11 +107,11 @@ bun run verify
 
 `bun run verify` runs typecheck, component and route tests, documentation reference checks, accessibility checks, the group-use MVP smoke workflow, and screenshot capture in sequence.
 
-`bun run test:a11y` starts an in-memory app on an available local port and runs Pa11y against public `/` and `/login`, player `/characters`, `/sheet/lynott`, `/campaigns/rovnost-shadows/wiki/factions-guide`, and `/logout`, Game Master `/campaigns/rovnost-shadows` and `/campaigns/rovnost-shadows/characters`, and admin `/admin`.
+`bun run test:a11y` starts an in-memory app on an available local port and runs Pa11y against public `/` and `/login`, player `/characters`, `/sheet/lynott`, `/rules`, `/rules/spell/bless`, `/campaigns/rovnost-shadows/wiki/factions-guide`, and `/logout`, Game Master `/campaigns/rovnost-shadows` and `/campaigns/rovnost-shadows/characters`, and admin `/admin`.
 
-`bun run smoke:mvp` starts an in-memory app and walks the seeded group-use workflow: player login, roster character creation, manual sheet editing, resource mutation, player notes, faction selection, every sheet tab fragment, logout protection, Game Master roster creation, campaign session creation, wiki reads and writes, image upload, and admin invite/password-reset preparation.
+`bun run smoke:mvp` starts an in-memory app and walks the seeded group-use workflow: player login, roster character creation, manual sheet editing, resource mutation, player notes, faction selection, every sheet tab fragment, SRD fixture import, rules browsing, sheet rule links, logout protection, Game Master roster creation, campaign session creation, wiki reads and writes, image upload, and admin invite/password-reset preparation.
 
-`bun run screenshots:sheet` captures Lynott's sheet in light and dark mode, the Background tab faction picker, the player roster, the Game Master campaign page, a wiki page with image references, and an edited sheet state. Screenshots are written to `docs/pr-screenshots/` by default, which is ignored by Git. Set `SCREENSHOT_DIR` to write them elsewhere.
+`bun run screenshots:sheet` captures Lynott's sheet in light and dark mode, the Background tab faction picker, the player roster, the Game Master campaign page, rules list/detail pages, a wiki page with image references, and an edited sheet state. Screenshots are written to `docs/pr-screenshots/` by default, which is ignored by Git. Set `SCREENSHOT_DIR` to write them elsewhere.
 
 `bun run import:rules` imports local markdown or JSON rule files from `docs/rules` by default into the configured SQLite database. Pass a path to import one file or directory:
 
@@ -127,6 +127,10 @@ bun run protect:branches
 ```
 
 `import:rules` is intentionally local-first. It reads local markdown or JSON exports, transforms American English spellings to British English where safe, and seeds structured database tables. The next rules epic expands this boundary to the full SRD 5.1 local corpus rather than live-fetching from external rules sites.
+
+The SRD import contract is documented in [SRD 5.1 Rules Import Contract](./docs/rules-srd-import.md). `docs/rules/srd-5.1-fixtures/` contains small parser-contract fixtures only; the full SRD corpus should be added later under `docs/rules/srd-5.1/`.
+
+Signed-in users can browse imported rules at `/rules`, filter by type, spell level, equipment category, and search text, and open detail pages such as `/rules/spell/bless`. Sheet spell and feature entries link back to their rule detail pages where imported rule links exist.
 
 ## Deployment Readiness
 

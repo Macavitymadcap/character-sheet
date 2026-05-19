@@ -3,6 +3,7 @@ import { mkdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import puppeteer, { type Browser, type Page } from "puppeteer";
+import { RulesImportService } from "../src/rules";
 import { createInMemoryApp, login, startLocalServer, waitForHttp } from "./lib/local-app";
 
 export const sheetScreenshotTargets = [
@@ -50,6 +51,20 @@ export const sheetScreenshotTargets = [
     theme: "light",
   },
   {
+    fileName: "rules-spells.png",
+    label: "Rules spell list",
+    path: "/rules?type=spell&level=1",
+    role: "player",
+    theme: "light",
+  },
+  {
+    fileName: "rules-bless.png",
+    label: "Rules Bless detail",
+    path: "/rules/spell/bless",
+    role: "player",
+    theme: "light",
+  },
+  {
     fileName: "lynott-edited-sheet.png",
     label: "Lynott edited sheet",
     path: "/sheet/lynott",
@@ -74,6 +89,8 @@ export async function captureSheetScreenshots(
   try {
     await waitForHttp(`${baseUrl}/healthz`);
     await mkdir(outputDir, { recursive: true });
+    await new RulesImportService(runtime.databaseRuntime.repositories.rulesSeedRepository)
+      .importFromLocalSource("docs/rules/srd-5.1-fixtures");
     await writeSeedAssetPlaceholders();
 
     const playerCookie = await login(baseUrl, "lynott@example.local");

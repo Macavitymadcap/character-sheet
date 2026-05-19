@@ -61,13 +61,14 @@ hosted asset storage, email delivery, and Hyper-Dank package adoption are delibe
 | `sheet-0025` | Link sheet features, species traits, backgrounds, spells, equipment, and conditions to rules. |
 | `sheet-0026` | Add focused SRD-backed play workflows without a full guided character builder. |
 | `sheet-0027` | Expand smoke, accessibility, screenshot, and documentation coverage for the rules experience. |
-| `sheet-0028` | Complete final SRD import verification, acceptance notes, and follow-up boundaries. |
+| `sheet-0028` | Complete SRD import verification, acceptance notes, and follow-up boundaries. |
+| `sheet-0029` | Harden the SRD player experience across mobile sheets, rules details, seeded characters, and campaign surfaces. |
 
 ## Branch Strategy
 
 Create `sheet-0020` from the latest `main`. Open the planning pull request into `main`. Once
 accepted, keep or recreate `sheet-0020` as the epic integration branch. Tickets `sheet-0021`
-through `sheet-0028` should branch from `sheet-0020`, open pull requests back into `sheet-0020`,
+through `sheet-0029` should branch from `sheet-0020`, open pull requests back into `sheet-0020`,
 and be squash-merged there before the epic lands on `main`.
 
 `sheet-0030` is reserved for Railway deployment after this epic lands. `sheet-0040` is reserved for

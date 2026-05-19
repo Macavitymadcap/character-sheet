@@ -480,7 +480,7 @@ function spellToAccordionItem(
     controls: isCantrip ? undefined : renderSpellCastControls(firstLevelSlot, characterSlug),
     id: `spell-card-${slugify(spell.entityName)}`,
     meta: spell.prepared ? `Prepared · ${spell.sourceName}` : spell.sourceName,
-    title: spell.entityName,
+    title: ruleTitleLink(spell),
   };
 }
 
@@ -523,8 +523,12 @@ function featureToAccordionItem(
     controls: resource ? renderResourceControls(resource, characterSlug, "features") : undefined,
     id: `feature-card-${slugify(feature.entityName)}`,
     meta: feature.sourceName,
-    title: feature.entityName,
+    title: ruleTitleLink(feature),
   };
+}
+
+function ruleTitleLink(rule: CharacterRuleLink) {
+  return <a href={`/rules/${rule.entityType}/${rule.entitySlug}`}>{rule.entityName}</a>;
 }
 
 function renderResourceControls(resource: CharacterResource, characterSlug: string, tabId: SheetTabId) {

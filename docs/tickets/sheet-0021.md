@@ -20,3 +20,11 @@ Define the local SRD 5.1 source layout, importer contract, provenance handling, 
 
 - The repo documents where SRD source files live locally and how `bun run import:rules` reads them.
 - Later tickets can add parsers without revisiting the source contract.
+
+## Implementation Notes
+
+- Added `docs/rules-srd-import.md` as the SRD 5.1 import contract.
+- Added tiny SRD fixture files under `docs/rules/srd-5.1-fixtures/` for parser-contract tests.
+- Extended `RulesImportService.importFromLocalSource()` with `skippedFiles` and `sourceCounts`
+  while preserving `entities` and `imported`.
+- Added mechanic provenance metadata in `data_json` rather than changing the schema in this ticket.

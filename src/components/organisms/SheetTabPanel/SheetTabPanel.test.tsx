@@ -115,19 +115,23 @@ const notes: CharacterNote[] = [
 const ruleLinks: CharacterRuleLink[] = [
   {
     entityName: "Repeating Shot",
+    entitySlug: "repeating-shot",
     entityType: "infusion",
     prepared: false,
     selected: true,
     selectionType: "active_infusion",
     sourceName: "Tasha's Cauldron of Everything",
+    sourceSlug: "tashas-cauldron-of-everything",
   },
   {
     entityName: "Mage Hand",
+    entitySlug: "mage-hand",
     entityType: "spell",
     prepared: true,
     selected: true,
     selectionType: "known_cantrip",
     sourceName: "Player's Handbook",
+    sourceSlug: "players-handbook",
   },
 ];
 

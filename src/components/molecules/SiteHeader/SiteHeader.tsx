@@ -2,7 +2,7 @@ import type { AuthUser } from "../../../db";
 import { PopoverMenu } from "../PopoverMenu";
 import { Switch } from "../../atoms/Switch";
 
-type SiteSection = "admin" | "campaign" | "characters" | "home" | "login" | "logout" | "sheet";
+type SiteSection = "admin" | "campaign" | "characters" | "home" | "login" | "logout" | "rules" | "sheet";
 
 interface SiteHeaderProps {
   appName: string;
@@ -71,6 +71,8 @@ function getMenuLinks(user: SiteHeaderProps["user"], currentSection: SiteSection
   if (user.role === "player") {
     links.push({ current: currentSection === "characters", href: "/characters", label: "Characters" });
   }
+
+  links.push({ current: currentSection === "rules", href: "/rules", label: "Rules" });
 
   links.push({
     action: "/logout",
