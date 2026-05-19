@@ -36,3 +36,4 @@ This ticket exists to keep `sheet-0020` accepted while giving the remaining play
 - Added focused edit, save, and cancel fragments for ability rows, skill rows, and proficiency list items.
 - Improved mobile dice controls so dense skill/tool roll triggers fill their cells and popover results centre predictably on small screens.
 - Added a visible seeded note for Mira that marks the human cleric sheet as deliberately partial until a later character-building slice handles automatic cleric grants, prepared spells, and equipment rules.
+- Campaign subpage splitting is not required for this pre-deployment hardening slice; `sheet-0036` owns the final hosted-rehearsal check and should add a follow-up ticket if campaign page density blocks remote table use.
