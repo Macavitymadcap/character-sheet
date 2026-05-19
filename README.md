@@ -40,6 +40,8 @@ bun install
 bun run dev
 ```
 
+For a fresh local database, run `bun run seed` before signing in. App startup only applies schema bootstrap; it does not reseed mutable records.
+
 The development server should default to `http://localhost:3000`. The root page is public, keeps the shared header for signed-in users, and links to sign in or continue to the user's role workspace. The login route still sends users to their default role home after successful sign in:
 
 | Role | Default route |
@@ -96,6 +98,11 @@ Current scripts:
 ```bash
 bun run db:bootstrap
 bun run dev
+Command variants:
+bun run hosted:data -- migrate
+bun run hosted:data -- prepare
+bun run hosted:data -- backup
+bun run hosted:data -- restore
 bun run import:rules
 bun run seed
 bun run screenshots:sheet
@@ -108,6 +115,8 @@ bun run verify
 ```
 
 `bun run verify` runs typecheck, component and route tests, documentation reference checks, accessibility checks, the group-use MVP smoke workflow, and screenshot capture in sequence.
+
+`bun run hosted:data -- migrate` applies the SQLite schema without seed data, which is what normal hosted startup relies on. `prepare`, `backup`, and `restore` are reserved for hosted rehearsal operations and are documented in [Railway Hosted Rehearsal](./docs/deployment/railway.md).
 
 `bun run test:a11y` starts an in-memory app on an available local port and runs Pa11y against public `/` and `/login`, player `/characters`, `/sheet/lynott`, `/rules`, `/rules/spell/bless`, `/campaigns/rovnost-shadows/wiki/factions-guide`, and `/logout`, Game Master `/campaigns/rovnost-shadows` and `/campaigns/rovnost-shadows/characters`, and admin `/admin`.
 
