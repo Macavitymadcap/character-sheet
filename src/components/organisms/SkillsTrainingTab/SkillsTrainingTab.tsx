@@ -30,7 +30,6 @@ export const SkillsTrainingTab = ({ sheet }: SkillsTrainingTabProps) => {
                 <th scope="col">Ability</th>
                 <th scope="col">Mod</th>
                 <th scope="col">Prof</th>
-                <th scope="col">Roll</th>
                 <th scope="col">Edit</th>
               </tr>
             </thead>
@@ -68,18 +67,20 @@ export const SkillsTrainingTab = ({ sheet }: SkillsTrainingTabProps) => {
 
 export const SkillReadRow = ({ sheet, skill }: { sheet: CharacterSheetReadModel; skill: CharacterSkill }) => (
   <tr id={skillRowId(skill.skill)}>
-    <th scope="row">{formatSkill(skill.skill)}</th>
+    <th scope="row">
+      <span class="skill-name-with-roll">
+        <span>{formatSkill(skill.skill)}</span>
+        <DiceRoller
+          characterSlug={sheet.slug}
+          defaultModifier={skill.modifier}
+          id={`skill-${slugify(skill.skill)}`}
+          label={formatSkill(skill.skill)}
+        />
+      </span>
+    </th>
     <td>{formatAbility(skill.ability)}</td>
     <td>{formatModifier(skill.modifier)}</td>
     <td class="proficiency-icon-cell">{renderProficiencyIcon(skill.proficiencyLevel)}</td>
-    <td class="skills-roll-cell">
-      <DiceRoller
-        characterSlug={sheet.slug}
-        defaultModifier={skill.modifier}
-        id={`skill-${slugify(skill.skill)}`}
-        label={formatSkill(skill.skill)}
-      />
-    </td>
     <td class="row-action-cell">
       <button
         class="row-edit-button"
@@ -98,7 +99,7 @@ export const SkillReadRow = ({ sheet, skill }: { sheet: CharacterSheetReadModel;
 export const SkillEditRow = ({ sheet, skill }: { sheet: CharacterSheetReadModel; skill: CharacterSkill }) => (
   <tr id={skillRowId(skill.skill)} class="inline-edit-row">
     <th scope="row">{formatSkill(skill.skill)}</th>
-    <td colSpan={5}>
+    <td colSpan={4}>
       <form
         class="sheet-edit-form row-edit-form row-edit-form-inline"
         hx-patch={`/sheet/${sheet.slug}/skills/${encodeURIComponent(skill.skill)}`}
@@ -139,16 +140,18 @@ export const ProficiencyReadItem = ({
   sheet: CharacterSheetReadModel;
 }) => (
   <li id={proficiencyItemId(proficiency)}>
-    <strong>{proficiency.name}</strong>
-    {isTool ? (
-      <DiceRoller
-        abilityOptions={abilityOptions(sheet)}
-        characterSlug={sheet.slug}
-        id={`tool-${slugify(proficiency.name)}`}
-        label={proficiency.name}
-        proficiencyBonus={sheet.proficiencyBonus}
-      />
-    ) : null}
+    <span class="proficiency-name-with-actions">
+      <strong>{proficiency.name}</strong>
+      {isTool ? (
+        <DiceRoller
+          abilityOptions={abilityOptions(sheet)}
+          characterSlug={sheet.slug}
+          id={`tool-${slugify(proficiency.name)}`}
+          label={proficiency.name}
+          proficiencyBonus={sheet.proficiencyBonus}
+        />
+      ) : null}
+    </span>
     {proficiency.detail ? <span>{proficiency.detail}</span> : null}
     {proficiency.id ? (
       <button

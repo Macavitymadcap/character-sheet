@@ -5,7 +5,7 @@ export const skillsTrainingTabStyles = /* css */ `
 }
 
 .skills-table {
-  min-width: 38rem;
+  min-width: 32rem;
   table-layout: fixed;
 }
 
@@ -16,12 +16,12 @@ export const skillsTrainingTabStyles = /* css */ `
 
 .skills-table th:first-child,
 .skills-table td:first-child {
-  width: 34%;
+  width: 46%;
 }
 
 .skills-table th:nth-child(2),
 .skills-table td:nth-child(2) {
-  width: 26%;
+  width: 24%;
 }
 
 .skills-table th:nth-child(3),
@@ -35,14 +35,55 @@ export const skillsTrainingTabStyles = /* css */ `
   width: 12%;
 }
 
-.skills-table th:nth-child(5),
-.skills-table td:nth-child(5) {
-  width: 15%;
-}
-
 .skills-table th:last-child,
 .skills-table td:last-child {
-  width: 10%;
+  width: 12%;
+}
+
+.skill-name-with-roll {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.35rem;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.skill-name-with-roll > span:first-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.skill-name-with-roll .dice-roller {
+  flex: 0 0 auto;
+  width: auto;
+}
+
+.skill-name-with-roll .dice-roller-trigger {
+  font-size: 0.66rem;
+  line-height: 1;
+  min-height: 1.45rem;
+  min-width: 1.9rem;
+  padding: 0.1rem 0.3rem;
+}
+
+.proficiency-name-with-actions {
+  align-items: center;
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.proficiency-name-with-actions .dice-roller {
+  flex: 0 0 auto;
+  width: auto;
+}
+
+.proficiency-name-with-actions .dice-roller-trigger {
+  font-size: 0.66rem;
+  line-height: 1;
+  min-height: 1.45rem;
+  min-width: 1.9rem;
+  padding: 0.1rem 0.3rem;
 }
 
 .proficiency-grid {
@@ -147,7 +188,7 @@ export const skillsTrainingTabStyles = /* css */ `
 
   .skills-table th:first-child,
   .skills-table td:first-child {
-    width: 38%;
+    width: 52%;
   }
 
   .skills-table th:nth-child(3),
@@ -156,12 +197,7 @@ export const skillsTrainingTabStyles = /* css */ `
   .skills-table td:nth-child(4),
   .skills-table th:last-child,
   .skills-table td:last-child {
-    width: 12%;
-  }
-
-  .skills-table th:nth-child(5),
-  .skills-table td:nth-child(5) {
-    width: 26%;
+    width: 16%;
   }
 
   .proficiency-grid {

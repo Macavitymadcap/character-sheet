@@ -45,7 +45,7 @@ describe("SkillsTrainingTab", () => {
 
     expect(html).toContain('<h3 id="skills-heading">Skills</h3>');
     expect(html).toContain('<table class="sheet-table skills-table">');
-    expect(html).toContain("<th scope=\"row\">Stealth</th>");
+    expect(html).toContain('<span class="skill-name-with-roll"><span>Stealth</span>');
     expect(html).toContain("<td>+5</td>");
     expect(html).toContain('aria-label="Roll Stealth"');
     expect(html).toContain('hx-post="/sheet/lynott/rolls"');
@@ -53,7 +53,7 @@ describe("SkillsTrainingTab", () => {
     expect(html).toContain('hx-target="#skill-row-stealth"');
     expect(html).toContain('aria-label="Proficient"');
     expect(html).toContain('data-icon="check-circle"');
-    expect(html).toContain("<th scope=\"row\">Arcana</th>");
+    expect(html).toContain('<span class="skill-name-with-roll"><span>Arcana</span>');
     expect(html).toContain('aria-label="Untrained"');
     expect(html).toContain("<h4 id=\"proficiency-tool\">Tools</h4>");
     expect(html).toContain("<strong>Thieves&#39; tools</strong>");
