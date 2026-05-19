@@ -107,11 +107,11 @@ bun run verify
 
 `bun run verify` runs typecheck, component and route tests, documentation reference checks, accessibility checks, the group-use MVP smoke workflow, and screenshot capture in sequence.
 
-`bun run test:a11y` starts an in-memory app on an available local port and runs Pa11y against public `/` and `/login`, player `/characters`, `/sheet/lynott`, `/campaigns/rovnost-shadows/wiki/factions-guide`, and `/logout`, Game Master `/campaigns/rovnost-shadows` and `/campaigns/rovnost-shadows/characters`, and admin `/admin`.
+`bun run test:a11y` starts an in-memory app on an available local port and runs Pa11y against public `/` and `/login`, player `/characters`, `/sheet/lynott`, `/rules`, `/rules/spell/bless`, `/campaigns/rovnost-shadows/wiki/factions-guide`, and `/logout`, Game Master `/campaigns/rovnost-shadows` and `/campaigns/rovnost-shadows/characters`, and admin `/admin`.
 
-`bun run smoke:mvp` starts an in-memory app and walks the seeded group-use workflow: player login, roster character creation, manual sheet editing, resource mutation, player notes, faction selection, every sheet tab fragment, logout protection, Game Master roster creation, campaign session creation, wiki reads and writes, image upload, and admin invite/password-reset preparation.
+`bun run smoke:mvp` starts an in-memory app and walks the seeded group-use workflow: player login, roster character creation, manual sheet editing, resource mutation, player notes, faction selection, every sheet tab fragment, SRD fixture import, rules browsing, sheet rule links, logout protection, Game Master roster creation, campaign session creation, wiki reads and writes, image upload, and admin invite/password-reset preparation.
 
-`bun run screenshots:sheet` captures Lynott's sheet in light and dark mode, the Background tab faction picker, the player roster, the Game Master campaign page, a wiki page with image references, and an edited sheet state. Screenshots are written to `docs/pr-screenshots/` by default, which is ignored by Git. Set `SCREENSHOT_DIR` to write them elsewhere.
+`bun run screenshots:sheet` captures Lynott's sheet in light and dark mode, the Background tab faction picker, the player roster, the Game Master campaign page, rules list/detail pages, a wiki page with image references, and an edited sheet state. Screenshots are written to `docs/pr-screenshots/` by default, which is ignored by Git. Set `SCREENSHOT_DIR` to write them elsewhere.
 
 `bun run import:rules` imports local markdown or JSON rule files from `docs/rules` by default into the configured SQLite database. Pass a path to import one file or directory:
 
@@ -126,11 +126,15 @@ bun run protect:branches:bootstrap
 bun run protect:branches
 ```
 
-`import:rules` is intentionally local-first. It reads local markdown or JSON exports, transforms American English spellings to British English where safe, and seeds structured database tables. Direct fetching from 5e.tools can be added after the local importer boundary is stable.
+`import:rules` is intentionally local-first. It reads local markdown or JSON exports, transforms American English spellings to British English where safe, and seeds structured database tables. The SRD corpus is local rather than live-fetched from external rules sites.
+
+The SRD import contract is documented in [SRD 5.1 Rules Import Contract](./docs/rules-srd-import.md). The full local SRD corpus lives under `docs/rules/srd-5.1/`; `docs/rules/srd-5.1-fixtures/` contains small parser-contract fixtures only. Existing Lynott rules from non-SRD sources remain supported as local or third-party rule-source categories.
+
+Signed-in users can browse imported rules at `/rules`, filter by type, spell level, equipment category, and search text, and open detail pages such as `/rules/spell/bless`. Sheet spell and feature entries link back to their rule detail pages where imported rule links exist.
 
 ## Deployment Readiness
 
-The current app is ready for fresh local checkout, seed, verification, and table-use rehearsal with SQLite and local asset storage. Railway hosting, production secret handling, Postgres migration, email delivery for invites/password resets, and any homebrew/SRD expansion are explicitly deferred to the next epic.
+The current app is ready for fresh local checkout, seed, verification, and table-use rehearsal with SQLite and local asset storage. The roadmap now reserves `sheet-0020` for full SRD 5.1 rules and functionality, `sheet-0030` for Railway deployment with seeded hosted accounts/passwords, and `sheet-0040` for Hyper-Dank package adoption.
 
 ## TDD Approach
 
@@ -164,3 +168,12 @@ Development tickets should be implemented tests first wherever the boundary is t
 - [Ticket sheet-0017](./docs/tickets/sheet-0017.md)
 - [Ticket sheet-0018](./docs/tickets/sheet-0018.md)
 - [Ticket sheet-0019](./docs/tickets/sheet-0019.md)
+- [Epic sheet-0020](./docs/epics/sheet-0020.md)
+- [Ticket sheet-0021](./docs/tickets/sheet-0021.md)
+- [Ticket sheet-0022](./docs/tickets/sheet-0022.md)
+- [Ticket sheet-0023](./docs/tickets/sheet-0023.md)
+- [Ticket sheet-0024](./docs/tickets/sheet-0024.md)
+- [Ticket sheet-0025](./docs/tickets/sheet-0025.md)
+- [Ticket sheet-0026](./docs/tickets/sheet-0026.md)
+- [Ticket sheet-0027](./docs/tickets/sheet-0027.md)
+- [Ticket sheet-0028](./docs/tickets/sheet-0028.md)

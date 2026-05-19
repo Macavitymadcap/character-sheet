@@ -37,8 +37,15 @@ import type {
   NotesRepository,
   PasswordResetToken,
   RulesRepository,
+  RulesContentCategory,
+  RuleDetail,
   RulesSeedRepository,
   RuleEntitySeedInput,
+  RuleEntityType,
+  RuleEntityTypeCount,
+  RuleMechanicReadModel,
+  RuleSearchFilters,
+  RuleSummary,
   StoredSession,
   UpsertedRuleEntity,
   UserRole,
@@ -291,16 +298,20 @@ interface CharacterFactionChoiceRow {
 }
 
 interface RuleLinkRow {
+  content_category: RulesContentCategory;
   entity_name: string;
+  entity_slug: string;
   entity_type: string;
   prepared: number;
   selected: number;
   selection_type: string;
   source_name: string;
+  source_slug: string;
 }
 
 interface RuleSourceRow {
   abbreviation: string;
+  content_category: RulesContentCategory;
   id: string;
   name: string;
   precedence: number;
@@ -313,6 +324,24 @@ interface RuleEntityRow {
   name: string;
   slug: string;
   source_id: string;
+}
+
+interface RuleSummaryRow {
+  content_category: RulesContentCategory;
+  data_json: string | null;
+  entity_type: RuleEntityType;
+  id: string;
+  mechanic_type: string | null;
+  name: string;
+  slug: string;
+  source_abbreviation: string;
+  source_name: string;
+  source_slug: string;
+}
+
+interface RuleEntityTypeCountRow {
+  count: number;
+  entity_type: RuleEntityType;
 }
 
 export interface SqliteRepositories {
@@ -1972,15 +2001,58 @@ class SqliteCampaignRepository implements CampaignRepository {
 class SqliteRulesRepository implements RulesRepository {
   constructor(private readonly database: Database) {}
 
+  getRuleDetail(entityType: RuleEntityType, slug: string): RuleDetail | null {
+    const rows = this.ruleRows().filter((row) => row.entity_type === entityType && row.slug === slug);
+    const summary = rows[0] ? toRuleSummary(rows[0]) : null;
+    if (!summary) return null;
+
+    const mechanics = rows
+      .filter((row) => row.mechanic_type && row.data_json)
+      .map((row) => ({
+        data: parseRuleData(row.data_json ?? "{}"),
+        mechanicType: row.mechanic_type ?? summary.entityType,
+      }));
+
+    const provenance = mechanics
+      .map((mechanic) => mechanic.data.provenance)
+      .find((candidate): candidate is NonNullable<RuleDetail["provenance"]> =>
+        Boolean(candidate && typeof candidate === "object"),
+      ) ?? null;
+
+    return {
+      ...summary,
+      mechanics,
+      provenance,
+    };
+  }
+
+  listRuleEntityTypes(): RuleEntityTypeCount[] {
+    return this.database
+      .query<RuleEntityTypeCountRow, []>(
+        `select entity_type, count(*) as count
+         from rules_entities
+         group by entity_type
+         order by entity_type`,
+      )
+      .all()
+      .map((row) => ({
+        count: row.count,
+        entityType: row.entity_type,
+      }));
+  }
+
   listRuleLinksForCharacter(characterId: string): CharacterRuleLink[] {
     return this.database
       .query<RuleLinkRow, [string]>(
         `select entities.name as entity_name,
+          entities.slug as entity_slug,
           entities.entity_type,
           links.prepared,
           links.selected,
           links.selection_type,
-          sources.name as source_name
+          sources.content_category,
+          sources.name as source_name,
+          sources.slug as source_slug
         from character_rule_links links
         inner join rules_entities entities on entities.id = links.rules_entity_id
         inner join rules_sources sources on sources.id = entities.source_id
@@ -1989,14 +2061,109 @@ class SqliteRulesRepository implements RulesRepository {
       )
       .all(characterId)
       .map((row) => ({
+        contentCategory: row.content_category,
         entityName: row.entity_name,
+        entitySlug: row.entity_slug,
         entityType: row.entity_type,
         prepared: row.prepared === 1,
         selected: row.selected === 1,
         selectionType: row.selection_type,
         sourceName: row.source_name,
+        sourceSlug: row.source_slug,
       }));
   }
+
+  listRules(filters: RuleSearchFilters = {}): RuleSummary[] {
+    const seen = new Set<string>();
+
+    return this.ruleRows()
+      .map(toRuleSummary)
+      .filter((rule) => {
+        if (seen.has(rule.id)) return false;
+        seen.add(rule.id);
+
+        if (filters.entityType && rule.entityType !== filters.entityType) return false;
+        if (filters.sourceSlug && rule.sourceSlug !== filters.sourceSlug) return false;
+        if (filters.spellLevel !== undefined && !rule.tags.includes(`level-${filters.spellLevel}`)) {
+          return false;
+        }
+        if (filters.equipmentCategory && !rule.tags.includes(slugForFilter(filters.equipmentCategory))) {
+          return false;
+        }
+        if (filters.query) {
+          const query = filters.query.toLowerCase();
+          const haystack = `${rule.name} ${rule.description} ${rule.tags.join(" ")}`.toLowerCase();
+          if (!haystack.includes(query)) return false;
+        }
+
+        return true;
+      });
+  }
+
+  private ruleRows() {
+    return this.database
+      .query<RuleSummaryRow, []>(
+        `select entities.id,
+          entities.slug,
+          entities.entity_type,
+          entities.name,
+          sources.slug as source_slug,
+          sources.name as source_name,
+          sources.abbreviation as source_abbreviation,
+          sources.content_category,
+          mechanics.mechanic_type,
+          mechanics.data_json
+        from rules_entities entities
+        inner join rules_sources sources on sources.id = entities.source_id
+        left join rule_mechanics mechanics on mechanics.rules_entity_id = entities.id
+        order by entities.entity_type, entities.name, mechanics.id`,
+      )
+      .all();
+  }
+}
+
+function toRuleSummary(row: RuleSummaryRow): RuleSummary {
+  const data = parseRuleData(row.data_json ?? "{}");
+  const tags = Array.isArray(data.tags) ? data.tags.filter((tag): tag is string => typeof tag === "string") : [];
+  const description = typeof data.searchableText === "string"
+    ? data.searchableText
+    : typeof data.description === "string"
+      ? data.description
+      : "";
+
+  return {
+    contentCategory: row.content_category,
+    description,
+    entityType: row.entity_type,
+    id: row.id,
+    name: row.name,
+    slug: row.slug,
+    sourceAbbreviation: row.source_abbreviation,
+    sourceName: row.source_name,
+    sourceSlug: row.source_slug,
+    tags,
+  };
+}
+
+function parseRuleData(dataJson: string): RuleMechanicReadModel["data"] {
+  try {
+    const data = JSON.parse(dataJson) as unknown;
+
+    return data && typeof data === "object" && !Array.isArray(data)
+      ? data as Record<string, unknown>
+      : {};
+  } catch {
+    return {};
+  }
+}
+
+function slugForFilter(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }
 
 class SqliteRulesSeedRepository implements RulesSeedRepository {
@@ -2040,24 +2207,39 @@ class SqliteRulesSeedRepository implements RulesSeedRepository {
     const sourceId = source.id ?? ruleSourceId(source.slug);
 
     this.database.run(
-      `insert into rules_sources (id, slug, name, abbreviation, precedence)
-       values (?, ?, ?, ?, ?)
+      `insert into rules_sources (id, slug, name, abbreviation, content_category, precedence)
+       values (?, ?, ?, ?, ?, ?)
        on conflict(slug) do update set
          name = excluded.name,
          abbreviation = excluded.abbreviation,
+         content_category = excluded.content_category,
          precedence = excluded.precedence`,
-      [sourceId, source.slug, source.name, source.abbreviation, source.precedence],
+      [
+        sourceId,
+        source.slug,
+        source.name,
+        source.abbreviation,
+        source.contentCategory ?? "third_party",
+        source.precedence,
+      ],
     );
 
     const row = this.database
       .query<RuleSourceRow, [string]>(
-        "select id, slug, name, abbreviation, precedence from rules_sources where slug = ?",
+        "select id, slug, name, abbreviation, content_category, precedence from rules_sources where slug = ?",
       )
       .get(source.slug);
 
     if (!row) throw new Error(`Could not upsert rules source ${source.slug}`);
 
-    return row;
+    return {
+      abbreviation: row.abbreviation,
+      contentCategory: row.content_category,
+      id: row.id,
+      name: row.name,
+      precedence: row.precedence,
+      slug: row.slug,
+    };
   }
 
   private getEntityByNaturalKey(

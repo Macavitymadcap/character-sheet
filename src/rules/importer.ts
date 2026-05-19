@@ -12,24 +12,31 @@ import type {
 export interface RulesImportResult {
   entities: UpsertedRuleEntity[];
   imported: number;
+  skippedFiles: string[];
+  sourceCounts: Record<string, number>;
 }
 
 export class RulesImportService {
   constructor(private readonly repository: RulesSeedRepository) {}
 
   async importFromLocalSource(sourcePath: string): Promise<RulesImportResult> {
-    const files = await collectRuleFiles(sourcePath);
+    const { files, skippedFiles } = await collectRuleFiles(sourcePath);
     const entities: UpsertedRuleEntity[] = [];
+    const sourceCounts: Record<string, number> = {};
 
     for (const filePath of files) {
       for (const entity of await parseLocalRuleFile(filePath)) {
-        entities.push(this.repository.upsertRuleEntity(entity));
+        const upserted = this.repository.upsertRuleEntity(withImportProvenance(entity, filePath));
+        entities.push(upserted);
+        sourceCounts[upserted.source.slug] = (sourceCounts[upserted.source.slug] ?? 0) + 1;
       }
     }
 
     return {
       entities,
       imported: entities.length,
+      skippedFiles,
+      sourceCounts,
     };
   }
 }
@@ -90,16 +97,44 @@ function parseMechanic(
   body: string,
 ): RuleMechanicSeedInput {
   if (entityType === "spell") return parseSpellMechanic(filePath, body);
-  if (entityType === "infusion") return parseInfusionMechanic(body);
-  if (entityType === "background") return parseBackgroundMechanic(body);
+  if (entityType === "infusion") return parseInfusionMechanic(filePath, body);
+  if (entityType === "background") return parseBackgroundMechanic(filePath, body);
+  if (entityType === "equipment") return parseEquipmentMechanic(filePath, body);
 
   return {
     data: {
       description: normaliseRuleText(stripMetadata(body)),
       sections: parseSections(body),
       subtitle: normaliseRuleText(readSubtitle(body) ?? ""),
+      ...parseCommonMetadata(entityType, filePath, body),
     },
     mechanicType: entityType,
+  };
+}
+
+function withImportProvenance(
+  entity: RuleEntitySeedInput,
+  filePath: string,
+): RuleEntitySeedInput {
+  const sourcePath = normalisePath(filePath);
+  const srdVersion = sourcePath.includes("/srd-5.1/") || sourcePath.includes("/srd-5.1-fixtures/")
+    ? "5.1"
+    : undefined;
+
+  return {
+    ...entity,
+    mechanics: entity.mechanics.map((mechanic) => ({
+      ...mechanic,
+      data: {
+        ...mechanic.data,
+        provenance: {
+          originalPath: sourcePath,
+          ruleType: entity.entityType,
+          source: entity.source.abbreviation,
+          ...(srdVersion ? { srdVersion } : {}),
+        },
+      },
+    })),
   };
 }
 
@@ -119,6 +154,8 @@ function parseSpellMechanic(filePath: string, body: string): RuleMechanicSeedInp
       description: normaliseRuleText(description),
       duration: normaliseRuleText(fields.Duration ?? ""),
       higherLevels: normaliseRuleText(higherLevels ?? ""),
+      ...parseCommonMetadata("spell", filePath, body),
+      classes: splitCsv(fields.Classes),
       level: spellInfo.level,
       range: normaliseRuleText(fields.Range ?? ""),
       school: spellInfo.school,
@@ -127,12 +164,13 @@ function parseSpellMechanic(filePath: string, body: string): RuleMechanicSeedInp
   };
 }
 
-function parseInfusionMechanic(body: string): RuleMechanicSeedInput {
+function parseInfusionMechanic(filePath: string, body: string): RuleMechanicSeedInput {
   const subtitle = readSubtitle(body) ?? "";
 
   return {
     data: {
       description: normaliseRuleText(stripMetadata(body)),
+      ...parseCommonMetadata("infusion", filePath, body),
       prerequisite: normaliseRuleText(subtitle),
       requiresAttunement: /requires attunement/i.test(subtitle),
     },
@@ -140,7 +178,7 @@ function parseInfusionMechanic(body: string): RuleMechanicSeedInput {
   };
 }
 
-function parseBackgroundMechanic(body: string): RuleMechanicSeedInput {
+function parseBackgroundMechanic(filePath: string, body: string): RuleMechanicSeedInput {
   const fields = readBoldFields(body);
   const sections = parseSections(body);
   const feature = sections.find((section) => section.title !== "Background Features");
@@ -150,10 +188,33 @@ function parseBackgroundMechanic(body: string): RuleMechanicSeedInput {
       description: normaliseRuleText(feature?.body ?? stripMetadata(body)),
       equipment: normaliseRuleText(fields.Equipment ?? ""),
       featureName: normaliseRuleText(feature?.title ?? ""),
+      ...parseCommonMetadata("background", filePath, body),
       skillProficiencies: splitCsv(fields["Skill Proficiencies"]),
       toolProficiencies: splitCsv(fields["Tool Proficiencies"]),
     },
     mechanicType: "background",
+  };
+}
+
+function parseEquipmentMechanic(filePath: string, body: string): RuleMechanicSeedInput {
+  return {
+    data: {
+      category: inferEquipmentCategory(filePath, body),
+      description: normaliseRuleText(stripMetadata(body)),
+      sections: parseSections(body),
+      subtitle: normaliseRuleText(readSubtitle(body) ?? ""),
+      ...parseCommonMetadata("equipment", filePath, body),
+    },
+    mechanicType: "equipment",
+  };
+}
+
+function parseCommonMetadata(entityType: RuleEntityType, filePath: string, body: string) {
+  const subtitle = readSubtitle(body);
+
+  return {
+    searchableText: normaliseRuleText(stripMarkdown(`${subtitle ?? ""}\n${stripMetadata(body)}`)),
+    tags: inferTags(entityType, filePath, body),
   };
 }
 
@@ -196,6 +257,15 @@ function stripMetadata(body: string) {
     .trim();
 }
 
+function stripMarkdown(value: string) {
+  return value
+    .replace(/\*\*([^*]+):\*\*/g, "$1:")
+    .replace(/\*([^*]+)\*/g, "$1")
+    .replace(/^#{1,6}\s+/gm, "")
+    .replace(/[`>]/g, "")
+    .trim();
+}
+
 function parseSections(body: string) {
   const sections: Array<{ body: string; title: string }> = [];
   const matches = [...body.matchAll(/^#{2,3}\s+(.+)$/gm)];
@@ -230,20 +300,93 @@ function parseSpellSubtitle(filePath: string, subtitle: string | null) {
 function inferEntityType(filePath: string): RuleEntityType {
   const normalisedPath = normalisePath(filePath);
 
+  if (normalisedPath.includes("/actions/")) return "action";
   if (normalisedPath.includes("/spells/")) return "spell";
   if (normalisedPath.includes("/infusions/")) return "infusion";
-  if (normalisedPath.includes("/species/")) return "species_trait";
+  if (normalisedPath.includes("/classes/") && normalisedPath.includes("/subclasses/")) {
+    return "subclass";
+  }
+  if (isClassOverviewFile(normalisedPath)) return "class";
+  if (normalisedPath.includes("/species/")) {
+    return normalisedPath.includes("/srd-5.1/") || normalisedPath.includes("/srd-5.1-fixtures/")
+      ? "species"
+      : "species_trait";
+  }
   if (normalisedPath.includes("/backgrounds/")) return "background";
   if (normalisedPath.includes("/equipment/")) return "equipment";
   if (normalisedPath.includes("/conditions/")) return "condition";
+  if (normalisedPath.includes("/core-rules/")) return "core_rule";
+  if (normalisedPath.includes("/feats/")) return "feat";
+  if (normalisedPath.includes("/proficiencies/")) return "proficiency";
+  if (normalisedPath.includes("/senses/")) return "sense";
 
   return "class_feature";
+}
+
+function isClassOverviewFile(filePath: string) {
+  const segments = filePath.split("/");
+  const classesIndex = segments.indexOf("classes");
+  if (classesIndex === -1) return false;
+
+  const classSlug = segments[classesIndex + 1];
+  const fileName = segments[classesIndex + 2];
+
+  return Boolean(classSlug && fileName === `${classSlug}.md`);
+}
+
+function inferTags(entityType: RuleEntityType, filePath: string, body: string) {
+  const tags = new Set<string>([entityType]);
+  const normalisedPath = normalisePath(filePath);
+  const subtitle = readSubtitle(body);
+
+  for (const segment of normalisedPath.split("/").slice(0, -1)) {
+    if (
+      [
+        "actions",
+        "backgrounds",
+        "classes",
+        "conditions",
+        "core-rules",
+        "equipment",
+        "feats",
+        "proficiencies",
+        "senses",
+        "species",
+        "spells",
+        "subclasses",
+      ].includes(segment)
+    ) {
+      tags.add(segment);
+    }
+  }
+
+  if (subtitle) tags.add(slugify(subtitle));
+  if (entityType === "spell") tags.add(`level-${parseSpellSubtitle(filePath, subtitle).level}`);
+  const equipmentCategory = entityType === "equipment" ? inferEquipmentCategory(filePath, body) : "";
+  if (equipmentCategory) tags.add(slugify(equipmentCategory));
+
+  return [...tags].sort();
+}
+
+function inferEquipmentCategory(filePath: string, body: string) {
+  const normalisedPath = normalisePath(filePath);
+  const subtitle = readSubtitle(body);
+  if (normalisedPath.includes("/equipment/armour/")) return "armour";
+  if (normalisedPath.includes("/equipment/armor/")) return "armour";
+  if (normalisedPath.includes("/equipment/weapons/")) return "weapon";
+  if (normalisedPath.includes("/equipment/adventuring-gear/")) return "adventuring gear";
+  if (subtitle) return normaliseRuleText(subtitle).toLowerCase();
+
+  return "equipment";
 }
 
 function inferRulesSource(filePath: string): RulesSourceSeedInput {
   const normalisedPath = normalisePath(filePath);
   const fileName = basename(filePath, ".md");
 
+  if (normalisedPath.includes("/srd-5.1/") || normalisedPath.includes("/srd-5.1-fixtures/")) {
+    return sources.srd51;
+  }
   if (normalisedPath.includes("/backgrounds/special-ops.md")) return sources.local;
   if (normalisedPath.includes("/species/hobgoblin.md")) return sources.mpmotm;
   if (normalisedPath.includes("/classes/artificer/")) return sources.tcoe;
@@ -253,20 +396,38 @@ function inferRulesSource(filePath: string): RulesSourceSeedInput {
   return sources.phb;
 }
 
-async function collectRuleFiles(sourcePath: string): Promise<string[]> {
+interface CollectedRuleFiles {
+  files: string[];
+  skippedFiles: string[];
+}
+
+async function collectRuleFiles(sourcePath: string): Promise<CollectedRuleFiles> {
   const sourceStats = await stat(sourcePath);
-  if (sourceStats.isFile()) return isRuleFile(sourcePath) ? [sourcePath] : [];
+  if (sourceStats.isFile()) {
+    return isRuleFile(sourcePath)
+      ? { files: [sourcePath], skippedFiles: [] }
+      : { files: [], skippedFiles: [sourcePath] };
+  }
 
   const entries = await readdir(sourcePath, { withFileTypes: true });
   const files: string[] = [];
+  const skippedFiles: string[] = [];
 
   for (const entry of entries) {
     const childPath = join(sourcePath, entry.name);
-    if (entry.isDirectory()) files.push(...(await collectRuleFiles(childPath)));
+    if (entry.isDirectory()) {
+      const childFiles = await collectRuleFiles(childPath);
+      files.push(...childFiles.files);
+      skippedFiles.push(...childFiles.skippedFiles);
+    }
     if (entry.isFile() && isRuleFile(childPath)) files.push(childPath);
+    if (entry.isFile() && !isRuleFile(childPath)) skippedFiles.push(childPath);
   }
 
-  return files.sort();
+  return {
+    files: files.sort(),
+    skippedFiles: skippedFiles.sort(),
+  };
 }
 
 function isRuleFile(filePath: string) {
@@ -328,8 +489,17 @@ const replacements: Array<[RegExp, string]> = [
 ];
 
 const sources = {
+  srd51: {
+    abbreviation: "SRD 5.1",
+    contentCategory: "srd",
+    id: "rules_source_srd_5_1",
+    name: "Systems Reference Document 5.1",
+    precedence: 15,
+    slug: "srd-5-1",
+  },
   local: {
     abbreviation: "Local",
+    contentCategory: "local",
     id: "rules_source_local",
     name: "Local Campaign",
     precedence: 100,
@@ -337,6 +507,7 @@ const sources = {
   },
   mpmotm: {
     abbreviation: "MPMotM",
+    contentCategory: "third_party",
     id: "rules_source_mpmotm",
     name: "Mordenkainen Presents: Monsters of the Multiverse",
     precedence: 30,
@@ -344,6 +515,7 @@ const sources = {
   },
   phb: {
     abbreviation: "PHB",
+    contentCategory: "third_party",
     id: "rules_source_phb",
     name: "Player's Handbook",
     precedence: 10,
@@ -351,6 +523,7 @@ const sources = {
   },
   tcoe: {
     abbreviation: "TCoE",
+    contentCategory: "third_party",
     id: "rules_source_tcoe",
     name: "Tasha's Cauldron of Everything",
     precedence: 20,
@@ -358,6 +531,7 @@ const sources = {
   },
   xgte: {
     abbreviation: "XGtE",
+    contentCategory: "third_party",
     id: "rules_source_xgte",
     name: "Xanathar's Guide to Everything",
     precedence: 15,

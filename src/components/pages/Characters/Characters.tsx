@@ -9,6 +9,7 @@ interface CharactersPageProps {
   appName: string;
   campaign?: CampaignSummary;
   characters: CharacterRosterItem[];
+  showCreateForm?: boolean;
   members?: Array<CampaignMember & { displayName: string }>;
   mode: "game_master" | "player";
   user: Pick<AuthUser, "displayName" | "id" | "role">;
@@ -18,6 +19,7 @@ export const CharactersPage = ({
   appName,
   campaign,
   characters,
+  showCreateForm = true,
   members = [],
   mode,
   user,
@@ -39,8 +41,17 @@ export const CharactersPage = ({
               <h1 id="characters-heading" class="panel-heading">
                 {title}
               </h1>
+              {!showCreateForm ? (
+                <a
+                  class="action-link"
+                  href={mode === "game_master" && campaign ? `/campaigns/${campaign.slug}/characters/new` : "/characters/new"}
+                >
+                  Create character
+                </a>
+              ) : null}
             </div>
 
+            {showCreateForm ? (
             <section aria-labelledby="create-character-heading">
               <h2 id="create-character-heading">Create character</h2>
               <form class="form-grid" action={action} method="post">
@@ -63,6 +74,7 @@ export const CharactersPage = ({
                 <Button type="submit">Create character</Button>
               </form>
             </section>
+            ) : null}
 
             <section aria-labelledby="roster-heading">
               <h2 id="roster-heading">Roster</h2>

@@ -494,29 +494,45 @@ export interface CampaignContentRepository {
 }
 
 export interface CharacterRuleLink {
+  contentCategory: RulesContentCategory;
   entityName: string;
+  entitySlug: string;
   entityType: string;
   prepared: boolean;
   selected: boolean;
   selectionType: string;
   sourceName: string;
+  sourceSlug: string;
 }
 
 export interface RulesRepository {
+  getRuleDetail(entityType: RuleEntityType, slug: string): RuleDetail | null;
+  listRuleEntityTypes(): RuleEntityTypeCount[];
   listRuleLinksForCharacter(characterId: string): CharacterRuleLink[];
+  listRules(filters?: RuleSearchFilters): RuleSummary[];
 }
 
 export type RuleEntityType =
+  | "action"
   | "background"
+  | "class"
   | "class_feature"
   | "condition"
+  | "core_rule"
   | "equipment"
+  | "feat"
   | "infusion"
+  | "proficiency"
+  | "sense"
+  | "species"
   | "species_trait"
+  | "subclass"
+  | "subclass_feature"
   | "spell";
 
 export interface RulesSourceSeedInput {
   abbreviation: string;
+  contentCategory?: RulesContentCategory;
   id?: string;
   name: string;
   precedence: number;
@@ -539,9 +555,52 @@ export interface RuleEntitySeedInput {
 
 export interface UpsertedRuleEntity extends RuleEntitySeedInput {
   id: string;
-  source: RulesSourceSeedInput & { id: string };
+  source: RulesSourceSeedInput & { contentCategory: RulesContentCategory; id: string };
 }
+
+export type RulesContentCategory = "local" | "srd" | "third_party";
 
 export interface RulesSeedRepository {
   upsertRuleEntity(entity: RuleEntitySeedInput): UpsertedRuleEntity;
+}
+
+export interface RuleSearchFilters {
+  entityType?: RuleEntityType;
+  equipmentCategory?: string;
+  query?: string;
+  sourceSlug?: string;
+  spellLevel?: number;
+}
+
+export interface RuleEntityTypeCount {
+  count: number;
+  entityType: RuleEntityType;
+}
+
+export interface RuleMechanicReadModel {
+  data: Record<string, unknown>;
+  mechanicType: string;
+}
+
+export interface RuleSummary {
+  contentCategory: RulesContentCategory;
+  description: string;
+  entityType: RuleEntityType;
+  id: string;
+  name: string;
+  slug: string;
+  sourceAbbreviation: string;
+  sourceName: string;
+  sourceSlug: string;
+  tags: string[];
+}
+
+export interface RuleDetail extends RuleSummary {
+  mechanics: RuleMechanicReadModel[];
+  provenance: {
+    originalPath?: string;
+    ruleType?: string;
+    source?: string;
+    srdVersion?: string;
+  } | null;
 }

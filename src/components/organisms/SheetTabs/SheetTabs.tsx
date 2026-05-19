@@ -16,8 +16,9 @@ export const SheetTabs = ({ activeTab, characterSlug }: SheetTabsProps) => {
           class="sheet-tab"
           data-tab-id={tab.id}
           data-state={tab.id === activeTab ? "active" : "idle"}
-          href={`/sheet/${characterSlug}/tabs/${tab.id}`}
+          href={`/sheet/${characterSlug}/${tab.id}`}
           hx-get={`/sheet/${characterSlug}/tabs/${tab.id}`}
+          hx-push-url={`/sheet/${characterSlug}/${tab.id}`}
           hx-swap="outerHTML"
           hx-target="#sheet-tab-panel"
           role="tab"

@@ -38,6 +38,7 @@ Epics and tickets share one numbering sequence:
 - `sheet-0001` is the first epic.
 - The first ticket generated from that epic is `sheet-0002`.
 - Later epics continue the same pattern for their project prefix.
+- Reserved roadmap blocks can be used when several future epics need unambiguous ordering. The current reserved blocks are `sheet-0020` for SRD/rules, `sheet-0030` for Railway deployment, and `sheet-0040` for Hyper-Dank adoption.
 
 The review loop is:
 

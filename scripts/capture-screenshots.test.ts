@@ -48,6 +48,20 @@ describe("sheet screenshot targets", () => {
         theme: "light",
       },
       {
+        fileName: "rules-spells.png",
+        label: "Rules spell list",
+        path: "/rules?type=spell&level=1",
+        role: "player",
+        theme: "light",
+      },
+      {
+        fileName: "rules-bless.png",
+        label: "Rules Bless detail",
+        path: "/rules/spell/bless",
+        role: "player",
+        theme: "light",
+      },
+      {
         fileName: "lynott-edited-sheet.png",
         label: "Lynott edited sheet",
         path: "/sheet/lynott",

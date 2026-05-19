@@ -1,6 +1,7 @@
 #!/usr/bin/env bun
 import { mkdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
+import { RulesImportService } from "../src/rules";
 import { createInMemoryApp, login, requestText, startLocalServer, waitForHttp } from "./lib/local-app";
 
 export const mvpSmokeTabs = [
@@ -25,6 +26,11 @@ export async function runMvpSmoke() {
 
   try {
     await waitForHttp(`${baseUrl}/healthz`);
+    const rulesImport = await new RulesImportService(runtime.databaseRuntime.repositories.rulesSeedRepository)
+      .importFromLocalSource("docs/rules/srd-5.1-fixtures");
+    if (rulesImport.imported !== 15) {
+      throw new Error(`SRD fixture import expected 15 rules, imported ${rulesImport.imported}.`);
+    }
 
     const playerCookie = await login(baseUrl, "lynott@example.local");
     const miraCookie = await login(baseUrl, "mira@example.local");
@@ -105,6 +111,9 @@ export async function runMvpSmoke() {
         `data-tab-id="${tabId}"`,
       );
     }
+    await assertContains("rules browse", `${baseUrl}/rules?type=spell&level=1`, playerCookie, "Bless");
+    await assertContains("rule detail", `${baseUrl}/rules/spell/bless`, playerCookie, "You bless up to three creatures");
+    await assertContains("sheet rule link", `${baseUrl}/sheet/lynott/tabs/spellcasting`, playerCookie, "/rules/spell/mage-hand");
 
     const logout = await requestText(`${baseUrl}/logout`, {
       cookie: playerCookie,

@@ -3,7 +3,7 @@ export interface AccordionItem {
   controls?: unknown;
   id: string;
   meta?: string;
-  title: string;
+  title: unknown;
 }
 
 interface AccordionProps {

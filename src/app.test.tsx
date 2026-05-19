@@ -3,6 +3,7 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { createApp } from "./app";
 import { AuthService, PasswordService, SessionService } from "./auth";
 import { createSqliteDatabase, type SqliteDatabaseRuntime } from "./db";
+import { RulesImportService } from "./rules";
 
 let runtime: SqliteDatabaseRuntime | undefined;
 
@@ -115,6 +116,7 @@ describe("createApp", () => {
     expect(response.headers.get("content-type")).toContain("text/html");
     expect(html).toContain("<title>Lynott Magulbisson - Character Sheet</title>");
     expect(html).toContain('id="site-header"');
+    expect(html).toContain('<a href="/characters">Characters</a>');
     expect(html).toContain('id="sheet-header"');
     expect(html).toContain('id="sheet-tabs"');
     expect(html).toContain('id="sheet-tab-workspace"');
@@ -162,6 +164,82 @@ describe("createApp", () => {
     expect(html).toContain("<h2>Spellcasting</h2>");
     expect(html).toContain("Mage Hand");
     expect(html).toContain("1st-level spell slots");
+    expect(html).toContain('href="/rules/spell/mage-hand"');
+  });
+
+  test("serves canonical sheet tab pages for refreshable navigation", async () => {
+    const { app, sessionService } = createTestApp("Character Sheet");
+    const session = sessionService.createSession("user_lynott_player");
+    const response = await app.request("/sheet/lynott/actions", {
+      headers: { cookie: session.cookie },
+    });
+    const html = await response.text();
+    const missing = await app.request("/sheet/lynott/unknown", {
+      headers: { cookie: session.cookie },
+    });
+
+    expect(response.status).toBe(200);
+    expect(html).toContain("<title>Lynott Magulbisson - Character Sheet</title>");
+    expect(html).toContain('data-tab-id="actions"');
+    expect(html).toContain('hx-push-url="/sheet/lynott/actions"');
+    expect(html).toContain("Available actions");
+    expect(missing.status).toBe(404);
+  });
+
+  test("serves authenticated rules browsing and detail pages", async () => {
+    const { app, sessionService } = createTestApp("Character Sheet");
+    const session = sessionService.createSession("user_lynott_player");
+    const importer = new RulesImportService(runtime!.repositories.rulesSeedRepository);
+    await importer.importFromLocalSource("docs/rules/srd-5.1-fixtures");
+
+    const unauthenticated = await app.request("/rules");
+    const list = await app.request("/rules?type=spell&level=1&q=bless", {
+      headers: { cookie: session.cookie },
+    });
+    const listHtml = await list.text();
+    const classList = await app.request("/rules?type=class&level=1&equipment=armour", {
+      headers: { cookie: session.cookie },
+    });
+    const classListHtml = await classList.text();
+    const detail = await app.request("/rules/spell/bless", {
+      headers: { cookie: session.cookie },
+    });
+    const detailHtml = await detail.text();
+    const typeRedirect = await app.request("/rules/spell", {
+      headers: { cookie: session.cookie },
+    });
+    const missing = await app.request("/rules/spell/missing", {
+      headers: { cookie: session.cookie },
+    });
+
+    expect(unauthenticated.status).toBe(303);
+    expect(unauthenticated.headers.get("location")).toBe("/login");
+    expect(list.status).toBe(200);
+    expect(listHtml).toContain("<h1 id=\"rules-heading\" class=\"panel-heading\">Rules</h1>");
+    expect(listHtml).toContain("Bless");
+    expect(listHtml).toContain("SRD 5.1");
+    expect(listHtml).toContain("SRD");
+    expect(listHtml).not.toContain("Mage Hand");
+    expect(classList.status).toBe(200);
+    expect(classListHtml).toContain("Wizard");
+    expect(classListHtml).toContain('<option value="1">1</option>');
+    expect(classListHtml).toContain('<option value="armour">Armour</option>');
+    expect(detail.status).toBe(200);
+    expect(detailHtml).toContain("<h1 id=\"rules-filter-heading\" class=\"panel-heading\">Rules</h1>");
+    expect(detailHtml).toContain('<a class="rules-reset-link" href="/rules">Reset</a>');
+    expect(detailHtml).toContain('<a href="/rules?type=spell">Rules</a>');
+    expect(detailHtml).toContain("<h1 id=\"rule-detail-heading\" class=\"panel-heading\">Bless</h1>");
+    expect(detailHtml).toContain("SRD");
+    expect(detailHtml).toContain("You bless up to three creatures");
+    expect(detailHtml).toContain("<dt>Casting time</dt>");
+    expect(detailHtml).toContain("<dt>At higher levels</dt>");
+    expect(detailHtml).toContain("Source: SRD 5.1");
+    expect(detailHtml).not.toContain("CastingTime");
+    expect(detailHtml).not.toContain("HigherLevels");
+    expect(detailHtml).not.toContain("docs/rules/srd-5.1-fixtures/spells/level-1/bless.md");
+    expect(typeRedirect.status).toBe(303);
+    expect(typeRedirect.headers.get("location")).toBe("/rules?type=spell");
+    expect(missing.status).toBe(404);
   });
 
   test("updates header resources through HTMX fragments", async () => {
@@ -486,13 +564,23 @@ describe("createApp", () => {
 
     expect(playerRoster.status).toBe(200);
     expect(playerRosterHtml).toContain("Player roster");
+    expect(playerRosterHtml).toContain('<a class="action-link" href="/characters/new">Create character</a>');
+    expect(playerRosterHtml).not.toContain('name="hitPointMax"');
     expect(playerRosterHtml).toContain("Mira Voss");
+    const playerCreate = await app.request("/characters/new", {
+      headers: { cookie: playerCookie },
+    });
+    const playerCreateHtml = await playerCreate.text();
+    expect(playerCreate.status).toBe(200);
+    expect(playerCreateHtml).toContain('action="/characters"');
+    expect(playerCreateHtml).toContain('name="hitPointMax"');
     expect(createdByPlayer.status).toBe(303);
     expect(createdByPlayer.headers.get("location")).toBe("/sheet/ash_vale");
     expect(createdByGm.status).toBe(303);
     expect(createdByGm.headers.get("location")).toBe("/sheet/bran_dock");
     expect(gmRoster.status).toBe(200);
     expect(gmRosterHtml).toContain("Campaign roster");
+    expect(gmRosterHtml).toContain('/campaigns/rovnost-shadows/characters/new');
     expect(gmRosterHtml).toContain("Ash Vale");
     expect(gmRosterHtml).toContain("Bran Dock");
     expect(newSheet.status).toBe(200);
@@ -862,6 +950,39 @@ describe("createApp", () => {
     expect(outsiderAsset.status).toBe(403);
     expect(gmAsset.status).toBe(200);
     expect(gmAsset.headers.get("content-type")).toContain("image/png");
+  });
+
+  test("serves a readable fallback for missing seeded campaign asset files", async () => {
+    const { app, sessionService } = createTestApp("Character Sheet");
+    const playerCookie = sessionService.createSession("user_lynott_player").cookie;
+    const quotedAsset = runtime?.repositories.campaignContentRepository.createImageAsset({
+      altText: "A missing asset with quote characters",
+      byteSize: 0,
+      campaignId: "campaign_rovnost_shadows",
+      caption: "Regression asset.",
+      height: null,
+      mimeType: "image/png",
+      storageKey: "campaigns/rovnost-shadows/missing-quoted-title.png",
+      title: `Vallen's "marked" seal`,
+      visibility: "player",
+      width: null,
+    });
+    const response = await app.request("/campaigns/rovnost-shadows/assets/asset_skywright_sigil", {
+      headers: { cookie: playerCookie },
+    });
+    const body = await response.text();
+    const quotedResponse = await app.request(`/campaigns/rovnost-shadows/assets/${quotedAsset?.id}`, {
+      headers: { cookie: playerCookie },
+    });
+    const quotedBody = await quotedResponse.text();
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toContain("image/svg+xml");
+    expect(body).toContain("Skywright sigil");
+    expect(body).toContain("Seeded campaign image unavailable locally");
+    expect(quotedResponse.status).toBe(200);
+    expect(quotedBody).toContain("Vallen&apos;s &quot;marked&quot; seal");
+    expect(quotedBody).not.toContain(`aria-label="Vallen's "marked" seal"`);
   });
 
   test("rejects image uploads without alt text or with unsupported file types", async () => {

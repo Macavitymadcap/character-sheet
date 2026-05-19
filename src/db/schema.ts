@@ -286,6 +286,7 @@ CREATE TABLE IF NOT EXISTS rules_sources (
   slug TEXT NOT NULL UNIQUE,
   name TEXT NOT NULL,
   abbreviation TEXT NOT NULL,
+  content_category TEXT NOT NULL DEFAULT 'third_party' CHECK (content_category IN ('srd', 'local', 'third_party')),
   precedence INTEGER NOT NULL DEFAULT 0
 );
 
@@ -330,6 +331,7 @@ const migrationStatements = [
   "ALTER TABLE campaign_factions ADD COLUMN motto TEXT NOT NULL DEFAULT ''",
   "ALTER TABLE campaign_factions ADD COLUMN connections_json TEXT NOT NULL DEFAULT '[]'",
   "ALTER TABLE campaign_factions ADD COLUMN wiki_page_id TEXT REFERENCES campaign_wiki_pages(id) ON DELETE SET NULL",
+  "ALTER TABLE rules_sources ADD COLUMN content_category TEXT NOT NULL DEFAULT 'third_party'",
 ];
 
 const triggers = /* sql */ `
