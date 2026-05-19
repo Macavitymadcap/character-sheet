@@ -1,4 +1,5 @@
 import { existsSync } from "node:fs";
+import { dirname, join, normalize } from "node:path";
 import { describe, expect, test } from "bun:test";
 
 const docs = [
@@ -18,10 +19,13 @@ describe("documentation references", () => {
 
     for (const doc of docs) {
       const text = await Bun.file(doc).text();
-      for (const match of text.matchAll(/\[[^\]]+\]\((\.\/[^)#]+|docs\/[^)#]+|\/[^)#]+)\)/g)) {
-        const href = match[1]?.replace(/^\.\//, "");
+      for (const match of text.matchAll(/\[[^\]]+\]\((\.{0,2}\/[^)#]+|docs\/[^)#]+|\/[^)#]+)\)/g)) {
+        const href = match[1];
         if (!href || href.startsWith("/")) continue;
-        if (!existsSync(href)) missing.push(`${doc} -> ${href}`);
+        const resolved = href.startsWith("docs/")
+          ? href
+          : normalize(join(dirname(doc), href));
+        if (!existsSync(resolved)) missing.push(`${doc} -> ${href}`);
       }
     }
 

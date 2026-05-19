@@ -4,8 +4,8 @@ This checklist is the final local acceptance gate for the `sheet-0030` Railway r
 
 ## Preconditions
 
-- Railway runtime setup follows [Railway Hosted Rehearsal](docs/deployment/railway.md).
-- Hosted account setup follows [Hosted Account Operator Runbook](docs/operations/hosted-account-runbook.md).
+- Railway runtime setup follows [Railway Hosted Rehearsal](../deployment/railway.md).
+- Hosted account setup follows [Hosted Account Operator Runbook](./hosted-account-runbook.md).
 - Hosted assets use Railway volume storage at `CHARACTER_SHEET_ASSET_ROOT=/data/assets`.
 - Email delivery, external identity, Postgres, and Hyper-Dank package adoption remain out of scope for this epic.
 
