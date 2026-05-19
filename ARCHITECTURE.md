@@ -337,7 +337,7 @@ The minimum verification before a source-code ticket is complete:
 bun run verify
 ```
 
-The accessibility script currently checks public `/` and `/login`, player `/characters`, `/sheet/lynott`, `/rules`, `/rules/spell/bless`, `/campaigns/rovnost-shadows/wiki/factions-guide`, and `/logout`, Game Master `/campaigns/rovnost-shadows` and `/campaigns/rovnost-shadows/characters`, and admin `/admin`. The MVP smoke script renders every sheet tab fragment directly and walks the group-use flows for character creation, manual edits, notes, faction choice, SRD fixture import, rules browsing, sheet rule links, sessions, wiki, assets, and admin account preparation. The screenshot script captures sheet, roster, campaign, rules, wiki, faction, and edited-sheet states to `docs/pr-screenshots/` by default.
+The accessibility script currently checks public `/` and `/login`, player `/characters`, `/sheet/lynott`, `/rules`, `/rules/spell/bless`, `/campaigns/rovnost-shadows/wiki/factions-guide`, and `/logout`, Game Master `/campaigns/rovnost-shadows` and `/campaigns/rovnost-shadows/characters`, and admin `/admin`. The MVP smoke script renders every sheet tab fragment directly and walks the group-use flows for character creation, manual edits, notes, faction choice, SRD fixture import, rules browsing, sheet rule links, sessions, wiki, protected seeded assets, image upload, admin account preparation, and logout protection. The screenshot script captures sheet, roster, campaign, rules, wiki, faction, and edited-sheet states to `docs/pr-screenshots/` by default. [Hosted Rehearsal Acceptance](./docs/operations/hosted-rehearsal-acceptance.md) records the final `sheet-0030` acceptance checklist.
 
 ## Pipeline
 
@@ -367,6 +367,6 @@ Release automation can be added after the MVP scaffold exists. The group-use MVP
 - Local password auth is in scope now; external identity providers are not.
 - Admin invite and password reset flows are local workflows without email delivery in this epic.
 - Live 5e.tools fetching is out of scope; local imports are available through `bun run import:rules`, and `sheet-0020` expanded that path to the full SRD 5.1 local corpus.
-- Character deletion, wiki-management polish, image-management polish, faction-management UI, production secrets, Postgres, email delivery, and Hyper-Dank adoption are deferred to later epics. Railway deployment is the focus of `sheet-0030`.
+- Character deletion, campaign subpage splitting (`sheet-0037`), wiki-management polish, image-management polish, faction-management UI, production secrets, Postgres, email delivery, and Hyper-Dank adoption are deferred to later epics. Railway deployment is the focus of `sheet-0030`.
 - British English is required across copy, docs, code naming, and CSS variables.
 - The first implementation sequence is documentation and tickets, then source code through accepted tickets.

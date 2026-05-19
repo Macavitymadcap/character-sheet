@@ -5,9 +5,11 @@ const docs = [
   "README.md",
   "ARCHITECTURE.md",
   "CONTRIBUTING.md",
+  "docs/operations/hosted-rehearsal-acceptance.md",
   "docs/operations/hosted-account-runbook.md",
   "docs/deployment/railway.md",
   "docs/tickets/sheet-0019.md",
+  "docs/tickets/sheet-0037.md",
 ];
 
 describe("documentation references", () => {
@@ -75,5 +77,19 @@ describe("documentation references", () => {
     expect(runbook).toContain("/password-reset/<token>");
     expect(runbook).toContain("The app prevents disabling the last active admin.");
     expect(runbook).toContain("Admins can manage accounts, invites, and reset tokens, but they do not get sheet play-edit access by default.");
+  });
+
+  test("hosted rehearsal acceptance documents final verification coverage and follow-ups", async () => {
+    const acceptance = await Bun.file("docs/operations/hosted-rehearsal-acceptance.md").text();
+    const readme = await Bun.file("README.md").text();
+    const architecture = await Bun.file("ARCHITECTURE.md").text();
+
+    expect(readme).toContain("[Hosted Rehearsal Acceptance](./docs/operations/hosted-rehearsal-acceptance.md)");
+    expect(architecture).toContain("[Hosted Rehearsal Acceptance](./docs/operations/hosted-rehearsal-acceptance.md)");
+    expect(acceptance).toContain("bun run verify");
+    expect(acceptance).toContain("protected seeded assets");
+    expect(acceptance).toContain("Game Master campaign images");
+    expect(acceptance).toContain("sheet-0037");
+    expect(acceptance).toContain("Campaign Density Decision");
   });
 });

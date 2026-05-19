@@ -80,6 +80,7 @@ SQLite database files and sidecar files should remain ignored by Git.
 
 For Railway rehearsal setup, including hosted values for these variables, see [Railway Hosted Rehearsal](./docs/deployment/railway.md).
 For manual hosted user preparation, invite handoff, and password-reset handoff, see [Hosted Account Operator Runbook](./docs/operations/hosted-account-runbook.md).
+For the final local and hosted browser acceptance checklist, see [Hosted Rehearsal Acceptance](./docs/operations/hosted-rehearsal-acceptance.md).
 
 Local seed users are available for development:
 
@@ -115,7 +116,7 @@ bun run typecheck
 bun run verify
 ```
 
-`bun run verify` runs typecheck, component and route tests, documentation reference checks, accessibility checks, the group-use MVP smoke workflow, and screenshot capture in sequence.
+`bun run verify` runs typecheck, component and route tests, documentation reference checks, accessibility checks, the group-use MVP smoke workflow, and screenshot capture in sequence. It is the local acceptance gate for the first hosted rehearsal.
 
 `bun run hosted:data -- migrate` applies the SQLite schema without seed data, which is what normal hosted startup relies on. `prepare`, `backup`, and `restore` are reserved for hosted rehearsal operations and are documented in [Railway Hosted Rehearsal](./docs/deployment/railway.md).
 
@@ -123,7 +124,7 @@ Hosted account setup stays manual for this epic. Admin-created invite and passwo
 
 `bun run test:a11y` starts an in-memory app on an available local port and runs Pa11y against public `/` and `/login`, player `/characters`, `/sheet/lynott`, `/rules`, `/rules/spell/bless`, `/campaigns/rovnost-shadows/wiki/factions-guide`, and `/logout`, Game Master `/campaigns/rovnost-shadows` and `/campaigns/rovnost-shadows/characters`, and admin `/admin`.
 
-`bun run smoke:mvp` starts an in-memory app and walks the seeded group-use workflow: player login, roster character creation, manual sheet editing, resource mutation, player notes, faction selection, every sheet tab fragment, SRD fixture import, rules browsing, sheet rule links, logout protection, Game Master roster creation, campaign session creation, wiki reads and writes, image upload, and admin invite/password-reset preparation.
+`bun run smoke:mvp` starts an in-memory app and walks the seeded group-use workflow: player login, roster character creation, manual sheet editing, resource mutation, player notes, faction selection, every sheet tab fragment, SRD fixture import, rules browsing, sheet rule links, logout protection, Game Master roster creation, campaign session creation, wiki reads and writes, protected seeded asset reads, image upload, and admin invite/password-reset preparation.
 
 `bun run screenshots:sheet` captures Lynott's sheet in light and dark mode, the Background tab faction picker, the player roster, the Game Master campaign page, rules list/detail pages, a wiki page with image references, and an edited sheet state. Screenshots are written to `docs/pr-screenshots/` by default, which is ignored by Git. Set `SCREENSHOT_DIR` to write them elsewhere.
 
@@ -148,7 +149,7 @@ Signed-in users can browse imported rules at `/rules`, filter by type, spell lev
 
 ## Deployment Readiness
 
-The current app is ready for fresh local checkout, seed, verification, and table-use rehearsal with SQLite, local asset storage, and imported SRD 5.1 rules. `sheet-0020` completed the SRD rules roadmap slice. `sheet-0030` is active for Railway deployment and hosted rehearsal; the first runtime configuration lives in [`railway.json`](./railway.json), with service setup documented in [Railway Hosted Rehearsal](./docs/deployment/railway.md). The roadmap still reserves `sheet-0040` for Hyper-Dank package adoption.
+The current app is ready for fresh local checkout, seed, verification, Railway deployment rehearsal, and table-use rehearsal with SQLite, Railway volume-backed asset storage, manual hosted account handoff, and imported SRD 5.1 rules. `sheet-0020` completed the SRD rules roadmap slice. `sheet-0030` is the active Railway deployment epic; the first runtime configuration lives in [`railway.json`](./railway.json), with service setup documented in [Railway Hosted Rehearsal](./docs/deployment/railway.md) and final acceptance in [Hosted Rehearsal Acceptance](./docs/operations/hosted-rehearsal-acceptance.md). `sheet-0037` captures campaign subpage splitting after the rehearsal, and the roadmap still reserves `sheet-0040` for Hyper-Dank package adoption.
 
 ## TDD Approach
 
@@ -199,3 +200,4 @@ Development tickets should be implemented tests first wherever the boundary is t
 - [Ticket sheet-0034](./docs/tickets/sheet-0034.md)
 - [Ticket sheet-0035](./docs/tickets/sheet-0035.md)
 - [Ticket sheet-0036](./docs/tickets/sheet-0036.md)
+- [Ticket sheet-0037](./docs/tickets/sheet-0037.md)

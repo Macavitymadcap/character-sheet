@@ -24,3 +24,8 @@ Add the final hosted-rehearsal smoke, accessibility, screenshot, and documentati
 - Campaign page density has been reviewed for remote table use, with any required subpage split captured as a named follow-up.
 - README and architecture docs describe the deployment state and remaining deferred epics.
 - `bun run verify` passes.
+
+## Completion Notes
+
+- [Hosted Rehearsal Acceptance](../operations/hosted-rehearsal-acceptance.md) is the final local and manual hosted checklist.
+- The campaign page is acceptable for the first hosted rehearsal, with the longer-term split captured as `sheet-0037`.
