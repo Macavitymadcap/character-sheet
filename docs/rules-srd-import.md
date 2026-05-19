@@ -9,11 +9,11 @@ structured JSON, and writes structured rules into SQLite through `RulesImportSer
 
 ## Source Layout
 
-The full SRD corpus should live under a local folder named `docs/rules/srd-5.1/` when the corpus is
-added. `sheet-0021` adds `docs/rules/srd-5.1-fixtures/` as a tiny contract fixture, not as the full
-rules source.
+The full SRD corpus lives under `docs/rules/srd-5.1/`. `docs/rules/srd-5.1-fixtures/` is a tiny
+contract fixture, not the full rules source.
 
-Expected folders are grouped by rule type:
+The committed corpus is structured JSON generated from the CC-BY SRD conversion. Markdown corpus
+folders, when used for hand-maintained additions, should be grouped by rule type:
 
 ```text
 docs/rules/srd-5.1/

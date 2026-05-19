@@ -101,6 +101,8 @@ and obvious local setup gaps before the roadmap moves on to Railway deployment i
   response.
 - Rule sources now carry a content category (`srd`, `local`, or `third_party`) so SRD imports can
   coexist with Lynott's current non-SRD rules without mislabelling or deleting them.
+- Added the local SRD 5.1 corpus under `docs/rules/srd-5.1/` with attribution, and added importer
+  acceptance coverage for the full corpus rather than the fixture folder alone.
 - Full inline edit-form replacement, dice popover placement, campaign subpage splitting, and deeper
   Mira SRD automation remain implementation follow-ups if the review asks for a larger hardening
   slice before the epic lands.

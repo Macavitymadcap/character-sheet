@@ -24,9 +24,8 @@ player-experience hardening pass in `sheet-0029`.
 
 ## Implementation Notes
 
-- Final verification previously used the SRD fixture corpus as a parser-contract stand-in. That is
-  not sufficient for the epic merge to `main`; the actual local corpus must be added under
-  `docs/rules/srd-5.1/` and imported idempotently before this epic is accepted as full SRD.
+- Final verification now imports the actual local corpus under `docs/rules/srd-5.1/` idempotently.
+  The SRD fixture corpus remains only a parser-contract stand-in for targeted tests.
 - README and architecture docs now describe rules browsing, sheet rule links, verification coverage,
   and the remaining full-corpus follow-up boundary.
 - Railway remains deferred to `sheet-0030`; Hyper-Dank adoption remains deferred to `sheet-0040`.

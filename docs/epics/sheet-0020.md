@@ -67,9 +67,9 @@ hosted asset storage, email delivery, and Hyper-Dank package adoption are delibe
 | `sheet-0028` | Complete SRD import verification, acceptance notes, and follow-up boundaries. |
 | `sheet-0029` | Harden the SRD player experience across mobile sheets, rules details, seeded characters, and campaign surfaces. |
 
-`sheet-0029` also carries the final acceptance gate for this epic: the merge to `main` should not
-claim full SRD delivery until the actual local `docs/rules/srd-5.1/` corpus is present, imported,
-and verified. Fixture-only import remains a parser contract, not full SRD acceptance.
+`sheet-0029` also carries the final acceptance gate for this epic: the actual local
+`docs/rules/srd-5.1/` corpus must be present, imported, and verified. Fixture-only import remains a
+parser contract, not full SRD acceptance.
 
 ## Branch Strategy
 

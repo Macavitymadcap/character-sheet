@@ -221,6 +221,37 @@ describe("rules importer", () => {
     }
   });
 
+  test("imports the full local SRD 5.1 corpus from structured JSON", async () => {
+    let runtime: SqliteDatabaseRuntime | undefined;
+
+    try {
+      runtime = createSqliteDatabase({ path: ":memory:" });
+      const importer = new RulesImportService(runtime.repositories.rulesSeedRepository);
+      const result = await importer.importFromLocalSource("docs/rules/srd-5.1");
+
+      expect(result.imported).toBeGreaterThan(2000);
+      expect(result.skippedFiles).toEqual(["docs/rules/srd-5.1/ATTRIBUTION.txt"]);
+      expect(result.sourceCounts).toEqual({ "srd-5-1": result.imported });
+      expect(result.entities.every((entity) => entity.source.contentCategory === "srd")).toBe(
+        true,
+      );
+      expect(result.entities.map((entity) => `${entity.entityType}:${entity.slug}`)).toEqual(
+        expect.arrayContaining([
+          "action:dash",
+          "background:acolyte",
+          "class:cleric",
+          "condition:grappled",
+          "equipment:armor",
+          "feat:grappler",
+          "species:human",
+          "spell:fireball",
+        ]),
+      );
+    } finally {
+      runtime?.close();
+    }
+  });
+
   test("extracts SRD parser metadata needed for filtering and sheet links", async () => {
     const bless = parseRuleMarkdown(
       "docs/rules/srd-5.1-fixtures/spells/level-1/bless.md",
