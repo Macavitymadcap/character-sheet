@@ -1,4 +1,4 @@
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, test } from "bun:test";
@@ -27,12 +27,17 @@ describe("hosted data operations", () => {
   test("prepares a fresh hosted-style database with seeded group data", async () => {
     const dir = await createTempDir();
     const databasePath = join(dir, "character-sheet.sqlite3");
+    const assetRoot = join(dir, "assets");
 
-    await prepareHostedData({ databasePath });
+    await prepareHostedData({ assetRoot, databasePath });
 
     const database = new Database(databasePath, { readonly: true });
     expect(database.query("select count(*) as count from users").get()).toEqual({ count: 4 });
     expect(database.query("select count(*) as count from characters").get()).toEqual({ count: 2 });
+    expect(database.query("select storage_key as storageKey from campaign_image_assets where id = ?").get("asset_skywright_sigil"))
+      .toEqual({ storageKey: "campaigns/rovnost-shadows/skywright-sigil.png" });
+    expect((await stat(join(assetRoot, "campaigns/rovnost-shadows/skywright-sigil.png"))).size).toBeGreaterThan(0);
+    expect((await stat(join(assetRoot, "campaigns/rovnost-shadows/astril-map.webp"))).size).toBeGreaterThan(0);
     database.close();
   });
 

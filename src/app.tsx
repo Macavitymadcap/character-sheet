@@ -1,6 +1,7 @@
 import { mkdir } from "node:fs/promises";
 import { dirname } from "node:path";
 import { Hono, type Context } from "hono";
+import { assetStorageRoot } from "./assets";
 import { AuthService, requireCampaignAccess, requireRole, requireSheetAccess, SessionService } from "./auth";
 import { isCampaignWikiPageType, normaliseGoogleDocsMarkdown } from "./campaigns/wiki";
 import { isRestType, planRestResourceUpdates } from "./characters/rests";
@@ -2085,10 +2086,6 @@ function imageExtensionForMimeType(mimeType: string) {
   if (mimeType === "image/webp") return "webp";
 
   return null;
-}
-
-function assetStorageRoot() {
-  return process.env.CHARACTER_SHEET_ASSET_ROOT || "data/assets";
 }
 
 function missingSeedAssetSvg(title: string) {

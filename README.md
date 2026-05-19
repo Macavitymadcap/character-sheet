@@ -74,7 +74,7 @@ Current environment variables:
 | `HOST` | `0.0.0.0` | HTTP host used by Bun. |
 | `DB_PATH` | `character-sheet.sqlite3` | SQLite database file path. |
 | `SESSION_SECRET` | local development secret | Secret used for signed session cookies. |
-| `CHARACTER_SHEET_ASSET_ROOT` | `data/assets` | Local root for app-managed campaign image assets. |
+| `CHARACTER_SHEET_ASSET_ROOT` | `data/assets` | Root for app-managed campaign image assets; use `/data/assets` on Railway. |
 
 SQLite database files and sidecar files should remain ignored by Git.
 
@@ -90,7 +90,7 @@ Local seed users are available for development:
 | Game Master | `gm@example.local` | `password123` |
 | Admin | `admin@example.local` | `password123` |
 
-The seeded Rovnost campaign also includes initial roster, wiki, image asset, session, faction, and character faction-choice records. Image assets store app-managed relative storage keys such as `campaigns/rovnost-shadows/cover.png`; absolute local source paths are rejected by the schema.
+The seeded Rovnost campaign also includes initial roster, wiki, image asset, session, faction, and character faction-choice records. Image assets store app-managed relative storage keys such as `campaigns/rovnost-shadows/cover.png`; absolute local source paths are rejected by the schema. Hosted preparation writes deterministic placeholder files for seeded campaign assets under `CHARACTER_SHEET_ASSET_ROOT`, and missing seeded files render a readable protected fallback instead of a broken image.
 
 ## Scripts
 
