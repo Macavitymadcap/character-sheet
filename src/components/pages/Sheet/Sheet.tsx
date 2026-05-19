@@ -47,6 +47,11 @@ export const SheetPage = ({
       <div class="shell sheet-shell">
         <SiteHeader appName={appName} currentSection="sheet" user={user} />
         <main class="sheet-main" aria-labelledby="sheet-heading">
+          <nav class="breadcrumb-nav" aria-label="Breadcrumb">
+            <a href="/characters">Characters</a>
+            <span aria-hidden="true">/</span>
+            <span>{sheet.name}</span>
+          </nav>
           <SheetTabWorkspace
             activeTab={activeTab}
             backgroundEntries={backgroundEntries}

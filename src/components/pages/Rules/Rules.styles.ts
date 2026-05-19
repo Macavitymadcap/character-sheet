@@ -45,7 +45,8 @@ export const rulesStyles = /* css */ `
   width: 100%;
 }
 
-.rules-filter-form button {
+.rules-filter-form button,
+.rules-reset-link {
   background: var(--action-background-colour);
   border: 1px solid var(--action-border-colour);
   border-radius: 0.4rem;
@@ -54,6 +55,14 @@ export const rulesStyles = /* css */ `
   font-weight: 850;
   min-height: 2.2rem;
   padding: 0.35rem 0.65rem;
+  text-align: center;
+}
+
+.rules-reset-link {
+  align-content: center;
+  background: var(--stat-background-colour);
+  color: var(--heading-colour);
+  text-decoration: none;
 }
 
 .rules-results-heading,

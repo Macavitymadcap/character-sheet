@@ -21,6 +21,22 @@ describe("CharactersPage", () => {
     expect(html).toContain("No characters yet.");
   });
 
+  test("renders a separate create link when the roster hides the form", () => {
+    const html = render(
+      <CharactersPage
+        appName="Character Sheet"
+        characters={[]}
+        mode="player"
+        showCreateForm={false}
+        user={{ displayName: "Mira Player", id: "user_mira_player", role: "player" }}
+      />,
+    );
+
+    expect(html).toContain('<a class="action-link" href="/characters/new">Create character</a>');
+    expect(html).not.toContain('name="hitPointMax"');
+    expect(html).toContain("No characters yet.");
+  });
+
   test("renders Game Master roster owner choices", () => {
     const html = render(
       <CharactersPage

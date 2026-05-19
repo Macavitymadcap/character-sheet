@@ -114,7 +114,13 @@ export const createApp = (dependencies: AppDependencies) => {
     if (!rule) return context.text("Not found", 404);
 
     return context.html(
-      <RulesDetailPage appName={dependencies.appName} rule={rule} user={session.user} />,
+      <RulesDetailPage
+        appName={dependencies.appName}
+        counts={dependencies.rulesRepository.listRuleEntityTypes()}
+        filters={parseRuleFilters(context)}
+        rule={rule}
+        user={session.user}
+      />,
     );
   });
 
@@ -297,7 +303,14 @@ export const createApp = (dependencies: AppDependencies) => {
     if (!asset) return context.text("Not found", 404);
 
     const file = Bun.file(`${assetStorageRoot()}/${asset.storageKey}`);
-    if (!(await file.exists())) return context.text("Not found", 404);
+    if (!(await file.exists())) {
+      return new Response(missingSeedAssetSvg(asset.title), {
+        headers: {
+          "Cache-Control": "private, max-age=300",
+          "Content-Type": "image/svg+xml",
+        },
+      });
+    }
 
     return new Response(file, {
       headers: {
@@ -467,6 +480,24 @@ export const createApp = (dependencies: AppDependencies) => {
         appName={dependencies.appName}
         characters={dependencies.characterRepository.listCharactersForPlayer(session.user.id)}
         mode="player"
+        showCreateForm={false}
+        user={session.user}
+      />,
+    );
+  });
+
+  app.get("/characters/new", (context) => {
+    const session = readSession(context.req.header("cookie"));
+    const guard = requireRole(session, ["player"]);
+    const guarded = guardResponse(context, guard);
+    if (guarded) return guarded;
+    if (!session) return context.redirect("/login", 303);
+
+    return context.html(
+      <CharactersPage
+        appName={dependencies.appName}
+        characters={dependencies.characterRepository.listCharactersForPlayer(session.user.id)}
+        mode="player"
         user={session.user}
       />,
     );
@@ -498,6 +529,37 @@ export const createApp = (dependencies: AppDependencies) => {
   });
 
   app.get("/campaigns/:campaignSlug/characters", (context) => {
+    const session = readSession(context.req.header("cookie"));
+    if (!session) return context.redirect("/login", 303);
+
+    const campaign = dependencies.campaignRepository.getCampaignBySlug(
+      context.req.param("campaignSlug"),
+    );
+    if (!campaign) return context.text("Not found", 404);
+
+    const guard = requireCampaignAccess({
+      campaignId: campaign.id,
+      campaignRepository: dependencies.campaignRepository,
+      permission: "manage",
+      session,
+    });
+    const guarded = guardResponse(context, guard);
+    if (guarded) return guarded;
+
+    return context.html(
+      <CharactersPage
+        appName={dependencies.appName}
+        campaign={campaign}
+        characters={dependencies.characterRepository.listCharactersForCampaign(campaign.id)}
+        members={membersWithDisplayNames(dependencies, campaign.id)}
+        mode="game_master"
+        showCreateForm={false}
+        user={session.user}
+      />,
+    );
+  });
+
+  app.get("/campaigns/:campaignSlug/characters/new", (context) => {
     const session = readSession(context.req.header("cookie"));
     if (!session) return context.redirect("/login", 303);
 
@@ -752,6 +814,45 @@ export const createApp = (dependencies: AppDependencies) => {
     return context.html(
       <SheetPage
         activeTab="core"
+        appName={dependencies.appName}
+        backgroundEntries={dependencies.characterRepository.listBackgroundEntries(sheet.id)}
+        campaignFactions={campaignFactionsForSheet(dependencies, sheet.id)}
+        equipment={dependencies.characterRepository.listEquipment(sheet.id)}
+        factionChoice={dependencies.campaignContentRepository.getCharacterFactionChoice(sheet.id)}
+        notes={dependencies.notesRepository.listNotesForCharacter(sheet.id, session.user.role)}
+        resources={dependencies.characterRepository.listResources(sheet.id)}
+        ruleLinks={dependencies.rulesRepository.listRuleLinksForCharacter(sheet.id)}
+        sheet={sheet}
+        user={session.user}
+      />,
+    );
+  });
+
+  app.get("/sheet/:characterRef/:tabId", (context) => {
+    const session = readSession(context.req.header("cookie"));
+    if (!session) return context.redirect("/login", 303);
+
+    const characterRef = context.req.param("characterRef");
+    const sheet = getSheetByRef(characterRef);
+    if (!sheet) return context.text("Not found", 404);
+
+    const guard = requireSheetAccess({
+      campaignRepository: dependencies.campaignRepository,
+      characterId: sheet.id,
+      characterRepository: dependencies.characterRepository,
+      permission: "read",
+      session,
+    });
+    const guarded = guardResponse(context, guard);
+    if (guarded) return guarded;
+
+    const tabId = context.req.param("tabId");
+    if (!isSheetTabId(tabId)) return context.text("Not found", 404);
+    if (characterRef !== sheet.slug) return context.redirect(`/sheet/${sheet.slug}/${tabId}`, 303);
+
+    return context.html(
+      <SheetPage
+        activeTab={tabId}
         appName={dependencies.appName}
         backgroundEntries={dependencies.characterRepository.listBackgroundEntries(sheet.id)}
         campaignFactions={campaignFactionsForSheet(dependencies, sheet.id)}
@@ -1806,6 +1907,26 @@ function imageExtensionForMimeType(mimeType: string) {
 
 function assetStorageRoot() {
   return process.env.CHARACTER_SHEET_ASSET_ROOT || "data/assets";
+}
+
+function missingSeedAssetSvg(title: string) {
+  const safeTitle = escapeSvgText(title);
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-label="${safeTitle}">
+  <rect width="960" height="540" fill="#f5f1e8"/>
+  <rect x="32" y="32" width="896" height="476" rx="18" fill="none" stroke="#8f6f3f" stroke-width="6"/>
+  <text x="480" y="250" fill="#3b3126" font-family="Georgia, serif" font-size="42" font-weight="700" text-anchor="middle">${safeTitle}</text>
+  <text x="480" y="310" fill="#6d5a43" font-family="system-ui, sans-serif" font-size="24" text-anchor="middle">Seeded campaign image unavailable locally</text>
+</svg>`;
+}
+
+function escapeSvgText(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
 }
 
 function parseSheetTabId(value: unknown) {

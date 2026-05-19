@@ -81,3 +81,19 @@ and obvious local setup gaps before the roadmap moves on to Railway deployment i
 - Rules search and detail views keep players oriented and expose enough rule text and metadata for
   table use.
 - The SRD epic is ready to land as the player-value roadmap slice before `sheet-0030` begins.
+
+## Implementation Notes
+
+- Added refreshable sheet tab URLs such as `/sheet/lynott/actions` while preserving the existing
+  HTMX fragment endpoints under `/sheet/:characterRef/tabs/:tabId`.
+- Sheet tab links now push the canonical tab URL into browser history and sheet pages include a
+  breadcrumb link back to `/characters`.
+- The player and Game Master rosters now link to separate character creation routes while preserving
+  the existing POST endpoints.
+- Rules detail pages now keep the filter/search form available, include a reset action, and show a
+  breadcrumb back to the rule type list.
+- Missing seeded campaign asset files now return a readable SVG fallback instead of a broken image
+  response.
+- Full inline edit-form replacement, dice popover placement, campaign subpage splitting, and deeper
+  Mira SRD automation remain implementation follow-ups if the review asks for a larger hardening
+  slice before the epic lands.
