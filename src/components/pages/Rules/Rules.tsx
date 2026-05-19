@@ -97,8 +97,7 @@ export const RulesDetailPage = ({ appName, counts, filters, rule, user }: RulesD
           ))}
           {rule.provenance?.originalPath ? (
             <p class="rules-provenance">
-              Source: {rule.sourceAbbreviation}
-              {rule.provenance.srdVersion ? ` ${rule.provenance.srdVersion}` : ""} · {rule.provenance.originalPath}
+              Source: {formatSourceLabel(rule)}
             </p>
           ) : null}
         </Panel>
@@ -163,7 +162,7 @@ function renderMechanicData(data: Record<string, unknown>) {
           .filter(([key, value]) => key !== "description" && value !== "" && value !== null && value !== undefined)
           .map(([key, value]) => (
             <div>
-              <dt>{formatWords(key)}</dt>
+              <dt>{formatMechanicLabel(key)}</dt>
               <dd>{formatMechanicValue(value)}</dd>
             </div>
           ))}
@@ -194,6 +193,24 @@ function formatContentCategory(value: string) {
   if (value === "local") return "Local";
 
   return "Non-SRD";
+}
+
+function formatSourceLabel(rule: RuleDetail) {
+  if (rule.contentCategory === "srd") return rule.sourceAbbreviation;
+
+  return rule.sourceName;
+}
+
+function formatMechanicLabel(value: string) {
+  const labels: Record<string, string> = {
+    castingTime: "Casting time",
+    higherLevels: "At higher levels",
+    requiresAttunement: "Requires attunement",
+    skillProficiencies: "Skill proficiencies",
+    toolProficiencies: "Tool proficiencies",
+  };
+
+  return labels[value] ?? formatWords(value.replace(/([a-z0-9])([A-Z])/g, "$1 $2"));
 }
 
 function formatWords(value: string) {

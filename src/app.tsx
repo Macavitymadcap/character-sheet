@@ -1571,11 +1571,17 @@ function parseRuleFilters(context: Context): RuleSearchFilters {
   const level = Number(context.req.query("level") ?? NaN);
   const equipmentCategory = parseFormString(context.req.query("equipment"));
   const query = parseFormString(context.req.query("q"));
+  const spellLevel = Number.isInteger(level) && (!entityType || entityType === "spell")
+    ? level
+    : undefined;
+  const normalisedEquipmentCategory = equipmentCategory && (!entityType || entityType === "equipment")
+    ? equipmentCategory
+    : "";
 
   return {
     ...(entityType ? { entityType } : {}),
-    ...(equipmentCategory ? { equipmentCategory } : {}),
-    ...(Number.isInteger(level) ? { spellLevel: level } : {}),
+    ...(normalisedEquipmentCategory ? { equipmentCategory: normalisedEquipmentCategory } : {}),
+    ...(spellLevel !== undefined ? { spellLevel } : {}),
     ...(query ? { query } : {}),
   };
 }

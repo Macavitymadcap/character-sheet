@@ -197,6 +197,10 @@ describe("createApp", () => {
       headers: { cookie: session.cookie },
     });
     const listHtml = await list.text();
+    const classList = await app.request("/rules?type=class&level=1&equipment=armour", {
+      headers: { cookie: session.cookie },
+    });
+    const classListHtml = await classList.text();
     const detail = await app.request("/rules/spell/bless", {
       headers: { cookie: session.cookie },
     });
@@ -216,6 +220,10 @@ describe("createApp", () => {
     expect(listHtml).toContain("SRD 5.1");
     expect(listHtml).toContain("SRD");
     expect(listHtml).not.toContain("Mage Hand");
+    expect(classList.status).toBe(200);
+    expect(classListHtml).toContain("Wizard");
+    expect(classListHtml).toContain('<option value="1">1</option>');
+    expect(classListHtml).toContain('<option value="armour">Armour</option>');
     expect(detail.status).toBe(200);
     expect(detailHtml).toContain("<h1 id=\"rules-filter-heading\" class=\"panel-heading\">Rules</h1>");
     expect(detailHtml).toContain('<a class="rules-reset-link" href="/rules">Reset</a>');
@@ -223,7 +231,12 @@ describe("createApp", () => {
     expect(detailHtml).toContain("<h1 id=\"rule-detail-heading\" class=\"panel-heading\">Bless</h1>");
     expect(detailHtml).toContain("SRD");
     expect(detailHtml).toContain("You bless up to three creatures");
-    expect(detailHtml).toContain("docs/rules/srd-5.1-fixtures/spells/level-1/bless.md");
+    expect(detailHtml).toContain("<dt>Casting time</dt>");
+    expect(detailHtml).toContain("<dt>At higher levels</dt>");
+    expect(detailHtml).toContain("Source: SRD 5.1");
+    expect(detailHtml).not.toContain("CastingTime");
+    expect(detailHtml).not.toContain("HigherLevels");
+    expect(detailHtml).not.toContain("docs/rules/srd-5.1-fixtures/spells/level-1/bless.md");
     expect(typeRedirect.status).toBe(303);
     expect(typeRedirect.headers.get("location")).toBe("/rules?type=spell");
     expect(missing.status).toBe(404);
