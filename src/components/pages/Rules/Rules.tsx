@@ -14,6 +14,8 @@ interface RulesPageProps {
 
 interface RulesDetailPageProps {
   appName: string;
+  counts: RuleEntityTypeCount[];
+  filters: RuleSearchFilters;
   rule: RuleDetail;
   user: Pick<AuthUser, "displayName" | "role">;
 }
@@ -28,46 +30,7 @@ export const RulesPage = ({ appName, counts, filters, rules, user }: RulesPagePr
             <p class="rules-kicker">SRD 5.1</p>
             <h1 id="rules-heading" class="panel-heading">Rules</h1>
           </div>
-          <form class="rules-filter-form" action="/rules" method="get">
-            <label>
-              Search
-              <input name="q" type="search" value={filters.query ?? ""} />
-            </label>
-            <label>
-              Type
-              <select name="type">
-                <option value="">All</option>
-                {counts.map((count) => (
-                  <option value={count.entityType} selected={filters.entityType === count.entityType}>
-                    {formatRuleType(count.entityType)} ({count.count})
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Spell level
-              <select name="level">
-                <option value="">Any</option>
-                {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((level) => (
-                  <option value={String(level)} selected={filters.spellLevel === level}>
-                    {level === 0 ? "Cantrip" : String(level)}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Equipment
-              <select name="equipment">
-                <option value="">Any</option>
-                {["armour", "weapon", "adventuring gear", "equipment"].map((category) => (
-                  <option value={category} selected={filters.equipmentCategory === category}>
-                    {formatWords(category)}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <button type="submit">Filter</button>
-          </form>
+          <RulesFilterForm counts={counts} filters={filters} />
         </Panel>
         <Panel labelledBy="rules-results-heading">
           <div class="rules-results-heading">
@@ -101,13 +64,24 @@ export const RulesPage = ({ appName, counts, filters, rules, user }: RulesPagePr
   </Layout>
 );
 
-export const RulesDetailPage = ({ appName, rule, user }: RulesDetailPageProps) => (
+export const RulesDetailPage = ({ appName, counts, filters, rule, user }: RulesDetailPageProps) => (
   <Layout title={`${rule.name} - Rules - ${appName}`}>
     <div class="shell rules-shell">
       <SiteHeader appName={appName} currentSection="rules" user={user} />
       <main class="rules-main" aria-labelledby="rule-detail-heading">
+        <Panel labelledBy="rules-filter-heading">
+          <div class="rules-heading">
+            <p class="rules-kicker">SRD 5.1</p>
+            <h1 id="rules-filter-heading" class="panel-heading">Rules</h1>
+          </div>
+          <RulesFilterForm counts={counts} filters={{ ...filters, entityType: filters.entityType ?? rule.entityType }} />
+        </Panel>
         <Panel labelledBy="rule-detail-heading">
-          <a class="action-link" href={`/rules?type=${rule.entityType}`}>Back to rules</a>
+          <nav class="breadcrumb-nav" aria-label="Breadcrumb">
+            <a href={`/rules?type=${rule.entityType}`}>Rules</a>
+            <span aria-hidden="true">/</span>
+            <span>{rule.name}</span>
+          </nav>
           <p class="rules-kicker">{rule.sourceName}</p>
           <h1 id="rule-detail-heading" class="panel-heading">{rule.name}</h1>
           <div class="rules-tag-list">
@@ -129,6 +103,50 @@ export const RulesDetailPage = ({ appName, rule, user }: RulesDetailPageProps) =
       </main>
     </div>
   </Layout>
+);
+
+const RulesFilterForm = ({ counts, filters }: { counts: RuleEntityTypeCount[]; filters: RuleSearchFilters }) => (
+  <form class="rules-filter-form" action="/rules" method="get">
+    <label>
+      Search
+      <input name="q" type="search" value={filters.query ?? ""} />
+    </label>
+    <label>
+      Type
+      <select name="type">
+        <option value="">All</option>
+        {counts.map((count) => (
+          <option value={count.entityType} selected={filters.entityType === count.entityType}>
+            {formatRuleType(count.entityType)} ({count.count})
+          </option>
+        ))}
+      </select>
+    </label>
+    <label>
+      Spell level
+      <select name="level">
+        <option value="">Any</option>
+        {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((level) => (
+          <option value={String(level)} selected={filters.spellLevel === level}>
+            {level === 0 ? "Cantrip" : String(level)}
+          </option>
+        ))}
+      </select>
+    </label>
+    <label>
+      Equipment
+      <select name="equipment">
+        <option value="">Any</option>
+        {["armour", "weapon", "adventuring gear", "equipment"].map((category) => (
+          <option value={category} selected={filters.equipmentCategory === category}>
+            {formatWords(category)}
+          </option>
+        ))}
+      </select>
+    </label>
+    <button type="submit">Filter</button>
+    <a class="rules-reset-link" href="/rules">Reset</a>
+  </form>
 );
 
 function renderMechanicData(data: Record<string, unknown>) {

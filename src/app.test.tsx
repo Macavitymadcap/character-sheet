@@ -116,6 +116,7 @@ describe("createApp", () => {
     expect(response.headers.get("content-type")).toContain("text/html");
     expect(html).toContain("<title>Lynott Magulbisson - Character Sheet</title>");
     expect(html).toContain('id="site-header"');
+    expect(html).toContain('<a href="/characters">Characters</a>');
     expect(html).toContain('id="sheet-header"');
     expect(html).toContain('id="sheet-tabs"');
     expect(html).toContain('id="sheet-tab-workspace"');
@@ -166,6 +167,25 @@ describe("createApp", () => {
     expect(html).toContain('href="/rules/spell/mage-hand"');
   });
 
+  test("serves canonical sheet tab pages for refreshable navigation", async () => {
+    const { app, sessionService } = createTestApp("Character Sheet");
+    const session = sessionService.createSession("user_lynott_player");
+    const response = await app.request("/sheet/lynott/actions", {
+      headers: { cookie: session.cookie },
+    });
+    const html = await response.text();
+    const missing = await app.request("/sheet/lynott/unknown", {
+      headers: { cookie: session.cookie },
+    });
+
+    expect(response.status).toBe(200);
+    expect(html).toContain("<title>Lynott Magulbisson - Character Sheet</title>");
+    expect(html).toContain('data-tab-id="actions"');
+    expect(html).toContain('hx-push-url="/sheet/lynott/actions"');
+    expect(html).toContain("Available actions");
+    expect(missing.status).toBe(404);
+  });
+
   test("serves authenticated rules browsing and detail pages", async () => {
     const { app, sessionService } = createTestApp("Character Sheet");
     const session = sessionService.createSession("user_lynott_player");
@@ -196,6 +216,9 @@ describe("createApp", () => {
     expect(listHtml).toContain("SRD 5.1");
     expect(listHtml).not.toContain("Mage Hand");
     expect(detail.status).toBe(200);
+    expect(detailHtml).toContain("<h1 id=\"rules-filter-heading\" class=\"panel-heading\">Rules</h1>");
+    expect(detailHtml).toContain('<a class="rules-reset-link" href="/rules">Reset</a>');
+    expect(detailHtml).toContain('<a href="/rules?type=spell">Rules</a>');
     expect(detailHtml).toContain("<h1 id=\"rule-detail-heading\" class=\"panel-heading\">Bless</h1>");
     expect(detailHtml).toContain("You bless up to three creatures");
     expect(detailHtml).toContain("docs/rules/srd-5.1-fixtures/spells/level-1/bless.md");
@@ -526,13 +549,23 @@ describe("createApp", () => {
 
     expect(playerRoster.status).toBe(200);
     expect(playerRosterHtml).toContain("Player roster");
+    expect(playerRosterHtml).toContain('<a class="action-link" href="/characters/new">Create character</a>');
+    expect(playerRosterHtml).not.toContain('name="hitPointMax"');
     expect(playerRosterHtml).toContain("Mira Voss");
+    const playerCreate = await app.request("/characters/new", {
+      headers: { cookie: playerCookie },
+    });
+    const playerCreateHtml = await playerCreate.text();
+    expect(playerCreate.status).toBe(200);
+    expect(playerCreateHtml).toContain('action="/characters"');
+    expect(playerCreateHtml).toContain('name="hitPointMax"');
     expect(createdByPlayer.status).toBe(303);
     expect(createdByPlayer.headers.get("location")).toBe("/sheet/ash_vale");
     expect(createdByGm.status).toBe(303);
     expect(createdByGm.headers.get("location")).toBe("/sheet/bran_dock");
     expect(gmRoster.status).toBe(200);
     expect(gmRosterHtml).toContain("Campaign roster");
+    expect(gmRosterHtml).toContain('/campaigns/rovnost-shadows/characters/new');
     expect(gmRosterHtml).toContain("Ash Vale");
     expect(gmRosterHtml).toContain("Bran Dock");
     expect(newSheet.status).toBe(200);
@@ -902,6 +935,20 @@ describe("createApp", () => {
     expect(outsiderAsset.status).toBe(403);
     expect(gmAsset.status).toBe(200);
     expect(gmAsset.headers.get("content-type")).toContain("image/png");
+  });
+
+  test("serves a readable fallback for missing seeded campaign asset files", async () => {
+    const { app, sessionService } = createTestApp("Character Sheet");
+    const playerCookie = sessionService.createSession("user_lynott_player").cookie;
+    const response = await app.request("/campaigns/rovnost-shadows/assets/asset_skywright_sigil", {
+      headers: { cookie: playerCookie },
+    });
+    const body = await response.text();
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toContain("image/svg+xml");
+    expect(body).toContain("Skywright sigil");
+    expect(body).toContain("Seeded campaign image unavailable locally");
   });
 
   test("rejects image uploads without alt text or with unsupported file types", async () => {
