@@ -134,7 +134,7 @@ Signed-in users can browse imported rules at `/rules`, filter by type, spell lev
 
 ## Deployment Readiness
 
-The current app is ready for fresh local checkout, seed, verification, and table-use rehearsal with SQLite and local asset storage. The roadmap now reserves `sheet-0020` for full SRD 5.1 rules and functionality, `sheet-0030` for Railway deployment with seeded hosted accounts/passwords, and `sheet-0040` for Hyper-Dank package adoption.
+The current app is ready for fresh local checkout, seed, verification, and table-use rehearsal with SQLite, local asset storage, and imported SRD 5.1 rules. `sheet-0020` completed the SRD rules roadmap slice. The roadmap now reserves `sheet-0030` for Railway deployment with seeded hosted accounts/passwords and `sheet-0040` for Hyper-Dank package adoption.
 
 ## TDD Approach
 
@@ -177,3 +177,11 @@ Development tickets should be implemented tests first wherever the boundary is t
 - [Ticket sheet-0026](./docs/tickets/sheet-0026.md)
 - [Ticket sheet-0027](./docs/tickets/sheet-0027.md)
 - [Ticket sheet-0028](./docs/tickets/sheet-0028.md)
+- [Ticket sheet-0029](./docs/tickets/sheet-0029.md)
+- [Epic sheet-0030](./docs/epics/sheet-0030.md)
+- [Ticket sheet-0031](./docs/tickets/sheet-0031.md)
+- [Ticket sheet-0032](./docs/tickets/sheet-0032.md)
+- [Ticket sheet-0033](./docs/tickets/sheet-0033.md)
+- [Ticket sheet-0034](./docs/tickets/sheet-0034.md)
+- [Ticket sheet-0035](./docs/tickets/sheet-0035.md)
+- [Ticket sheet-0036](./docs/tickets/sheet-0036.md)
