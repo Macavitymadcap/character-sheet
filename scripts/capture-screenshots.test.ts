@@ -63,11 +63,19 @@ describe("sheet screenshot targets", () => {
       },
       {
         fileName: "lynott-edited-sheet.png",
-        label: "Lynott edited sheet",
+        label: "Lynott edited sheet light",
         path: "/sheet/lynott",
         prepare: "edited-sheet",
         role: "player",
         theme: "light",
+      },
+      {
+        fileName: "lynott-edited-sheet-dark.png",
+        label: "Lynott edited sheet dark",
+        path: "/sheet/lynott",
+        prepare: "edited-sheet",
+        role: "player",
+        theme: "dark",
       },
     ]);
   });
