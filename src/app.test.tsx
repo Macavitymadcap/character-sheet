@@ -342,6 +342,65 @@ describe("createApp", () => {
     expect(await equipment.text()).toContain("Clockwork pistol");
   });
 
+  test("serves focused skill and proficiency edit fragments", async () => {
+    const { app, sessionService } = createTestApp("Character Sheet");
+    const cookie = sessionService.createSession("user_lynott_player").cookie;
+    const headers = { Cookie: cookie };
+
+    const skillEdit = await app.request("/sheet/lynott/skills/arcana/edit", { headers });
+    const skillCancel = await app.request("/sheet/lynott/skills/arcana", { headers });
+    const proficiencyEdit = await app.request(
+      "/sheet/lynott/proficiencies/proficiency_lynott_disguise_kit/edit",
+      { headers },
+    );
+    const proficiencyCancel = await app.request(
+      "/sheet/lynott/proficiencies/proficiency_lynott_disguise_kit",
+      { headers },
+    );
+    const proficiencySave = await app.request(
+      "/sheet/lynott/proficiencies/proficiency_lynott_disguise_kit",
+      {
+        body: new URLSearchParams({ detail: "Fresh cover credentials.", name: "Disguise kit" }),
+        headers: formHeaders(cookie),
+        method: "PATCH",
+      },
+    );
+
+    expect(skillEdit.status).toBe(200);
+    expect(await skillEdit.text()).toContain('hx-patch="/sheet/lynott/skills/arcana"');
+    expect(skillCancel.status).toBe(200);
+    expect(await skillCancel.text()).toContain('hx-get="/sheet/lynott/skills/arcana/edit"');
+    expect(proficiencyEdit.status).toBe(200);
+    expect(await proficiencyEdit.text()).toContain(
+      'hx-patch="/sheet/lynott/proficiencies/proficiency_lynott_disguise_kit"',
+    );
+    expect(proficiencyCancel.status).toBe(200);
+    expect(await proficiencyCancel.text()).toContain("Disguise kit");
+    expect(proficiencySave.status).toBe(200);
+    expect(await proficiencySave.text()).toContain("Fresh cover credentials.");
+  });
+
+  test("serves focused ability edit fragments", async () => {
+    const { app, sessionService } = createTestApp("Character Sheet");
+    const cookie = sessionService.createSession("user_lynott_player").cookie;
+    const headers = { Cookie: cookie };
+
+    const abilityEdit = await app.request("/sheet/lynott/abilities/intelligence/edit", { headers });
+    const abilityCancel = await app.request("/sheet/lynott/abilities/intelligence", { headers });
+    const abilitySave = await app.request("/sheet/lynott/abilities/intelligence", {
+      body: new URLSearchParams({ saveProficient: "1", score: "20" }),
+      headers: formHeaders(cookie),
+      method: "PATCH",
+    });
+
+    expect(abilityEdit.status).toBe(200);
+    expect(await abilityEdit.text()).toContain('hx-patch="/sheet/lynott/abilities/intelligence"');
+    expect(abilityCancel.status).toBe(200);
+    expect(await abilityCancel.text()).toContain('hx-get="/sheet/lynott/abilities/intelligence/edit"');
+    expect(abilitySave.status).toBe(200);
+    expect(await abilitySave.text()).toContain("+7");
+  });
+
   test("adds custom conditions and returns dice roll fragments", async () => {
     const { app, sessionService } = createTestApp("Character Sheet");
     const session = sessionService.createSession("user_lynott_player");
@@ -670,6 +729,20 @@ describe("createApp", () => {
     expect(playerNotesHtml).not.toContain("Sergeant Kora Steelheart");
     expect(gmNotes.status).toBe(200);
     expect(gmNotesHtml).toContain("Game Master notes");
+  });
+
+  test("marks Mira's seeded cleric sheet as intentionally partial", async () => {
+    const { app, sessionService } = createTestApp("Character Sheet");
+    const miraSession = sessionService.createSession("user_mira_player");
+    const notes = await app.request("/sheet/mira-voss/tabs/notes", {
+      headers: { cookie: miraSession.cookie },
+    });
+    const notesHtml = await notes.text();
+
+    expect(notes.status).toBe(200);
+    expect(notesHtml).toContain("Seed data scope");
+    expect(notesHtml).toContain("deliberately partial human cleric seed");
+    expect(notesHtml).toContain("automatic cleric grants");
   });
 
   test("saves visible notes and keeps role-only notes protected", async () => {

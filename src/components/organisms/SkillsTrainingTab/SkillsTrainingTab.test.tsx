@@ -17,7 +17,12 @@ const sheet: CharacterSheetReadModel = {
   level: 4,
   name: "Lynott Magulbisson",
   proficiencies: [
-    { category: "tool", detail: "Expertise from Artificer.", name: "Thieves' tools" },
+    {
+      category: "tool",
+      detail: "Expertise from Artificer.",
+      id: "proficiency_lynott_thieves_tools",
+      name: "Thieves' tools",
+    },
     { category: "tool", detail: "Special Operations background.", name: "Forgery kit" },
     { category: "armour", detail: "Artificer training.", name: "Medium armour" },
     { category: "weapon", detail: "Artificer training and campaign exposure.", name: "Firearms" },
@@ -43,6 +48,8 @@ describe("SkillsTrainingTab", () => {
     expect(html).toContain("<td>+5</td>");
     expect(html).toContain('aria-label="Roll Stealth"');
     expect(html).toContain('hx-post="/sheet/lynott/rolls"');
+    expect(html).toContain('hx-get="/sheet/lynott/skills/stealth/edit"');
+    expect(html).toContain('hx-target="#skill-row-stealth"');
     expect(html).toContain('aria-label="Proficient"');
     expect(html).toContain('data-icon="check-circle"');
     expect(html).toContain("<th scope=\"row\">Arcana</th>");
@@ -50,7 +57,9 @@ describe("SkillsTrainingTab", () => {
     expect(html).toContain("<h4 id=\"proficiency-tool\">Tools</h4>");
     expect(html).toContain("<strong>Thieves&#39; tools</strong>");
     expect(html).toContain('aria-label="Roll Thieves&#39; tools"');
+    expect(html).toContain('hx-get="/sheet/lynott/proficiencies/proficiency_lynott_thieves_tools/edit"');
     expect(html).toContain('<select name="baseModifier">');
+    expect(html).not.toContain("row-edit-disclosure");
     expect(html).toContain("<strong>Forgery kit</strong>");
     expect(html).toContain("<h4 id=\"proficiency-armour\">Armour</h4>");
     expect(html).toContain("<strong>Medium armour</strong>");

@@ -29,3 +29,10 @@ This ticket exists to keep `sheet-0020` accepted while giving the remaining play
 - Rules search and detail views remain connected to sheet context during the player workflow.
 - Any remaining density or campaign-splitting work is documented as a deployment non-blocker with a named follow-up.
 - `bun run verify` passes.
+
+## Implementation Notes
+
+- Replaced cramped ability, skill, and proficiency row edit disclosures with button-triggered HTMX edit fragments.
+- Added focused edit, save, and cancel fragments for ability rows, skill rows, and proficiency list items.
+- Improved mobile dice controls so dense skill/tool roll triggers fill their cells and popover results centre predictably on small screens.
+- Added a visible seeded note for Mira that marks the human cleric sheet as deliberately partial until a later character-building slice handles automatic cleric grants, prepared spells, and equipment rules.
