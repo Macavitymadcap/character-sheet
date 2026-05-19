@@ -112,6 +112,7 @@ describe("sheet screenshot targets", () => {
         theme: "dark",
       },
       {
+        action: "scroll-roster-table",
         fileName: "player-roster.png",
         label: "Player roster",
         path: "/characters",
@@ -119,6 +120,7 @@ describe("sheet screenshot targets", () => {
         theme: "light",
       },
       {
+        action: "scroll-roster-table",
         fileName: "player-roster-dark.png",
         label: "Player roster dark",
         path: "/characters",
@@ -126,6 +128,7 @@ describe("sheet screenshot targets", () => {
         theme: "dark",
       },
       {
+        action: "scroll-admin-users",
         fileName: "admin-tables-light.png",
         label: "Admin tables light",
         path: "/admin",
@@ -133,6 +136,7 @@ describe("sheet screenshot targets", () => {
         theme: "light",
       },
       {
+        action: "scroll-admin-users",
         fileName: "admin-tables-dark.png",
         label: "Admin tables dark",
         path: "/admin",

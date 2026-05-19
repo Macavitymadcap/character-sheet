@@ -114,6 +114,7 @@ export const sheetScreenshotTargets = [
     theme: "dark",
   },
   {
+    action: "scroll-roster-table",
     fileName: "player-roster.png",
     label: "Player roster",
     path: "/characters",
@@ -121,6 +122,7 @@ export const sheetScreenshotTargets = [
     theme: "light",
   },
   {
+    action: "scroll-roster-table",
     fileName: "player-roster-dark.png",
     label: "Player roster dark",
     path: "/characters",
@@ -128,6 +130,7 @@ export const sheetScreenshotTargets = [
     theme: "dark",
   },
   {
+    action: "scroll-admin-users",
     fileName: "admin-tables-light.png",
     label: "Admin tables light",
     path: "/admin",
@@ -135,6 +138,7 @@ export const sheetScreenshotTargets = [
     theme: "light",
   },
   {
+    action: "scroll-admin-users",
     fileName: "admin-tables-dark.png",
     label: "Admin tables dark",
     path: "/admin",
@@ -259,8 +263,18 @@ export async function captureSheetScreenshots(
 
 async function runScreenshotAction(
   page: Page,
-  action: "edit-stealth" | "edit-strength" | "roll-stealth",
+  action: "edit-stealth" | "edit-strength" | "roll-stealth" | "scroll-admin-users" | "scroll-roster-table",
 ) {
+  if (action === "scroll-admin-users") {
+    await scrollIntoView(page, ".admin-users-table");
+    return;
+  }
+
+  if (action === "scroll-roster-table") {
+    await scrollIntoView(page, ".characters-table");
+    return;
+  }
+
   if (action === "edit-strength") {
     await scrollIntoView(page, "#ability-row-strength");
     await page.click('button[aria-label="Edit Strength score and save"]');
@@ -288,7 +302,7 @@ async function runScreenshotAction(
 async function scrollIntoView(page: Page, selector: string) {
   await page.waitForSelector(selector);
   await page.evaluate(
-    `document.querySelector(${JSON.stringify(selector)})?.scrollIntoView({ block: "center", inline: "nearest" })`,
+    `document.querySelector(${JSON.stringify(selector)})?.scrollIntoView({ block: "start", inline: "nearest" }); window.scrollBy(0, -72); window.scrollTo(0, window.scrollY)`,
   );
 }
 

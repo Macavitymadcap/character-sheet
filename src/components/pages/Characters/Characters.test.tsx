@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { CharactersPage } from "./Characters";
+import { charactersStyles } from "./Characters.styles";
 
 const render = (node: unknown): string => String(node);
 
@@ -90,5 +91,12 @@ describe("CharactersPage", () => {
     expect(html).toContain('<option value="user_mira_player">Mira Player</option>');
     expect(html).not.toContain('<option value="user_game_master">Campaign GM</option>');
     expect(html).toContain('<a href="/sheet/ash_vale">Ash Vale</a>');
+  });
+
+  test("keeps roster tables compressed and scrollable on mobile", () => {
+    expect(charactersStyles).toContain(".characters-table {\n  min-width: 38rem;");
+    expect(charactersStyles).toContain("@media (max-width: 760px)");
+    expect(charactersStyles).toContain(".characters-table {\n    min-width: 32rem;");
+    expect(charactersStyles).toContain("overflow-wrap: anywhere;");
   });
 });
