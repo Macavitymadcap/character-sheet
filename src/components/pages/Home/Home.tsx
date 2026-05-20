@@ -19,7 +19,7 @@ export const HomePage = ({ appName, user }: HomePageProps) => {
         <main class="home-main" aria-labelledby="home-heading">
           <section class="home-intro">
             <p class="home-kicker">Rovnost Shadows</p>
-            <h1 id="home-heading">Character Sheet</h1>
+            <h1 id="home-heading">{appName}</h1>
             <p>
               Local table tools for Lynott, the Game Master, and campaign administration.
             </p>

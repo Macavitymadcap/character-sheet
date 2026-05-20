@@ -2,7 +2,7 @@
 
 ## Summary
 
-Make Character Sheet rules/functionality complete for table play by importing and exposing the full
+Make Campaign Ledger rules/functionality complete for table play by importing and exposing the full
 SRD 5.1 rules corpus from local source files, rendering it in the app, and connecting those rules to
 character sheets. This epic prioritises player and Game Master value before deployment and
 Hyper-Dank platform adoption.

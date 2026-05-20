@@ -6,8 +6,8 @@ import { createApp } from "../../src/app";
 import { AuthService, PasswordService, SessionService } from "../../src/auth";
 import { createSqliteDatabase } from "../../src/db";
 
-export function createInMemoryApp(appName = "Character Sheet", secret = "local-script-session-secret") {
-  process.env.CHARACTER_SHEET_ASSET_ROOT ??= `${tmpdir()}/character-sheet-script-assets`;
+export function createInMemoryApp(appName = "Campaign Ledger", secret = "local-script-session-secret") {
+  process.env.CAMPAIGN_LEDGER_ASSET_ROOT ??= `${tmpdir()}/campaign-ledger-script-assets`;
   const databaseRuntime = createSqliteDatabase({ path: ":memory:" });
   const passwordService = new PasswordService();
   const sessionService = new SessionService({

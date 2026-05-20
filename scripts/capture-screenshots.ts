@@ -206,7 +206,7 @@ if (import.meta.main) {
 export async function captureSheetScreenshots(
   outputDir = Bun.env.SCREENSHOT_DIR ?? "docs/pr-screenshots",
 ) {
-  const runtime = createInMemoryApp("Character Sheet", "screenshots-session-secret");
+  const runtime = createInMemoryApp("Campaign Ledger", "screenshots-session-secret");
   const server = await startLocalServer(runtime.app, { envName: "SCREENSHOT_PORT" });
   const baseUrl = `http://127.0.0.1:${server.port}`;
   let browser: Browser | undefined;

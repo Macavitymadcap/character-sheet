@@ -2,7 +2,7 @@
 
 ## Summary
 
-Take the local-first Character Sheet app from table rehearsal on a developer machine to a small hosted Railway deployment for the current group. The epic should preserve the existing Hono, HTMX, SQLite, and local-first shape while adding the deployment configuration, environment documentation, production seed path, operational checks, and final player-experience polish needed before the table uses the app remotely.
+Take the local-first Campaign Ledger app from table rehearsal on a developer machine to a small hosted Railway deployment for the current group. The epic should preserve the existing Hono, HTMX, SQLite, and local-first shape while adding the deployment configuration, environment documentation, production seed path, operational checks, and final player-experience polish needed before the table uses the app remotely.
 
 `sheet-0020` completed the SRD 5.1 rules slice. The deferred SRD hardening work that did not block that epic now lands as `sheet-0031`, the first ticket in this epic, before hosted rollout work begins.
 

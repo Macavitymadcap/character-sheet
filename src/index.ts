@@ -10,7 +10,7 @@ const databaseRuntime = createSqliteDatabase({
 });
 const passwordService = new PasswordService();
 const app = createApp({
-  appName: "Character Sheet",
+  appName: "Campaign Ledger",
   authService: new AuthService({
     authRepository: databaseRuntime.repositories.authRepository,
     passwordService,

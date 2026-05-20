@@ -7,7 +7,7 @@ describe("CampaignPage", () => {
   test("renders the shared shell for Game Masters", () => {
     const html = render(
       <CampaignPage
-        appName="Character Sheet"
+        appName="Campaign Ledger"
         campaign={{
           gmUserId: "user_game_master",
           id: "campaign_rovnost_shadows",
@@ -34,7 +34,7 @@ describe("CampaignPage", () => {
       />,
     );
 
-    expect(html).toContain("<title>Rovnost Shadows - Character Sheet</title>");
+    expect(html).toContain("<title>Rovnost Shadows - Campaign Ledger</title>");
     expect(html).toContain('<header id="site-header" class="site-header">');
     expect(html).toContain(
       '<a class="popover-menu-item" href="/campaigns/rovnost-shadows" role="menuitem" aria-current="page">Campaign</a>',

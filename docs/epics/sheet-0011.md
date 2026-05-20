@@ -6,7 +6,7 @@ Turn the seeded local sheet MVP into a usable local app for the current D&D grou
 
 This epic prioritises getting the table running quickly. Railway deployment, Postgres, full SRD expansion, broad homebrew workflows, and the latest `pace-calculator` developer-experience tooling remain follow-up work.
 
-The current `pace-calculator` baseline has landed its workspace split and release flow on `main` at `pace-calculator` 1.3.4, including private Hyper-Dank component, database, and HTTP packages with consumer compatibility coverage. Character Sheet should continue to follow those patterns during this epic, but it should not add runtime dependencies on the private workspace packages unless a ticket explicitly adds the consumption path and compatibility checks.
+The current `pace-calculator` baseline has landed its workspace split and release flow on `main` at `pace-calculator` 1.3.4, including private Hyper-Dank component, database, and HTTP packages with consumer compatibility coverage. Campaign Ledger should continue to follow those patterns during this epic, but it should not add runtime dependencies on the private workspace packages unless a ticket explicitly adds the consumption path and compatibility checks.
 
 ## Goals
 

@@ -10,11 +10,12 @@ let runtime: SqliteDatabaseRuntime | undefined;
 afterEach(() => {
   runtime?.close();
   runtime = undefined;
+  delete process.env.CAMPAIGN_LEDGER_ASSET_ROOT;
   delete process.env.CHARACTER_SHEET_ASSET_ROOT;
 });
 
-const createTestApp = (appName = "Test Character Sheet") => {
-  process.env.CHARACTER_SHEET_ASSET_ROOT = `${tmpdir()}/character-sheet-test-assets`;
+const createTestApp = (appName = "Test Campaign Ledger") => {
+  process.env.CAMPAIGN_LEDGER_ASSET_ROOT = `${tmpdir()}/campaign-ledger-test-assets`;
   runtime = createSqliteDatabase({ path: ":memory:" });
   const passwordService = new PasswordService();
 
@@ -71,20 +72,20 @@ describe("createApp", () => {
   });
 
   test("renders the public home page as a full HTML document", async () => {
-    const { app } = createTestApp("Character Sheet");
+    const { app } = createTestApp("Campaign Ledger");
     const response = await app.request("/");
     const html = await response.text();
 
     expect(response.status).toBe(200);
     expect(response.headers.get("content-type")).toContain("text/html");
     expect(html).toContain('<html lang="en-GB">');
-    expect(html).toContain("<title>Character Sheet</title>");
-    expect(html).toContain('<h1 id="home-heading">Character Sheet</h1>');
+    expect(html).toContain("<title>Campaign Ledger</title>");
+    expect(html).toContain('<h1 id="home-heading">Campaign Ledger</h1>');
     expect(html).toContain('<a class="popover-menu-item" href="/login" role="menuitem">Sign in</a>');
   });
 
   test("renders signed-in home with role continue links", async () => {
-    const { app, sessionService } = createTestApp("Character Sheet");
+    const { app, sessionService } = createTestApp("Campaign Ledger");
     const playerSession = sessionService.createSession("user_lynott_player");
     const gmSession = sessionService.createSession("user_game_master");
     const adminSession = sessionService.createSession("user_site_admin");
@@ -105,7 +106,7 @@ describe("createApp", () => {
   });
 
   test("renders Lynott's authenticated sheet page with stable shell anchors", async () => {
-    const { app, sessionService } = createTestApp("Character Sheet");
+    const { app, sessionService } = createTestApp("Campaign Ledger");
     const session = sessionService.createSession("user_lynott_player");
     const response = await app.request("/sheet/lynott", {
       headers: { cookie: session.cookie },
@@ -114,7 +115,7 @@ describe("createApp", () => {
 
     expect(response.status).toBe(200);
     expect(response.headers.get("content-type")).toContain("text/html");
-    expect(html).toContain("<title>Lynott Magulbisson - Character Sheet</title>");
+    expect(html).toContain("<title>Lynott Magulbisson - Campaign Ledger</title>");
     expect(html).toContain('id="site-header"');
     expect(html).toContain('<a href="/characters">Characters</a>');
     expect(html).toContain('id="sheet-header"');
@@ -128,7 +129,7 @@ describe("createApp", () => {
   });
 
   test("redirects internal sheet ids to the public sheet slug", async () => {
-    const { app, sessionService } = createTestApp("Character Sheet");
+    const { app, sessionService } = createTestApp("Campaign Ledger");
     const session = sessionService.createSession("user_lynott_player");
     const response = await app.request("/sheet/character_lynott_magulbisson", {
       headers: { cookie: session.cookie },
@@ -139,7 +140,7 @@ describe("createApp", () => {
   });
 
   test("redirects unauthenticated sheet page requests", async () => {
-    const { app } = createTestApp("Character Sheet");
+    const { app } = createTestApp("Campaign Ledger");
     const response = await app.request("/sheet/lynott");
 
     expect(response.status).toBe(303);
@@ -147,7 +148,7 @@ describe("createApp", () => {
   });
 
   test("serves sheet tab panels as HTMX fragment-only HTML", async () => {
-    const { app, sessionService } = createTestApp("Character Sheet");
+    const { app, sessionService } = createTestApp("Campaign Ledger");
     const session = sessionService.createSession("user_lynott_player");
     const response = await app.request("/sheet/lynott/tabs/spellcasting", {
       headers: { cookie: session.cookie },
@@ -168,7 +169,7 @@ describe("createApp", () => {
   });
 
   test("serves canonical sheet tab pages for refreshable navigation", async () => {
-    const { app, sessionService } = createTestApp("Character Sheet");
+    const { app, sessionService } = createTestApp("Campaign Ledger");
     const session = sessionService.createSession("user_lynott_player");
     const response = await app.request("/sheet/lynott/actions", {
       headers: { cookie: session.cookie },
@@ -179,7 +180,7 @@ describe("createApp", () => {
     });
 
     expect(response.status).toBe(200);
-    expect(html).toContain("<title>Lynott Magulbisson - Character Sheet</title>");
+    expect(html).toContain("<title>Lynott Magulbisson - Campaign Ledger</title>");
     expect(html).toContain('data-tab-id="actions"');
     expect(html).toContain('hx-push-url="/sheet/lynott/actions"');
     expect(html).toContain("Available actions");
@@ -187,7 +188,7 @@ describe("createApp", () => {
   });
 
   test("serves authenticated rules browsing and detail pages", async () => {
-    const { app, sessionService } = createTestApp("Character Sheet");
+    const { app, sessionService } = createTestApp("Campaign Ledger");
     const session = sessionService.createSession("user_lynott_player");
     const importer = new RulesImportService(runtime!.repositories.rulesSeedRepository);
     await importer.importFromLocalSource("docs/rules/srd-5.1-fixtures");
@@ -243,7 +244,7 @@ describe("createApp", () => {
   });
 
   test("updates header resources through HTMX fragments", async () => {
-    const { app, sessionService } = createTestApp("Character Sheet");
+    const { app, sessionService } = createTestApp("Campaign Ledger");
     const session = sessionService.createSession("user_lynott_player");
     const cookie = session.cookie;
 
@@ -290,7 +291,7 @@ describe("createApp", () => {
   });
 
   test("updates manual sheet fields through HTMX fragments", async () => {
-    const { app, sessionService } = createTestApp("Character Sheet");
+    const { app, sessionService } = createTestApp("Campaign Ledger");
     const cookie = sessionService.createSession("user_lynott_player").cookie;
     const headers = formHeaders(cookie);
 
@@ -343,7 +344,7 @@ describe("createApp", () => {
   });
 
   test("serves focused skill and proficiency edit fragments", async () => {
-    const { app, sessionService } = createTestApp("Character Sheet");
+    const { app, sessionService } = createTestApp("Campaign Ledger");
     const cookie = sessionService.createSession("user_lynott_player").cookie;
     const headers = { Cookie: cookie };
 
@@ -381,7 +382,7 @@ describe("createApp", () => {
   });
 
   test("serves focused ability edit fragments", async () => {
-    const { app, sessionService } = createTestApp("Character Sheet");
+    const { app, sessionService } = createTestApp("Campaign Ledger");
     const cookie = sessionService.createSession("user_lynott_player").cookie;
     const headers = { Cookie: cookie };
 
@@ -402,7 +403,7 @@ describe("createApp", () => {
   });
 
   test("adds custom conditions and returns dice roll fragments", async () => {
-    const { app, sessionService } = createTestApp("Character Sheet");
+    const { app, sessionService } = createTestApp("Campaign Ledger");
     const session = sessionService.createSession("user_lynott_player");
     const cookie = session.cookie;
     const headers = { cookie, "Content-Type": "application/x-www-form-urlencoded" };
@@ -441,7 +442,7 @@ describe("createApp", () => {
   });
 
   test("updates tab resources through HTMX panel fragments", async () => {
-    const { app, sessionService } = createTestApp("Character Sheet");
+    const { app, sessionService } = createTestApp("Campaign Ledger");
     const session = sessionService.createSession("user_lynott_player");
     const cookie = session.cookie;
 
@@ -482,7 +483,7 @@ describe("createApp", () => {
   });
 
   test("applies long rests and refreshes the full sheet workspace", async () => {
-    const { app, sessionService } = createTestApp("Character Sheet");
+    const { app, sessionService } = createTestApp("Campaign Ledger");
     const session = sessionService.createSession("user_lynott_player");
     const cookie = session.cookie;
     const formHeaders = { cookie, "Content-Type": "application/x-www-form-urlencoded" };
@@ -553,7 +554,7 @@ describe("createApp", () => {
   });
 
   test("renders the Game Master campaign page", async () => {
-    const { app, sessionService } = createTestApp("Character Sheet");
+    const { app, sessionService } = createTestApp("Campaign Ledger");
     const session = sessionService.createSession("user_game_master");
     const playerSession = sessionService.createSession("user_lynott_player");
     const response = await app.request("/campaigns/rovnost-shadows", {
@@ -566,7 +567,7 @@ describe("createApp", () => {
     const playerHtml = await playerResponse.text();
 
     expect(response.status).toBe(200);
-    expect(html).toContain("<title>Rovnost Shadows - Character Sheet</title>");
+    expect(html).toContain("<title>Rovnost Shadows - Campaign Ledger</title>");
     expect(html).toContain(
       '<a class="popover-menu-item" href="/campaigns/rovnost-shadows" role="menuitem" aria-current="page">Campaign</a>',
     );
@@ -578,7 +579,7 @@ describe("createApp", () => {
   });
 
   test("creates player and Game Master roster characters", async () => {
-    const { app } = createTestApp("Character Sheet");
+    const { app } = createTestApp("Campaign Ledger");
     const playerCookie = await login(app, "mira@example.local");
     const gmCookie = await login(app, "gm@example.local");
 
@@ -647,7 +648,7 @@ describe("createApp", () => {
   });
 
   test("serves database-backed core and skills tab fragments", async () => {
-    const { app, sessionService } = createTestApp("Character Sheet");
+    const { app, sessionService } = createTestApp("Campaign Ledger");
     const session = sessionService.createSession("user_lynott_player");
     const core = await app.request("/sheet/lynott/tabs/core", {
       headers: { cookie: session.cookie },
@@ -674,7 +675,7 @@ describe("createApp", () => {
   });
 
   test("serves compact action, equipment, and role-filtered notes fragments", async () => {
-    const { app, sessionService } = createTestApp("Character Sheet");
+    const { app, sessionService } = createTestApp("Campaign Ledger");
     const playerSession = sessionService.createSession("user_lynott_player");
     const gmSession = sessionService.createSession("user_game_master");
     const actions = await app.request("/sheet/lynott/tabs/actions", {
@@ -732,7 +733,7 @@ describe("createApp", () => {
   });
 
   test("marks Mira's seeded cleric sheet as intentionally partial", async () => {
-    const { app, sessionService } = createTestApp("Character Sheet");
+    const { app, sessionService } = createTestApp("Campaign Ledger");
     const miraSession = sessionService.createSession("user_mira_player");
     const notes = await app.request("/sheet/mira-voss/tabs/notes", {
       headers: { cookie: miraSession.cookie },
@@ -746,7 +747,7 @@ describe("createApp", () => {
   });
 
   test("saves visible notes and keeps role-only notes protected", async () => {
-    const { app, sessionService } = createTestApp("Character Sheet");
+    const { app, sessionService } = createTestApp("Campaign Ledger");
     const playerSession = sessionService.createSession("user_lynott_player");
     const gmSession = sessionService.createSession("user_game_master");
 
@@ -808,7 +809,7 @@ describe("createApp", () => {
   });
 
   test("lets Game Masters create, update, and delete campaign sessions", async () => {
-    const { app, sessionService } = createTestApp("Character Sheet");
+    const { app, sessionService } = createTestApp("Campaign Ledger");
     const gmCookie = sessionService.createSession("user_game_master").cookie;
     const playerCookie = sessionService.createSession("user_lynott_player").cookie;
 
@@ -874,7 +875,7 @@ describe("createApp", () => {
   });
 
   test("lets players and Game Masters update character faction choices", async () => {
-    const { app, sessionService } = createTestApp("Character Sheet");
+    const { app, sessionService } = createTestApp("Campaign Ledger");
     const playerCookie = sessionService.createSession("user_lynott_player").cookie;
     const otherPlayerCookie = sessionService.createSession("user_mira_player").cookie;
     const gmCookie = sessionService.createSession("user_game_master").cookie;
@@ -931,7 +932,7 @@ describe("createApp", () => {
   });
 
   test("serves campaign wiki pages by visibility", async () => {
-    const { app, sessionService } = createTestApp("Character Sheet");
+    const { app, sessionService } = createTestApp("Campaign Ledger");
     const playerCookie = sessionService.createSession("user_lynott_player").cookie;
     const gmCookie = sessionService.createSession("user_game_master").cookie;
 
@@ -947,7 +948,7 @@ describe("createApp", () => {
     });
 
     expect(playerPage.status).toBe(200);
-    expect(playerHtml).toContain("<title>Factions Guide - Rovnost Shadows - Character Sheet</title>");
+    expect(playerHtml).toContain("<title>Factions Guide - Rovnost Shadows - Campaign Ledger</title>");
     expect(playerHtml).toContain("<h2>Factions Guide</h2>");
     expect(playerHtml).toContain('src="/campaigns/rovnost-shadows/assets/asset_skywright_sigil"');
     expect(playerHtml).toContain('aria-label="Factions Guide gallery"');
@@ -957,7 +958,7 @@ describe("createApp", () => {
   });
 
   test("lets Game Masters create wiki pages and image assets with protected reads", async () => {
-    const { app, sessionService } = createTestApp("Character Sheet");
+    const { app, sessionService } = createTestApp("Campaign Ledger");
     const gmCookie = sessionService.createSession("user_game_master").cookie;
     const playerCookie = sessionService.createSession("user_lynott_player").cookie;
 
@@ -1026,7 +1027,7 @@ describe("createApp", () => {
   });
 
   test("serves a readable fallback for missing seeded campaign asset files", async () => {
-    const { app, sessionService } = createTestApp("Character Sheet");
+    const { app, sessionService } = createTestApp("Campaign Ledger");
     const playerCookie = sessionService.createSession("user_lynott_player").cookie;
     const quotedAsset = runtime?.repositories.campaignContentRepository.createImageAsset({
       altText: "A missing asset with quote characters",
@@ -1059,7 +1060,7 @@ describe("createApp", () => {
   });
 
   test("rejects image uploads without alt text or with unsupported file types", async () => {
-    const { app, sessionService } = createTestApp("Character Sheet");
+    const { app, sessionService } = createTestApp("Campaign Ledger");
     const gmCookie = sessionService.createSession("user_game_master").cookie;
 
     const missingAlt = new FormData();
@@ -1085,7 +1086,7 @@ describe("createApp", () => {
   });
 
   test("smokes the seeded MVP workflow through login, sheet play, notes, roles, and logout", async () => {
-    const { app } = createTestApp("Character Sheet");
+    const { app } = createTestApp("Campaign Ledger");
     const playerCookie = await login(app, "lynott@example.local");
 
     const sheet = await app.request("/sheet/lynott", { headers: { cookie: playerCookie } });
@@ -1126,7 +1127,7 @@ describe("createApp", () => {
     const admin = await app.request("/admin", { headers: { cookie: adminCookie } });
 
     expect(sheet.status).toBe(200);
-    expect(await sheet.text()).toContain("<title>Lynott Magulbisson - Character Sheet</title>");
+    expect(await sheet.text()).toContain("<title>Lynott Magulbisson - Campaign Ledger</title>");
     expect(damage.status).toBe(200);
     expect(await damage.text()).toContain("28 / 31");
     expect(note.status).toBe(200);
@@ -1148,7 +1149,7 @@ describe("createApp", () => {
   });
 
   test("rejects unauthenticated, unknown, and invalid sheet tab requests", async () => {
-    const { app, sessionService } = createTestApp("Character Sheet");
+    const { app, sessionService } = createTestApp("Campaign Ledger");
     const session = sessionService.createSession("user_lynott_player");
     const unauthenticated = await app.request("/sheet/lynott/tabs/core");
     const unknownCharacter = await app.request("/sheet/character_unknown/tabs/core", {

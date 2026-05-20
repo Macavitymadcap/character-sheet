@@ -7,14 +7,14 @@ describe("SiteHeader", () => {
   test("renders primary navigation and the current user identity", () => {
     const html = render(
       <SiteHeader
-        appName="Character Sheet"
+        appName="Campaign Ledger"
         currentSection="characters"
         user={{ displayName: "Lynott Player", role: "player" }}
       />,
     );
 
     expect(html).toContain('<header id="site-header" class="site-header">');
-    expect(html).toContain('<span class="site-title">Character Sheet</span>');
+    expect(html).toContain('<span class="site-title">Campaign Ledger</span>');
     expect(html).toContain('<a class="site-brand" href="/">');
     expect(html).toContain('popovertarget="site-menu-panel"');
     expect(html).toContain('<a class="popover-menu-item" href="/" role="menuitem">Home</a>');
@@ -34,7 +34,7 @@ describe("SiteHeader", () => {
   });
 
   test("renders a sign-in link for visitors", () => {
-    const html = render(<SiteHeader appName="Character Sheet" currentSection="home" />);
+    const html = render(<SiteHeader appName="Campaign Ledger" currentSection="home" />);
 
     expect(html).toContain("Visitor");
     expect(html).toContain(
@@ -46,14 +46,14 @@ describe("SiteHeader", () => {
   test("renders role-specific navigation", () => {
     const gm = render(
       <SiteHeader
-        appName="Character Sheet"
+        appName="Campaign Ledger"
         currentSection="campaign"
         user={{ displayName: "Game Master", role: "game_master" }}
       />,
     );
     const admin = render(
       <SiteHeader
-        appName="Character Sheet"
+        appName="Campaign Ledger"
         currentSection="admin"
         user={{ displayName: "Admin", role: "admin" }}
       />,
