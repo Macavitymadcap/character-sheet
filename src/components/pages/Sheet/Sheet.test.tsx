@@ -53,7 +53,7 @@ describe("SheetPage", () => {
     const html = render(
       <SheetPage
         activeTab="core"
-        appName="Character Sheet"
+        appName="Campaign Ledger"
         backgroundEntries={[]}
         campaignFactions={[]}
         equipment={[]}
@@ -66,7 +66,7 @@ describe("SheetPage", () => {
       />,
     );
 
-    expect(html).toContain("<title>Lynott Magulbisson - Character Sheet</title>");
+    expect(html).toContain("<title>Lynott Magulbisson - Campaign Ledger</title>");
     expect(html).toContain('id="site-header"');
     expect(html).toContain('<a href="/characters">Characters</a>');
     expect(html).toContain('class="sheet-sticky-stack"');

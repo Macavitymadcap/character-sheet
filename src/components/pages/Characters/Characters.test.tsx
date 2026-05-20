@@ -8,7 +8,7 @@ describe("CharactersPage", () => {
   test("renders player roster, create form, and empty state", () => {
     const html = render(
       <CharactersPage
-        appName="Character Sheet"
+        appName="Campaign Ledger"
         characters={[]}
         mode="player"
         user={{ displayName: "Mira Player", id: "user_mira_player", role: "player" }}
@@ -25,7 +25,7 @@ describe("CharactersPage", () => {
   test("renders a separate create link when the roster hides the form", () => {
     const html = render(
       <CharactersPage
-        appName="Character Sheet"
+        appName="Campaign Ledger"
         characters={[]}
         mode="player"
         showCreateForm={false}
@@ -41,7 +41,7 @@ describe("CharactersPage", () => {
   test("renders Game Master roster owner choices", () => {
     const html = render(
       <CharactersPage
-        appName="Character Sheet"
+        appName="Campaign Ledger"
         campaign={{
           gmUserId: "user_game_master",
           id: "campaign_rovnost_shadows",
@@ -96,7 +96,7 @@ describe("CharactersPage", () => {
   test("renders roster actions and links with focused styling hooks", () => {
     const html = render(
       <CharactersPage
-        appName="Character Sheet"
+        appName="Campaign Ledger"
         characters={[
           {
             background: "Guide",

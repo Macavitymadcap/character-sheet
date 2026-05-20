@@ -18,7 +18,7 @@ export const pa11yTargets = [
 ] as const;
 
 if (import.meta.main) {
-  const runtime = createInMemoryApp("Character Sheet", "a11y-session-secret");
+  const runtime = createInMemoryApp("Campaign Ledger", "a11y-session-secret");
   const server = await startLocalServer(runtime.app, { envName: "A11Y_PORT" });
   const baseUrl = `http://127.0.0.1:${server.port}`;
 

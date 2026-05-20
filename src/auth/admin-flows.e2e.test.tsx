@@ -11,7 +11,7 @@ let app: ReturnType<typeof createApp>;
 beforeEach(() => {
   runtime = createSqliteDatabase({ path: ":memory:" });
   app = createApp({
-    appName: "Character Sheet",
+    appName: "Campaign Ledger",
     authService: new AuthService({
       authRepository: runtime.repositories.authRepository,
       passwordService: new PasswordService(),

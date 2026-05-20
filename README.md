@@ -1,6 +1,6 @@
-# Character Sheet
+# Campaign Ledger
 
-A local-first D&D 5e character sheet app for Lynott Magulbisson, built as a Hono + HTMX + SQLite application.
+A local-first D&D 5e campaign ledger for character sheets, campaign records, and table-use rules, built as a Hono + HTMX + SQLite application.
 
 The first MVP focuses on a small table: one player character, one Game Master, and one admin. It runs locally with SQLite, uses server-rendered HTML fragments for sheet interactions, and stores D&D 2014 rules data in structured database tables rather than treating markdown as the runtime source of truth. The group-use campaign work now adds multiple players, multiple campaign characters, local character creation, wiki pages, image assets, factions, faction choices, and session records.
 
@@ -74,7 +74,8 @@ Current environment variables:
 | `HOST` | `0.0.0.0` | HTTP host used by Bun. |
 | `DB_PATH` | `character-sheet.sqlite3` | SQLite database file path. |
 | `SESSION_SECRET` | local development secret | Secret used for signed session cookies. |
-| `CHARACTER_SHEET_ASSET_ROOT` | `data/assets` | Root for app-managed campaign image assets; use `/data/assets` on Railway. |
+| `CAMPAIGN_LEDGER_ASSET_ROOT` | `data/assets` | Root for app-managed campaign image assets; use `/data/assets` on Railway. |
+| `CHARACTER_SHEET_ASSET_ROOT` | unset | Backwards-compatible alias for existing Railway/local asset configuration. |
 
 SQLite database files and sidecar files should remain ignored by Git.
 
@@ -91,7 +92,11 @@ Local seed users are available for development:
 | Game Master | `gm@example.local` | `password123` |
 | Admin | `admin@example.local` | `password123` |
 
-The seeded Rovnost campaign also includes initial roster, wiki, image asset, session, faction, and character faction-choice records. Image assets store app-managed relative storage keys such as `campaigns/rovnost-shadows/cover.png`; absolute local source paths are rejected by the schema. Hosted preparation writes deterministic placeholder files for seeded campaign assets under `CHARACTER_SHEET_ASSET_ROOT`, and missing seeded files render a readable protected fallback instead of a broken image.
+The seeded Rovnost campaign also includes initial roster, wiki, image asset, session, faction, and character faction-choice records. Image assets store app-managed relative storage keys such as `campaigns/rovnost-shadows/cover.png`; absolute local source paths are rejected by the schema. Hosted preparation writes deterministic placeholder files for seeded campaign assets under `CAMPAIGN_LEDGER_ASSET_ROOT`, falling back to `CHARACTER_SHEET_ASSET_ROOT` for existing environments, and missing seeded files render a readable protected fallback instead of a broken image.
+
+## Rename Notes
+
+The product and package name is Campaign Ledger. Existing local checkouts and the GitHub repository may still live at `character-sheet` until renamed outside a code PR. When that rename happens, update the GitHub repository name, then rename the local folder or reclone from the new remote URL. Runtime paths such as `character-sheet.sqlite3`, existing session cookies, and the compatibility asset-root variable are intentionally preserved by this ticket so current local and Railway data keeps working.
 
 ## Scripts
 

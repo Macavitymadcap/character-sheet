@@ -5,9 +5,9 @@ const render = (node: unknown): string => String(node);
 
 describe("LoginPage", () => {
   test("renders a local sign-in form", () => {
-    const html = render(<LoginPage appName="Character Sheet" />);
+    const html = render(<LoginPage appName="Campaign Ledger" />);
 
-    expect(html).toContain("<title>Character Sheet</title>");
+    expect(html).toContain("<title>Campaign Ledger</title>");
     expect(html).toContain('<header id="site-header" class="site-header">');
     expect(html).toContain('id="theme-toggle"');
     expect(html).toContain("Sign in");
@@ -21,7 +21,7 @@ describe("LoginPage", () => {
   });
 
   test("renders authentication errors", () => {
-    const html = render(<LoginPage appName="Character Sheet" error="Invalid email or password." />);
+    const html = render(<LoginPage appName="Campaign Ledger" error="Invalid email or password." />);
 
     expect(html).toContain('role="alert"');
     expect(html).toContain("Invalid email or password.");

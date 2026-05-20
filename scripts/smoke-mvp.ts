@@ -35,7 +35,7 @@ if (import.meta.main) {
 }
 
 export async function runMvpSmoke() {
-  const runtime = createInMemoryApp("Character Sheet", "mvp-smoke-session-secret");
+  const runtime = createInMemoryApp("Campaign Ledger", "mvp-smoke-session-secret");
   const server = await startLocalServer(runtime.app, { envName: "SMOKE_PORT" });
   const baseUrl = `http://127.0.0.1:${server.port}`;
 

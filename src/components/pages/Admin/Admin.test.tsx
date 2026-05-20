@@ -8,7 +8,7 @@ describe("AdminPage", () => {
   test("renders local admin workflows", () => {
     const html = render(
       <AdminPage
-        appName="Character Sheet"
+        appName="Campaign Ledger"
         invites={[]}
         resetTokens={[]}
         users={[
@@ -26,7 +26,7 @@ describe("AdminPage", () => {
       />,
     );
 
-    expect(html).toContain("<title>Character Sheet</title>");
+    expect(html).toContain("<title>Campaign Ledger</title>");
     expect(html).toContain('<header id="site-header" class="site-header">');
     expect(html).toContain(
       '<a class="popover-menu-item" href="/admin" role="menuitem" aria-current="page">Admin</a>',

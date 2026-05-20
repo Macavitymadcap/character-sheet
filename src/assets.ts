@@ -11,7 +11,7 @@ export const seededCampaignAssetFiles = [
 ] as const;
 
 export function assetStorageRoot(env: Record<string, string | undefined> = Bun.env) {
-  return env.CHARACTER_SHEET_ASSET_ROOT || defaultAssetStorageRoot;
+  return env.CAMPAIGN_LEDGER_ASSET_ROOT || env.CHARACTER_SHEET_ASSET_ROOT || defaultAssetStorageRoot;
 }
 
 export async function writeSeedAssetPlaceholders(root = assetStorageRoot()) {

@@ -2,7 +2,7 @@
 
 ## Summary
 
-Evolve Character Sheet from a hosted character-sheet rehearsal into a broader campaign companion for
+Evolve Campaign Ledger from a hosted character-sheet rehearsal into a broader campaign companion for
 Rovnost table play. The epic should make public SRD rules and local browser-backed play tools useful
 without sign-in, improve admin account handoff, support admin access alongside player or Game Master
 membership, and fill the most obvious rules and seeded-character gaps.
@@ -33,7 +33,7 @@ remain the baseline.
 - Flesh out Mira's sheet data, including spells, class features, actions, and Eldritch Cannon bonus
   action handling where relevant.
 - Improve compact table-use layout for admin, campaign, rules, and roll popover surfaces.
-- Rename the app from "Character Sheet" to "Campaign Ledger" across package, docs, app chrome,
+- Rename the app from its former "Character Sheet" identity to "Campaign Ledger" across package, docs, app chrome,
   deployment copy, local folder references, and GitHub repository references.
 
 ## Non-Goals
@@ -97,8 +97,8 @@ flowchart TD
 
 ## Current UX Review Findings
 
-- `P2` The home page does not yet explain the app's real scope. It still presents the product as
-  "Character Sheet" for Lynott, the Game Master, and admin only, then offers signed-out users only a
+- `P2` The home page does not yet explain the app's real scope. It still presents the product through
+  the old sheet-only framing for Lynott, the Game Master, and admin, then offers signed-out users only a
   sign-in path. `sheet-0052` should make public rules, local browser sheets, local campaign
   tracking, and signed-in campaign tools clear from the first screen.
 - `P2` Admin account handoff is still operator-hostile. The admin screen can create invites and

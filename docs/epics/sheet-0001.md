@@ -1,8 +1,8 @@
-# Epic sheet-0001: Local Character Sheet MVP
+# Epic sheet-0001: Local Campaign Ledger MVP
 
 ## Summary
 
-Build the first seeded local MVP of Character Sheet as a Hono + HTMX + SQLite application. The MVP should support Lynott Magulbisson as the first player character, one Game Master, and one admin. It should run locally, store structured sheet and rules data in SQLite, and use the `pace-calculator` app as the implementation template.
+Build the first seeded local MVP of Campaign Ledger as a Hono + HTMX + SQLite application. The MVP should support Lynott Magulbisson as the first player character, one Game Master, and one admin. It should run locally, store structured sheet and rules data in SQLite, and use the `pace-calculator` app as the implementation template.
 
 This epic replaces the earlier static GitHub Pages/localStorage architecture. Railway deployment and Postgres are deferred to the next epic.
 

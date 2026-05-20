@@ -33,7 +33,7 @@ describe("documentation references", () => {
   });
 
   test("documented verification scripts exist in package.json", async () => {
-    const packageJson = await Bun.file("package.json").json() as { scripts: Record<string, string> };
+    const packageJson = await Bun.file("package.json").json() as { name: string; scripts: Record<string, string> };
     const readme = await Bun.file("README.md").text();
     const contributing = await Bun.file("CONTRIBUTING.md").text();
     const documentedScripts = [...`${readme}\n${contributing}`.matchAll(/bun run ([a-z0-9:-]+)/g)]
@@ -45,7 +45,7 @@ describe("documentation references", () => {
   });
 
   test("Railway runtime docs match repository configuration", async () => {
-    const packageJson = await Bun.file("package.json").json() as { scripts: Record<string, string> };
+    const packageJson = await Bun.file("package.json").json() as { name: string; scripts: Record<string, string> };
     const railway = await Bun.file("railway.json").json() as {
       deploy: {
         healthcheckPath: string;
@@ -58,6 +58,7 @@ describe("documentation references", () => {
 
     expect(packageJson.scripts.start).toBe("bun src/index.ts");
     expect(packageJson.scripts["hosted:data"]).toBe("bun scripts/hosted-data.ts");
+    expect(packageJson.name).toBe("campaign-ledger");
     expect(railway.deploy.startCommand).toBe("bun run start");
     expect(railway.deploy.healthcheckPath).toBe("/healthz");
     expect(railway.deploy.healthcheckTimeout).toBe(60);
@@ -68,6 +69,9 @@ describe("documentation references", () => {
     expect(railwayDocs).toContain("HOSTED_DATA_CONFIRM=replace");
     expect(railwayDocs).toContain("`DB_PATH`");
     expect(railwayDocs).toContain("`SESSION_SECRET`");
+    expect(railwayDocs).toContain("`CAMPAIGN_LEDGER_ASSET_ROOT`");
+    expect(readme).toContain("# Campaign Ledger");
+    expect(readme).toContain("`CAMPAIGN_LEDGER_ASSET_ROOT`");
     expect(readme).toContain("[Railway Hosted Rehearsal](./docs/deployment/railway.md)");
   });
 

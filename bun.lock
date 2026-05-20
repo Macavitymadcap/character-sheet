@@ -2,7 +2,7 @@
   "lockfileVersion": 1,
   "workspaces": {
     "": {
-      "name": "character-sheet",
+      "name": "campaign-ledger",
       "dependencies": {
         "hono": "^4.0.0",
       },

@@ -2,7 +2,7 @@
 
 ## Summary
 
-Rename the app from "Character Sheet" to "Campaign Ledger" across product copy, package metadata,
+Rename the app from its former "Character Sheet" identity to "Campaign Ledger" across product copy, package metadata,
 docs, deployment copy, and repository/local-folder guidance.
 
 This ticket should not change gameplay behaviour. It creates the naming baseline so later public
@@ -11,7 +11,7 @@ play and campaign features do not keep reinforcing the old sheet-only identity.
 ## Implementation
 
 - Update app chrome, page titles, README, architecture docs, deployment docs, operator docs, and
-  screenshot labels that refer to "Character Sheet" as the product name.
+  screenshot labels that still use the former product name.
 - Update `package.json` package name to a package-safe Campaign Ledger form.
 - Document GitHub repository rename and local folder rename steps without assuming the PR can rename
   the remote repository or the user's local checkout automatically.
