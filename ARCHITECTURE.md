@@ -357,7 +357,7 @@ flowchart LR
     I -- "No" --> J["Epic PR into main"]
 ```
 
-Release automation can be added after the MVP scaffold exists. The group-use MVP is ready for local checkout, seed, verification, table rehearsal, and imported SRD 5.1 rules. `sheet-0020` completed the full SRD rules roadmap slice. The roadmap now reserves `sheet-0030` for Railway deployment with seeded hosted accounts/passwords and `sheet-0040` for Hyper-Dank package adoption.
+Release automation can be added after the MVP scaffold exists. The group-use MVP is ready for local checkout, seed, verification, table rehearsal, and imported SRD 5.1 rules. `sheet-0020` completed the full SRD rules roadmap slice. The roadmap now reserves `sheet-0030` for Railway deployment with seeded hosted accounts/passwords, `sheet-0050` for campaign companion, public play, and rules-content product work, and `sheet-0040` for Hyper-Dank package adoption.
 
 ## Design Decisions
 
@@ -367,6 +367,6 @@ Release automation can be added after the MVP scaffold exists. The group-use MVP
 - Local password auth is in scope now; external identity providers are not.
 - Admin invite and password reset flows are local workflows without email delivery in this epic.
 - Live 5e.tools fetching is out of scope; local imports are available through `bun run import:rules`, and `sheet-0020` expanded that path to the full SRD 5.1 local corpus.
-- Character deletion, campaign subpage splitting (`sheet-0037`), wiki-management polish, image-management polish, faction-management UI, production secrets, Postgres, email delivery, and Hyper-Dank adoption are deferred to later epics. Railway deployment is the focus of `sheet-0030`.
+- Character deletion, campaign subpage splitting (`sheet-0037`), wiki-management polish, image-management polish, faction-management UI, production secrets, Postgres, email delivery, and Hyper-Dank adoption are deferred to later epics. Railway deployment is the focus of `sheet-0030`; public SRD access, browser-local public play, richer campaign rules content, and the broader app rename are planned in `sheet-0050`.
 - British English is required across copy, docs, code naming, and CSS variables.
 - The first implementation sequence is documentation and tickets, then source code through accepted tickets.

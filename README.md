@@ -149,7 +149,7 @@ Signed-in users can browse imported rules at `/rules`, filter by type, spell lev
 
 ## Deployment Readiness
 
-The current app is ready for fresh local checkout, seed, verification, Railway deployment rehearsal, and table-use rehearsal with SQLite, Railway volume-backed asset storage, manual hosted account handoff, and imported SRD 5.1 rules. `sheet-0020` completed the SRD rules roadmap slice. `sheet-0030` is the active Railway deployment epic; the first runtime configuration lives in [`railway.json`](./railway.json), with service setup documented in [Railway Hosted Rehearsal](./docs/deployment/railway.md) and final acceptance in [Hosted Rehearsal Acceptance](./docs/operations/hosted-rehearsal-acceptance.md). `sheet-0037` captures campaign subpage splitting after the rehearsal, and the roadmap still reserves `sheet-0040` for Hyper-Dank package adoption.
+The current app is ready for fresh local checkout, seed, verification, Railway deployment rehearsal, and table-use rehearsal with SQLite, Railway volume-backed asset storage, manual hosted account handoff, and imported SRD 5.1 rules. `sheet-0020` completed the SRD rules roadmap slice. `sheet-0030` is the active Railway deployment epic; the first runtime configuration lives in [`railway.json`](./railway.json), with service setup documented in [Railway Hosted Rehearsal](./docs/deployment/railway.md) and final acceptance in [Hosted Rehearsal Acceptance](./docs/operations/hosted-rehearsal-acceptance.md). `sheet-0037` captures campaign subpage splitting after the rehearsal, `sheet-0050` plans the next campaign companion, public play, and rules-content product slice, and the roadmap still reserves `sheet-0040` for Hyper-Dank package adoption.
 
 ## TDD Approach
 
@@ -201,3 +201,14 @@ Development tickets should be implemented tests first wherever the boundary is t
 - [Ticket sheet-0035](./docs/tickets/sheet-0035.md)
 - [Ticket sheet-0036](./docs/tickets/sheet-0036.md)
 - [Ticket sheet-0037](./docs/tickets/sheet-0037.md)
+- [Epic sheet-0050](./docs/epics/sheet-0050.md)
+- [Ticket sheet-0051](./docs/tickets/sheet-0051.md)
+- [Ticket sheet-0052](./docs/tickets/sheet-0052.md)
+- [Ticket sheet-0053](./docs/tickets/sheet-0053.md)
+- [Ticket sheet-0054](./docs/tickets/sheet-0054.md)
+- [Ticket sheet-0055](./docs/tickets/sheet-0055.md)
+- [Ticket sheet-0056](./docs/tickets/sheet-0056.md)
+- [Ticket sheet-0057](./docs/tickets/sheet-0057.md)
+- [Ticket sheet-0058](./docs/tickets/sheet-0058.md)
+- [Ticket sheet-0059](./docs/tickets/sheet-0059.md)
+- [Ticket sheet-0060](./docs/tickets/sheet-0060.md)
