@@ -168,10 +168,15 @@ function isAddressInUse(error: unknown) {
   );
 }
 
-function getCandidatePorts() {
-  const start = 3200 + Math.floor(Math.random() * 2000);
+const browserBlockedPorts = new Set([
+  3659,
+  4045,
+]);
 
-  return Array.from({ length: 20 }, (_, index) => start + index);
+export function getCandidatePorts(start = 3200 + Math.floor(Math.random() * 2000)) {
+  return Array.from({ length: 20 }, (_, index) => start + index).filter(
+    (port) => !browserBlockedPorts.has(port),
+  );
 }
 
 function listen(server: ReturnType<typeof createServer>, port: number, hostname: string) {
