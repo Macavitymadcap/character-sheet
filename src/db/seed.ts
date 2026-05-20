@@ -209,6 +209,21 @@ const resources: ResourceSeed[] = [
   ["resource_lynott_eldritch_cannon", "eldritch_cannon", "feature_use", "Eldritch Cannon", 1, 1, 70],
 ];
 
+const miraResources: ResourceSeed[] = [
+  ["resource_mira_hit_points", "hit_points", "hit_points", "Hit points", 9, 9, 10],
+  [
+    "resource_mira_temporary_hit_points",
+    "temporary_hit_points",
+    "temporary_hit_points",
+    "Temporary hit points",
+    0,
+    null,
+    20,
+  ],
+  ["resource_mira_inspiration", "inspiration", "inspiration", "Inspiration", 0, 1, 25],
+  ["resource_mira_hit_dice", "hit_dice_d8", "hit_dice", "Hit dice d8", 1, 1, 30],
+];
+
 const equipment: EquipmentSeed[] = [
   [
     "equipment_lynott_coin_purse",
@@ -1037,6 +1052,20 @@ export const seedDatabase = (database: Database) => {
          max_value = excluded.max_value,
          sort_order = excluded.sort_order`,
       [resource[0], "character_lynott_magulbisson", ...resource.slice(1)],
+    );
+  }
+
+  for (const resource of miraResources) {
+    database.run(
+      `insert into character_resources (id, character_id, resource_key, resource_type, label, current_value, max_value, sort_order)
+       values (?, ?, ?, ?, ?, ?, ?, ?)
+       on conflict(id) do update set
+         resource_key = excluded.resource_key,
+         resource_type = excluded.resource_type,
+         label = excluded.label,
+         max_value = excluded.max_value,
+         sort_order = excluded.sort_order`,
+      [resource[0], "character_mira_voss", ...resource.slice(1)],
     );
   }
 

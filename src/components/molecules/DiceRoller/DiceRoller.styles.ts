@@ -28,19 +28,29 @@ export const diceRollerStyles = /* css */ `
   box-shadow: 0 1rem 2.5rem var(--shadow-colour);
   color: var(--heading-colour);
   margin: 0;
-  min-width: min(18rem, calc(100vw - 1.5rem));
-  padding: 0.7rem;
+  min-width: min(16rem, calc(100vw - 1.5rem));
+  padding: 0.55rem;
   position-area: bottom center;
 }
 
 .dice-roller-panel:popover-open {
   display: grid;
-  gap: 0.6rem;
+  gap: 0.45rem;
 }
 
 .dice-roller-form {
   display: grid;
-  gap: 0.5rem;
+  gap: 0.45rem;
+}
+
+.dice-roller-fields {
+  display: grid;
+  gap: 0.4rem;
+  grid-template-columns: minmax(0, 1fr) 4.5rem;
+}
+
+.dice-roller-field-wide {
+  grid-column: 1 / -1;
 }
 
 .dice-roller-form label {
@@ -59,8 +69,12 @@ export const diceRollerStyles = /* css */ `
   border-radius: 0.35rem;
   color: var(--heading-colour);
   font-weight: 800;
-  min-height: 2.1rem;
-  padding: 0.35rem 0.45rem;
+  min-height: 1.9rem;
+  padding: 0.28rem 0.4rem;
+}
+
+.dice-roller-extra-field input {
+  text-align: center;
 }
 
 .dice-roller-form button {
@@ -70,7 +84,7 @@ export const diceRollerStyles = /* css */ `
   color: var(--action-text-colour);
   cursor: pointer;
   font-weight: 900;
-  min-height: 2.2rem;
+  min-height: 2rem;
 }
 
 .dice-roll-result {
@@ -79,7 +93,7 @@ export const diceRollerStyles = /* css */ `
   border-radius: 0.4rem;
   display: block;
   font-weight: 900;
-  padding: 0.45rem 0.55rem;
+  padding: 0.4rem 0.5rem;
 }
 
 @media (max-width: 760px) {
@@ -93,13 +107,13 @@ export const diceRollerStyles = /* css */ `
   }
 
   .dice-roller-panel {
-    inset: auto 0.75rem 1rem 0.75rem;
-    margin: auto;
+    inset: auto 0.75rem 1rem auto;
+    margin: 0;
     max-height: calc(100vh - 2rem);
     min-width: 0;
     overflow: auto;
     position: fixed;
-    width: calc(100vw - 1.5rem);
+    width: min(19rem, calc(100vw - 1.5rem));
   }
 
   .dice-roll-result {

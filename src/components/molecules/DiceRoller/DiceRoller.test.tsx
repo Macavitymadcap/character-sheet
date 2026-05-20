@@ -20,6 +20,8 @@ describe("DiceRoller", () => {
     expect(html).toContain('hx-target="#stealth-roll-result"');
     expect(html).toContain('name="resultId" value="stealth-roll-result"');
     expect(html).toContain('name="modifier" value="5"');
+    expect(html).toContain('<div class="dice-roller-fields">');
+    expect(html).toContain('class="dice-roller-field dice-roller-extra-field"');
     expect(html).toContain("Ready: d20 +5");
   });
 
@@ -35,6 +37,7 @@ describe("DiceRoller", () => {
     );
 
     expect(html).toContain('<select name="baseModifier">');
+    expect(html).toContain('class="dice-roller-field dice-roller-field-wide"');
     expect(html).toContain('name="proficiencyBonus" value="2"');
     expect(html).toContain("Dexterity +3");
     expect(html).toContain("Ready: d20 +5");

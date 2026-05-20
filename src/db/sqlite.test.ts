@@ -789,6 +789,12 @@ describe("SQLite repositories", () => {
       expect.objectContaining({ id: "character_lynott_magulbisson", name: "Lynott Magulbisson" }),
       expect.objectContaining({ id: "character_mira_voss", name: "Mira Voss" }),
     ]);
+    expect(characters.listResources("character_mira_voss").map((resource) => resource.key)).toEqual([
+      "hit_points",
+      "temporary_hit_points",
+      "inspiration",
+      "hit_dice_d8",
+    ]);
   });
 
   test("creates manual characters with stable slugs and renderable defaults", () => {
