@@ -1,6 +1,6 @@
 # Campaign Ledger
 
-A local-first D&D 5e character sheet app for Lynott Magulbisson, built as a Hono + HTMX + SQLite application.
+A local-first D&D 5e campaign ledger for character sheets, campaign records, and table-use rules, built as a Hono + HTMX + SQLite application.
 
 The first MVP focuses on a small table: one player character, one Game Master, and one admin. It runs locally with SQLite, uses server-rendered HTML fragments for sheet interactions, and stores D&D 2014 rules data in structured database tables rather than treating markdown as the runtime source of truth. The group-use campaign work now adds multiple players, multiple campaign characters, local character creation, wiki pages, image assets, factions, faction choices, and session records.
 
