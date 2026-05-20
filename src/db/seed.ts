@@ -1,5 +1,7 @@
 import type { Database } from "bun:sqlite";
 import { PasswordService } from "../auth/password";
+import { characterClassDefaults, formatHitDice } from "./class-defaults";
+import { standardCharacterResourceTemplates } from "./standard-resources";
 
 type AbilitySeed = [string, number, number, number, number];
 type ArmourClassSourceSeed = [string, string, number, string, number];
@@ -182,19 +184,11 @@ const staleProficiencyIds = [
   "training_lynott_magitech",
 ];
 
+const lynottClass = characterClassDefaults("Artificer");
+const miraClass = characterClassDefaults("Cleric");
+
 const resources: ResourceSeed[] = [
-  ["resource_lynott_hit_points", "hit_points", "hit_points", "Hit points", 31, 31, 10],
-  [
-    "resource_lynott_temporary_hit_points",
-    "temporary_hit_points",
-    "temporary_hit_points",
-    "Temporary hit points",
-    0,
-    null,
-    20,
-  ],
-  ["resource_lynott_inspiration", "inspiration", "inspiration", "Inspiration", 0, 1, 25],
-  ["resource_lynott_hit_dice", "hit_dice_d8", "hit_dice", "Hit dice d8", 4, 4, 30],
+  ...standardResourceSeeds("lynott", { hitDiceCurrent: 4, hitDieSides: lynottClass.hitDieSides, hitPointMax: 31 }),
   ["resource_lynott_spell_slots_1", "spell_slots_1", "spell_slot", "1st-level spell slots", 3, 3, 40],
   ["resource_lynott_fey_gift", "fey_gift", "feature_use", "Fey Gift", 2, 2, 50],
   [
@@ -208,6 +202,27 @@ const resources: ResourceSeed[] = [
   ],
   ["resource_lynott_eldritch_cannon", "eldritch_cannon", "feature_use", "Eldritch Cannon", 1, 1, 70],
 ];
+
+const miraResources: ResourceSeed[] = standardResourceSeeds("mira", {
+  hitDiceCurrent: 1,
+  hitDieSides: miraClass.hitDieSides,
+  hitPointMax: 9,
+});
+
+function standardResourceSeeds(
+  idPrefix: string,
+  options: Parameters<typeof standardCharacterResourceTemplates>[0],
+): ResourceSeed[] {
+  return standardCharacterResourceTemplates(options).map((resource) => [
+    `resource_${idPrefix}_${resource.type === "hit_dice" ? "hit_dice" : resource.key}`,
+    resource.key,
+    resource.type,
+    resource.label,
+    resource.current,
+    resource.max,
+    resource.sortOrder,
+  ]);
+}
 
 const equipment: EquipmentSeed[] = [
   [
@@ -953,8 +968,8 @@ export const seedDatabase = (database: Database) => {
       "Artificer",
       "Artillerist",
       4,
-      "4d8",
-      "intelligence",
+      formatHitDice(4, lynottClass.hitDieSides),
+      lynottClass.spellcastingAbility,
     ],
   );
 
@@ -966,8 +981,8 @@ export const seedDatabase = (database: Database) => {
       "Cleric",
       null,
       1,
-      "1d8",
-      "wisdom",
+      formatHitDice(1, miraClass.hitDieSides),
+      miraClass.spellcastingAbility,
     ],
   );
 
@@ -1037,6 +1052,20 @@ export const seedDatabase = (database: Database) => {
          max_value = excluded.max_value,
          sort_order = excluded.sort_order`,
       [resource[0], "character_lynott_magulbisson", ...resource.slice(1)],
+    );
+  }
+
+  for (const resource of miraResources) {
+    database.run(
+      `insert into character_resources (id, character_id, resource_key, resource_type, label, current_value, max_value, sort_order)
+       values (?, ?, ?, ?, ?, ?, ?, ?)
+       on conflict(id) do update set
+         resource_key = excluded.resource_key,
+         resource_type = excluded.resource_type,
+         label = excluded.label,
+         max_value = excluded.max_value,
+         sort_order = excluded.sort_order`,
+      [resource[0], "character_mira_voss", ...resource.slice(1)],
     );
   }
 

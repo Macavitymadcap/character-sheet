@@ -67,15 +67,37 @@ const themeScript = /* js */ `
 
 const sheetTabsScript = /* js */ `
 (() => {
+  const scrollActiveTabIntoView = (tab) => {
+    const tabList = tab?.closest?.(".sheet-tabs");
+    if (!tab || !tabList) {
+      tab?.scrollIntoView?.({ block: "nearest", inline: "center" });
+      return;
+    }
+
+    const minimumScrollLeft = tab.offsetLeft + tab.offsetWidth - tabList.clientWidth;
+    const tabs = Array.from(tabList.querySelectorAll(".sheet-tab"));
+    const firstFullyVisibleTab = tabs.find((candidate) => candidate.offsetLeft >= minimumScrollLeft) ?? tab;
+
+    tabList.scrollTo({ left: Math.max(0, firstFullyVisibleTab.offsetLeft - 4), top: 0 });
+  };
+
   const syncSheetTabs = (tabId) => {
     if (!tabId) return;
 
+    let activeTab = null;
     document.querySelectorAll(".sheet-tab").forEach((tab) => {
       const isActive = tab.id === "sheet-tab-" + tabId;
       tab.dataset.state = isActive ? "active" : "idle";
       tab.setAttribute("aria-selected", String(isActive));
+      if (isActive) activeTab = tab;
     });
+
+    scrollActiveTabIntoView(activeTab);
   };
+
+  window.addEventListener("DOMContentLoaded", () => {
+    scrollActiveTabIntoView(document.querySelector('.sheet-tab[data-state="active"]'));
+  });
 
   document.addEventListener("click", (event) => {
     const target = event.target instanceof Element ? event.target : event.target?.parentElement;

@@ -735,11 +735,19 @@ describe("createApp", () => {
   test("marks Mira's seeded cleric sheet as intentionally partial", async () => {
     const { app, sessionService } = createTestApp("Campaign Ledger");
     const miraSession = sessionService.createSession("user_mira_player");
+    const sheet = await app.request("/sheet/mira-voss", {
+      headers: { cookie: miraSession.cookie },
+    });
     const notes = await app.request("/sheet/mira-voss/tabs/notes", {
       headers: { cookie: miraSession.cookie },
     });
+    const sheetHtml = await sheet.text();
     const notesHtml = await notes.text();
 
+    expect(sheet.status).toBe(200);
+    expect(sheetHtml).toContain('id="inspiration-toggle"');
+    expect(sheetHtml).toContain('hx-patch="/sheet/mira-voss/resources/resource_mira_inspiration"');
+    expect(sheetHtml).not.toContain("<dd>No</dd>");
     expect(notes.status).toBe(200);
     expect(notesHtml).toContain("Seed data scope");
     expect(notesHtml).toContain("deliberately partial human cleric seed");

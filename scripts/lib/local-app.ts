@@ -49,7 +49,7 @@ export async function startLocalServer(
 ): Promise<LocalServer> {
   const requestedPort = envName ? getRequestedPort(envName) : undefined;
 
-  for (const port of requestedPort === undefined ? getCandidatePorts() : [requestedPort]) {
+  for (const port of requestedPort === undefined ? [...getCandidatePorts(), 0] : [requestedPort]) {
     try {
       const server = createServer(async (request, response) => {
         try {
@@ -67,10 +67,10 @@ export async function startLocalServer(
         }
       });
 
-      await listen(server, port, hostname);
+      const actualPort = await listen(server, port, hostname);
 
       return {
-        port,
+        port: actualPort,
         stop: () => server.close(),
       };
     } catch (error) {
@@ -168,18 +168,24 @@ function isAddressInUse(error: unknown) {
   );
 }
 
-function getCandidatePorts() {
-  const start = 3200 + Math.floor(Math.random() * 2000);
+const browserBlockedPorts = new Set([
+  3659,
+  4045,
+]);
 
-  return Array.from({ length: 20 }, (_, index) => start + index);
+export function getCandidatePorts(start = 49152 + Math.floor(Math.random() * 10000)) {
+  return Array.from({ length: 100 }, (_, index) => start + index).filter(
+    (port) => !browserBlockedPorts.has(port),
+  );
 }
 
 function listen(server: ReturnType<typeof createServer>, port: number, hostname: string) {
-  return new Promise<void>((resolve, reject) => {
+  return new Promise<number>((resolve, reject) => {
     server.once("error", reject);
     server.listen(port, hostname, () => {
       server.off("error", reject);
-      resolve();
+      const address = server.address();
+      resolve(typeof address === "object" && address ? address.port : port);
     });
   });
 }

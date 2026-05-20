@@ -37,6 +37,8 @@ export const sheetTabsStyles = /* css */ `
   overflow-x: auto;
   overflow-y: hidden;
   padding: 0.25rem;
+  scroll-padding-inline: 0.75rem;
+  scroll-snap-type: x proximity;
   scrollbar-gutter: stable;
   transition:
     background-color var(--theme-transition),
@@ -58,12 +60,19 @@ export const sheetTabsStyles = /* css */ `
   min-height: 2.2rem;
   min-width: 0;
   padding: 0.35rem 0.5rem;
+  scroll-margin-inline: 0.75rem;
+  scroll-snap-align: start;
   text-decoration: none;
   transition:
     background-color var(--theme-transition),
     border-color var(--theme-transition),
     color var(--theme-text-transition);
   white-space: nowrap;
+}
+
+.sheet-tabs::after {
+  content: "";
+  flex: 0 0 3rem;
 }
 
 .sheet-tab:hover {

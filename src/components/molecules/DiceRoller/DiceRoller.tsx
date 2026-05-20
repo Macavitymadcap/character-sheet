@@ -55,30 +55,32 @@ export const DiceRoller = ({
           {proficiencyBonus !== undefined ? (
             <input type="hidden" name="proficiencyBonus" value={String(proficiencyBonus)} />
           ) : null}
-          {abilityOptions ? (
-            <label>
-              Ability
-              <select name="baseModifier">
-                {abilityOptions.map((option) => (
-                  <option value={String(option.value)}>
-                    {option.label} {formatModifier(option.value)}
-                  </option>
-                ))}
+          <div class="dice-roller-fields">
+            {abilityOptions ? (
+              <label class="dice-roller-field dice-roller-field-wide">
+                Ability
+                <select name="baseModifier">
+                  {abilityOptions.map((option) => (
+                    <option value={String(option.value)}>
+                      {option.label} {formatModifier(option.value)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
+            <label class="dice-roller-field">
+              Mode
+              <select name="mode">
+                <option value="normal">Normal</option>
+                <option value="advantage">Advantage</option>
+                <option value="disadvantage">Disadvantage</option>
               </select>
             </label>
-          ) : null}
-          <label>
-            Mode
-            <select name="mode">
-              <option value="normal">Normal</option>
-              <option value="advantage">Advantage</option>
-              <option value="disadvantage">Disadvantage</option>
-            </select>
-          </label>
-          <label>
-            Extra
-            <input inputmode="numeric" name="additionalModifier" type="number" value="0" />
-          </label>
+            <label class="dice-roller-field dice-roller-extra-field">
+              Extra
+              <input inputmode="numeric" name="additionalModifier" type="number" value="0" />
+            </label>
+          </div>
           <button type="submit">Roll</button>
         </form>
         <output id={resultId} class="dice-roll-result">
