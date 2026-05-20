@@ -1,5 +1,6 @@
 import type { Database } from "bun:sqlite";
 import { PasswordService } from "../auth/password";
+import { characterClassDefaults, formatHitDice } from "./class-defaults";
 import { standardCharacterResourceTemplates } from "./standard-resources";
 
 type AbilitySeed = [string, number, number, number, number];
@@ -183,8 +184,11 @@ const staleProficiencyIds = [
   "training_lynott_magitech",
 ];
 
+const lynottClass = characterClassDefaults("Artificer");
+const miraClass = characterClassDefaults("Cleric");
+
 const resources: ResourceSeed[] = [
-  ...standardResourceSeeds("lynott", { hitDiceCurrent: 4, hitPointMax: 31 }),
+  ...standardResourceSeeds("lynott", { hitDiceCurrent: 4, hitDieSides: lynottClass.hitDieSides, hitPointMax: 31 }),
   ["resource_lynott_spell_slots_1", "spell_slots_1", "spell_slot", "1st-level spell slots", 3, 3, 40],
   ["resource_lynott_fey_gift", "fey_gift", "feature_use", "Fey Gift", 2, 2, 50],
   [
@@ -201,6 +205,7 @@ const resources: ResourceSeed[] = [
 
 const miraResources: ResourceSeed[] = standardResourceSeeds("mira", {
   hitDiceCurrent: 1,
+  hitDieSides: miraClass.hitDieSides,
   hitPointMax: 9,
 });
 
@@ -209,7 +214,7 @@ function standardResourceSeeds(
   options: Parameters<typeof standardCharacterResourceTemplates>[0],
 ): ResourceSeed[] {
   return standardCharacterResourceTemplates(options).map((resource) => [
-    `resource_${idPrefix}_${resource.key === "hit_dice_d8" ? "hit_dice" : resource.key}`,
+    `resource_${idPrefix}_${resource.type === "hit_dice" ? "hit_dice" : resource.key}`,
     resource.key,
     resource.type,
     resource.label,
@@ -963,8 +968,8 @@ export const seedDatabase = (database: Database) => {
       "Artificer",
       "Artillerist",
       4,
-      "4d8",
-      "intelligence",
+      formatHitDice(4, lynottClass.hitDieSides),
+      lynottClass.spellcastingAbility,
     ],
   );
 
@@ -976,8 +981,8 @@ export const seedDatabase = (database: Database) => {
       "Cleric",
       null,
       1,
-      "1d8",
-      "wisdom",
+      formatHitDice(1, miraClass.hitDieSides),
+      miraClass.spellcastingAbility,
     ],
   );
 

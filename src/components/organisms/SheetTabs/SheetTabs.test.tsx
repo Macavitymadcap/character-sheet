@@ -44,6 +44,12 @@ describe("SheetTabs", () => {
     expect(sheetTabsStyles).toContain("inline-size: max-content;");
     expect(sheetTabsStyles).toContain("justify-content: flex-start;");
     expect(sheetTabsStyles).toContain("overflow-x: auto;");
+    expect(sheetTabsStyles).toContain("scroll-padding-inline: 0.75rem;");
+    expect(sheetTabsStyles).toContain("scroll-margin-inline: 0.75rem;");
+    expect(sheetTabsStyles).toContain("scroll-snap-align: start;");
+    expect(sheetTabsStyles).toContain("scroll-snap-type: x proximity;");
+    expect(sheetTabsStyles).toContain(".sheet-tabs::after");
+    expect(sheetTabsStyles).toContain("flex: 0 0 3rem;");
     expect(sheetTabsStyles).toContain(".sheet-tab:hover");
     expect(sheetTabsStyles).not.toContain("justify-content: space-between;");
     expect(sheetTabsStyles).not.toContain("repeat(8");

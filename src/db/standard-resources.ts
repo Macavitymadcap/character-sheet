@@ -17,17 +17,22 @@ export const standardCharacterResourceKeys = [
   "hit_points",
   "temporary_hit_points",
   "inspiration",
-  "hit_dice_d8",
 ] as const;
+
+export function standardCharacterResourceKeysForHitDie(hitDieSides: number) {
+  return [...standardCharacterResourceKeys, `hit_dice_d${hitDieSides}`];
+}
 
 export function standardCharacterResourceTemplates({
   hitDiceCurrent,
   hitDiceMax = hitDiceCurrent,
+  hitDieSides,
   hitPointCurrent,
   hitPointMax,
 }: {
   hitDiceCurrent: number;
   hitDiceMax?: number;
+  hitDieSides: number;
   hitPointCurrent?: number;
   hitPointMax: number;
 }): StandardCharacterResourceTemplate[] {
@@ -60,8 +65,8 @@ export function standardCharacterResourceTemplates({
     },
     {
       current: hitDiceCurrent,
-      key: "hit_dice_d8",
-      label: "Hit dice d8",
+      key: `hit_dice_d${hitDieSides}`,
+      label: `Hit dice d${hitDieSides}`,
       max: hitDiceMax,
       sortOrder: 30,
       type: "hit_dice",

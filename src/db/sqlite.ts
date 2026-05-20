@@ -1,6 +1,7 @@
 import { Database } from "bun:sqlite";
 import { randomUUID } from "node:crypto";
 import { abilityModifier, armourClassTotal, savingThrowModifier, skillModifier } from "../characters/calculations";
+import { characterClassDefaults, formatHitDice } from "./class-defaults";
 import { standardCharacterResourceTemplates } from "./standard-resources";
 import type {
   AbilityName,
@@ -698,6 +699,7 @@ class SqliteCharacterRepository implements CharacterRepository {
     const subclassName = input.subclassName?.trim() || null;
     const level = Math.max(1, Math.floor(input.level));
     const hitPointMax = Math.max(1, Math.floor(input.hitPointMax));
+    const classDefaults = characterClassDefaults(className);
     const characterId = randomUUID();
     const slug = this.nextSlug(input.campaignId, name);
     const proficiencyBonus = Math.max(2, Math.ceil(level / 4) + 1);
@@ -726,8 +728,16 @@ class SqliteCharacterRepository implements CharacterRepository {
       this.database.run(
         `insert into character_classes (
           id, character_id, class_name, subclass_name, level, hit_dice, spellcasting_ability
-        ) values (?, ?, ?, ?, ?, '1d8', null)`,
-        [randomUUID(), characterId, className, subclassName, level],
+        ) values (?, ?, ?, ?, ?, ?, ?)`,
+        [
+          randomUUID(),
+          characterId,
+          className,
+          subclassName,
+          level,
+          formatHitDice(level, classDefaults.hitDieSides),
+          classDefaults.spellcastingAbility,
+        ],
       );
 
       for (const ability of abilityNames) {
@@ -773,6 +783,7 @@ class SqliteCharacterRepository implements CharacterRepository {
 
       for (const resource of standardCharacterResourceTemplates({
         hitDiceCurrent: level,
+        hitDieSides: classDefaults.hitDieSides,
         hitPointMax,
       })) {
         this.database.run(
