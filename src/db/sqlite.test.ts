@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import { RulesImportService } from "../rules";
 import { createSqliteDatabase, type SqliteDatabaseRuntime } from "./sqlite";
+import { standardCharacterResourceKeys } from "./standard-resources";
 
 let runtime: SqliteDatabaseRuntime | undefined;
 
@@ -789,12 +790,9 @@ describe("SQLite repositories", () => {
       expect.objectContaining({ id: "character_lynott_magulbisson", name: "Lynott Magulbisson" }),
       expect.objectContaining({ id: "character_mira_voss", name: "Mira Voss" }),
     ]);
-    expect(characters.listResources("character_mira_voss").map((resource) => resource.key)).toEqual([
-      "hit_points",
-      "temporary_hit_points",
-      "inspiration",
-      "hit_dice_d8",
-    ]);
+    expect(characters.listResources("character_mira_voss").map((resource) => resource.key)).toEqual(
+      [...standardCharacterResourceKeys],
+    );
   });
 
   test("creates manual characters with stable slugs and renderable defaults", () => {
@@ -842,12 +840,9 @@ describe("SQLite repositories", () => {
         subclassName: null,
       },
     ]);
-    expect(characters.listResources(first.id).map((resource) => resource.key)).toEqual([
-      "hit_points",
-      "temporary_hit_points",
-      "inspiration",
-      "hit_dice_d8",
-    ]);
+    expect(characters.listResources(first.id).map((resource) => resource.key)).toEqual(
+      [...standardCharacterResourceKeys],
+    );
     expect(characters.listCharactersForPlayer("user_mira_player").map((character) => character.slug))
       .toContain("ash_vale");
   });

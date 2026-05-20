@@ -1,6 +1,7 @@
 import { Database } from "bun:sqlite";
 import { randomUUID } from "node:crypto";
 import { abilityModifier, armourClassTotal, savingThrowModifier, skillModifier } from "../characters/calculations";
+import { standardCharacterResourceTemplates } from "./standard-resources";
 import type {
   AbilityName,
   ArmourClassSource,
@@ -770,26 +771,25 @@ class SqliteCharacterRepository implements CharacterRepository {
         );
       });
 
-      this.database.run(
-        `insert into character_resources (id, character_id, resource_key, resource_type, label, current_value, max_value, sort_order)
-         values (?, ?, 'hit_points', 'hit_points', 'Hit points', ?, ?, 10)`,
-        [randomUUID(), characterId, hitPointMax, hitPointMax],
-      );
-      this.database.run(
-        `insert into character_resources (id, character_id, resource_key, resource_type, label, current_value, max_value, sort_order)
-         values (?, ?, 'temporary_hit_points', 'temporary_hit_points', 'Temporary hit points', 0, null, 20)`,
-        [randomUUID(), characterId],
-      );
-      this.database.run(
-        `insert into character_resources (id, character_id, resource_key, resource_type, label, current_value, max_value, sort_order)
-         values (?, ?, 'inspiration', 'inspiration', 'Inspiration', 0, 1, 30)`,
-        [randomUUID(), characterId],
-      );
-      this.database.run(
-        `insert into character_resources (id, character_id, resource_key, resource_type, label, current_value, max_value, sort_order)
-         values (?, ?, 'hit_dice_d8', 'hit_dice', 'Hit dice d8', ?, ?, 40)`,
-        [randomUUID(), characterId, level, level],
-      );
+      for (const resource of standardCharacterResourceTemplates({
+        hitDiceCurrent: level,
+        hitPointMax,
+      })) {
+        this.database.run(
+          `insert into character_resources (id, character_id, resource_key, resource_type, label, current_value, max_value, sort_order)
+           values (?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            randomUUID(),
+            characterId,
+            resource.key,
+            resource.type,
+            resource.label,
+            resource.current,
+            resource.max,
+            resource.sortOrder,
+          ],
+        );
+      }
       this.database.run(
         `insert into character_equipment (id, character_id, name, category, quantity, equipped, notes)
          values (?, ?, 'Coin purse', 'money', 0, 0, 'Starting money to be recorded.')`,
