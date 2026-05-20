@@ -9,6 +9,7 @@ export { FormField } from "./molecules/FormField";
 export { Icon } from "./atoms/Icon";
 export { LabelledOutput } from "./molecules/LabelledOutput";
 export { LoginPage } from "./pages/Login";
+export { LocalPlayPage } from "./pages/LocalPlay";
 export { LogoutPage } from "./pages/Logout";
 export { Panel } from "./atoms/Panel";
 export { PopoverMenu } from "./molecules/PopoverMenu";

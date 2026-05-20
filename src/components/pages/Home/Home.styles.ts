@@ -70,6 +70,12 @@ export const homeStyles = /* css */ `
   text-decoration: none;
 }
 
+.action-link-secondary {
+  background: var(--surface-colour);
+  border-color: var(--border-colour);
+  color: var(--heading-colour);
+}
+
 @media (max-width: 760px) {
   .shell {
     padding: 0.75rem;

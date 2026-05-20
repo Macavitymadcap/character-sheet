@@ -2,7 +2,7 @@ import type { AuthUser } from "../../../db";
 import { PopoverMenu } from "../PopoverMenu";
 import { Switch } from "../../atoms/Switch";
 
-type SiteSection = "admin" | "campaign" | "characters" | "home" | "login" | "logout" | "rules" | "sheet";
+type SiteSection = "admin" | "campaign" | "characters" | "home" | "local" | "login" | "logout" | "rules" | "sheet";
 
 interface SiteHeaderProps {
   appName: string;
@@ -46,6 +46,7 @@ function getMenuLinks(user: SiteHeaderProps["user"], currentSection: SiteSection
   ];
 
   if (!user) {
+    links.push({ current: currentSection === "rules", href: "/rules", label: "Rules" });
     links.push({ current: currentSection === "login", href: "/login", label: "Sign in" });
 
     return links;

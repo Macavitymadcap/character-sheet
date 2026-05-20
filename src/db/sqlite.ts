@@ -41,6 +41,7 @@ import type {
   RulesRepository,
   RulesContentCategory,
   RuleDetail,
+  RuleAccessFilters,
   RulesSeedRepository,
   RuleEntitySeedInput,
   RuleEntityType,
@@ -2012,8 +2013,8 @@ class SqliteCampaignRepository implements CampaignRepository {
 class SqliteRulesRepository implements RulesRepository {
   constructor(private readonly database: Database) {}
 
-  getRuleDetail(entityType: RuleEntityType, slug: string): RuleDetail | null {
-    const rows = this.ruleRows().filter((row) => row.entity_type === entityType && row.slug === slug);
+  getRuleDetail(entityType: RuleEntityType, slug: string, filters: RuleAccessFilters = {}): RuleDetail | null {
+    const rows = this.ruleRows(filters).filter((row) => row.entity_type === entityType && row.slug === slug);
     const summary = rows[0] ? toRuleSummary(rows[0]) : null;
     if (!summary) return null;
 
@@ -2037,15 +2038,21 @@ class SqliteRulesRepository implements RulesRepository {
     };
   }
 
-  listRuleEntityTypes(): RuleEntityTypeCount[] {
+  listRuleEntityTypes(filters: RuleAccessFilters = {}): RuleEntityTypeCount[] {
+    const values: RulesContentCategory[] = [];
+    const contentCategoryClause = filters.contentCategory ? "where sources.content_category = ?" : "";
+    if (filters.contentCategory) values.push(filters.contentCategory);
+
     return this.database
-      .query<RuleEntityTypeCountRow, []>(
+      .query<RuleEntityTypeCountRow, RulesContentCategory[]>(
         `select entity_type, count(*) as count
          from rules_entities
+         inner join rules_sources sources on sources.id = rules_entities.source_id
+         ${contentCategoryClause}
          group by entity_type
          order by entity_type`,
       )
-      .all()
+      .all(...values)
       .map((row) => ({
         count: row.count,
         entityType: row.entity_type,
@@ -2087,7 +2094,7 @@ class SqliteRulesRepository implements RulesRepository {
   listRules(filters: RuleSearchFilters = {}): RuleSummary[] {
     const seen = new Set<string>();
 
-    return this.ruleRows()
+    return this.ruleRows(filters)
       .map(toRuleSummary)
       .filter((rule) => {
         if (seen.has(rule.id)) return false;
@@ -2111,9 +2118,13 @@ class SqliteRulesRepository implements RulesRepository {
       });
   }
 
-  private ruleRows() {
+  private ruleRows(filters: RuleAccessFilters = {}) {
+    const values: RulesContentCategory[] = [];
+    const contentCategoryClause = filters.contentCategory ? "where sources.content_category = ?" : "";
+    if (filters.contentCategory) values.push(filters.contentCategory);
+
     return this.database
-      .query<RuleSummaryRow, []>(
+      .query<RuleSummaryRow, RulesContentCategory[]>(
         `select entities.id,
           entities.slug,
           entities.entity_type,
@@ -2127,9 +2138,10 @@ class SqliteRulesRepository implements RulesRepository {
         from rules_entities entities
         inner join rules_sources sources on sources.id = entities.source_id
         left join rule_mechanics mechanics on mechanics.rules_entity_id = entities.id
+        ${contentCategoryClause}
         order by entities.entity_type, entities.name, mechanics.id`,
       )
-      .all();
+      .all(...values);
   }
 }
 

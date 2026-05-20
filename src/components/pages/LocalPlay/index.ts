@@ -1,0 +1,1 @@
+export { LocalPlayPage } from "./LocalPlay";

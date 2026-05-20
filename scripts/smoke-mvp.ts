@@ -127,8 +127,9 @@ export async function runMvpSmoke() {
         `data-tab-id="${tabId}"`,
       );
     }
-    await assertContains("rules browse", `${baseUrl}/rules?type=spell&level=1`, playerCookie, "Bless");
-    await assertContains("rule detail", `${baseUrl}/rules/spell/bless`, playerCookie, "You bless up to three creatures");
+    await assertContains("public rules browse", `${baseUrl}/rules?type=spell&level=1`, "", "Bless");
+    await assertContains("public rule detail", `${baseUrl}/rules/spell/bless`, "", "You bless up to three creatures");
+    await assertContains("signed-in rules browse", `${baseUrl}/rules?type=spell&level=1`, playerCookie, "Bless");
     await assertContains("sheet rule link", `${baseUrl}/sheet/lynott/tabs/spellcasting`, playerCookie, "/rules/spell/mage-hand");
 
     const logout = await requestText(`${baseUrl}/logout`, {

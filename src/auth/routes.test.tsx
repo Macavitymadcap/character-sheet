@@ -97,7 +97,7 @@ describe("auth routes", () => {
     const afterLogoutHtml = await afterLogout.text();
 
     expect(home.status).toBe(200);
-    expect(homeHtml).toContain('<a class="action-link" href="/characters">Continue</a>');
+    expect(homeHtml).toContain('<a class="action-link action-link-secondary" href="/characters">Continue</a>');
     expect(logoutPage.status).toBe(200);
     expect(await logoutPage.text()).toContain("End the current session for Lynott Player.");
     expect(logout.status).toBe(303);
