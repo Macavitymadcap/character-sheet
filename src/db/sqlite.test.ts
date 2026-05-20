@@ -10,6 +10,12 @@ afterEach(() => {
 });
 
 describe("SQLite repositories", () => {
+  test("can bootstrap schema without seeding mutable data", () => {
+    runtime = createSqliteDatabase({ path: ":memory:", seed: false });
+
+    expect(runtime.repositories.authRepository.listUsers()).toEqual([]);
+  });
+
   test("seeds the MVP users idempotently", () => {
     runtime = createSqliteDatabase({ path: ":memory:" });
     runtime.seed();

@@ -22,3 +22,10 @@ Add the Railway runtime configuration, health checks, and deployment documentati
 - Health checks prove the app is booted without requiring authentication.
 - Local development remains unchanged.
 - `bun run verify` passes.
+
+## Implementation Notes
+
+- Added root `railway.json` using Railpack, `bun run start`, `/healthz`, and an `ON_FAILURE` restart policy for the hosted rehearsal service.
+- Added a testable runtime configuration resolver for `PORT`, `HOST`, `DB_PATH`, and `SESSION_SECRET`, preserving local defaults while rejecting invalid ports before server bind.
+- Documented Railway service setup, hosted environment variables, health checks, and local hosted-style verification in `docs/deployment/railway.md`.
+- Linked the Railway setup from README and architecture docs, with documentation tests checking the config and instructions stay aligned.

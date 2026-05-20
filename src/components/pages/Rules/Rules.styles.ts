@@ -5,10 +5,14 @@ export const rulesStyles = /* css */ `
 
 .rules-main,
 .rules-heading,
-.rules-result-list,
-.rule-mechanic-body {
+.rules-result-list {
   display: grid;
   gap: 1rem;
+}
+
+.rule-mechanic-body {
+  display: grid;
+  gap: 1.1rem;
 }
 
 .rules-kicker {
@@ -22,8 +26,8 @@ export const rulesStyles = /* css */ `
 .rules-filter-form {
   align-items: end;
   display: grid;
-  gap: 0.75rem;
-  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 0.55rem;
+  grid-template-columns: minmax(10rem, 1.35fr) repeat(3, minmax(7rem, 1fr)) auto auto;
 }
 
 .rules-filter-form label {
@@ -39,9 +43,9 @@ export const rulesStyles = /* css */ `
   border-radius: 0.4rem;
   color: var(--heading-colour);
   display: block;
-  margin-block-start: 0.25rem;
-  min-height: 2.2rem;
-  padding: 0.45rem;
+  margin-block-start: 0.18rem;
+  min-height: 2rem;
+  padding: 0.34rem 0.45rem;
   width: 100%;
 }
 
@@ -53,8 +57,8 @@ export const rulesStyles = /* css */ `
   color: var(--action-text-colour);
   cursor: pointer;
   font-weight: 850;
-  min-height: 2.2rem;
-  padding: 0.35rem 0.65rem;
+  min-height: 2rem;
+  padding: 0.28rem 0.65rem;
   text-align: center;
 }
 
@@ -104,6 +108,11 @@ export const rulesStyles = /* css */ `
   margin: 0;
 }
 
+.rule-mechanic-body p {
+  font-size: 1rem;
+  line-height: 1.45;
+}
+
 .rules-tag-list {
   display: flex;
   flex-wrap: wrap;
@@ -122,13 +131,13 @@ export const rulesStyles = /* css */ `
 
 .rule-mechanic {
   border-block-start: 1px solid var(--border-colour);
-  padding-block-start: 0.85rem;
+  padding-block-start: 1rem;
 }
 
 .rule-mechanic-body dl {
   display: grid;
-  gap: 0.4rem;
-  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 0.8rem 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
   margin: 0;
 }
 
@@ -136,9 +145,48 @@ export const rulesStyles = /* css */ `
   color: var(--muted-text-colour);
   font-size: 0.78rem;
   font-weight: 850;
+  line-height: 1.1;
 }
 
 .rule-mechanic-body dd {
+  line-height: 1.3;
   margin: 0;
+}
+
+@media (max-width: 44rem) {
+  .rules-main {
+    gap: 0.75rem;
+  }
+
+  .rules-heading {
+    gap: 0.35rem;
+  }
+
+  .rules-filter-form {
+    gap: 0.45rem;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .rules-filter-form label:first-child,
+  .rules-filter-form button,
+  .rules-reset-link {
+    grid-column: 1 / -1;
+  }
+
+  .rules-filter-form label {
+    font-size: 0.78rem;
+  }
+
+  .rules-filter-form input,
+  .rules-filter-form select,
+  .rules-filter-form button,
+  .rules-reset-link {
+    min-height: 1.9rem;
+  }
+
+  .rule-mechanic-body dl {
+    gap: 0.85rem;
+    grid-template-columns: 1fr;
+  }
 }
 `;

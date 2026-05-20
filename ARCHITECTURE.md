@@ -4,7 +4,7 @@ Character Sheet is a local-first D&D 5e sheet app built with Hono, HTMX, Bun, Ty
 
 The first MVP supports a seeded local workflow for Lynott Magulbisson, one Game Master, and one admin. It is intentionally designed as a server-rendered application, not a static markdown viewer: the database stores both durable character state and structured rules data, routes own mutation and permission checks, JSX components own semantic markup, and HTMX owns focused fragment swaps.
 
-Deployment to Railway and a Postgres migration are out of scope for `sheet-0001`. The MVP should run locally with SQLite and keep the architecture compatible with a later database adapter.
+Railway deployment is active in `sheet-0030` as a hosted rehearsal of the existing SQLite app. A Postgres migration remains out of scope. The MVP should keep running locally with SQLite and keep the architecture compatible with a later database adapter.
 
 ## Goals
 
@@ -41,7 +41,7 @@ src/
 └── test/                       # shared app and repository harnesses
 ```
 
-`src/index.ts` owns process setup: host and port environment variables, the SQLite filename, repository construction, auth/session service construction, seed/bootstrap wiring, and the Bun `fetch` export.
+`src/index.ts` owns process setup through `resolveRuntimeConfig()`: host and port environment variables, the SQLite filename, repository construction, auth/session service construction, schema bootstrap, and the Bun `fetch` export. Startup deliberately does not seed mutable data. Railway-specific service configuration lives in [`railway.json`](./railway.json), hosted seed, backup, restore, and migration operations are documented in [Railway Hosted Rehearsal](./docs/deployment/railway.md), and manual account handoff is documented in [Hosted Account Operator Runbook](./docs/operations/hosted-account-runbook.md).
 
 The runtime dependency boundary includes the app name, service contracts, and repository contracts:
 
@@ -194,7 +194,7 @@ flowchart TD
 
 The database stores structured data for rules and sheet state. Markdown files in `docs/rules` are useful source material, but runtime reads should use SQLite read models. `bootstrapDatabase()` creates the MVP schema idempotently, `seedDatabase()` inserts local seed data, and repository interfaces keep route-facing contracts independent of SQLite.
 
-Campaign wiki pages store normalised Markdown and source metadata in SQLite. Rendered pages use a small safe Markdown renderer for the current Google Docs export shape: title lines, bold section headings, italic quotes, bullet lists, horizontal rules, and scene breaks. Image uploads are copied into app-managed storage under `data/assets` by default, or `CHARACTER_SHEET_ASSET_ROOT` when set for tests or local overrides. The database stores generated storage keys rather than raw local source paths, and asset routes enforce campaign membership and content visibility before reading files.
+Campaign wiki pages store normalised Markdown and source metadata in SQLite. Rendered pages use a small safe Markdown renderer for the current Google Docs export shape: title lines, bold section headings, italic quotes, bullet lists, horizontal rules, and scene breaks. Image uploads are copied into app-managed storage under `data/assets` by default, or `CHARACTER_SHEET_ASSET_ROOT` when set for tests, local overrides, or Railway volume storage at `/data/assets`. The database stores generated storage keys rather than raw local source paths, hosted preparation writes deterministic placeholders for seeded campaign asset keys, and asset routes enforce campaign membership and content visibility before reading files.
 
 ```mermaid
 erDiagram
@@ -337,7 +337,7 @@ The minimum verification before a source-code ticket is complete:
 bun run verify
 ```
 
-The accessibility script currently checks public `/` and `/login`, player `/characters`, `/sheet/lynott`, `/rules`, `/rules/spell/bless`, `/campaigns/rovnost-shadows/wiki/factions-guide`, and `/logout`, Game Master `/campaigns/rovnost-shadows` and `/campaigns/rovnost-shadows/characters`, and admin `/admin`. The MVP smoke script renders every sheet tab fragment directly and walks the group-use flows for character creation, manual edits, notes, faction choice, SRD fixture import, rules browsing, sheet rule links, sessions, wiki, assets, and admin account preparation. The screenshot script captures sheet, roster, campaign, rules, wiki, faction, and edited-sheet states to `docs/pr-screenshots/` by default.
+The accessibility script currently checks public `/` and `/login`, player `/characters`, `/sheet/lynott`, `/rules`, `/rules/spell/bless`, `/campaigns/rovnost-shadows/wiki/factions-guide`, and `/logout`, Game Master `/campaigns/rovnost-shadows` and `/campaigns/rovnost-shadows/characters`, and admin `/admin`. The MVP smoke script renders every sheet tab fragment directly and walks the group-use flows for character creation, manual edits, notes, faction choice, SRD fixture import, rules browsing, sheet rule links, sessions, wiki, protected seeded assets, image upload, admin account preparation, and logout protection. The screenshot script captures sheet, roster, campaign, rules, wiki, faction, and edited-sheet states to `docs/pr-screenshots/` by default. [Hosted Rehearsal Acceptance](./docs/operations/hosted-rehearsal-acceptance.md) records the final `sheet-0030` acceptance checklist.
 
 ## Pipeline
 
@@ -367,6 +367,6 @@ Release automation can be added after the MVP scaffold exists. The group-use MVP
 - Local password auth is in scope now; external identity providers are not.
 - Admin invite and password reset flows are local workflows without email delivery in this epic.
 - Live 5e.tools fetching is out of scope; local imports are available through `bun run import:rules`, and `sheet-0020` expanded that path to the full SRD 5.1 local corpus.
-- Character deletion, wiki-management polish, image-management polish, faction-management UI, production secrets, Postgres, email delivery, and Hyper-Dank adoption are deferred to later epics. Railway deployment is the focus of `sheet-0030`.
+- Character deletion, campaign subpage splitting (`sheet-0037`), wiki-management polish, image-management polish, faction-management UI, production secrets, Postgres, email delivery, and Hyper-Dank adoption are deferred to later epics. Railway deployment is the focus of `sheet-0030`.
 - British English is required across copy, docs, code naming, and CSS variables.
 - The first implementation sequence is documentation and tickets, then source code through accepted tickets.

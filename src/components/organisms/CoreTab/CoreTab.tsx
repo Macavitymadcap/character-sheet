@@ -21,57 +21,11 @@ export const CoreTab = ({ sheet }: CoreTabProps) => {
                 <th scope="col">Mod</th>
                 <th scope="col">Save</th>
                 <th scope="col">Prof</th>
-                <th scope="col">Roll</th>
-                <th scope="col">Edit</th>
+                <th scope="col">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {sheet.abilities.map((ability) => (
-                <tr>
-                  <th scope="row">
-                    <span class="ability-full">{formatAbility(ability.ability)}</span>
-                    <abbr class="ability-short" title={formatAbility(ability.ability)}>
-                      {formatAbilityShort(ability.ability)}
-                    </abbr>
-                  </th>
-                  <td>{ability.score}</td>
-                  <td>{formatModifier(ability.modifier)}</td>
-                  <td>{formatModifier(ability.saveModifier)}</td>
-                  <td class="proficiency-icon-cell">{renderSaveProficiencyIcon(ability.saveProficient)}</td>
-                  <td>
-                    <DiceRoller
-                      characterSlug={sheet.slug}
-                      defaultModifier={ability.modifier}
-                      id={`ability-${ability.ability}`}
-                      label={formatAbility(ability.ability)}
-                    />
-                  </td>
-                  <td>
-                    <details class="row-edit-disclosure">
-                      <summary>Edit</summary>
-                      <form
-                        class="sheet-edit-form row-edit-form"
-                        hx-patch={`/sheet/${sheet.slug}/abilities/${ability.ability}`}
-                        hx-target="#sheet-tab-panel"
-                        hx-swap="outerHTML"
-                      >
-                        <label>
-                          Score
-                          <input min="1" max="30" name="score" type="number" value={ability.score} />
-                        </label>
-                        <label>
-                          Save proficient
-                          <select name="saveProficient">
-                            <option value="1" selected={ability.saveProficient}>Yes</option>
-                            <option value="0" selected={!ability.saveProficient}>No</option>
-                          </select>
-                        </label>
-                        <button type="submit">Save</button>
-                      </form>
-                    </details>
-                  </td>
-                </tr>
-              ))}
+              {sheet.abilities.map((ability) => <AbilityReadRow ability={ability} sheet={sheet} />)}
             </tbody>
           </table>
         </div>
@@ -181,6 +135,88 @@ export const CoreTab = ({ sheet }: CoreTabProps) => {
   );
 };
 
+export const AbilityReadRow = ({
+  ability,
+  sheet,
+}: {
+  ability: CharacterAbility;
+  sheet: CharacterSheetReadModel;
+}) => (
+  <tr id={abilityRowId(ability.ability)}>
+    <th scope="row">
+      <span class="ability-full">{formatAbility(ability.ability)}</span>
+      <abbr class="ability-short" title={formatAbility(ability.ability)}>
+        {formatAbilityShort(ability.ability)}
+      </abbr>
+    </th>
+    <td>{ability.score}</td>
+    <td>{formatModifier(ability.modifier)}</td>
+    <td>{formatModifier(ability.saveModifier)}</td>
+    <td class="proficiency-icon-cell">{renderSaveProficiencyIcon(ability.saveProficient)}</td>
+    <td class="ability-action-cell">
+      <DiceRoller
+        characterSlug={sheet.slug}
+        defaultModifier={ability.modifier}
+        id={`ability-${ability.ability}`}
+        label={formatAbility(ability.ability)}
+      />
+      <button
+        class="row-edit-button"
+        type="button"
+        hx-get={`/sheet/${sheet.slug}/abilities/${ability.ability}/edit`}
+        hx-target={`#${abilityRowId(ability.ability)}`}
+        hx-swap="outerHTML"
+        aria-label={`Edit ${formatAbility(ability.ability)} score and save`}
+      >
+        Edit
+      </button>
+    </td>
+  </tr>
+);
+
+export const AbilityEditRow = ({
+  ability,
+  sheet,
+}: {
+  ability: CharacterAbility;
+  sheet: CharacterSheetReadModel;
+}) => (
+  <tr id={abilityRowId(ability.ability)} class="inline-edit-row">
+    <th scope="row">{formatAbility(ability.ability)}</th>
+    <td colSpan={5}>
+      <form
+        class="sheet-edit-form row-edit-form row-edit-form-inline"
+        hx-patch={`/sheet/${sheet.slug}/abilities/${ability.ability}`}
+        hx-target={`#${abilityRowId(ability.ability)}`}
+        hx-swap="outerHTML"
+      >
+        <label>
+          Score
+          <input min="1" max="30" name="score" type="number" value={ability.score} />
+        </label>
+        <label>
+          Save proficient
+          <select name="saveProficient">
+            <option value="1" selected={ability.saveProficient}>Yes</option>
+            <option value="0" selected={!ability.saveProficient}>No</option>
+          </select>
+        </label>
+        <div class="row-edit-actions">
+          <button type="submit">Save</button>
+          <button
+            type="button"
+            hx-get={`/sheet/${sheet.slug}/abilities/${ability.ability}`}
+            hx-target={`#${abilityRowId(ability.ability)}`}
+            hx-swap="outerHTML"
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
+    </td>
+  </tr>
+);
+
 function renderSaveProficiencyIcon(isProficient: boolean) {
   return isProficient ? (
     <Icon name="check_circle" label="Proficient" tone="success" />
@@ -234,4 +270,8 @@ function formatAbilityShort(ability: CharacterAbility["ability"]) {
   };
 
   return labels[ability];
+}
+
+function abilityRowId(ability: CharacterAbility["ability"]) {
+  return `ability-row-${ability}`;
 }

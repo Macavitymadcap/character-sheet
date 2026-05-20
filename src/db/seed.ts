@@ -1067,6 +1067,18 @@ export const seedDatabase = (database: Database) => {
     );
   }
 
+  database.run(
+    "insert or ignore into character_notes (id, character_id, author_user_id, visibility, title, body) values (?, ?, ?, ?, ?, ?)",
+    [
+      "note_mira_seed_scope",
+      "character_mira_voss",
+      "user_mira_player",
+      "player",
+      "Seed data scope",
+      "Mira is a deliberately partial human cleric seed for hosted rehearsal. Her core identity is SRD-compatible, but automatic cleric grants, prepared spells, and equipment rules remain manual until a later character-building slice.",
+    ],
+  );
+
   for (const asset of campaignImageAssets) {
     database.run(
       `insert into campaign_image_assets (id, campaign_id, title, storage_key, mime_type, byte_size, width, height, alt_text, caption, visibility)

@@ -1,6 +1,5 @@
 #!/usr/bin/env bun
-import { mkdir } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { writeSeedAssetPlaceholders } from "../src/assets";
 import { RulesImportService } from "../src/rules";
 import { createInMemoryApp, login, requestText, startLocalServer, waitForHttp } from "./lib/local-app";
 
@@ -13,6 +12,22 @@ export const mvpSmokeTabs = [
   "equipment",
   "background",
   "notes",
+] as const;
+
+export const operatorSmokePaths = ["/invites/<token>", "/password-reset/<token>"] as const;
+
+export const hostedRehearsalSmokeCoverage = [
+  "seeded sign-in",
+  "player roster character creation",
+  "sheet tabs",
+  "SRD rules browsing",
+  "campaign sessions",
+  "campaign wiki",
+  "protected seeded assets",
+  "image upload",
+  "admin invite handoff",
+  "admin password reset handoff",
+  "logout protection",
 ] as const;
 
 if (import.meta.main) {
@@ -31,6 +46,7 @@ export async function runMvpSmoke() {
     if (rulesImport.imported !== 15) {
       throw new Error(`SRD fixture import expected 15 rules, imported ${rulesImport.imported}.`);
     }
+    await writeSeedAssetPlaceholders();
 
     const playerCookie = await login(baseUrl, "lynott@example.local");
     const miraCookie = await login(baseUrl, "mira@example.local");
@@ -167,6 +183,14 @@ export async function runMvpSmoke() {
     });
     assertResponse("gm session creation", session.response, 303);
     await assertContains("gm session appears", `${baseUrl}/campaigns/rovnost-shadows`, gmCookie, "Smoke Workflow Session");
+    const seededAsset = await requestText(`${baseUrl}/campaigns/rovnost-shadows/assets/asset_skywright_sigil`, {
+      cookie: returningPlayerCookie,
+    });
+    assertResponse("seeded campaign asset read", seededAsset.response, 200);
+    const assetContentType = seededAsset.response.headers.get("content-type") ?? "";
+    if (!assetContentType.includes("image/png")) {
+      throw new Error(`Seeded campaign asset used ${assetContentType}; expected image/png.`);
+    }
 
     const imageForm = new FormData();
     imageForm.set("title", "Smoke handout");
@@ -176,7 +200,6 @@ export async function runMvpSmoke() {
     imageForm.set("width", "1");
     imageForm.set("height", "1");
     imageForm.set("image", new File([new Uint8Array([137, 80, 78, 71])], "smoke.png", { type: "image/png" }));
-    await mkdir(process.env.CHARACTER_SHEET_ASSET_ROOT ?? `${tmpdir()}/character-sheet-script-assets`, { recursive: true });
     const assetUpload = await requestText(`${baseUrl}/campaigns/rovnost-shadows/assets`, {
       body: imageForm,
       cookie: gmCookie,
@@ -208,6 +231,25 @@ export async function runMvpSmoke() {
     });
     assertResponse("admin invite creation", invite.response, 201);
     assertBody("admin invite creation", invite.body, "smoke-player@example.local");
+    const inviteJson = JSON.parse(invite.body) as { token: string };
+    await assertContains(
+      "operator invite handoff page",
+      `${baseUrl}/invites/${inviteJson.token}`,
+      "",
+      "Accept invite",
+    );
+    const inviteAccept = await requestText(`${baseUrl}/invites/${inviteJson.token}`, {
+      body: new URLSearchParams({
+        displayName: "Smoke Invited Player",
+        password: "smoke-invite-password",
+      }),
+      method: "POST",
+    });
+    assertResponse("operator invite acceptance", inviteAccept.response, 303);
+    if (inviteAccept.response.headers.get("location") !== "/login") {
+      throw new Error("Invite acceptance did not redirect to login.");
+    }
+    await login(baseUrl, "smoke-player@example.local", "smoke-invite-password");
 
     const reset = await requestText(`${baseUrl}/admin/users/user_mira_player/password-reset`, {
       cookie: adminCookie,
@@ -215,6 +257,22 @@ export async function runMvpSmoke() {
     });
     assertResponse("admin password reset preparation", reset.response, 201);
     assertBody("admin password reset preparation", reset.body, "user_mira_player");
+    const resetJson = JSON.parse(reset.body) as { token: string };
+    await assertContains(
+      "operator password reset handoff page",
+      `${baseUrl}/password-reset/${resetJson.token}`,
+      "",
+      "Reset password",
+    );
+    const resetUse = await requestText(`${baseUrl}/password-reset/${resetJson.token}`, {
+      body: new URLSearchParams({ password: "smoke-reset-password" }),
+      method: "POST",
+    });
+    assertResponse("operator password reset", resetUse.response, 303);
+    if (resetUse.response.headers.get("location") !== "/login") {
+      throw new Error("Password reset did not redirect to login.");
+    }
+    await login(baseUrl, "mira@example.local", "smoke-reset-password");
 
     console.log("MVP smoke workflow complete.");
   } finally {

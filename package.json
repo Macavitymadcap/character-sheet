@@ -6,6 +6,7 @@
     "db:bootstrap": "bun scripts/db-bootstrap.ts",
     "dev": "bun run --hot src/index.ts",
     "import:rules": "bun scripts/import-rules.ts",
+    "hosted:data": "bun scripts/hosted-data.ts",
     "protect:branches": "bun scripts/configure-branch-protection.ts",
     "protect:branches:bootstrap": "bun scripts/configure-branch-protection.ts --bootstrap",
     "screenshots:sheet": "bun -e \"import { captureSheetScreenshots } from './scripts/capture-screenshots'; await captureSheetScreenshots();\"",

@@ -40,12 +40,16 @@ describe("CoreTab", () => {
     const html = render(<CoreTab sheet={sheet} />);
 
     expect(html).toContain('<h3 id="abilities-heading">Abilities and saves</h3>');
+    expect(html).toContain('<table class="sheet-table ability-table">');
     expect(html).toContain('<span class="ability-full">Strength</span>');
     expect(html).toContain('<abbr class="ability-short" title="Constitution">CON</abbr>');
     expect(html).toContain("<td>-1</td>");
     expect(html).toContain('aria-label="Roll Strength"');
     expect(html).toContain('hx-post="/sheet/lynott/rolls"');
+    expect(html).toContain('hx-get="/sheet/lynott/abilities/strength/edit"');
+    expect(html).toContain('hx-target="#ability-row-strength"');
     expect(html).toContain('aria-label="Proficient"');
+    expect(html).not.toContain("row-edit-disclosure");
     expect(html).toContain("<dt>Speed</dt>");
     expect(html).toContain("<dd>30 ft</dd>");
     expect(html).toContain("<dt>Darkvision</dt>");

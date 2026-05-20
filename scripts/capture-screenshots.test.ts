@@ -3,6 +3,7 @@ import { sheetScreenshotTargets } from "./capture-screenshots";
 
 describe("sheet screenshot targets", () => {
   test("captures sheet, group-use, wiki, and edited states", () => {
+    expect(sheetScreenshotTargets.every((target) => !("capture" in target))).toBe(true);
     expect(sheetScreenshotTargets).toEqual([
       {
         fileName: "lynott-sheet-light.png",
@@ -19,6 +20,74 @@ describe("sheet screenshot targets", () => {
         theme: "dark",
       },
       {
+        action: "edit-strength",
+        fileName: "lynott-ability-edit-light.png",
+        label: "Lynott ability edit light",
+        path: "/sheet/lynott",
+        role: "player",
+        theme: "light",
+      },
+      {
+        action: "edit-strength",
+        fileName: "lynott-ability-edit-dark.png",
+        label: "Lynott ability edit dark",
+        path: "/sheet/lynott",
+        role: "player",
+        theme: "dark",
+      },
+      {
+        fileName: "lynott-skills-light.png",
+        label: "Lynott skills light",
+        path: "/sheet/lynott",
+        role: "player",
+        tabId: "skills",
+        theme: "light",
+      },
+      {
+        fileName: "lynott-skills-dark.png",
+        label: "Lynott skills dark",
+        path: "/sheet/lynott",
+        role: "player",
+        tabId: "skills",
+        theme: "dark",
+      },
+      {
+        action: "edit-stealth",
+        fileName: "lynott-skills-edit-light.png",
+        label: "Lynott skills edit light",
+        path: "/sheet/lynott",
+        role: "player",
+        tabId: "skills",
+        theme: "light",
+      },
+      {
+        action: "edit-stealth",
+        fileName: "lynott-skills-edit-dark.png",
+        label: "Lynott skills edit dark",
+        path: "/sheet/lynott",
+        role: "player",
+        tabId: "skills",
+        theme: "dark",
+      },
+      {
+        action: "roll-stealth",
+        fileName: "lynott-skills-roll-light.png",
+        label: "Lynott skills roll light",
+        path: "/sheet/lynott",
+        role: "player",
+        tabId: "skills",
+        theme: "light",
+      },
+      {
+        action: "roll-stealth",
+        fileName: "lynott-skills-roll-dark.png",
+        label: "Lynott skills roll dark",
+        path: "/sheet/lynott",
+        role: "player",
+        tabId: "skills",
+        theme: "dark",
+      },
+      {
         fileName: "lynott-background-faction.png",
         label: "Lynott background faction",
         path: "/sheet/lynott",
@@ -27,11 +96,52 @@ describe("sheet screenshot targets", () => {
         theme: "light",
       },
       {
+        fileName: "mira-partial-notes-light.png",
+        label: "Mira partial notes light",
+        path: "/sheet/mira-voss",
+        role: "mira_player",
+        tabId: "notes",
+        theme: "light",
+      },
+      {
+        fileName: "mira-partial-notes-dark.png",
+        label: "Mira partial notes dark",
+        path: "/sheet/mira-voss",
+        role: "mira_player",
+        tabId: "notes",
+        theme: "dark",
+      },
+      {
+        action: "scroll-roster-table",
         fileName: "player-roster.png",
         label: "Player roster",
         path: "/characters",
         role: "player",
         theme: "light",
+      },
+      {
+        action: "scroll-roster-table",
+        fileName: "player-roster-dark.png",
+        label: "Player roster dark",
+        path: "/characters",
+        role: "player",
+        theme: "dark",
+      },
+      {
+        action: "scroll-admin-users",
+        fileName: "admin-tables-light.png",
+        label: "Admin tables light",
+        path: "/admin",
+        role: "admin",
+        theme: "light",
+      },
+      {
+        action: "scroll-admin-users",
+        fileName: "admin-tables-dark.png",
+        label: "Admin tables dark",
+        path: "/admin",
+        role: "admin",
+        theme: "dark",
       },
       {
         fileName: "gm-campaign.png",
@@ -48,6 +158,7 @@ describe("sheet screenshot targets", () => {
         theme: "light",
       },
       {
+        action: "scroll-rules-results",
         fileName: "rules-spells.png",
         label: "Rules spell list",
         path: "/rules?type=spell&level=1",
@@ -55,6 +166,7 @@ describe("sheet screenshot targets", () => {
         theme: "light",
       },
       {
+        action: "scroll-rule-detail",
         fileName: "rules-bless.png",
         label: "Rules Bless detail",
         path: "/rules/spell/bless",
@@ -63,11 +175,19 @@ describe("sheet screenshot targets", () => {
       },
       {
         fileName: "lynott-edited-sheet.png",
-        label: "Lynott edited sheet",
+        label: "Lynott edited sheet light",
         path: "/sheet/lynott",
         prepare: "edited-sheet",
         role: "player",
         theme: "light",
+      },
+      {
+        fileName: "lynott-edited-sheet-dark.png",
+        label: "Lynott edited sheet dark",
+        path: "/sheet/lynott",
+        prepare: "edited-sheet",
+        role: "player",
+        theme: "dark",
       },
     ]);
   });

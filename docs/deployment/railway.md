@@ -1,0 +1,117 @@
+# Railway Hosted Rehearsal
+
+This document covers the first Railway rehearsal deployment for the Character Sheet app. It keeps the current Bun, Hono, HTMX, and SQLite runtime shape intact while moving the process onto Railway.
+
+## Service Setup
+
+Create one Railway service from the GitHub repository and point it at the branch being rehearsed for `sheet-0030`. Railway reads `railway.json` from the repository root and uses Railpack to build the Bun app.
+
+Use these service settings:
+
+| Setting | Value |
+| --- | --- |
+| Build command | Railway default |
+| Start command | `bun run start` |
+| Healthcheck path | `/healthz` |
+| Healthcheck timeout | `60` seconds |
+| Restart policy | `ON_FAILURE`, up to `3` retries |
+
+The app exposes `/healthz` without authentication and returns `200` with `{ "ok": true }` once the Hono app has booted. Railway's healthcheck should use this route before routing traffic to a new deployment.
+
+## Environment Variables
+
+Set these Railway variables for the rehearsal environment:
+
+| Variable | Required | Rehearsal value | Notes |
+| --- | --- | --- | --- |
+| `PORT` | Railway-provided | Use Railway default | Railway injects the public listener port. The app falls back to `3000` only for local development. |
+| `HOST` | Optional | `0.0.0.0` | The local default already binds all interfaces, which is suitable for Railway. |
+| `DB_PATH` | Required | `/data/character-sheet.sqlite3` | Mount a persistent Railway volume at `/data` and keep the SQLite database there. |
+| `SESSION_SECRET` | Required | Generate a long random value | Do not use the local development fallback in Railway. Rotating this signs everyone out. |
+| `CHARACTER_SHEET_ASSET_ROOT` | Required | `/data/assets` | Stores app-managed campaign images on the persistent Railway volume. Keep it under `/data`, separate from `DB_PATH`. |
+| `HOSTED_BACKUP_DIR` | Optional | `/data/backups` | Used by the hosted backup command. |
+
+Local development remains unchanged if these variables are omitted: `bun run dev` binds to `0.0.0.0:3000`, uses `character-sheet.sqlite3`, and stores assets under `data/assets`. App startup applies schema bootstrap only; seeding is an explicit operation.
+
+## Asset Storage
+
+Hosted campaign images use the same Railway volume as the SQLite database, but a separate directory: set `CHARACTER_SHEET_ASSET_ROOT=/data/assets`. Uploaded files are copied into app-managed relative keys such as `campaigns/rovnost-shadows/<uuid>.png`; the database never stores a source-machine absolute path.
+
+The first rehearsal does not use object storage or an external CDN. This keeps the deployment small and makes backup expectations clear: back up `/data/character-sheet.sqlite3` and the `/data/assets` directory together. Seeded campaign image records are created by the database seed, and `bun run hosted:data -- prepare` also writes deterministic tiny placeholder files for those seeded keys so hosted pages render images even before final campaign art is uploaded. If a seeded file is missing, the protected asset route serves a readable SVG fallback instead of a broken image.
+
+## Bootstrap And Start
+
+For the first rehearsal deploy:
+
+1. Attach or prepare the persistent storage path planned for `/data`.
+2. Set the variables above in Railway.
+3. Run `bun run hosted:data -- prepare` once against an empty `DB_PATH` to create the schema, seed the group data, and write seeded campaign asset placeholders under `CHARACTER_SHEET_ASSET_ROOT`.
+4. Deploy the service from GitHub.
+5. Confirm Railway reports `/healthz` as healthy.
+
+Normal app startup does not seed data or rewrite asset files. This prevents a deployment restart from rewriting existing hosted records or uploaded images. Use `bun run hosted:data -- migrate` when you need to apply idempotent schema bootstrap without touching seed rows.
+
+## Backup And Restore
+
+Create a backup before any hosted seed, import, or manual recovery operation:
+
+```bash
+bun run hosted:data -- backup
+```
+
+By default backups are written under `HOSTED_BACKUP_DIR` or `data/backups` with a timestamped filename. On Railway, set `HOSTED_BACKUP_DIR=/data/backups` so backups stay on the attached volume.
+
+Restore from a named backup with an explicit replacement confirmation:
+
+```bash
+HOSTED_RESTORE_SOURCE=/data/backups/character-sheet-2026-05-19T193000Z.sqlite3 \
+HOSTED_DATA_CONFIRM=replace \
+bun run hosted:data -- restore
+```
+
+The restore command copies the backup to a temporary file and then renames it over `DB_PATH`. It refuses to run without `HOSTED_DATA_CONFIRM=replace`.
+
+## Reseeding Or Resetting
+
+`bun run hosted:data -- prepare` refuses to seed over a non-empty database by default. For a deliberate reset:
+
+1. Run `bun run hosted:data -- backup`.
+2. Confirm the backup file exists under `/data/backups`.
+3. Set `HOSTED_DATA_CONFIRM=seed-existing`.
+4. Run `bun run hosted:data -- prepare`.
+
+This reseeds the known baseline records and may update seeded users, characters, campaign wiki, sessions, factions, resources, and notes. Do not use it as part of normal deploy startup.
+
+## Local Verification
+
+Before opening a deployment PR, run:
+
+```bash
+bun run verify
+```
+
+For a quick runtime check, start the app with hosted-style variables and hit the health endpoint:
+
+```bash
+PORT=3100 HOST=127.0.0.1 DB_PATH=:memory: SESSION_SECRET=local-check bun run start
+curl -s http://127.0.0.1:3100/healthz
+```
+
+The response should be:
+
+```json
+{"ok":true}
+```
+
+For a local hosted-data rehearsal:
+
+```bash
+DB_PATH=/tmp/character-sheet-hosted.sqlite3 bun run hosted:data -- prepare
+DB_PATH=/tmp/character-sheet-hosted.sqlite3 HOSTED_BACKUP_DIR=/tmp/character-sheet-backups bun run hosted:data -- backup
+DB_PATH=/tmp/character-sheet-hosted.sqlite3 bun run hosted:data -- migrate
+```
+
+## References
+
+- [Railway config as code](https://docs.railway.com/config-as-code/reference)
+- [Railway healthchecks](https://docs.railway.com/deployments/healthchecks)
