@@ -101,6 +101,9 @@ const ActionsTab = ({ data }: { data: TabContentData }) => {
   const actionResources = data.resources.filter(
     (resource) => resource.type === "hit_dice",
   );
+  const actionRules = data.ruleLinks.filter((link) =>
+    link.actionTiming.some((timing) => ["Action", "Bonus action", "Reaction"].includes(timing)),
+  );
   const weaponItems = data.equipment
     .filter((item) => item.category === "weapon")
     .map((item) => weaponToActionItem(item, data.sheet.slug));
@@ -114,7 +117,12 @@ const ActionsTab = ({ data }: { data: TabContentData }) => {
         actionResources.map((resource) => resourceToItem(resource, data.sheet.slug, "actions")),
       )}
       {renderCompactSection("available-actions-heading", "Available actions", standardActionItems)}
-      {renderCompactSection("bonus-reaction-heading", "Bonus actions and reactions", bonusReactionItems)}
+      {renderAccordionSection(
+        "bonus-reaction-heading",
+        "Character actions and reactions",
+        "character-action-list",
+        actionRules.map((rule) => ruleToAccordionItem(rule, data.resources, data.sheet.slug, "actions")),
+      )}
       {renderCompactSection("readied-actions-heading", "Readied actions", weaponItems)}
     </div>
   );
@@ -175,7 +183,7 @@ const FeaturesTab = ({ data }: { data: TabContentData }) => {
         "selected-features-heading",
         "Selected features",
         "feature-list",
-        featureLinks.map((feature) => featureToAccordionItem(feature, data.resources, data.sheet.slug)),
+        featureLinks.map((feature) => ruleToAccordionItem(feature, data.resources, data.sheet.slug, "features")),
       )}
     </div>
   );
@@ -397,34 +405,6 @@ const standardActionItems: CompactListItem[] = [
   { label: "Action", value: "Use an object" },
 ];
 
-const bonusReactionItems: CompactListItem[] = [
-  {
-    label: "Bonus action",
-    meta: "Command, move, or detonate an active eldritch cannon.",
-    value: "Eldritch Cannon",
-  },
-  {
-    label: "Reaction",
-    meta: "Make one melee attack when a hostile creature leaves reach.",
-    value: "Opportunity attack",
-  },
-  {
-    label: "Reaction spell",
-    meta: "Spend a 1st-level spell slot when taking acid, cold, fire, lightning, or thunder damage.",
-    value: "Absorb Elements",
-  },
-  {
-    label: "Reaction spell",
-    meta: "Spend a 1st-level spell slot when hit by an attack or targeted by Magic Missile.",
-    value: "Shield",
-  },
-  {
-    label: "Trigger",
-    meta: "Add up to +2 from nearby allies after a failed roll or missed attack.",
-    value: "Fortune from the Many",
-  },
-];
-
 function resourceToItem(
   resource: CharacterResource,
   characterSlug?: string,
@@ -467,9 +447,8 @@ function spellToAccordionItem(
   return {
     body: (
       <div class="tab-card-copy">
-        <p>
-          {formatSelection(spell.selectionType)} from {spell.sourceName}.
-        </p>
+        {ruleMetadataList(spell)}
+        {spell.description ? <p>{spell.description}</p> : null}
         <p>
           {isCantrip
             ? "Cantrip: no spell slot required."
@@ -498,21 +477,21 @@ function renderSpellCastControls(slot: CharacterResource | undefined, characterS
   );
 }
 
-function featureToAccordionItem(
-  feature: CharacterRuleLink,
+function ruleToAccordionItem(
+  rule: CharacterRuleLink,
   resources: CharacterResource[],
   characterSlug: string,
+  tabId: SheetTabId,
 ): AccordionItem {
   const resource = resources.find(
-    (candidate) => candidate.label.toLowerCase() === feature.entityName.toLowerCase(),
+    (candidate) => candidate.label.toLowerCase() === rule.entityName.toLowerCase(),
   );
 
   return {
     body: (
       <div class="tab-card-copy">
-        <p>
-          {formatSelection(feature.selectionType)} from {feature.sourceName}.
-        </p>
+        {ruleMetadataList(rule)}
+        {rule.description ? <p>{rule.description}</p> : null}
         {resource ? (
           <p>
             Uses: {resource.current} / {resource.max ?? "∞"}
@@ -520,11 +499,27 @@ function featureToAccordionItem(
         ) : null}
       </div>
     ),
-    controls: resource ? renderResourceControls(resource, characterSlug, "features") : undefined,
-    id: `feature-card-${slugify(feature.entityName)}`,
-    meta: feature.sourceName,
-    title: ruleTitleLink(feature),
+    controls: resource ? renderResourceControls(resource, characterSlug, tabId) : undefined,
+    id: `rule-card-${slugify(rule.entityName)}`,
+    meta: ruleMeta(rule),
+    title: ruleTitleLink(rule),
   };
+}
+
+function ruleMetadataList(rule: CharacterRuleLink) {
+  const items = [
+    formatSelection(rule.selectionType),
+    rule.sourceName,
+    ...rule.actionTiming,
+    rule.resetCadence ? `Resets: ${rule.resetCadence}` : "",
+    rule.charges,
+  ].filter(Boolean);
+
+  return <p>{items.join(" · ")}</p>;
+}
+
+function ruleMeta(rule: CharacterRuleLink) {
+  return [rule.sourceName, ...rule.actionTiming, rule.resetCadence].filter(Boolean).join(" · ");
 }
 
 function ruleTitleLink(rule: CharacterRuleLink) {

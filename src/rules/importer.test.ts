@@ -53,6 +53,30 @@ describe("rules importer", () => {
       "docs/rules/species/hobgoblin.md",
       await Bun.file("docs/rules/species/hobgoblin.md").text(),
     );
+    const radiantWeapon = parseRuleMarkdown(
+      "docs/rules/classes/artificer/infusions/radiant-weapon.md",
+      await Bun.file("docs/rules/classes/artificer/infusions/radiant-weapon.md").text(),
+    );
+    const statBlock = parseRuleMarkdown(
+      "docs/rules/stat-blocks/clockwork-scout.md",
+      [
+        "# Clockwork Scout",
+        "",
+        "**Armor Class:** 14",
+        "",
+        "**Hit Points:** 27",
+        "",
+        "**Speed:** 30 ft.",
+        "",
+        "### Actions",
+        "",
+        "**Gear Slam.** Melee Weapon Attack.",
+        "",
+        "### Reactions",
+        "",
+        "**Parry.** The scout adds 2 to its AC.",
+      ].join("\n"),
+    );
     const classFeature = parseRuleMarkdown(
       "docs/rules/classes/fighter/battle-drill.md",
       "# Battle Drill\n\n*1st-level fighter feature*\n\nYou recognize armor colors.",
@@ -97,6 +121,27 @@ describe("rules importer", () => {
       source: { abbreviation: "MPMotM", contentCategory: "third_party" },
     });
     expect(JSON.stringify(hobgoblin.mechanics[0]!.data)).toContain("colours");
+    expect(radiantWeapon.mechanics[0]!.data).toMatchObject({
+      actionTiming: ["Bonus action", "Reaction"],
+      charges: "4 charges",
+      resetCadence: "Dawn",
+    });
+    expect(statBlock).toMatchObject({
+      entityType: "stat_block",
+      name: "Clockwork Scout",
+      slug: "clockwork-scout",
+    });
+    expect(statBlock.mechanics[0]).toMatchObject({
+      data: {
+        actionTiming: ["Reaction", "Action"],
+        armourClass: "14",
+        hitPoints: "27",
+        reactions: expect.stringContaining("Parry"),
+        speed: "30 ft.",
+        statBlock: true,
+      },
+      mechanicType: "stat_block",
+    });
     expect(classFeature).toMatchObject({ entityType: "class_feature" });
     expect(classFeature.mechanics[0]!.data.description).toContain("recognise armour colours");
     expect(equipment).toMatchObject({ entityType: "equipment" });

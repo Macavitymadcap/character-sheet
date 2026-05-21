@@ -498,11 +498,15 @@ export interface CampaignContentRepository {
 }
 
 export interface CharacterRuleLink {
+  actionTiming: string[];
+  charges: string;
   contentCategory: RulesContentCategory;
+  description: string;
   entityName: string;
   entitySlug: string;
   entityType: string;
   prepared: boolean;
+  resetCadence: string;
   selected: boolean;
   selectionType: string;
   sourceName: string;
@@ -531,6 +535,7 @@ export type RuleEntityType =
   | "sense"
   | "species"
   | "species_trait"
+  | "stat_block"
   | "subclass"
   | "subclass_feature"
   | "spell";

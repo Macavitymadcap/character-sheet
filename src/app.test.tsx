@@ -1,4 +1,6 @@
+import { mkdtempSync, mkdirSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { afterEach, describe, expect, test } from "bun:test";
 import { createApp } from "./app";
 import { AuthService, PasswordService, SessionService } from "./auth";
@@ -330,6 +332,55 @@ describe("createApp", () => {
     expect(campaignHtml).toContain("Rules sources");
     expect(campaignHtml).toContain("Rovnost Private Notes");
     expect(campaignHtml).toContain("Campaign scoped");
+  });
+
+  test("serves imported stat block rule details", async () => {
+    const { app, sessionService } = createTestApp("Campaign Ledger");
+    const session = sessionService.createSession("user_game_master");
+    const statBlockRoot = mkdtempSync(join(tmpdir(), "campaign-ledger-stat-block-"));
+    const statBlockDir = join(statBlockRoot, "stat-blocks");
+    mkdirSync(statBlockDir, { recursive: true });
+    writeFileSync(
+      join(statBlockDir, "clockwork-scout.md"),
+      [
+        "# Clockwork Scout",
+        "",
+        "**Armor Class:** 14",
+        "",
+        "**Hit Points:** 27",
+        "",
+        "**Speed:** 30 ft.",
+        "",
+        "### Actions",
+        "",
+        "**Gear Slam.** Melee Weapon Attack.",
+        "",
+        "### Reactions",
+        "",
+        "**Parry.** The scout adds 2 to its AC.",
+      ].join("\n"),
+    );
+    const importer = new RulesImportService(runtime!.repositories.rulesSeedRepository);
+    await importer.importFromLocalSource(statBlockRoot);
+
+    const list = await app.request("/rules?type=stat_block&q=scout", {
+      headers: { cookie: session.cookie },
+    });
+    const listHtml = await list.text();
+    const detail = await app.request("/rules/stat_block/clockwork-scout", {
+      headers: { cookie: session.cookie },
+    });
+    const detailHtml = await detail.text();
+
+    expect(list.status).toBe(200);
+    expect(listHtml).toContain("Clockwork Scout");
+    expect(listHtml).toContain("Stat Block");
+    expect(detail.status).toBe(200);
+    expect(detailHtml).toContain("<h1 id=\"rule-detail-heading\" class=\"panel-heading\">Clockwork Scout</h1>");
+    expect(detailHtml).toContain("<dt>Armour Class</dt>");
+    expect(detailHtml).toContain("<dd>14</dd>");
+    expect(detailHtml).toContain("<dt>Action Timing</dt>");
+    expect(detailHtml).toContain("<dd>Reaction, Action</dd>");
   });
 
   test("updates header resources through HTMX fragments", async () => {
@@ -767,6 +818,9 @@ describe("createApp", () => {
     const { app, sessionService } = createTestApp("Campaign Ledger");
     const playerSession = sessionService.createSession("user_lynott_player");
     const gmSession = sessionService.createSession("user_game_master");
+    const importer = new RulesImportService(runtime!.repositories.rulesSeedRepository);
+    await importer.importFromLocalSource("docs/rules/spells/level-1/absorb-elements.md");
+    await importer.importFromLocalSource("docs/rules/spells/level-1/shield.md");
     const actions = await app.request("/sheet/lynott/tabs/actions", {
       headers: { cookie: playerSession.cookie },
     });
@@ -799,7 +853,7 @@ describe("createApp", () => {
 
     expect(actions.status).toBe(200);
     expect(actionsHtml).toContain("Action resources");
-    expect(actionsHtml).toContain("Bonus actions and reactions");
+    expect(actionsHtml).toContain("Character actions and reactions");
     expect(actionsHtml).toContain("Absorb Elements");
     expect(actionsHtml).toContain("Pistol with Repeating Shot infusion");
     expect(actionsHtml).toContain('class="compact-list"');
