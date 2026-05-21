@@ -123,10 +123,12 @@ export async function requestText(
   {
     body,
     cookie,
+    headers,
     method = "GET",
   }: {
     body?: FormData | URLSearchParams;
     cookie?: string;
+    headers?: Record<string, string>;
     method?: string;
   } = {},
 ) {
@@ -134,6 +136,7 @@ export async function requestText(
   const response = await fetch(url, {
     body,
     headers: {
+      ...headers,
       ...(cookie ? { Cookie: cookie } : {}),
       ...(isUrlEncoded ? { "Content-Type": "application/x-www-form-urlencoded" } : {}),
     },
