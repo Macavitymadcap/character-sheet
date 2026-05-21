@@ -25,6 +25,7 @@ export const hostedRehearsalSmokeCoverage = [
   "public local play storage import/export",
   "campaign sessions",
   "campaign wiki",
+  "combined admin campaign access",
   "protected seeded assets",
   "image upload",
   "admin invite handoff",
@@ -228,6 +229,29 @@ export async function runMvpSmoke() {
 
     const adminCookie = await login(baseUrl, "admin@example.local");
     await assertContains("admin", `${baseUrl}/admin`, adminCookie, "Admin");
+    const adminCampaign = await requestText(`${baseUrl}/campaigns/rovnost-shadows`, {
+      cookie: adminCookie,
+    });
+    assertResponse("admin-only campaign access", adminCampaign.response, 403);
+    const adminPlayerCookie = await login(baseUrl, "admin.player@example.local");
+    await assertContains("admin player admin", `${baseUrl}/admin`, adminPlayerCookie, "Admin");
+    await assertContains("admin player roster", `${baseUrl}/characters`, adminPlayerCookie, "Player roster");
+    const adminPlayerCampaign = await requestText(`${baseUrl}/campaigns/rovnost-shadows`, {
+      cookie: adminPlayerCookie,
+    });
+    assertResponse("admin player campaign read", adminPlayerCampaign.response, 200);
+    assertBody("admin player campaign read", adminPlayerCampaign.body, "Factions Guide");
+    if (adminPlayerCampaign.body.includes("Add wiki page")) {
+      throw new Error("Admin player unexpectedly saw Game Master campaign controls.");
+    }
+    const adminGameMasterCookie = await login(baseUrl, "admin.gm@example.local");
+    await assertContains("admin gm admin", `${baseUrl}/admin`, adminGameMasterCookie, "Admin");
+    await assertContains(
+      "admin gm campaign manage",
+      `${baseUrl}/campaigns/rovnost-shadows`,
+      adminGameMasterCookie,
+      "Add wiki page",
+    );
     const invite = await requestText(`${baseUrl}/admin/invites`, {
       body: new URLSearchParams({ email: "smoke-player@example.local", role: "player" }),
       cookie: adminCookie,

@@ -5,6 +5,8 @@ import { Layout } from "../../templates/Layout";
 interface HomePageProps {
   appName: string;
   user?: {
+    capabilities?: AuthUser["capabilities"];
+    campaignRoles?: AuthUser["campaignRoles"];
     displayName: string;
     role: AuthUser["role"];
   };
@@ -35,7 +37,7 @@ export const HomePage = ({ appName, user }: HomePageProps) => {
                 Local campaigns
               </a>
               {user ? (
-                <a class="action-link action-link-secondary" href={getDestination(user.role)}>
+                <a class="action-link action-link-secondary" href={getDestination(user)}>
                   Continue
                 </a>
               ) : (
@@ -51,9 +53,11 @@ export const HomePage = ({ appName, user }: HomePageProps) => {
   );
 };
 
-function getDestination(role: AuthUser["role"]) {
-  if (role === "admin") return "/admin";
-  if (role === "game_master") return "/campaigns/rovnost-shadows";
+function getDestination(user: NonNullable<HomePageProps["user"]>) {
+  if (user.role === "admin" || (user.capabilities ?? []).includes("admin")) return "/admin";
+  if (user.role === "game_master" || (user.campaignRoles ?? []).includes("game_master")) {
+    return "/campaigns/rovnost-shadows";
+  }
 
   return "/characters";
 }

@@ -11,11 +11,15 @@ interface CampaignPageProps {
   members: CampaignMember[];
   imageAssets: CampaignImageAsset[];
   sessions: CampaignSessionRecord[];
-  user: Pick<AuthUser, "displayName" | "role">;
+  user: Pick<AuthUser, "displayName" | "role"> &
+    Partial<Pick<AuthUser, "campaignRoles" | "capabilities">>;
+  viewerRole: CampaignMember["role"];
   wikiPages: CampaignWikiPage[];
 }
 
-export const CampaignPage = ({ appName, campaign, gameMasterDisplayName, imageAssets, members, sessions, user, wikiPages }: CampaignPageProps) => {
+export const CampaignPage = ({ appName, campaign, gameMasterDisplayName, imageAssets, members, sessions, user, viewerRole, wikiPages }: CampaignPageProps) => {
+  const canManageCampaign = viewerRole === "game_master";
+
   return (
     <Layout title={`${campaign.name} - ${appName}`}>
       <div class="shell campaign-shell">
@@ -70,7 +74,7 @@ export const CampaignPage = ({ appName, campaign, gameMasterDisplayName, imageAs
             </div>
             {wikiPages.length === 0 ? <p class="campaign-empty-state">No wiki pages recorded.</p> : null}
           </Panel>
-          {user.role === "game_master" ? <Panel labelledBy="campaign-assets-heading">
+          {canManageCampaign ? <Panel labelledBy="campaign-assets-heading">
             <div class="campaign-heading">
               <p class="campaign-kicker">Game Master</p>
               <h2 id="campaign-assets-heading" class="panel-heading">Images</h2>
@@ -94,7 +98,7 @@ export const CampaignPage = ({ appName, campaign, gameMasterDisplayName, imageAs
               ))}
             </div>
           </Panel> : null}
-          {user.role === "game_master" ? <Panel labelledBy="campaign-wiki-create-heading">
+          {canManageCampaign ? <Panel labelledBy="campaign-wiki-create-heading">
             <div class="campaign-heading">
               <p class="campaign-kicker">Game Master</p>
               <h2 id="campaign-wiki-create-heading" class="panel-heading">Add wiki page</h2>
@@ -110,7 +114,7 @@ export const CampaignPage = ({ appName, campaign, gameMasterDisplayName, imageAs
               <button type="submit">Add page</button>
             </form>
           </Panel> : null}
-          {user.role === "game_master" ? <Panel labelledBy="campaign-sessions-heading">
+          {canManageCampaign ? <Panel labelledBy="campaign-sessions-heading">
             <div class="campaign-heading">
               <p class="campaign-kicker">Game Master</p>
               <h2 id="campaign-sessions-heading" class="panel-heading">

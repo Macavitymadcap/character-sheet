@@ -32,7 +32,7 @@ describe("hosted data operations", () => {
     await prepareHostedData({ assetRoot, databasePath });
 
     const database = new Database(databasePath, { readonly: true });
-    expect(database.query("select count(*) as count from users").get()).toEqual({ count: 4 });
+    expect(database.query("select count(*) as count from users").get()).toEqual({ count: 6 });
     expect(database.query("select count(*) as count from characters").get()).toEqual({ count: 2 });
     expect(database.query("select storage_key as storageKey from campaign_image_assets where id = ?").get("asset_skywright_sigil"))
       .toEqual({ storageKey: "campaigns/rovnost-shadows/skywright-sigil.png" });

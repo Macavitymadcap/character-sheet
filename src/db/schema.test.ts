@@ -53,6 +53,7 @@ describe("bootstrapDatabase", () => {
       "rules_entities",
       "rules_sources",
       "sessions",
+      "user_capabilities",
       "users",
     ]);
   });

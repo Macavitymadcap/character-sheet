@@ -1,4 +1,6 @@
 export type UserRole = "admin" | "game_master" | "player";
+export type UserCapability = "admin";
+export type CampaignMemberRole = "game_master" | "player";
 export type UserStatus = "active" | "disabled";
 export type AbilityName =
   | "charisma"
@@ -12,6 +14,8 @@ export type CampaignContentVisibility = "game_master" | "player";
 export type WikiPageType = "campaign" | "faction" | "location" | "lore" | "npc" | "session";
 
 export interface AuthUser {
+  capabilities: UserCapability[];
+  campaignRoles: CampaignMemberRole[];
   displayName: string;
   email: string;
   id: string;
@@ -91,7 +95,7 @@ export interface CampaignRepository {
 
 export interface CampaignMember {
   campaignId: string;
-  role: "game_master" | "player";
+  role: CampaignMemberRole;
   userId: string;
 }
 

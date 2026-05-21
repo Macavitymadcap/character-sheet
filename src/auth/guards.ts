@@ -1,4 +1,5 @@
 import type {
+  AuthUser,
   CampaignContentVisibility,
   CampaignRepository,
   CharacterRepository,
@@ -16,7 +17,9 @@ export function requireRole(
   allowedRoles: UserRole[],
 ): GuardResult {
   if (!session) return { ok: false, reason: "unauthenticated" };
-  if (!allowedRoles.includes(session.user.role)) return { ok: false, reason: "forbidden" };
+  if (!allowedRoles.some((role) => userHasAccessRole(session.user, role))) {
+    return { ok: false, reason: "forbidden" };
+  }
 
   return { ok: true };
 }
@@ -48,7 +51,10 @@ export function requireSheetAccess({
     session,
   });
   if (!campaignAccess.ok) return campaignAccess;
-  if (session.user.role === "game_master") return { ok: true };
+  const membership = campaignRepository
+    .listMembers(character.campaignId)
+    .find((member) => member.userId === session.user.id);
+  if (membership?.role === "game_master") return { ok: true };
 
   return { ok: false, reason: "forbidden" };
 }
@@ -68,10 +74,6 @@ export function requireCampaignAccess({
 
   const campaign = campaignRepository.getCampaignById(campaignId);
   if (!campaign) return { ok: false, reason: "not_found" };
-
-  if (session.user.role === "admin") {
-    return permission === "read" ? { ok: true } : { ok: false, reason: "forbidden" };
-  }
 
   const membership = campaignRepository
     .listMembers(campaignId)
@@ -103,5 +105,15 @@ export function requireCampaignContentAccess({
 
   if (visibility === "player") return { ok: true };
 
-  return session?.user.role === "game_master" ? { ok: true } : { ok: false, reason: "forbidden" };
+  const membership = campaignRepository
+    .listMembers(campaignId)
+    .find((member) => member.userId === session?.user.id);
+
+  return membership?.role === "game_master" ? { ok: true } : { ok: false, reason: "forbidden" };
+}
+
+export function userHasAccessRole(user: Pick<AuthUser, "campaignRoles" | "capabilities" | "role">, role: UserRole) {
+  if (role === "admin") return user.role === "admin" || user.capabilities.includes("admin");
+
+  return user.role === role || user.campaignRoles.includes(role);
 }

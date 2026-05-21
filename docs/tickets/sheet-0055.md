@@ -43,3 +43,12 @@ coexist with player or Game Master campaign participation.
 - Admin users do not gain sheet play-edit access unless they also have the relevant campaign access.
 - Navigation and home destinations are understandable for combined users.
 - `bun run verify` passes.
+
+## Implementation Notes
+
+- Admin access is represented as an explicit `admin` capability while the legacy `users.role`
+  value remains as a compatibility/default display field.
+- Campaign play access is resolved from `campaign_members`, so admin-only users no longer receive
+  campaign read access unless they are also campaign members.
+- Seeded combined users cover admin+player and admin+Game Master navigation, guard, and smoke
+  paths.

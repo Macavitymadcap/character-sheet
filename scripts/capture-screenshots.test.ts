@@ -20,6 +20,22 @@ describe("sheet screenshot targets", () => {
         theme: "dark",
       },
       {
+        action: "open-menu",
+        fileName: "home-admin-player-menu-light.png",
+        label: "Combined admin player menu light",
+        path: "/",
+        role: "admin_player",
+        theme: "light",
+      },
+      {
+        action: "open-menu",
+        fileName: "home-admin-player-menu-dark.png",
+        label: "Combined admin player menu dark",
+        path: "/",
+        role: "admin_player",
+        theme: "dark",
+      },
+      {
         action: "scroll-local-list",
         fileName: "local-characters-light.png",
         label: "Local characters light",
