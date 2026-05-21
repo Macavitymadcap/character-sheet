@@ -39,6 +39,9 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 .eslintcache
 *.tsbuildinfo
 
+# local campaign assets
+data/assets/
+
 # generated review artefacts
 docs/pr-screenshots/**
 

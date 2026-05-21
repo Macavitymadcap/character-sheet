@@ -245,3 +245,4 @@ Development tickets should be implemented tests first wherever the boundary is t
 - [Ticket sheet-0058](./docs/tickets/sheet-0058.md)
 - [Ticket sheet-0059](./docs/tickets/sheet-0059.md)
 - [Ticket sheet-0060](./docs/tickets/sheet-0060.md)
+- [Epic sheet-0061](./docs/epics/sheet-0061.md)
