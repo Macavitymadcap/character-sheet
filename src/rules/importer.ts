@@ -16,17 +16,26 @@ export interface RulesImportResult {
   sourceCounts: Record<string, number>;
 }
 
+export interface RulesImportOptions {
+  campaignId?: string;
+  publicExportEligible?: boolean;
+  source?: Partial<RulesSourceSeedInput>;
+  visibility?: RulesSourceSeedInput["visibility"];
+}
+
 export class RulesImportService {
   constructor(private readonly repository: RulesSeedRepository) {}
 
-  async importFromLocalSource(sourcePath: string): Promise<RulesImportResult> {
+  async importFromLocalSource(sourcePath: string, options: RulesImportOptions = {}): Promise<RulesImportResult> {
     const { files, skippedFiles } = await collectRuleFiles(sourcePath);
     const entities: UpsertedRuleEntity[] = [];
     const sourceCounts: Record<string, number> = {};
 
     for (const filePath of files) {
       for (const entity of await parseLocalRuleFile(filePath)) {
-        const upserted = this.repository.upsertRuleEntity(withImportProvenance(entity, filePath));
+        const upserted = this.repository.upsertRuleEntity(
+          withImportOptions(withImportProvenance(entity, filePath), options),
+        );
         entities.push(upserted);
         sourceCounts[upserted.source.slug] = (sourceCounts[upserted.source.slug] ?? 0) + 1;
       }
@@ -39,6 +48,28 @@ export class RulesImportService {
       sourceCounts,
     };
   }
+}
+
+function withImportOptions(
+  entity: RuleEntitySeedInput,
+  options: RulesImportOptions,
+): RuleEntitySeedInput {
+  if (!options.campaignId && !options.visibility && options.publicExportEligible === undefined && !options.source) {
+    return entity;
+  }
+  const campaignIds = new Set(entity.source.campaignIds ?? []);
+  if (options.campaignId) campaignIds.add(options.campaignId);
+
+  return {
+    ...entity,
+    source: {
+      ...entity.source,
+      ...options.source,
+      campaignIds: [...campaignIds].sort(),
+      publicExportEligible: options.publicExportEligible ?? entity.source.publicExportEligible ?? false,
+      visibility: options.visibility ?? entity.source.visibility ?? (options.campaignId ? "campaign" : "public"),
+    },
+  };
 }
 
 export async function parseLocalRuleFile(filePath: string): Promise<RuleEntitySeedInput[]> {

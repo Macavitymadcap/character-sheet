@@ -43,3 +43,12 @@ boundaries, source provenance, and repository safety.
 - Permitted campaign users can find private campaign rules with clear provenance.
 - SRD content remains public and distinct from private sources.
 - `bun run verify` passes.
+
+## Implementation Notes
+
+- Rules sources now carry `visibility` and `public_export_eligible` metadata, with campaign-scoped
+  attachments stored separately from public source category labels.
+- The local importer accepts a campaign-scoped option for synthetic/private local source imports; SRD
+  imports remain public and export-eligible by default.
+- Public rules routes continue to filter to SRD content, while signed-in campaign members can find
+  private Rovnost sources attached to their campaign.

@@ -134,7 +134,7 @@ export const createApp = (dependencies: AppDependencies) => {
   app.get("/rules", (context) => {
     const session = readSession(context.req.header("cookie"));
     const filters = parseRuleFilters(context);
-    const accessFilters = publicRuleAccessFilters(session);
+    const accessFilters = ruleAccessFilters(dependencies, session);
     const rulesFilters = { ...filters, ...accessFilters };
 
     return context.html(
@@ -154,7 +154,7 @@ export const createApp = (dependencies: AppDependencies) => {
     const entityType = parseRuleEntityType(context.req.param("entityType"));
     if (!entityType) return context.text("Not found", 404);
 
-    const accessFilters = publicRuleAccessFilters(session);
+    const accessFilters = ruleAccessFilters(dependencies, session);
     const rule = dependencies.rulesRepository.getRuleDetail(entityType, context.req.param("slug"), accessFilters);
     if (!rule) return context.text("Not found", 404);
 
@@ -259,6 +259,7 @@ export const createApp = (dependencies: AppDependencies) => {
         }
         imageAssets={dependencies.campaignContentRepository.listImageAssetsForCampaign(campaign.id, viewerRole)}
         members={dependencies.campaignRepository.listMembers(campaign.id)}
+        ruleSources={dependencies.rulesRepository.listRuleSources({ campaignIds: [campaign.id] })}
         sessions={dependencies.campaignContentRepository.listSessionsForCampaign(campaign.id, viewerRole)}
         user={session.user}
         viewerRole={viewerRole}
@@ -1869,8 +1870,14 @@ async function parseCharacterCreateForm(
   };
 }
 
-function publicRuleAccessFilters(session: { user: AuthUser } | null) {
-  return session ? {} : { contentCategory: "srd" as const };
+function ruleAccessFilters(dependencies: AppDependencies, session: { user: AuthUser } | null) {
+  if (!session) return { contentCategory: "srd" as const };
+
+  const campaignIds = ["campaign_rovnost_shadows"].filter((campaignId) =>
+    dependencies.campaignRepository.listMembers(campaignId).some((member) => member.userId === session.user.id),
+  );
+
+  return campaignIds.length ? { campaignIds } : {};
 }
 
 function membersWithDisplayNames(dependencies: AppDependencies, campaignId: string) {

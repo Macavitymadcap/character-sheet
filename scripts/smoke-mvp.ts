@@ -26,6 +26,7 @@ export const hostedRehearsalSmokeCoverage = [
   "campaign sessions",
   "campaign wiki",
   "combined admin campaign access",
+  "campaign private rules sources",
   "protected seeded assets",
   "image upload",
   "admin invite handoff",
@@ -48,6 +49,20 @@ export async function runMvpSmoke() {
       .importFromLocalSource("docs/rules/srd-5.1-fixtures");
     if (rulesImport.imported !== 15) {
       throw new Error(`SRD fixture import expected 15 rules, imported ${rulesImport.imported}.`);
+    }
+    const privateRulesImport = await new RulesImportService(runtime.databaseRuntime.repositories.rulesSeedRepository)
+      .importFromLocalSource("docs/rules/backgrounds/special-ops.md", {
+        campaignId: "campaign_rovnost_shadows",
+        source: {
+          abbreviation: "Rovnost",
+          contentCategory: "local",
+          id: "rules_source_rovnost_private",
+          name: "Rovnost Private Notes",
+          slug: "rovnost-private",
+        },
+      });
+    if (privateRulesImport.imported !== 1) {
+      throw new Error(`Private rules import expected 1 rule, imported ${privateRulesImport.imported}.`);
     }
     await writeSeedAssetPlaceholders();
 
@@ -132,8 +147,25 @@ export async function runMvpSmoke() {
     }
     await assertContains("public rules browse", `${baseUrl}/rules?type=spell&level=1`, "", "Bless");
     await assertContains("public rule detail", `${baseUrl}/rules/spell/bless`, "", "You bless up to three creatures");
+    const publicPrivateRules = await requestText(`${baseUrl}/rules?q=special+operations`);
+    assertResponse("public private rules search", publicPrivateRules.response, 200);
+    if (publicPrivateRules.body.includes("Special Operations")) {
+      throw new Error("Public rules search exposed a campaign-scoped private rule.");
+    }
     await verifyLocalPlayBrowserStorage(baseUrl);
     await assertContains("signed-in rules browse", `${baseUrl}/rules?type=spell&level=1`, playerCookie, "Bless");
+    await assertContains(
+      "campaign private rules browse",
+      `${baseUrl}/rules?q=special+operations`,
+      playerCookie,
+      "Special Operations",
+    );
+    await assertContains(
+      "campaign private rule detail",
+      `${baseUrl}/rules/background/special-operations`,
+      playerCookie,
+      "Campaign scoped",
+    );
     await assertContains("sheet rule link", `${baseUrl}/sheet/lynott/tabs/spellcasting`, playerCookie, "/rules/spell/mage-hand");
 
     const logout = await requestText(`${baseUrl}/logout`, {
@@ -150,6 +182,7 @@ export async function runMvpSmoke() {
 
     const gmCookie = await login(baseUrl, "gm@example.local");
     await assertContains("campaign", `${baseUrl}/campaigns/rovnost-shadows`, gmCookie, "Rovnost Shadows");
+    await assertContains("campaign rules sources", `${baseUrl}/campaigns/rovnost-shadows`, gmCookie, "Rovnost Private Notes");
     await assertContains("gm roster", `${baseUrl}/campaigns/rovnost-shadows/characters`, gmCookie, "Campaign roster");
     await assertContains("gm notes", `${baseUrl}/sheet/lynott/tabs/notes`, gmCookie, "Game Master notes");
     await assertContains("wiki read", `${baseUrl}/campaigns/rovnost-shadows/wiki/factions-guide`, returningPlayerCookie, "Factions Guide");

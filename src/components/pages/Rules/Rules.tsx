@@ -50,6 +50,7 @@ export const RulesPage = ({ appName, counts, filters, rules, user }: RulesPagePr
                   <p>{summarise(rule.description)}</p>
                   <div class="rules-tag-list" aria-label={`${rule.name} metadata`}>
                     <span>{formatContentCategory(rule.contentCategory)}</span>
+                    {rule.sourceVisibility === "campaign" ? <span>Campaign scoped</span> : null}
                     <span>{rule.sourceAbbreviation}</span>
                     {rule.tags.slice(0, 4).map((tag) => <span>{formatWords(tag)}</span>)}
                   </div>
@@ -88,6 +89,8 @@ export const RulesDetailPage = ({ appName, counts, filters, rule, user }: RulesD
           <div class="rules-tag-list">
             <Badge>{formatRuleType(rule.entityType)}</Badge>
             <span>{formatContentCategory(rule.contentCategory)}</span>
+            {rule.sourceVisibility === "campaign" ? <span>Campaign scoped</span> : null}
+            <span>{rule.publicExportEligible ? "Exportable" : "Not public exportable"}</span>
             {rule.tags.map((tag) => <span>{formatWords(tag)}</span>)}
           </div>
           {rule.mechanics.map((mechanic) => (

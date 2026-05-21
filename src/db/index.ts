@@ -39,6 +39,8 @@ export type {
   RuleDetail,
   RuleMechanicReadModel,
   RulesContentCategory,
+  RulesSourceSummary,
+  RulesSourceVisibility,
   RuleSearchFilters,
   RuleSummary,
   RuleEntityType,
