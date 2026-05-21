@@ -13,7 +13,6 @@ export { LocalPlayPage } from "./pages/LocalPlay";
 export { LogoutPage } from "./pages/Logout";
 export { Panel } from "./atoms/Panel";
 export { PopoverMenu } from "./molecules/PopoverMenu";
-export { PasswordField } from "./molecules/PasswordField";
 export { RulesDetailPage, RulesPage } from "./pages/Rules";
 export { CoreTab } from "./organisms/CoreTab";
 export { SheetHeader } from "./organisms/SheetHeader";
