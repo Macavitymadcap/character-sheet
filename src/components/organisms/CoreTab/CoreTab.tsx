@@ -173,17 +173,23 @@ export const SenseReadCard = ({ sense, sheet }: { sense: CharacterSense; sheet: 
 
 export const SenseEditCard = ({ sense, sheet }: { sense: CharacterSense; sheet: CharacterSheetReadModel }) => (
   <div id={senseCardId(sense)} class="inline-edit-card">
-    <dt>{sense.label}</dt>
+    <dt>Edit {sense.label}</dt>
     <dd>
       <form
-        class="sheet-edit-form row-edit-form row-edit-form-inline"
+        class="sheet-edit-form core-card-edit-form"
         hx-patch={`/sheet/${sheet.slug}/senses/${sense.id}`}
         hx-target={`#${senseCardId(sense)}`}
         hx-swap="outerHTML"
       >
-        <label>Label <input name="label" type="text" value={sense.label} /></label>
-        <label>Value <input name="value" type="text" value={sense.value} /></label>
-        <div class="row-edit-actions">
+        <label>
+          <span>Label</span>
+          <input name="label" type="text" value={sense.label} />
+        </label>
+        <label>
+          <span>Value</span>
+          <input name="value" type="text" value={sense.value} />
+        </label>
+        <div class="core-card-edit-actions">
           <button type="submit">Save</button>
           <button
             type="button"
@@ -222,18 +228,27 @@ export const ArmourReadCard = ({ sheet, source }: { sheet: CharacterSheetReadMod
 
 export const ArmourEditCard = ({ sheet, source }: { sheet: CharacterSheetReadModel; source: ArmourClassSource }) => (
   <div id={armourCardId(source)} class="inline-edit-card">
-    <dt>{source.label}</dt>
+    <dt>Edit {source.label}</dt>
     <dd>
       <form
-        class="sheet-edit-form row-edit-form row-edit-form-inline"
+        class="sheet-edit-form core-card-edit-form"
         hx-patch={`/sheet/${sheet.slug}/armour/${source.id}`}
         hx-target={`#${armourCardId(source)}`}
         hx-swap="outerHTML"
       >
-        <label>Label <input name="label" type="text" value={source.label} /></label>
-        <label>Value <input name="value" type="number" value={source.value} /></label>
-        <label>Notes <input name="notes" type="text" value={source.notes} /></label>
-        <div class="row-edit-actions">
+        <label>
+          <span>Label</span>
+          <input name="label" type="text" value={source.label} />
+        </label>
+        <label>
+          <span>Value</span>
+          <input name="value" type="number" value={source.value} />
+        </label>
+        <label class="core-card-edit-field-wide">
+          <span>Notes</span>
+          <input name="notes" type="text" value={source.notes} />
+        </label>
+        <div class="core-card-edit-actions">
           <button type="submit">Save</button>
           <button
             type="button"
@@ -272,17 +287,23 @@ export const DefenceReadCard = ({ defence, sheet }: { defence: CharacterDefence;
 
 export const DefenceEditCard = ({ defence, sheet }: { defence: CharacterDefence; sheet: CharacterSheetReadModel }) => (
   <div id={defenceCardId(defence)} class="inline-edit-card">
-    <dt>{defence.label}</dt>
+    <dt>Edit {defence.label}</dt>
     <dd>
       <form
-        class="sheet-edit-form row-edit-form row-edit-form-inline"
+        class="sheet-edit-form core-card-edit-form"
         hx-patch={`/sheet/${sheet.slug}/defences/${defence.id}`}
         hx-target={`#${defenceCardId(defence)}`}
         hx-swap="outerHTML"
       >
-        <label>Label <input name="label" type="text" value={defence.label} /></label>
-        <label>Detail <input name="detail" type="text" value={defence.detail} /></label>
-        <div class="row-edit-actions">
+        <label>
+          <span>Label</span>
+          <input name="label" type="text" value={defence.label} />
+        </label>
+        <label>
+          <span>Detail</span>
+          <input name="detail" type="text" value={defence.detail} />
+        </label>
+        <div class="core-card-edit-actions">
           <button type="submit">Save</button>
           <button
             type="button"

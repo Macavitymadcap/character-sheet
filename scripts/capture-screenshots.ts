@@ -540,7 +540,7 @@ async function runScreenshotAction(
       if (card) card.outerHTML = html;
     })()`);
     await page.waitForSelector("#armour-card-ac_lynott_breastplate form");
-    await scrollIntoView(page, "#armour-card-ac_lynott_breastplate", -360);
+    await scrollIntoView(page, "#armour-card-ac_lynott_breastplate", -410);
     return;
   }
 
