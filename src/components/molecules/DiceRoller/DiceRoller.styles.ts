@@ -108,13 +108,18 @@ export const diceRollerStyles = /* css */ `
   }
 
   .dice-roller-panel {
-    inset: auto 0.75rem 1rem 0.75rem;
+    inset: 50% 0.75rem auto 0.75rem;
     margin: 0;
     max-height: calc(100vh - 2rem);
     min-width: 0;
     overflow: auto;
     position: fixed;
+    transform: translateY(-50%);
     width: auto;
+  }
+
+  .dice-roller-fields {
+    grid-template-columns: minmax(0, 1fr) 5.5rem;
   }
 
   .dice-roll-result {
