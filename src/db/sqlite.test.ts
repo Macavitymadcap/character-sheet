@@ -584,8 +584,12 @@ describe("SQLite repositories", () => {
     );
   });
 
-  test("reads campaign and starter rules references", () => {
+  test("reads campaign and starter rules references", async () => {
     runtime = createSqliteDatabase({ path: ":memory:" });
+    const importer = new RulesImportService(runtime.repositories.rulesSeedRepository);
+    await importer.importFromLocalSource("docs/rules/classes/artificer/infusions/repeating-shot.md");
+    await importer.importFromLocalSource("docs/rules/spells/level-0/mage-hand.md");
+    await importer.importFromLocalSource("docs/rules/spells/level-1/shield.md");
 
     expect(runtime.repositories.campaignRepository.getCampaignBySlug("rovnost-shadows")).toEqual({
       gmUserId: "user_game_master",
@@ -593,9 +597,11 @@ describe("SQLite repositories", () => {
       name: "Rovnost Shadows",
       slug: "rovnost-shadows",
     });
-    expect(
-      runtime.repositories.rulesRepository.listRuleLinksForCharacter("character_lynott_magulbisson"),
-    ).toMatchObject([
+    const ruleLinks = runtime.repositories.rulesRepository.listRuleLinksForCharacter(
+      "character_lynott_magulbisson",
+    );
+
+    expect(ruleLinks).toMatchObject([
       {
         contentCategory: "third_party",
         entityName: "Magical Tinkering",
@@ -743,6 +749,18 @@ describe("SQLite repositories", () => {
         sourceName: "Player's Handbook",
       },
     ]);
+    expect(ruleLinks.find((link) => link.entityName === "Repeating Shot")).toMatchObject({
+      actionTiming: [],
+      description: expect.stringContaining("ignores the loading property"),
+    });
+    expect(ruleLinks.find((link) => link.entityName === "Mage Hand")).toMatchObject({
+      actionTiming: ["Action"],
+      description: expect.stringContaining("A spectral, floating hand appears"),
+    });
+    expect(ruleLinks.find((link) => link.entityName === "Shield")).toMatchObject({
+      actionTiming: ["Reaction"],
+      description: expect.stringContaining("invisible barrier of magical force"),
+    });
   });
 
   test("lists and filters imported SRD rules for browsing", async () => {

@@ -114,22 +114,30 @@ const notes: CharacterNote[] = [
 
 const ruleLinks: CharacterRuleLink[] = [
   {
+    actionTiming: ["Action"],
+    charges: "1 charge",
     contentCategory: "third_party",
+    description: "This magic weapon ignores loading and produces its own ammunition when fired.",
     entityName: "Repeating Shot",
     entitySlug: "repeating-shot",
     entityType: "infusion",
     prepared: false,
+    resetCadence: "Long rest",
     selected: true,
     selectionType: "active_infusion",
     sourceName: "Tasha's Cauldron of Everything",
     sourceSlug: "tashas-cauldron-of-everything",
   },
   {
+    actionTiming: ["Action"],
+    charges: "",
     contentCategory: "third_party",
+    description: "A spectral, floating hand appears at a point you choose within range.",
     entityName: "Mage Hand",
     entitySlug: "mage-hand",
     entityType: "spell",
     prepared: true,
+    resetCadence: "",
     selected: true,
     selectionType: "known_cantrip",
     sourceName: "Player's Handbook",
@@ -211,7 +219,11 @@ describe("SheetTabPanel", () => {
     expect(actions).toContain('hx-post="/sheet/lynott/rests/long"');
     expect(actions).toContain('hx-target="#sheet-tab-workspace"');
     expect(actions).toContain("Pistol with Repeating Shot infusion");
+    expect(actions).toContain("Character actions and reactions");
+    expect(actions).toContain("This magic weapon ignores loading");
+    expect(actions).toContain("Resets: Long rest");
     expect(spellcasting).toContain("Mage Hand");
+    expect(spellcasting).toContain("A spectral, floating hand appears");
     expect(spellcasting).toContain("Spell attack");
     expect(spellcasting).toContain('<details class="accordion-item" name="spell-list">');
     expect(spellcasting).toContain("1st-level spell slots");

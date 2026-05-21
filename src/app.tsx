@@ -1929,6 +1929,7 @@ function parseRuleEntityType(value: string): RuleEntityType | null {
     "sense",
     "species",
     "species_trait",
+    "stat_block",
     "subclass",
     "subclass_feature",
     "spell",

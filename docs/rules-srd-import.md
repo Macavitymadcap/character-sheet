@@ -26,6 +26,7 @@ docs/rules/srd-5.1/
 ├── feats/
 ├── proficiencies/
 ├── senses/
+├── stat-blocks/
 ├── species/
 └── spells/
     └── level-1/
@@ -48,10 +49,14 @@ filters and sheet links without reparsing source files. The parser currently emi
 - Background metadata: feature name, skill proficiencies, tool proficiencies, and equipment.
 - Equipment metadata: category, supporting armour, weapon, adventuring gear, and generic equipment
   folders.
+- Mechanics metadata: action timing, charges, reset cadence, and passive trait hints where the
+  source text provides them.
+- Stat block metadata: armour class, hit points, speed, challenge, actions, and reactions for
+  Markdown files under `stat-blocks/`.
 
 The parser recognises SRD actions, backgrounds, classes, class features, subclasses, conditions,
-core rules, equipment, feats, proficiencies, senses, species, and spells. Commercial non-SRD source
-types remain out of scope for the SRD epic.
+core rules, equipment, feats, proficiencies, senses, species, spells, and local stat blocks.
+Commercial non-SRD source types remain out of scope for the SRD epic.
 
 ## Provenance
 

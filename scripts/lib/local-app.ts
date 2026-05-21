@@ -48,8 +48,9 @@ export async function startLocalServer(
   } = {},
 ): Promise<LocalServer> {
   const requestedPort = envName ? getRequestedPort(envName) : undefined;
+  let lastError: unknown;
 
-  for (const port of requestedPort === undefined ? [...getCandidatePorts(), 0] : [requestedPort]) {
+  for (const port of requestedPort === undefined ? [0, ...getCandidatePorts()] : [requestedPort]) {
     try {
       const server = createServer(async (request, response) => {
         try {
@@ -74,6 +75,7 @@ export async function startLocalServer(
         stop: () => server.close(),
       };
     } catch (error) {
+      lastError = error;
       if (requestedPort !== undefined && isAddressInUse(error)) {
         throw new Error(`Requested ${envName} ${requestedPort} is already in use.`);
       }
@@ -85,7 +87,7 @@ export async function startLocalServer(
     }
   }
 
-  throw new Error("Could not find an available local port.");
+  throw new Error(`Could not find an available local port.${formatListenError(lastError)}`);
 }
 
 export async function waitForHttp(url: string, attempts = 40, delayMs = 250) {
@@ -169,6 +171,14 @@ function isAddressInUse(error: unknown) {
     "code" in error &&
     error.code === "EADDRINUSE"
   );
+}
+
+function formatListenError(error: unknown) {
+  if (!error || typeof error !== "object") return "";
+  const code = "code" in error ? ` ${String(error.code)}` : "";
+  const message = "message" in error ? `: ${String(error.message)}` : "";
+
+  return code || message ? ` Last error${code}${message}.` : "";
 }
 
 const browserBlockedPorts = new Set([

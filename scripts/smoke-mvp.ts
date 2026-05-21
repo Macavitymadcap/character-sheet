@@ -1,5 +1,4 @@
 #!/usr/bin/env bun
-import puppeteer from "puppeteer";
 import { writeSeedAssetPlaceholders } from "../src/assets";
 import { RulesImportService } from "../src/rules";
 import { createInMemoryApp, login, requestText, startLocalServer, waitForHttp } from "./lib/local-app";
@@ -27,16 +26,13 @@ export const hostedRehearsalSmokeCoverage = [
   "campaign wiki",
   "combined admin campaign access",
   "campaign private rules sources",
+  "rule mechanics and sheet disclosures",
   "protected seeded assets",
   "image upload",
   "admin invite handoff",
   "admin password reset handoff",
   "logout protection",
 ] as const;
-
-if (import.meta.main) {
-  await runMvpSmoke();
-}
 
 export async function runMvpSmoke() {
   const runtime = createInMemoryApp("Campaign Ledger", "mvp-smoke-session-secret");
@@ -63,6 +59,11 @@ export async function runMvpSmoke() {
       });
     if (privateRulesImport.imported !== 1) {
       throw new Error(`Private rules import expected 1 rule, imported ${privateRulesImport.imported}.`);
+    }
+    const sheetRulesImport = await new RulesImportService(runtime.databaseRuntime.repositories.rulesSeedRepository)
+      .importFromLocalSource("docs/rules/spells/level-0/mage-hand.md");
+    if (sheetRulesImport.imported !== 1) {
+      throw new Error(`Sheet rules import expected 1 rule, imported ${sheetRulesImport.imported}.`);
     }
     await writeSeedAssetPlaceholders();
 
@@ -167,6 +168,12 @@ export async function runMvpSmoke() {
       "Campaign scoped",
     );
     await assertContains("sheet rule link", `${baseUrl}/sheet/lynott/tabs/spellcasting`, playerCookie, "/rules/spell/mage-hand");
+    await assertContains(
+      "sheet rule disclosure text",
+      `${baseUrl}/sheet/lynott/tabs/spellcasting`,
+      playerCookie,
+      "A spectral, floating hand appears",
+    );
 
     const logout = await requestText(`${baseUrl}/logout`, {
       cookie: playerCookie,
@@ -349,6 +356,7 @@ export async function runMvpSmoke() {
 }
 
 async function verifyLocalPlayBrowserStorage(baseUrl: string) {
+  const { default: puppeteer } = await import("puppeteer");
   const browser = await puppeteer.launch({
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });
@@ -453,4 +461,8 @@ function assertBody(label: string, body: string, expected: string) {
   if (!body.includes(expected)) {
     throw new Error(`${label} did not include ${expected}.`);
   }
+}
+
+if (import.meta.main) {
+  await runMvpSmoke();
 }

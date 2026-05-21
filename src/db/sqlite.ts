@@ -305,11 +305,15 @@ interface CharacterFactionChoiceRow {
 }
 
 interface RuleLinkRow {
+  action_timing_json: string | null;
+  charges: string | null;
   content_category: RulesContentCategory;
+  description: string | null;
   entity_name: string;
   entity_slug: string;
   entity_type: string;
   prepared: number;
+  reset_cadence: string | null;
   selected: number;
   selection_type: string;
   source_name: string;
@@ -2144,20 +2148,35 @@ class SqliteRulesRepository implements RulesRepository {
           links.selection_type,
           sources.content_category,
           sources.name as source_name,
-          sources.slug as source_slug
+          sources.slug as source_slug,
+          mechanics.data_json ->> '$.description' as description,
+          mechanics.data_json ->> '$.actionTiming' as action_timing_json,
+          mechanics.data_json ->> '$.resetCadence' as reset_cadence,
+          mechanics.data_json ->> '$.charges' as charges
         from character_rule_links links
         inner join rules_entities entities on entities.id = links.rules_entity_id
         inner join rules_sources sources on sources.id = entities.source_id
+        left join rule_mechanics mechanics on mechanics.id = (
+          select id
+          from rule_mechanics
+          where rule_mechanics.rules_entity_id = entities.id
+          order by id
+          limit 1
+        )
         where links.character_id = ?
         order by links.sort_order, entities.name`,
       )
       .all(characterId)
       .map((row) => ({
+        actionTiming: parseStringArray(row.action_timing_json),
+        charges: row.charges ?? "",
         contentCategory: row.content_category,
+        description: row.description ?? "",
         entityName: row.entity_name,
         entitySlug: row.entity_slug,
         entityType: row.entity_type,
         prepared: row.prepared === 1,
+        resetCadence: row.reset_cadence ?? "",
         selected: row.selected === 1,
         selectionType: row.selection_type,
         sourceName: row.source_name,
@@ -2322,6 +2341,17 @@ function parseRuleData(dataJson: string): RuleMechanicReadModel["data"] {
       : {};
   } catch {
     return {};
+  }
+}
+
+function parseStringArray(value: string | null): string[] {
+  if (!value) return [];
+  try {
+    const parsed = JSON.parse(value) as unknown;
+
+    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : [];
+  } catch {
+    return [];
   }
 }
 
@@ -2554,17 +2584,6 @@ function toCampaignFaction(row: CampaignFactionRow): CampaignFaction {
 
 function canSeeGameMasterContent(viewerRole: UserRole) {
   return viewerRole === "game_master" ? 1 : 0;
-}
-
-function parseStringArray(json: string) {
-  try {
-    const parsed = JSON.parse(json);
-    return Array.isArray(parsed)
-      ? parsed.filter((item): item is string => typeof item === "string")
-      : [];
-  } catch {
-    return [];
-  }
 }
 
 function clampResourceCurrent(resource: CharacterResource, current: number) {

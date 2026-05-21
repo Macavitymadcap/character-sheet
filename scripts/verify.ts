@@ -35,7 +35,9 @@ function runCommand(command: string[]) {
       return;
     }
 
-    const child = spawn(executable, args, { stdio: "inherit" });
+    const env = { ...process.env };
+    delete env.npm_lifecycle_event;
+    const child = spawn(executable, args, { env, stdio: "inherit" });
 
     child.on("error", reject);
     child.on("close", (code) => resolve(code ?? 1));

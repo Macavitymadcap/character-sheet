@@ -90,7 +90,7 @@ export function parseRuleMarkdown(filePath: string, content: string): RuleEntity
 
   return {
     entityType,
-    mechanics: [parseMechanic(entityType, filePath, body)],
+    mechanics: parseMechanics(entityType, filePath, body),
     name: title,
     slug,
     source,
@@ -122,6 +122,17 @@ function parseRuleJson(content: string): RuleEntitySeedInput[] {
   return [parsed as RuleEntitySeedInput];
 }
 
+function parseMechanics(
+  entityType: RuleEntityType,
+  filePath: string,
+  body: string,
+): RuleMechanicSeedInput[] {
+  const mechanic = parseMechanic(entityType, filePath, body);
+  const statBlock = parseStatBlockMechanic(body);
+
+  return statBlock && mechanic.mechanicType !== "stat_block" ? [mechanic, statBlock] : [mechanic];
+}
+
 function parseMechanic(
   entityType: RuleEntityType,
   filePath: string,
@@ -131,14 +142,21 @@ function parseMechanic(
   if (entityType === "infusion") return parseInfusionMechanic(filePath, body);
   if (entityType === "background") return parseBackgroundMechanic(filePath, body);
   if (entityType === "equipment") return parseEquipmentMechanic(filePath, body);
+  if (entityType === "stat_block") return parseStatBlockMechanic(body) ?? {
+    data: enrichMechanicData("stat_block", filePath, body, {
+      description: normaliseRuleText(stripMetadata(body)),
+      sections: parseSections(body),
+    }),
+    mechanicType: "stat_block",
+  };
 
   return {
-    data: {
+    data: enrichMechanicData(entityType, filePath, body, {
       description: normaliseRuleText(stripMetadata(body)),
       sections: parseSections(body),
       subtitle: normaliseRuleText(readSubtitle(body) ?? ""),
       ...parseCommonMetadata(entityType, filePath, body),
-    },
+    }),
     mechanicType: entityType,
   };
 }
@@ -179,7 +197,7 @@ function parseSpellMechanic(filePath: string, body: string): RuleMechanicSeedInp
   const spellInfo = parseSpellSubtitle(filePath, subtitle);
 
   return {
-    data: {
+    data: enrichMechanicData("spell", filePath, body, {
       castingTime: normaliseRuleText(fields["Casting Time"] ?? ""),
       components: normaliseRuleText(fields.Components ?? ""),
       description: normaliseRuleText(description),
@@ -190,7 +208,7 @@ function parseSpellMechanic(filePath: string, body: string): RuleMechanicSeedInp
       level: spellInfo.level,
       range: normaliseRuleText(fields.Range ?? ""),
       school: spellInfo.school,
-    },
+    }),
     mechanicType: "spell",
   };
 }
@@ -199,12 +217,12 @@ function parseInfusionMechanic(filePath: string, body: string): RuleMechanicSeed
   const subtitle = readSubtitle(body) ?? "";
 
   return {
-    data: {
+    data: enrichMechanicData("infusion", filePath, body, {
       description: normaliseRuleText(stripMetadata(body)),
       ...parseCommonMetadata("infusion", filePath, body),
       prerequisite: normaliseRuleText(subtitle),
       requiresAttunement: /requires attunement/i.test(subtitle),
-    },
+    }),
     mechanicType: "infusion",
   };
 }
@@ -215,29 +233,97 @@ function parseBackgroundMechanic(filePath: string, body: string): RuleMechanicSe
   const feature = sections.find((section) => section.title !== "Background Features");
 
   return {
-    data: {
+    data: enrichMechanicData("background", filePath, body, {
       description: normaliseRuleText(feature?.body ?? stripMetadata(body)),
       equipment: normaliseRuleText(fields.Equipment ?? ""),
       featureName: normaliseRuleText(feature?.title ?? ""),
       ...parseCommonMetadata("background", filePath, body),
       skillProficiencies: splitCsv(fields["Skill Proficiencies"]),
       toolProficiencies: splitCsv(fields["Tool Proficiencies"]),
-    },
+    }),
     mechanicType: "background",
   };
 }
 
 function parseEquipmentMechanic(filePath: string, body: string): RuleMechanicSeedInput {
   return {
-    data: {
+    data: enrichMechanicData("equipment", filePath, body, {
       category: inferEquipmentCategory(filePath, body),
       description: normaliseRuleText(stripMetadata(body)),
       sections: parseSections(body),
       subtitle: normaliseRuleText(readSubtitle(body) ?? ""),
       ...parseCommonMetadata("equipment", filePath, body),
-    },
+    }),
     mechanicType: "equipment",
   };
+}
+
+function parseStatBlockMechanic(body: string): RuleMechanicSeedInput | null {
+  if (!/(^|\n)\s*(?:\*\*Armor Class:\*\*|Armor Class\b)/i.test(body)) return null;
+  if (!/(^|\n)\s*(?:###\s+Actions\b|\*\*Hit Points:\*\*)/i.test(body)) return null;
+  const fields = readBoldFields(body);
+  const sections = parseSections(body);
+
+  return {
+    data: enrichMechanicData("stat_block", "", body, {
+      actions: normaliseRuleText(sections.find((section) => section.title === "Actions")?.body ?? ""),
+      armourClass: normaliseRuleText(fields["Armor Class"] ?? fields["Armour Class"] ?? ""),
+      challenge: normaliseRuleText(fields.Challenge ?? ""),
+      description: normaliseRuleText(stripMetadata(body)),
+      hitPoints: normaliseRuleText(fields["Hit Points"] ?? ""),
+      reactions: normaliseRuleText(sections.find((section) => section.title === "Reactions")?.body ?? ""),
+      speed: normaliseRuleText(fields.Speed ?? ""),
+      statBlock: true,
+    }),
+    mechanicType: "stat_block",
+  };
+}
+
+function enrichMechanicData(
+  entityType: RuleEntityType,
+  filePath: string,
+  body: string,
+  data: Record<string, unknown>,
+) {
+  const text = normaliseRuleText(stripMarkdown(body));
+
+  return {
+    ...data,
+    actionTiming: inferActionTiming(entityType, data, text),
+    charges: inferCharges(text),
+    resetCadence: inferResetCadence(text),
+    tags: Array.isArray(data.tags) ? data.tags : inferTags(entityType, filePath, body),
+  };
+}
+
+function inferActionTiming(entityType: RuleEntityType, data: Record<string, unknown>, text: string) {
+  const timings = new Set<string>();
+  const castingTime = typeof data.castingTime === "string" ? data.castingTime.toLowerCase() : "";
+  if (castingTime.includes("bonus action")) timings.add("Bonus action");
+  else if (castingTime.includes("reaction")) timings.add("Reaction");
+  else if (castingTime.includes("action")) timings.add("Action");
+  if (/\bbonus action\b/i.test(text)) timings.add("Bonus action");
+  if (/\breactions?\b/i.test(text)) timings.add("Reaction");
+  if (/\btake an action\b|\bas an action\b|\busing your action\b/i.test(text)) timings.add("Action");
+  if (entityType === "stat_block" && /\bActions\b/i.test(text)) timings.add("Action");
+  if (entityType === "species_trait" || /\bpassive\b/i.test(text)) timings.add("Passive");
+
+  return [...timings];
+}
+
+function inferCharges(text: string) {
+  const match = text.match(/\b(?:has|with)\s+(\d+d\d+|\d+)\s+(?:expended\s+)?charges?\b/i);
+
+  return match?.[1] ? `${match[1]} charges` : "";
+}
+
+function inferResetCadence(text: string) {
+  if (/short or long rest/i.test(text)) return "Short or long rest";
+  if (/daily at dawn|regains? [^.]+ at dawn/i.test(text)) return "Dawn";
+  if (/finish(?:es)? a long rest|finishing a long rest/i.test(text)) return "Long rest";
+  if (/finish(?:es)? a short rest|finishing a short rest/i.test(text)) return "Short rest";
+
+  return "";
 }
 
 function parseCommonMetadata(entityType: RuleEntityType, filePath: string, body: string) {
@@ -350,6 +436,9 @@ function inferEntityType(filePath: string): RuleEntityType {
   if (normalisedPath.includes("/feats/")) return "feat";
   if (normalisedPath.includes("/proficiencies/")) return "proficiency";
   if (normalisedPath.includes("/senses/")) return "sense";
+  if (normalisedPath.includes("/stat-blocks/") || normalisedPath.includes("/stat_blocks/")) {
+    return "stat_block";
+  }
 
   return "class_feature";
 }
@@ -382,6 +471,7 @@ function inferTags(entityType: RuleEntityType, filePath: string, body: string) {
         "feats",
         "proficiencies",
         "senses",
+        "stat-blocks",
         "species",
         "spells",
         "subclasses",

@@ -48,3 +48,11 @@ character-specific action metadata, and stat block support where local source da
 - Per-day, dawn, charges, rests, actions, bonus actions, and reactions can be represented.
 - Stat blocks are imported and rendered where local source data supports them.
 - `bun run verify` passes.
+
+## Implementation Notes
+
+- Extended rule import metadata with action timing, charges, reset cadence, and stat block mechanics.
+- Added `stat_block` entity support through parsing, storage, filters, and detail routes.
+- Sheet spell, feature, and action accordions now render imported playable rule text and metadata where
+  the character-linked rule has mechanics data.
+- Character action/reaction disclosures now come from linked rule metadata instead of static sheet assumptions.

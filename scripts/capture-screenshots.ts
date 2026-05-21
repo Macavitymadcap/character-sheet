@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 import { mkdir } from "node:fs/promises";
 import { resolve } from "node:path";
-import puppeteer, { type Browser, type Page } from "puppeteer";
+import type { Browser, Page } from "puppeteer";
 import { writeSeedAssetPlaceholders } from "../src/assets";
 import { RulesImportService } from "../src/rules";
 import { createInMemoryApp, login, startLocalServer, waitForHttp } from "./lib/local-app";
@@ -99,6 +99,42 @@ export const sheetScreenshotTargets = [
     path: "/sheet/lynott",
     role: "player",
     tabId: "skills",
+    theme: "dark",
+  },
+  {
+    action: "open-first-accordion",
+    fileName: "lynott-spellcasting-rule-text-light.png",
+    label: "Lynott spellcasting rule text light",
+    path: "/sheet/lynott",
+    role: "player",
+    tabId: "spellcasting",
+    theme: "light",
+  },
+  {
+    action: "open-first-accordion",
+    fileName: "lynott-spellcasting-rule-text-dark.png",
+    label: "Lynott spellcasting rule text dark",
+    path: "/sheet/lynott",
+    role: "player",
+    tabId: "spellcasting",
+    theme: "dark",
+  },
+  {
+    action: "open-first-accordion",
+    fileName: "lynott-actions-rule-text-light.png",
+    label: "Lynott actions rule text light",
+    path: "/sheet/lynott",
+    role: "player",
+    tabId: "actions",
+    theme: "light",
+  },
+  {
+    action: "open-first-accordion",
+    fileName: "lynott-actions-rule-text-dark.png",
+    label: "Lynott actions rule text dark",
+    path: "/sheet/lynott",
+    role: "player",
+    tabId: "actions",
     theme: "dark",
   },
   {
@@ -277,10 +313,6 @@ const targetViewport = {
   width: 360,
 } as const;
 
-if (import.meta.main) {
-  await captureSheetScreenshots();
-}
-
 export async function captureSheetScreenshots(
   outputDir = Bun.env.SCREENSHOT_DIR ?? "docs/pr-screenshots",
 ) {
@@ -305,6 +337,12 @@ export async function captureSheetScreenshots(
           slug: "rovnost-private",
         },
       });
+    await new RulesImportService(runtime.databaseRuntime.repositories.rulesSeedRepository)
+      .importFromLocalSource("docs/rules/spells/level-0/mage-hand.md");
+    await new RulesImportService(runtime.databaseRuntime.repositories.rulesSeedRepository)
+      .importFromLocalSource("docs/rules/spells/level-1/absorb-elements.md");
+    await new RulesImportService(runtime.databaseRuntime.repositories.rulesSeedRepository)
+      .importFromLocalSource("docs/rules/spells/level-1/shield.md");
     await writeSeedAssetPlaceholders();
 
     const playerCookie = await login(baseUrl, "lynott@example.local");
@@ -312,6 +350,7 @@ export async function captureSheetScreenshots(
     const gmCookie = await login(baseUrl, "gm@example.local");
     const adminCookie = await login(baseUrl, "admin@example.local");
     const adminPlayerCookie = await login(baseUrl, "admin.player@example.local");
+    const { default: puppeteer } = await import("puppeteer");
     browser = await puppeteer.launch({
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
     });
@@ -362,6 +401,7 @@ async function runScreenshotAction(
   action:
     | "edit-stealth"
     | "edit-strength"
+    | "open-first-accordion"
     | "open-menu"
     | "roll-stealth"
     | "scroll-campaign-rules-sources"
@@ -374,6 +414,14 @@ async function runScreenshotAction(
   if (action === "open-menu") {
     await page.click(".popover-menu-trigger");
     await page.waitForSelector("#site-menu-panel:popover-open");
+    return;
+  }
+
+  if (action === "open-first-accordion") {
+    await page.waitForSelector(".accordion-item summary");
+    await scrollIntoView(page, ".accordion-item");
+    await page.evaluate(`document.querySelector(".accordion-item")?.setAttribute("open", "")`);
+    await page.waitForSelector(".accordion-item[open]");
     return;
   }
 
@@ -520,4 +568,8 @@ async function prepareEditedSheet(baseUrl: string, cookie: string) {
     method: "PATCH",
   });
   if (!response.ok) throw new Error(`Could not prepare edited sheet screenshot: ${response.status}`);
+}
+
+if (import.meta.main) {
+  await captureSheetScreenshots();
 }
