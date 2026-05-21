@@ -68,14 +68,24 @@ export const diceRollerStyles = /* css */ `
   background: var(--stat-background-colour);
   border: 1px solid var(--border-colour);
   border-radius: 0.35rem;
+  box-sizing: border-box;
   color: var(--heading-colour);
   font-weight: 800;
   min-height: 1.9rem;
+  min-width: 0;
   padding: 0.28rem 0.4rem;
+  width: 100%;
 }
 
 .dice-roller-extra-field input {
+  appearance: textfield;
   text-align: center;
+}
+
+.dice-roller-extra-field input::-webkit-inner-spin-button,
+.dice-roller-extra-field input::-webkit-outer-spin-button {
+  appearance: none;
+  margin: 0;
 }
 
 .dice-roller-form button {
@@ -119,7 +129,7 @@ export const diceRollerStyles = /* css */ `
   }
 
   .dice-roller-fields {
-    grid-template-columns: minmax(0, 1fr) 5.5rem;
+    grid-template-columns: minmax(0, 1fr) 6rem;
   }
 
   .dice-roll-result {
