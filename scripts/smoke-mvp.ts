@@ -42,9 +42,9 @@ export async function runMvpSmoke() {
   try {
     await waitForHttp(`${baseUrl}/healthz`);
     const rulesImport = await new RulesImportService(runtime.databaseRuntime.repositories.rulesSeedRepository)
-      .importFromLocalSource("docs/rules/srd-5.1-fixtures");
-    if (rulesImport.imported !== 15) {
-      throw new Error(`SRD fixture import expected 15 rules, imported ${rulesImport.imported}.`);
+      .importFromLocalSource("docs/rules/srd-5.1");
+    if (rulesImport.imported < 2000) {
+      throw new Error(`SRD import expected full corpus, imported ${rulesImport.imported}.`);
     }
     const privateRulesImport = await new RulesImportService(runtime.databaseRuntime.repositories.rulesSeedRepository)
       .importFromLocalSource("docs/rules/backgrounds/special-ops.md", {
@@ -60,16 +60,38 @@ export async function runMvpSmoke() {
     if (privateRulesImport.imported !== 1) {
       throw new Error(`Private rules import expected 1 rule, imported ${privateRulesImport.imported}.`);
     }
-    const sheetRulesImport = await new RulesImportService(runtime.databaseRuntime.repositories.rulesSeedRepository)
-      .importFromLocalSource("docs/rules/spells/level-0/mage-hand.md");
-    if (sheetRulesImport.imported !== 1) {
-      throw new Error(`Sheet rules import expected 1 rule, imported ${sheetRulesImport.imported}.`);
+    const sheetRulesImporter = new RulesImportService(runtime.databaseRuntime.repositories.rulesSeedRepository);
+    const srdSource = {
+      abbreviation: "SRD 5.1",
+      contentCategory: "srd" as const,
+      id: "rules_source_srd_5_1",
+      name: "Systems Reference Document 5.1",
+      precedence: 15,
+      slug: "srd-5-1",
+    };
+    await sheetRulesImporter.importFromLocalSource("docs/rules/srd-5.1-fixtures/spells/level-1/bless.md");
+    await sheetRulesImporter.importFromLocalSource("docs/rules/spells/level-0/mage-hand.md");
+    for (const rulePath of [
+      "docs/rules/spells/level-0/guidance.md",
+      "docs/rules/spells/level-0/resistance.md",
+      "docs/rules/spells/level-0/spare-the-dying.md",
+      "docs/rules/spells/level-1/cure-wounds.md",
+      "docs/rules/spells/level-1/detect-magic.md",
+      "docs/rules/spells/level-1/purify-food-and-drink.md",
+      "docs/rules/spells/level-1/sanctuary.md",
+    ]) {
+      await sheetRulesImporter.importFromLocalSource(rulePath, { publicExportEligible: true, source: srdSource });
     }
     await writeSeedAssetPlaceholders();
 
     const playerCookie = await login(baseUrl, "lynott@example.local");
     const miraCookie = await login(baseUrl, "mira@example.local");
     await assertContains("player sheet", `${baseUrl}/sheet/lynott`, playerCookie, "Lynott Magulbisson");
+    await assertContains("mira sheet", `${baseUrl}/sheet/mira-voss`, miraCookie, "Mira Voss");
+    await assertContains("mira spellcasting", `${baseUrl}/sheet/mira-voss/tabs/spellcasting`, miraCookie, "Cure Wounds");
+    await assertContains("mira actions", `${baseUrl}/sheet/mira-voss/tabs/actions`, miraCookie, "Sanctuary");
+    await assertContains("mira features", `${baseUrl}/sheet/mira-voss/tabs/features`, miraCookie, "Life Domain");
+    await assertContains("mira equipment", `${baseUrl}/sheet/mira-voss/tabs/equipment`, miraCookie, "Shield with holy symbol");
     await assertContains("player roster", `${baseUrl}/characters`, playerCookie, "Player roster");
 
     const playerCreatedCharacter = await requestText(`${baseUrl}/characters`, {

@@ -19,6 +19,18 @@ resources, and rule links.
 - Make any intentionally incomplete or table-specific data explicit rather than accidentally empty.
 - Update screenshots, smoke paths, and docs that currently describe Mira as partial.
 
+## Implementation Notes
+
+- Mira is now seeded as a level 1 human Life Domain cleric with SRD-linked acolyte background,
+  Wisdom-based spellcasting, scale mail, shield, mace, priest's pack, and two 1st-level spell slots.
+- Her spell set uses imported SRD/local rule docs where available: Guidance, Resistance,
+  Spare the Dying, Bless, Cure Wounds, Detect Magic, Purify Food and Drink, and Sanctuary.
+- Her class, domain, background, spellcasting focus, broad equipment, and spell records use SRD
+  rule links so a full SRD import can hydrate the sheet with rule text.
+- Eldritch Cannon remains Lynott-only; Mira has no cannon resource, equipment, or rule link.
+- Remaining manual scope is limited to future character-builder automation for level-up and daily
+  prepared-spell recalculation.
+
 ## Interfaces
 
 - Seed data in `src/db/seed.ts`.

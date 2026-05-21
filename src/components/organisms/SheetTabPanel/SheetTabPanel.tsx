@@ -170,7 +170,7 @@ const SpellcastingTab = ({ data }: { data: TabContentData }) => {
 };
 
 const FeaturesTab = ({ data }: { data: TabContentData }) => {
-  const featureLinks = data.ruleLinks.filter((link) => link.entityType !== "spell");
+  const featureLinks = data.ruleLinks.filter((link) => link.entityType !== "spell" && link.entityType !== "equipment");
 
   return (
     <div class="tab-compact-grid">
@@ -190,6 +190,8 @@ const FeaturesTab = ({ data }: { data: TabContentData }) => {
 };
 
 const EquipmentTab = ({ data }: { data: TabContentData }) => {
+  const equipmentRules = data.ruleLinks.filter((link) => link.entityType === "equipment");
+
   return (
     <div class="tab-compact-stack">
       {renderCompactSection(
@@ -197,6 +199,14 @@ const EquipmentTab = ({ data }: { data: TabContentData }) => {
         "Equipment",
         data.equipment.map((item) => equipmentToItem(item, data.sheet.slug)),
       )}
+      {equipmentRules.length > 0
+        ? renderAccordionSection(
+            "equipment-rules-heading",
+            "Equipment rules",
+            "equipment-rule-list",
+            equipmentRules.map((rule) => ruleToAccordionItem(rule, data.resources, data.sheet.slug, "equipment")),
+          )
+        : null}
     </div>
   );
 };

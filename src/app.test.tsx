@@ -875,26 +875,97 @@ describe("createApp", () => {
     expect(gmNotesHtml).toContain("Game Master notes");
   });
 
-  test("marks Mira's seeded cleric sheet as intentionally partial", async () => {
+  test("renders Mira's table-ready cleric sheet content", async () => {
     const { app, sessionService } = createTestApp("Campaign Ledger");
+    const importer = new RulesImportService(runtime!.repositories.rulesSeedRepository);
+    await importer.importFromLocalSource("docs/rules/srd-5.1");
+    const srdSource = {
+      abbreviation: "SRD 5.1",
+      contentCategory: "srd" as const,
+      id: "rules_source_srd_5_1",
+      name: "Systems Reference Document 5.1",
+      precedence: 15,
+      slug: "srd-5-1",
+    };
+    await importer.importFromLocalSource("docs/rules/srd-5.1-fixtures/spells/level-1/bless.md");
+    for (const rulePath of [
+      "docs/rules/spells/level-0/guidance.md",
+      "docs/rules/spells/level-0/resistance.md",
+      "docs/rules/spells/level-0/spare-the-dying.md",
+      "docs/rules/spells/level-1/cure-wounds.md",
+      "docs/rules/spells/level-1/detect-magic.md",
+      "docs/rules/spells/level-1/purify-food-and-drink.md",
+      "docs/rules/spells/level-1/sanctuary.md",
+    ]) {
+      await importer.importFromLocalSource(rulePath, { publicExportEligible: true, source: srdSource });
+    }
     const miraSession = sessionService.createSession("user_mira_player");
     const sheet = await app.request("/sheet/mira-voss", {
+      headers: { cookie: miraSession.cookie },
+    });
+    const spellcasting = await app.request("/sheet/mira-voss/tabs/spellcasting", {
+      headers: { cookie: miraSession.cookie },
+    });
+    const actions = await app.request("/sheet/mira-voss/tabs/actions", {
+      headers: { cookie: miraSession.cookie },
+    });
+    const features = await app.request("/sheet/mira-voss/tabs/features", {
+      headers: { cookie: miraSession.cookie },
+    });
+    const equipment = await app.request("/sheet/mira-voss/tabs/equipment", {
       headers: { cookie: miraSession.cookie },
     });
     const notes = await app.request("/sheet/mira-voss/tabs/notes", {
       headers: { cookie: miraSession.cookie },
     });
     const sheetHtml = await sheet.text();
+    const spellcastingHtml = await spellcasting.text();
+    const actionsHtml = await actions.text();
+    const featuresHtml = await features.text();
+    const equipmentHtml = await equipment.text();
     const notesHtml = await notes.text();
 
     expect(sheet.status).toBe(200);
     expect(sheetHtml).toContain('id="inspiration-toggle"');
     expect(sheetHtml).toContain('hx-patch="/sheet/mira-voss/resources/resource_mira_inspiration"');
     expect(sheetHtml).not.toContain("<dd>No</dd>");
+    expect(spellcasting.status).toBe(200);
+    expect(spellcastingHtml).toContain("Wisdom");
+    expect(spellcastingHtml).toContain("Spell attack");
+    expect(spellcastingHtml).toContain("+5");
+    expect(spellcastingHtml).toContain("Save DC");
+    expect(spellcastingHtml).toContain("13");
+    expect(spellcastingHtml).toContain("1st-level spell slots");
+    expect(spellcastingHtml).toContain('hx-patch="/sheet/mira-voss/resources/resource_mira_spell_slots_1"');
+    expect(spellcastingHtml).toContain("Guidance");
+    expect(spellcastingHtml).toContain("Resistance");
+    expect(spellcastingHtml).toContain("Spare the Dying");
+    expect(spellcastingHtml).toContain("Bless");
+    expect(spellcastingHtml).toContain("Cure Wounds");
+    expect(spellcastingHtml).toContain("Sanctuary");
+    expect(actions.status).toBe(200);
+    expect(actionsHtml).toContain("Cure Wounds");
+    expect(actionsHtml).toContain("Sanctuary");
+    expect(actionsHtml).not.toContain("Eldritch Cannon");
+    expect(features.status).toBe(200);
+    expect(featuresHtml).toContain("Life Domain");
+    expect(featuresHtml).toContain("Disciple of Life");
+    expect(featuresHtml).toContain("Acolyte");
+    expect(featuresHtml).toContain("Spellcasting Focus");
+    expect(featuresHtml).not.toContain("Medium Armor");
+    expect(featuresHtml).not.toContain("Eldritch Cannon");
+    expect(equipment.status).toBe(200);
+    expect(equipmentHtml).toContain("Scale mail");
+    expect(equipmentHtml).toContain("Shield with holy symbol");
+    expect(equipmentHtml).toContain("Mace");
+    expect(equipmentHtml).toContain("Equipment rules");
+    expect(equipmentHtml).toContain("Medium Armor");
+    expect(equipmentHtml).toContain("Weapons");
     expect(notes.status).toBe(200);
     expect(notesHtml).toContain("Seed data scope");
-    expect(notesHtml).toContain("deliberately partial human cleric seed");
-    expect(notesHtml).toContain("automatic cleric grants");
+    expect(notesHtml).toContain("table-ready human cleric seed");
+    expect(notesHtml).toContain("daily prepared-spell changes");
+    expect(notesHtml).not.toContain("deliberately partial");
   });
 
   test("saves visible notes and keeps role-only notes protected", async () => {

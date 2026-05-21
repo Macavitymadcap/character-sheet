@@ -182,19 +182,21 @@ export const sheetScreenshotTargets = [
     theme: "light",
   },
   {
-    fileName: "mira-partial-notes-light.png",
-    label: "Mira partial notes light",
+    action: "open-bless-accordion",
+    fileName: "mira-spellcasting-light.png",
+    label: "Mira spellcasting light",
     path: "/sheet/mira-voss",
     role: "mira_player",
-    tabId: "notes",
+    tabId: "spellcasting",
     theme: "light",
   },
   {
-    fileName: "mira-partial-notes-dark.png",
-    label: "Mira partial notes dark",
+    action: "open-bless-accordion",
+    fileName: "mira-spellcasting-dark.png",
+    label: "Mira spellcasting dark",
     path: "/sheet/mira-voss",
     role: "mira_player",
-    tabId: "notes",
+    tabId: "spellcasting",
     theme: "dark",
   },
   {
@@ -324,8 +326,16 @@ export async function captureSheetScreenshots(
   try {
     await waitForHttp(`${baseUrl}/healthz`);
     await mkdir(outputDir, { recursive: true });
-    await new RulesImportService(runtime.databaseRuntime.repositories.rulesSeedRepository)
-      .importFromLocalSource("docs/rules/srd-5.1-fixtures");
+    const rulesImporter = new RulesImportService(runtime.databaseRuntime.repositories.rulesSeedRepository);
+    const srdSource = {
+      abbreviation: "SRD 5.1",
+      contentCategory: "srd" as const,
+      id: "rules_source_srd_5_1",
+      name: "Systems Reference Document 5.1",
+      precedence: 15,
+      slug: "srd-5-1",
+    };
+    await rulesImporter.importFromLocalSource("docs/rules/srd-5.1");
     await new RulesImportService(runtime.databaseRuntime.repositories.rulesSeedRepository)
       .importFromLocalSource("docs/rules/backgrounds/special-ops.md", {
         campaignId: "campaign_rovnost_shadows",
@@ -337,12 +347,21 @@ export async function captureSheetScreenshots(
           slug: "rovnost-private",
         },
       });
-    await new RulesImportService(runtime.databaseRuntime.repositories.rulesSeedRepository)
-      .importFromLocalSource("docs/rules/spells/level-0/mage-hand.md");
-    await new RulesImportService(runtime.databaseRuntime.repositories.rulesSeedRepository)
-      .importFromLocalSource("docs/rules/spells/level-1/absorb-elements.md");
-    await new RulesImportService(runtime.databaseRuntime.repositories.rulesSeedRepository)
-      .importFromLocalSource("docs/rules/spells/level-1/shield.md");
+    await rulesImporter.importFromLocalSource("docs/rules/srd-5.1-fixtures/spells/level-1/bless.md");
+    await rulesImporter.importFromLocalSource("docs/rules/spells/level-0/mage-hand.md");
+    await rulesImporter.importFromLocalSource("docs/rules/spells/level-1/absorb-elements.md");
+    await rulesImporter.importFromLocalSource("docs/rules/spells/level-1/shield.md");
+    for (const rulePath of [
+      "docs/rules/spells/level-0/guidance.md",
+      "docs/rules/spells/level-0/resistance.md",
+      "docs/rules/spells/level-0/spare-the-dying.md",
+      "docs/rules/spells/level-1/cure-wounds.md",
+      "docs/rules/spells/level-1/detect-magic.md",
+      "docs/rules/spells/level-1/purify-food-and-drink.md",
+      "docs/rules/spells/level-1/sanctuary.md",
+    ]) {
+      await rulesImporter.importFromLocalSource(rulePath, { publicExportEligible: true, source: srdSource });
+    }
     await writeSeedAssetPlaceholders();
 
     const playerCookie = await login(baseUrl, "lynott@example.local");
@@ -401,6 +420,7 @@ async function runScreenshotAction(
   action:
     | "edit-stealth"
     | "edit-strength"
+    | "open-bless-accordion"
     | "open-first-accordion"
     | "open-menu"
     | "roll-stealth"
@@ -422,6 +442,16 @@ async function runScreenshotAction(
     await scrollIntoView(page, ".accordion-item");
     await page.evaluate(`document.querySelector(".accordion-item")?.setAttribute("open", "")`);
     await page.waitForSelector(".accordion-item[open]");
+    return;
+  }
+
+  if (action === "open-bless-accordion") {
+    await page.waitForSelector("#spell-card-bless");
+    await page.evaluate(`document.querySelector("#spell-card-bless")?.closest("details")?.setAttribute("open", "")`);
+    await page.waitForFunction(`document.querySelector("#spell-card-bless")?.closest("details")?.hasAttribute("open")`);
+    await page.evaluate(
+      `document.querySelector("#spell-card-bless")?.closest("details")?.scrollIntoView({ block: "start", inline: "nearest" }); window.scrollBy(0, -320); window.scrollTo(0, window.scrollY)`,
+    );
     return;
   }
 

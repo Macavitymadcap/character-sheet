@@ -122,6 +122,15 @@ const abilities: AbilitySeed[] = [
   ["charisma", 10, 0, 0, 0],
 ];
 
+const miraAbilities: AbilitySeed[] = [
+  ["strength", 10, 0, 0, 0],
+  ["dexterity", 12, 1, 0, 1],
+  ["constitution", 14, 2, 0, 2],
+  ["intelligence", 10, 0, 0, 0],
+  ["wisdom", 16, 3, 1, 5],
+  ["charisma", 13, 1, 1, 3],
+];
+
 const skills: Array<[string, string, number, number]> = [
   ["acrobatics", "dexterity", 0, 3],
   ["animal handling", "wisdom", 0, 1],
@@ -143,10 +152,37 @@ const skills: Array<[string, string, number, number]> = [
   ["survival", "wisdom", 0, 1],
 ];
 
+const miraSkills: Array<[string, string, number, number]> = [
+  ["acrobatics", "dexterity", 0, 1],
+  ["animal handling", "wisdom", 0, 3],
+  ["arcana", "intelligence", 0, 0],
+  ["athletics", "strength", 0, 0],
+  ["stealth", "dexterity", 0, 1],
+  ["deception", "charisma", 0, 1],
+  ["history", "intelligence", 0, 0],
+  ["insight", "wisdom", 1, 5],
+  ["intimidation", "charisma", 0, 1],
+  ["investigation", "intelligence", 0, 0],
+  ["medicine", "wisdom", 1, 5],
+  ["nature", "intelligence", 0, 0],
+  ["perception", "wisdom", 1, 5],
+  ["performance", "charisma", 0, 1],
+  ["persuasion", "charisma", 0, 1],
+  ["religion", "intelligence", 1, 2],
+  ["sleight of hand", "dexterity", 0, 1],
+  ["survival", "wisdom", 0, 3],
+];
+
 const senses: SenseSeed[] = [
   ["sense_lynott_darkvision", "Darkvision", "60 ft", 10],
   ["sense_lynott_passive_perception", "Passive perception", "13", 20],
   ["sense_lynott_passive_investigation", "Passive investigation", "16", 30],
+];
+
+const miraSenses: SenseSeed[] = [
+  ["sense_mira_passive_perception", "Passive perception", "15", 10],
+  ["sense_mira_passive_insight", "Passive insight", "15", 20],
+  ["sense_mira_passive_investigation", "Passive investigation", "10", 30],
 ];
 
 const armourClassSources: ArmourClassSourceSeed[] = [
@@ -155,12 +191,31 @@ const armourClassSources: ArmourClassSourceSeed[] = [
   ["ac_lynott_enhanced_defence", "Enhanced Defence", 1, "Active armour infusion.", 30],
 ];
 
+const miraArmourClassSources: ArmourClassSourceSeed[] = [
+  ["ac_mira_scale_mail", "Scale mail", 14, "Medium armour base AC.", 10],
+  ["ac_mira_dexterity", "Dexterity bonus", 1, "Scale mail Dexterity bonus.", 20],
+  ["ac_mira_shield", "Shield", 2, "Equipped holy-symbol shield.", 30],
+];
+
 const defences: DefenceSeed[] = [
   ["defence_lynott_armour", "armour", "Armour", "Breastplate with Enhanced Defence infusion.", 10],
   ["defence_lynott_resistances", "resistance", "Resistances", "None currently recorded.", 20],
   ["defence_lynott_immunities", "immunity", "Immunities", "None currently recorded.", 30],
   [
     "defence_lynott_condition_immunities",
+    "condition_immunity",
+    "Condition immunities",
+    "None currently recorded.",
+    40,
+  ],
+];
+
+const miraDefences: DefenceSeed[] = [
+  ["defence_mira_armour", "armour", "Armour", "Scale mail and shield.", 10],
+  ["defence_mira_resistances", "resistance", "Resistances", "None currently recorded.", 20],
+  ["defence_mira_immunities", "immunity", "Immunities", "None currently recorded.", 30],
+  [
+    "defence_mira_condition_immunities",
     "condition_immunity",
     "Condition immunities",
     "None currently recorded.",
@@ -189,6 +244,16 @@ const proficiencies: ProficiencySeed[] = [
     "To be determined by campaign setting.",
     140,
   ],
+];
+
+const miraProficiencies: ProficiencySeed[] = [
+  ["proficiency_mira_light_armour", "armour", "Light armour", "Cleric training.", 10],
+  ["proficiency_mira_medium_armour", "armour", "Medium armour", "Cleric training.", 20],
+  ["proficiency_mira_shields", "armour", "Shields", "Cleric training.", 30],
+  ["proficiency_mira_simple_weapons", "weapon", "Simple weapons", "Cleric training.", 40],
+  ["proficiency_mira_common", "language", "Common", "Known language.", 50],
+  ["proficiency_mira_celestial", "language", "Celestial", "Acolyte language.", 60],
+  ["proficiency_mira_primordial", "language", "Primordial", "Skywright shrine records.", 70],
 ];
 
 const staleProficiencyIds = [
@@ -220,8 +285,8 @@ const resources: ResourceSeed[] = [
 const miraResources: ResourceSeed[] = standardResourceSeeds("mira", {
   hitDiceCurrent: 1,
   hitDieSides: miraClass.hitDieSides,
-  hitPointMax: 9,
-});
+  hitPointMax: 10,
+}).concat([["resource_mira_spell_slots_1", "spell_slots_1", "spell_slot", "1st-level spell slots", 2, 2, 40]]);
 
 function standardResourceSeeds(
   idPrefix: string,
@@ -342,6 +407,73 @@ const equipment: EquipmentSeed[] = [
     1,
     0,
     "Covered by tinker's tools.",
+  ],
+];
+
+const miraEquipment: EquipmentSeed[] = [
+  [
+    "equipment_mira_coin_purse",
+    "Coin purse",
+    "money",
+    15,
+    0,
+    "Acolyte starting coin held for offerings, bribes, and emergency lodging.",
+  ],
+  [
+    "equipment_mira_scale_mail",
+    "Scale mail",
+    "armour",
+    1,
+    1,
+    "Medium armour; AC 14 plus Dexterity modifier.",
+  ],
+  [
+    "equipment_mira_shield",
+    "Shield with holy symbol",
+    "armour",
+    1,
+    1,
+    "Equipped shield used as Mira's spellcasting focus.",
+  ],
+  [
+    "equipment_mira_mace",
+    "Mace",
+    "weapon",
+    1,
+    1,
+    "Melee weapon attack: +2 to hit; Hit: 1d6 bludgeoning damage.",
+  ],
+  [
+    "equipment_mira_light_crossbow",
+    "Light crossbow",
+    "weapon",
+    1,
+    0,
+    "Range 80/320 ft.; +3 to hit; Hit: 1d8 + 1 piercing damage.",
+  ],
+  [
+    "equipment_mira_prayer_book",
+    "Prayer book and incense",
+    "gear",
+    1,
+    0,
+    "Acolyte kit for rites, omens, and calming frightened witnesses.",
+  ],
+  [
+    "equipment_mira_priests_pack",
+    "Priest's pack",
+    "gear",
+    1,
+    0,
+    "Blankets, candles, alms box, incense, vestments, rations, and waterskin.",
+  ],
+  [
+    "equipment_mira_healers_satchel",
+    "Healer's satchel",
+    "gear",
+    1,
+    0,
+    "Bandages, salves, and clean cloth for Medicine checks between spells.",
   ],
 ];
 
@@ -506,6 +638,65 @@ const backgroundEntries: BackgroundEntrySeed[] = [
     "Command ranks",
     "Lieutenant, Captain, and Major cover platoon leadership through battalion staff and intelligence operations.",
     200,
+  ],
+];
+
+const miraBackgroundEntries: BackgroundEntrySeed[] = [
+  [
+    "background_mira_personality_common_ground",
+    "personality",
+    "Common ground",
+    "Looks for the one shared fear or hope in a room before asking anyone to trust her.",
+    10,
+  ],
+  [
+    "background_mira_ideal_mercy",
+    "ideal",
+    "Mercy",
+    "The city runs on debts and pressure; mercy is the one force that can interrupt the machinery.",
+    20,
+  ],
+  [
+    "background_mira_bond_rooftop_shrines",
+    "bond",
+    "Rooftop shrines",
+    "Owes the Skywright Guild for access to the little shrines built into lift houses and crane towers.",
+    30,
+  ],
+  [
+    "background_mira_flaw_omens",
+    "flaw",
+    "Omens everywhere",
+    "Can over-read weather, machinery noises, and old prayers when a plain answer would be kinder.",
+    40,
+  ],
+  [
+    "background_mira_backstory_rooftops",
+    "backstory",
+    "The high chapels",
+    "Mira served small rooftop chapels where lift crews, couriers, and engineers asked for blessings before crossing the city by wire and wind. She learned to bind wounds quickly, bless dangerous work, and listen when machinery sounded wrong.",
+    50,
+  ],
+  [
+    "background_mira_backstory_rovnost",
+    "backstory",
+    "Smoke below",
+    "Her faith brought her down from the roofs after the factory districts began sending up too many injured workers and too few honest reports. Mira now moves between shrines, clinics, and guild platforms, trying to keep people alive long enough for the truth to matter.",
+    60,
+  ],
+  [
+    "background_mira_npc_guild_sacristan",
+    "npc",
+    "Sacristan Elian Vey",
+    "Skywright Guild sacristan who controls roof-shrine access and worries Mira attracts dangerous questions.",
+    70,
+  ],
+  [
+    "background_mira_npc_clinic",
+    "npc",
+    "Sister Halka Bren",
+    "Street-clinic organiser who trusts Mira with wounded organisers and careful lies.",
+    80,
   ],
 ];
 
@@ -802,6 +993,7 @@ const characterFactionChoices: CharacterFactionChoiceSeed[] = [
 ];
 
 const sources: SourceSeed[] = [
+  ["rules_source_srd_5_1", "srd-5-1", "Systems Reference Document 5.1", "SRD 5.1", "srd", 15],
   ["rules_source_phb", "players-handbook", "Player's Handbook", "PHB", "third_party", 10],
   ["rules_source_xgte", "xanathars-guide-to-everything", "Xanathar's Guide to Everything", "XGtE", "third_party", 15],
   ["rules_source_tcoe", "tashas-cauldron-of-everything", "Tasha's Cauldron of Everything", "TCoE", "third_party", 20],
@@ -837,11 +1029,98 @@ const rulesEntities: StringSeed[] = [
     "species_trait",
     "Fortune from the Many",
   ],
+  ["rule_srd_5_1_class_cleric", "rules_source_srd_5_1", "cleric", "class", "Cleric"],
+  [
+    "rule_srd_5_1_class_feature_proficiencies_cleric",
+    "rules_source_srd_5_1",
+    "proficiencies-cleric",
+    "class_feature",
+    "Proficiencies",
+  ],
+  [
+    "rule_srd_5_1_class_feature_spellcasting_cleric",
+    "rules_source_srd_5_1",
+    "spellcasting-cleric",
+    "class_feature",
+    "Spellcasting",
+  ],
+  [
+    "rule_srd_5_1_class_feature_spellcasting_focus_cleric",
+    "rules_source_srd_5_1",
+    "spellcasting-focus-cleric",
+    "class_feature",
+    "Spellcasting Focus",
+  ],
+  [
+    "rule_srd_5_1_class_feature_divine_domain",
+    "rules_source_srd_5_1",
+    "divine-domain",
+    "class_feature",
+    "Divine Domain",
+  ],
+  [
+    "rule_srd_5_1_class_feature_life_domain",
+    "rules_source_srd_5_1",
+    "life-domain",
+    "class_feature",
+    "Life Domain",
+  ],
+  [
+    "rule_srd_5_1_class_feature_disciple_of_life",
+    "rules_source_srd_5_1",
+    "disciple-of-life",
+    "class_feature",
+    "Disciple of Life",
+  ],
+  ["rule_srd_5_1_background_acolyte", "rules_source_srd_5_1", "acolyte", "background", "Acolyte"],
+  ["rule_srd_5_1_equipment_armor", "rules_source_srd_5_1", "armor", "equipment", "Armor"],
+  ["rule_srd_5_1_equipment_medium_armor", "rules_source_srd_5_1", "medium-armor", "equipment", "Medium Armor"],
+  ["rule_srd_5_1_equipment_weapons", "rules_source_srd_5_1", "weapons", "equipment", "Weapons"],
+  [
+    "rule_srd_5_1_equipment_adventuring_gear",
+    "rules_source_srd_5_1",
+    "adventuring-gear",
+    "equipment",
+    "Adventuring Gear",
+  ],
+  [
+    "rule_srd_5_1_equipment_equipment_packs",
+    "rules_source_srd_5_1",
+    "equipment-packs",
+    "equipment",
+    "Equipment Packs",
+  ],
+  ["rule_srd_5_1_spell_bless", "rules_source_srd_5_1", "bless", "spell", "Bless"],
+  ["rule_srd_5_1_spell_cure_wounds", "rules_source_srd_5_1", "cure-wounds", "spell", "Cure Wounds"],
+  ["rule_srd_5_1_spell_detect_magic", "rules_source_srd_5_1", "detect-magic", "spell", "Detect Magic"],
+  ["rule_srd_5_1_spell_guidance", "rules_source_srd_5_1", "guidance", "spell", "Guidance"],
+  [
+    "rule_srd_5_1_spell_purify_food_and_drink",
+    "rules_source_srd_5_1",
+    "purify-food-and-drink",
+    "spell",
+    "Purify Food and Drink",
+  ],
+  ["rule_srd_5_1_spell_resistance", "rules_source_srd_5_1", "resistance", "spell", "Resistance"],
+  ["rule_srd_5_1_spell_sanctuary", "rules_source_srd_5_1", "sanctuary", "spell", "Sanctuary"],
+  ["rule_srd_5_1_spell_spare_the_dying", "rules_source_srd_5_1", "spare-the-dying", "spell", "Spare the Dying"],
+  ["rule_cleric", "rules_source_phb", "cleric", "class", "Cleric"],
+  ["rule_cleric_spellcasting", "rules_source_phb", "spellcasting", "class_feature", "Spellcasting"],
+  ["rule_divine_domain", "rules_source_phb", "divine-domain", "class_feature", "Divine Domain"],
+  ["rule_life_domain", "rules_source_phb", "life-domain", "subclass", "Life Domain"],
+  ["rule_disciple_of_life", "rules_source_phb", "disciple-of-life", "subclass_feature", "Disciple of Life"],
+  ["rule_acolyte", "rules_source_phb", "acolyte", "background", "Acolyte"],
   ["rule_mage_hand", "rules_source_phb", "mage-hand", "spell", "Mage Hand"],
   ["rule_mending", "rules_source_phb", "mending", "spell", "Mending"],
+  ["rule_guidance", "rules_source_phb", "guidance", "spell", "Guidance"],
+  ["rule_resistance", "rules_source_phb", "resistance", "spell", "Resistance"],
+  ["rule_spare_the_dying", "rules_source_phb", "spare-the-dying", "spell", "Spare the Dying"],
   ["rule_disguise_self", "rules_source_phb", "disguise-self", "spell", "Disguise Self"],
   ["rule_cure_wounds", "rules_source_phb", "cure-wounds", "spell", "Cure Wounds"],
   ["rule_grease", "rules_source_phb", "grease", "spell", "Grease"],
+  ["rule_detect_magic", "rules_source_phb", "detect-magic", "spell", "Detect Magic"],
+  ["rule_purify_food_and_drink", "rules_source_phb", "purify-food-and-drink", "spell", "Purify Food and Drink"],
+  ["rule_sanctuary", "rules_source_phb", "sanctuary", "spell", "Sanctuary"],
   ["rule_absorb_elements", "rules_source_xgte", "absorb-elements", "spell", "Absorb Elements"],
   ["rule_shield", "rules_source_phb", "shield", "spell", "Shield"],
   ["rule_thunderwave", "rules_source_phb", "thunderwave", "spell", "Thunderwave"],
@@ -865,6 +1144,37 @@ const ruleLinks: RuleLinkSeed[] = [
   ["link_lynott_absorb_elements", "rule_absorb_elements", "prepared_spell", 1, 1, 150],
   ["link_lynott_shield", "rule_shield", "artillerist_spell", 1, 1, 160],
   ["link_lynott_thunderwave", "rule_thunderwave", "artillerist_spell", 1, 1, 170],
+];
+
+const miraRuleLinks: RuleLinkSeed[] = [
+  ["link_mira_cleric", "rule_srd_5_1_class_cleric", "class", 0, 1, 10],
+  ["link_mira_cleric_proficiencies", "rule_srd_5_1_class_feature_proficiencies_cleric", "class_feature", 0, 1, 20],
+  ["link_mira_cleric_spellcasting", "rule_srd_5_1_class_feature_spellcasting_cleric", "class_feature", 0, 1, 30],
+  [
+    "link_mira_cleric_spellcasting_focus",
+    "rule_srd_5_1_class_feature_spellcasting_focus_cleric",
+    "class_feature",
+    0,
+    1,
+    40,
+  ],
+  ["link_mira_divine_domain", "rule_srd_5_1_class_feature_divine_domain", "class_feature", 0, 1, 50],
+  ["link_mira_life_domain", "rule_srd_5_1_class_feature_life_domain", "subclass", 0, 1, 60],
+  ["link_mira_disciple_of_life", "rule_srd_5_1_class_feature_disciple_of_life", "subclass_feature", 0, 1, 70],
+  ["link_mira_acolyte", "rule_srd_5_1_background_acolyte", "background", 0, 1, 80],
+  ["link_mira_armor", "rule_srd_5_1_equipment_armor", "equipment_rule", 0, 1, 90],
+  ["link_mira_medium_armor", "rule_srd_5_1_equipment_medium_armor", "equipment_rule", 0, 1, 100],
+  ["link_mira_weapons", "rule_srd_5_1_equipment_weapons", "equipment_rule", 0, 1, 110],
+  ["link_mira_adventuring_gear", "rule_srd_5_1_equipment_adventuring_gear", "equipment_rule", 0, 1, 120],
+  ["link_mira_equipment_packs", "rule_srd_5_1_equipment_equipment_packs", "equipment_rule", 0, 1, 130],
+  ["link_mira_guidance", "rule_srd_5_1_spell_guidance", "known_cantrip", 1, 1, 140],
+  ["link_mira_resistance", "rule_srd_5_1_spell_resistance", "known_cantrip", 1, 1, 150],
+  ["link_mira_spare_the_dying", "rule_srd_5_1_spell_spare_the_dying", "known_cantrip", 1, 1, 160],
+  ["link_mira_bless", "rule_srd_5_1_spell_bless", "domain_spell", 1, 1, 170],
+  ["link_mira_cure_wounds", "rule_srd_5_1_spell_cure_wounds", "domain_spell", 1, 1, 180],
+  ["link_mira_detect_magic", "rule_srd_5_1_spell_detect_magic", "prepared_spell", 1, 1, 190],
+  ["link_mira_purify_food_and_drink", "rule_srd_5_1_spell_purify_food_and_drink", "prepared_spell", 1, 1, 200],
+  ["link_mira_sanctuary", "rule_srd_5_1_spell_sanctuary", "prepared_spell", 1, 1, 210],
 ];
 
 export const seedDatabase = (database: Database) => {
@@ -926,7 +1236,9 @@ export const seedDatabase = (database: Database) => {
        armour_class = excluded.armour_class,
        initiative = excluded.initiative,
        speed_ft = excluded.speed_ft,
-       hit_point_max = excluded.hit_point_max`,
+       hit_point_max = excluded.hit_point_max,
+       hit_point_current = excluded.hit_point_current,
+       temporary_hit_points = excluded.temporary_hit_points`,
     [
       "character_lynott_magulbisson",
       "lynott",
@@ -975,11 +1287,11 @@ export const seedDatabase = (database: Database) => {
       "Lawful Good",
       1,
       2,
-      12,
+      17,
       1,
       30,
-      9,
-      9,
+      10,
+      10,
       0,
     ],
   );
@@ -998,12 +1310,19 @@ export const seedDatabase = (database: Database) => {
   );
 
   database.run(
-    "insert or ignore into character_classes (id, character_id, class_name, subclass_name, level, hit_dice, spellcasting_ability) values (?, ?, ?, ?, ?, ?, ?)",
+    `insert into character_classes (id, character_id, class_name, subclass_name, level, hit_dice, spellcasting_ability)
+     values (?, ?, ?, ?, ?, ?, ?)
+     on conflict(id) do update set
+       class_name = excluded.class_name,
+       subclass_name = excluded.subclass_name,
+       level = excluded.level,
+       hit_dice = excluded.hit_dice,
+       spellcasting_ability = excluded.spellcasting_ability`,
     [
       "class_mira_cleric",
       "character_mira_voss",
       "Cleric",
-      null,
+      "Life Domain",
       1,
       formatHitDice(1, miraClass.hitDieSides),
       miraClass.spellcastingAbility,
@@ -1017,10 +1336,35 @@ export const seedDatabase = (database: Database) => {
     );
   }
 
+  for (const ability of miraAbilities) {
+    database.run(
+      `insert into character_abilities (character_id, ability, score, modifier, save_proficient, save_modifier)
+       values (?, ?, ?, ?, ?, ?)
+       on conflict(character_id, ability) do update set
+         score = excluded.score,
+         modifier = excluded.modifier,
+         save_proficient = excluded.save_proficient,
+         save_modifier = excluded.save_modifier`,
+      ["character_mira_voss", ...ability],
+    );
+  }
+
   for (const skill of skills) {
     database.run(
       "insert or ignore into character_skills (character_id, skill, ability, proficiency_level, modifier) values (?, ?, ?, ?, ?)",
       ["character_lynott_magulbisson", ...skill],
+    );
+  }
+
+  for (const skill of miraSkills) {
+    database.run(
+      `insert into character_skills (character_id, skill, ability, proficiency_level, modifier)
+       values (?, ?, ?, ?, ?)
+       on conflict(character_id, skill) do update set
+         ability = excluded.ability,
+         proficiency_level = excluded.proficiency_level,
+         modifier = excluded.modifier`,
+      ["character_mira_voss", ...skill],
     );
   }
 
@@ -1031,6 +1375,18 @@ export const seedDatabase = (database: Database) => {
     );
   }
 
+  for (const sense of miraSenses) {
+    database.run(
+      `insert into character_senses (id, character_id, label, value, sort_order)
+       values (?, ?, ?, ?, ?)
+       on conflict(id) do update set
+         label = excluded.label,
+         value = excluded.value,
+         sort_order = excluded.sort_order`,
+      [sense[0], "character_mira_voss", ...sense.slice(1)],
+    );
+  }
+
   for (const source of armourClassSources) {
     database.run(
       "insert or ignore into character_armour_class_sources (id, character_id, label, value, notes, sort_order) values (?, ?, ?, ?, ?, ?)",
@@ -1038,10 +1394,36 @@ export const seedDatabase = (database: Database) => {
     );
   }
 
+  for (const source of miraArmourClassSources) {
+    database.run(
+      `insert into character_armour_class_sources (id, character_id, label, value, notes, sort_order)
+       values (?, ?, ?, ?, ?, ?)
+       on conflict(id) do update set
+         label = excluded.label,
+         value = excluded.value,
+         notes = excluded.notes,
+         sort_order = excluded.sort_order`,
+      [source[0], "character_mira_voss", ...source.slice(1)],
+    );
+  }
+
   for (const defence of defences) {
     database.run(
       "insert or ignore into character_defences (id, character_id, defence_type, label, detail, sort_order) values (?, ?, ?, ?, ?, ?)",
       [defence[0], "character_lynott_magulbisson", ...defence.slice(1)],
+    );
+  }
+
+  for (const defence of miraDefences) {
+    database.run(
+      `insert into character_defences (id, character_id, defence_type, label, detail, sort_order)
+       values (?, ?, ?, ?, ?, ?)
+       on conflict(id) do update set
+         defence_type = excluded.defence_type,
+         label = excluded.label,
+         detail = excluded.detail,
+         sort_order = excluded.sort_order`,
+      [defence[0], "character_mira_voss", ...defence.slice(1)],
     );
   }
 
@@ -1062,6 +1444,19 @@ export const seedDatabase = (database: Database) => {
          detail = excluded.detail,
          sort_order = excluded.sort_order`,
       [proficiency[0], "character_lynott_magulbisson", ...proficiency.slice(1)],
+    );
+  }
+
+  for (const proficiency of miraProficiencies) {
+    database.run(
+      `insert into character_proficiencies (id, character_id, category, name, detail, sort_order)
+       values (?, ?, ?, ?, ?, ?)
+       on conflict(id) do update set
+         category = excluded.category,
+         name = excluded.name,
+         detail = excluded.detail,
+         sort_order = excluded.sort_order`,
+      [proficiency[0], "character_mira_voss", ...proficiency.slice(1)],
     );
   }
 
@@ -1100,6 +1495,20 @@ export const seedDatabase = (database: Database) => {
     );
   }
 
+  for (const item of miraEquipment) {
+    database.run(
+      `insert into character_equipment (id, character_id, name, category, quantity, equipped, notes)
+       values (?, ?, ?, ?, ?, ?, ?)
+       on conflict(id) do update set
+         name = excluded.name,
+         category = excluded.category,
+         quantity = excluded.quantity,
+         equipped = excluded.equipped,
+         notes = excluded.notes`,
+      [item[0], "character_mira_voss", ...item.slice(1)],
+    );
+  }
+
   for (const entry of backgroundEntries) {
     database.run(
       `insert into character_background_entries (id, character_id, category, title, body, sort_order)
@@ -1113,6 +1522,19 @@ export const seedDatabase = (database: Database) => {
     );
   }
 
+  for (const entry of miraBackgroundEntries) {
+    database.run(
+      `insert into character_background_entries (id, character_id, category, title, body, sort_order)
+       values (?, ?, ?, ?, ?, ?)
+       on conflict(id) do update set
+         category = excluded.category,
+         title = excluded.title,
+         body = excluded.body,
+         sort_order = excluded.sort_order`,
+      [entry[0], "character_mira_voss", ...entry.slice(1)],
+    );
+  }
+
   for (const note of notes) {
     database.run(
       "insert or ignore into character_notes (id, character_id, author_user_id, visibility, title, body) values (?, ?, ?, ?, ?, ?)",
@@ -1121,14 +1543,19 @@ export const seedDatabase = (database: Database) => {
   }
 
   database.run(
-    "insert or ignore into character_notes (id, character_id, author_user_id, visibility, title, body) values (?, ?, ?, ?, ?, ?)",
+    `insert into character_notes (id, character_id, author_user_id, visibility, title, body)
+     values (?, ?, ?, ?, ?, ?)
+     on conflict(id) do update set
+       visibility = excluded.visibility,
+       title = excluded.title,
+       body = excluded.body`,
     [
       "note_mira_seed_scope",
       "character_mira_voss",
       "user_mira_player",
       "player",
       "Seed data scope",
-      "Mira is a deliberately partial human cleric seed for hosted rehearsal. Her core identity is SRD-compatible, but automatic cleric grants, prepared spells, and equipment rules remain manual until a later character-building slice.",
+      "Mira is a table-ready human cleric seed for hosted rehearsal: Life Domain, acolyte background, prepared cleric spells, practical equipment, and rule links are recorded. Future character-builder automation may still recalculate level-up choices and daily prepared-spell changes manually.",
     ],
   );
 
@@ -1234,8 +1661,15 @@ export const seedDatabase = (database: Database) => {
 
   for (const source of sources) {
     database.run(
-      "insert or ignore into rules_sources (id, slug, name, abbreviation, content_category, precedence) values (?, ?, ?, ?, ?, ?)",
-      source,
+      `insert into rules_sources (id, slug, name, abbreviation, content_category, public_export_eligible, precedence)
+       values (?, ?, ?, ?, ?, ?, ?)
+       on conflict(slug) do update set
+         name = excluded.name,
+         abbreviation = excluded.abbreviation,
+         content_category = excluded.content_category,
+         public_export_eligible = excluded.public_export_eligible,
+         precedence = excluded.precedence`,
+      [...source.slice(0, 5), source[4] === "srd" ? 1 : 0, source[5]],
     );
   }
 
@@ -1250,6 +1684,20 @@ export const seedDatabase = (database: Database) => {
     database.run(
       "insert or ignore into character_rule_links (id, character_id, rules_entity_id, selection_type, prepared, selected, sort_order) values (?, ?, ?, ?, ?, ?, ?)",
       [link[0], "character_lynott_magulbisson", ...link.slice(1)],
+    );
+  }
+
+  for (const link of miraRuleLinks) {
+    database.run(
+      `insert into character_rule_links (id, character_id, rules_entity_id, selection_type, prepared, selected, sort_order)
+       values (?, ?, ?, ?, ?, ?, ?)
+       on conflict(id) do update set
+         rules_entity_id = excluded.rules_entity_id,
+         selection_type = excluded.selection_type,
+         prepared = excluded.prepared,
+         selected = excluded.selected,
+         sort_order = excluded.sort_order`,
+      [link[0], "character_mira_voss", ...link.slice(1)],
     );
   }
 };
