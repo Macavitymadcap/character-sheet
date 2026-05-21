@@ -126,7 +126,44 @@ export const AdminPage = ({ appName, handoff, invites, resetTokens, users, user 
 
             <section aria-labelledby="users-heading">
               <h2 id="users-heading">Users</h2>
-              <div class="table-scroll">
+              <div class="admin-compact-list admin-users-cards" aria-label="Compact users">
+                {users.map((row) => (
+                  <article class="admin-compact-card">
+                    <div>
+                      <h3>{row.displayName}</h3>
+                      <p>{row.email}</p>
+                    </div>
+                    <dl>
+                      <div><dt>Role</dt><dd>{formatRole(row.role)}</dd></div>
+                      <div><dt>Status</dt><dd>{row.status}</dd></div>
+                      <div><dt>Campaigns</dt><dd>{row.campaignCount}</dd></div>
+                      <div><dt>Characters</dt><dd>{row.characterCount}</dd></div>
+                    </dl>
+                    <div class="admin-compact-actions">
+                      <form class="admin-inline-form" action={`/admin/users/${row.id}/status`} method="post">
+                        <input
+                          type="hidden"
+                          name="status"
+                          value={row.status === "active" ? "disabled" : "active"}
+                        />
+                        <Button type="submit" variant="ghost">
+                          {row.status === "active" ? "Disable" : "Reactivate"}
+                        </Button>
+                      </form>
+                      <form
+                        class="admin-inline-form"
+                        action={`/admin/users/${row.id}/password-reset`}
+                        method="post"
+                      >
+                        <Button type="submit" variant="ghost">
+                          Create reset token
+                        </Button>
+                      </form>
+                    </div>
+                  </article>
+                ))}
+              </div>
+              <div class="table-scroll admin-table-wrap">
                 <table class="sheet-table admin-users-table">
                   <thead>
                     <tr>
@@ -144,7 +181,7 @@ export const AdminPage = ({ appName, handoff, invites, resetTokens, users, user 
                       <tr>
                         <td>{row.displayName}</td>
                         <td>{row.email}</td>
-                        <td>{row.role.replace("_", " ")}</td>
+                        <td>{formatRole(row.role)}</td>
                         <td>{row.status}</td>
                         <td>{row.campaignCount}</td>
                         <td>{row.characterCount}</td>
@@ -178,7 +215,22 @@ export const AdminPage = ({ appName, handoff, invites, resetTokens, users, user 
 
             <section aria-labelledby="invites-heading">
               <h2 id="invites-heading">Invites</h2>
-              <div class="table-scroll">
+              <div class="admin-compact-list admin-invite-cards" aria-label="Compact invites">
+                {invites.map((invite) => (
+                  <article class="admin-compact-card">
+                    <div>
+                      <h3>{invite.email}</h3>
+                      <p>{formatRole(invite.role)}</p>
+                    </div>
+                    <dl>
+                      <div><dt>Expires</dt><dd>{formatDate(invite.expiresAt)}</dd></div>
+                      <div><dt>Accepted</dt><dd>{formatDate(invite.acceptedAt)}</dd></div>
+                      <div><dt>Status</dt><dd>{invite.acceptedAt ? "Accepted" : "Waiting"}</dd></div>
+                    </dl>
+                  </article>
+                ))}
+              </div>
+              <div class="table-scroll admin-table-wrap">
                 <table class="sheet-table admin-invites-table">
                   <thead>
                     <tr>
@@ -193,7 +245,7 @@ export const AdminPage = ({ appName, handoff, invites, resetTokens, users, user 
                     {invites.map((invite) => (
                       <tr>
                         <td>{invite.email}</td>
-                        <td>{invite.role.replace("_", " ")}</td>
+                        <td>{formatRole(invite.role)}</td>
                         <td>{formatDate(invite.expiresAt)}</td>
                         <td>{formatDate(invite.acceptedAt)}</td>
                         <td>{invite.acceptedAt ? "Accepted" : "Waiting"}</td>
@@ -206,7 +258,21 @@ export const AdminPage = ({ appName, handoff, invites, resetTokens, users, user 
 
             <section aria-labelledby="reset-tokens-heading">
               <h2 id="reset-tokens-heading">Password reset tokens</h2>
-              <div class="table-scroll">
+              <div class="admin-compact-list admin-reset-token-cards" aria-label="Compact password reset tokens">
+                {resetTokens.map((token) => (
+                  <article class="admin-compact-card">
+                    <div>
+                      <h3>{userLabels.get(token.userId) ?? token.userId}</h3>
+                      <p>{token.usedAt ? "Used" : "Waiting"}</p>
+                    </div>
+                    <dl>
+                      <div><dt>Expires</dt><dd>{formatDate(token.expiresAt)}</dd></div>
+                      <div><dt>Used</dt><dd>{formatDate(token.usedAt)}</dd></div>
+                    </dl>
+                  </article>
+                ))}
+              </div>
+              <div class="table-scroll admin-table-wrap">
                 <table class="sheet-table admin-reset-tokens-table">
                   <thead>
                     <tr>
@@ -235,3 +301,7 @@ export const AdminPage = ({ appName, handoff, invites, resetTokens, users, user 
     </Layout>
   );
 };
+
+function formatRole(role: AuthUser["role"]) {
+  return role.replace("_", " ");
+}

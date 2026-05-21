@@ -87,6 +87,67 @@ export const adminStyles = /* css */ `
   margin-left: 0.35rem;
 }
 
+.admin-compact-list {
+  display: none;
+  gap: 0.65rem;
+}
+
+.admin-compact-card {
+  background: var(--stat-background-colour);
+  border: 1px solid var(--border-colour);
+  border-radius: 0.5rem;
+  display: grid;
+  gap: 0.65rem;
+  padding: 0.75rem;
+}
+
+.admin-compact-card h3,
+.admin-compact-card p,
+.admin-compact-card dl {
+  margin: 0;
+}
+
+.admin-compact-card h3 {
+  font-size: 1rem;
+  overflow-wrap: anywhere;
+}
+
+.admin-compact-card p {
+  color: var(--muted-text-colour);
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.admin-compact-card dl {
+  display: grid;
+  gap: 0.45rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.admin-compact-card dt {
+  color: var(--muted-text-colour);
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.admin-compact-card dd {
+  font-weight: 800;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.admin-compact-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.admin-compact-actions .admin-inline-form {
+  display: block;
+  margin: 0;
+}
+
 .admin-users-table {
   min-width: 44rem;
   table-layout: fixed;
@@ -136,27 +197,12 @@ export const adminStyles = /* css */ `
 }
 
 @media (max-width: 760px) {
-  .admin-users-table {
-    min-width: 46rem;
+  .admin-compact-list {
+    display: grid;
   }
 
-  .admin-invites-table,
-  .admin-reset-tokens-table {
-    min-width: 28rem;
-  }
-
-  .admin-users-table th,
-  .admin-users-table td,
-  .admin-invites-table th,
-  .admin-invites-table td,
-  .admin-reset-tokens-table th,
-  .admin-reset-tokens-table td {
-    overflow-wrap: anywhere;
-    padding-inline: 0.35rem;
-  }
-
-  .admin-inline-form + .admin-inline-form {
-    margin-left: 0.3rem;
+  .admin-table-wrap {
+    display: none;
   }
 
   .admin-copy-url {

@@ -86,6 +86,22 @@ export const sheetScreenshotTargets = [
     theme: "dark",
   },
   {
+    action: "edit-breastplate",
+    fileName: "lynott-core-card-edit-light.png",
+    label: "Lynott core card edit light",
+    path: "/sheet/lynott",
+    role: "player",
+    theme: "light",
+  },
+  {
+    action: "edit-breastplate",
+    fileName: "lynott-core-card-edit-dark.png",
+    label: "Lynott core card edit dark",
+    path: "/sheet/lynott",
+    role: "player",
+    theme: "dark",
+  },
+  {
     fileName: "lynott-skills-light.png",
     label: "Lynott skills light",
     path: "/sheet/lynott",
@@ -253,6 +269,22 @@ export const sheetScreenshotTargets = [
     theme: "light",
   },
   {
+    action: "scroll-campaign-assets",
+    fileName: "gm-campaign-assets-light.png",
+    label: "Game Master campaign assets light",
+    path: "/campaigns/rovnost-shadows",
+    role: "game_master",
+    theme: "light",
+  },
+  {
+    action: "scroll-campaign-assets",
+    fileName: "gm-campaign-assets-dark.png",
+    label: "Game Master campaign assets dark",
+    path: "/campaigns/rovnost-shadows",
+    role: "game_master",
+    theme: "dark",
+  },
+  {
     action: "scroll-campaign-rules-sources",
     fileName: "gm-campaign-rules-sources-light.png",
     label: "Game Master campaign rules sources light",
@@ -418,12 +450,14 @@ export async function captureSheetScreenshots(
 async function runScreenshotAction(
   page: Page,
   action:
+    | "edit-breastplate"
     | "edit-stealth"
     | "edit-strength"
     | "open-bless-accordion"
     | "open-first-accordion"
     | "open-menu"
     | "roll-stealth"
+    | "scroll-campaign-assets"
     | "scroll-campaign-rules-sources"
     | "scroll-local-list"
     | "scroll-admin-users"
@@ -456,12 +490,17 @@ async function runScreenshotAction(
   }
 
   if (action === "scroll-admin-users") {
-    await scrollIntoView(page, ".admin-users-table");
+    await scrollIntoView(page, ".admin-users-cards");
     return;
   }
 
   if (action === "scroll-campaign-rules-sources") {
     await scrollIntoView(page, "#campaign-rules-sources-heading", -96);
+    return;
+  }
+
+  if (action === "scroll-campaign-assets") {
+    await scrollIntoView(page, ".campaign-asset-list", -96);
     return;
   }
 
@@ -471,7 +510,7 @@ async function runScreenshotAction(
   }
 
   if (action === "scroll-roster-table") {
-    await scrollIntoView(page, ".characters-table");
+    await scrollIntoView(page, ".character-roster-cards");
     return;
   }
 
@@ -489,6 +528,19 @@ async function runScreenshotAction(
     await scrollIntoView(page, "#ability-row-strength");
     await page.click('button[aria-label="Edit Strength score and save"]');
     await page.waitForSelector("#ability-row-strength form");
+    return;
+  }
+
+  if (action === "edit-breastplate") {
+    await scrollIntoView(page, "#armour-card-ac_lynott_breastplate", -104);
+    await page.evaluate(`(async () => {
+      const response = await fetch("/sheet/lynott/armour/ac_lynott_breastplate/edit", { credentials: "same-origin" });
+      const html = await response.text();
+      const card = document.querySelector("#armour-card-ac_lynott_breastplate");
+      if (card) card.outerHTML = html;
+    })()`);
+    await page.waitForSelector("#armour-card-ac_lynott_breastplate form");
+    await scrollIntoView(page, "#armour-card-ac_lynott_breastplate", -360);
     return;
   }
 

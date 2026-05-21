@@ -125,14 +125,17 @@ describe("CharactersPage", () => {
     expect(html).toContain('<a class="character-roster-link" href="/sheet/ash_vale">Ash Vale</a>');
   });
 
-  test("keeps roster tables compressed and scrollable on mobile", () => {
+  test("switches roster tables to compact cards on mobile", () => {
     expect(charactersStyles).toContain(".character-create-link");
     expect(charactersStyles).toContain(".character-create-actions .button");
     expect(charactersStyles).toContain("min-width: 38rem;");
     expect(charactersStyles).toContain("border-collapse: separate;");
+    expect(charactersStyles).toContain(".character-roster-cards");
+    expect(charactersStyles).toContain(".character-roster-card dl");
     expect(charactersStyles).toContain(".character-roster-link");
     expect(charactersStyles).toContain("@media (max-width: 760px)");
-    expect(charactersStyles).toContain(".characters-table {\n    min-width: 32rem;");
+    expect(charactersStyles).toContain(".character-roster-cards {\n    display: grid;");
+    expect(charactersStyles).toContain(".character-roster-table-wrap {\n    display: none;");
     expect(charactersStyles).toContain("overflow-wrap: anywhere;");
   });
 });

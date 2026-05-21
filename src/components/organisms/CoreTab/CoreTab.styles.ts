@@ -134,6 +134,22 @@ export const coreTabStyles = /* css */ `
   text-align: center;
 }
 
+.sheet-description-grid .sheet-inline-read {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  justify-content: space-between;
+}
+
+.inline-edit-card {
+  background: var(--stat-background-colour);
+}
+
+.inline-edit-card .row-edit-form-inline {
+  grid-template-columns: 1fr;
+}
+
 .armour-defence-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }

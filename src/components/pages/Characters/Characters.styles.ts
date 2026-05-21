@@ -61,6 +61,54 @@ export const charactersStyles = /* css */ `
   margin: 0;
 }
 
+.character-roster-cards {
+  display: none;
+  gap: 0.65rem;
+}
+
+.character-roster-card {
+  background: var(--stat-background-colour);
+  border: 1px solid var(--border-colour);
+  border-radius: 0.5rem;
+  display: grid;
+  gap: 0.65rem;
+  padding: 0.75rem;
+}
+
+.character-roster-card h3,
+.character-roster-card p,
+.character-roster-card dl {
+  margin: 0;
+}
+
+.character-roster-card h3 {
+  font-size: 1rem;
+}
+
+.character-roster-card p {
+  color: var(--muted-text-colour);
+  font-weight: 800;
+}
+
+.character-roster-card dl {
+  display: grid;
+  gap: 0.45rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.character-roster-card dt {
+  color: var(--muted-text-colour);
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.character-roster-card dd {
+  font-weight: 800;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
 .characters-table {
   background: var(--stat-background-colour);
   border: 1px solid var(--border-colour);
@@ -132,14 +180,12 @@ export const charactersStyles = /* css */ `
     width: max-content;
   }
 
-  .characters-table {
-    min-width: 32rem;
+  .character-roster-cards {
+    display: grid;
   }
 
-  .characters-table th,
-  .characters-table td {
-    overflow-wrap: anywhere;
-    padding-inline: 0.35rem;
+  .character-roster-table-wrap {
+    display: none;
   }
 }
 `;

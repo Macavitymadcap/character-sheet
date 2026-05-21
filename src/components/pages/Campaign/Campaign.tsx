@@ -94,7 +94,13 @@ export const CampaignPage = ({ appName, campaign, gameMasterDisplayName, imageAs
               {imageAssets.map((asset) => (
                 <figure>
                   <img alt={asset.altText} src={`/campaigns/${campaign.slug}/assets/${asset.id}`} />
-                  <figcaption>{asset.title}{asset.caption ? ` - ${asset.caption}` : ""}</figcaption>
+                  <figcaption>
+                    <strong>{asset.title}</strong>
+                    {asset.caption ? <span>{asset.caption}</span> : null}
+                    <span class="campaign-asset-status">
+                      {assetStatusLabels(asset).map((label) => <span>{label}</span>)}
+                    </span>
+                  </figcaption>
                 </figure>
               ))}
             </div>
@@ -273,4 +279,12 @@ function formatRulesCategory(category: RulesSourceSummary["contentCategory"]) {
   if (category === "local") return "Local";
 
   return "Non-SRD";
+}
+
+function assetStatusLabels(asset: CampaignImageAsset) {
+  const dimensions = asset.width && asset.height ? `${asset.width} x ${asset.height}` : "Dimensions unknown";
+  const source = asset.id.startsWith("campaign_image_asset_") ? "Uploaded" : "Seeded";
+  const visibility = asset.visibility === "game_master" ? "Game Master only" : "Player visible";
+
+  return [source, visibility, dimensions, "Fallback shown if file is missing locally"];
 }

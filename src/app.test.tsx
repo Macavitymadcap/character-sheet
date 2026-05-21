@@ -542,6 +542,33 @@ describe("createApp", () => {
     expect(await abilitySave.text()).toContain("+7");
   });
 
+  test("serves focused core card edit fragments", async () => {
+    const { app, sessionService } = createTestApp("Campaign Ledger");
+    const cookie = sessionService.createSession("user_lynott_player").cookie;
+    const headers = { Cookie: cookie };
+
+    const senseEdit = await app.request("/sheet/lynott/senses/sense_lynott_darkvision/edit", { headers });
+    const senseCancel = await app.request("/sheet/lynott/senses/sense_lynott_darkvision", { headers });
+    const senseSave = await app.request("/sheet/lynott/senses/sense_lynott_darkvision", {
+      body: new URLSearchParams({ label: "Darkvision", value: "90 ft" }),
+      headers: formHeaders(cookie),
+      method: "PATCH",
+    });
+    const armourEdit = await app.request("/sheet/lynott/armour/ac_lynott_breastplate/edit", { headers });
+    const defenceEdit = await app.request("/sheet/lynott/defences/defence_lynott_resistances/edit", { headers });
+
+    expect(senseEdit.status).toBe(200);
+    expect(await senseEdit.text()).toContain('hx-patch="/sheet/lynott/senses/sense_lynott_darkvision"');
+    expect(senseCancel.status).toBe(200);
+    expect(await senseCancel.text()).toContain('hx-get="/sheet/lynott/senses/sense_lynott_darkvision/edit"');
+    expect(senseSave.status).toBe(200);
+    expect(await senseSave.text()).toContain("<span>90 ft</span>");
+    expect(armourEdit.status).toBe(200);
+    expect(await armourEdit.text()).toContain('hx-patch="/sheet/lynott/armour/ac_lynott_breastplate"');
+    expect(defenceEdit.status).toBe(200);
+    expect(await defenceEdit.text()).toContain('hx-patch="/sheet/lynott/defences/defence_lynott_resistances"');
+  });
+
   test("adds custom conditions and returns dice roll fragments", async () => {
     const { app, sessionService } = createTestApp("Campaign Ledger");
     const session = sessionService.createSession("user_lynott_player");

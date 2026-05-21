@@ -15,7 +15,34 @@ describe("CampaignPage", () => {
           slug: "rovnost-shadows",
         }}
         gameMasterDisplayName="Game Master"
-        imageAssets={[]}
+        imageAssets={[
+          {
+            altText: "Campaign cover",
+            byteSize: 144000,
+            campaignId: "campaign_rovnost_shadows",
+            caption: "Campaign cover art.",
+            height: 800,
+            id: "asset_rovnost_cover",
+            mimeType: "image/png",
+            storageKey: "campaigns/rovnost-shadows/cover.png",
+            title: "Campaign cover",
+            visibility: "player",
+            width: 1200,
+          },
+          {
+            altText: "Secret portrait",
+            byteSize: 86000,
+            campaignId: "campaign_rovnost_shadows",
+            caption: "Game Master reference.",
+            height: null,
+            id: "campaign_image_asset_123",
+            mimeType: "image/png",
+            storageKey: "campaigns/rovnost-shadows/upload.png",
+            title: "Secret portrait",
+            visibility: "game_master",
+            width: null,
+          },
+        ]}
         members={[
           {
             campaignId: "campaign_rovnost_shadows",
@@ -58,5 +85,11 @@ describe("CampaignPage", () => {
     expect(html).toContain("Rules sources");
     expect(html).toContain("Campaign scoped");
     expect(html).toContain("Not public exportable");
+    expect(html).toContain("Seeded");
+    expect(html).toContain("Uploaded");
+    expect(html).toContain("Player visible");
+    expect(html).toContain("Game Master only");
+    expect(html).toContain("1200 x 800");
+    expect(html).toContain("Fallback shown if file is missing locally");
   });
 });

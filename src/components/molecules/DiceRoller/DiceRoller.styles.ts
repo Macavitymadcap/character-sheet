@@ -22,10 +22,10 @@ export const diceRollerStyles = /* css */ `
 }
 
 .dice-roller-panel {
-  background: var(--surface-colour);
-  border: 1px solid var(--border-colour);
+  background: color-mix(in srgb, var(--action-background-colour) 12%, var(--surface-colour));
+  border: 2px solid var(--action-border-colour);
   border-radius: 0.5rem;
-  box-shadow: 0 1rem 2.5rem var(--shadow-colour);
+  box-shadow: 0 0.8rem 0 var(--shadow-colour), 0 1.25rem 2.5rem var(--shadow-colour);
   color: var(--heading-colour);
   margin: 0;
   min-width: min(16rem, calc(100vw - 1.5rem));
@@ -88,8 +88,8 @@ export const diceRollerStyles = /* css */ `
 }
 
 .dice-roll-result {
-  background: var(--stat-background-colour);
-  border: 1px solid var(--border-colour);
+  background: color-mix(in srgb, var(--action-background-colour) 14%, var(--stat-background-colour));
+  border: 1px solid var(--action-border-colour);
   border-radius: 0.4rem;
   display: block;
   font-weight: 900;
