@@ -178,6 +178,20 @@ export const sheetScreenshotTargets = [
     theme: "dark",
   },
   {
+    fileName: "admin-invite-handoff-light.png",
+    label: "Admin invite handoff light",
+    path: "/admin?handoff=invite&url=%2Finvites%2Fscreenshot-token&email=screenshot.player%40example.local&role=player&expires=2026-05-28T12%3A00%3A00.000Z",
+    role: "admin",
+    theme: "light",
+  },
+  {
+    fileName: "admin-invite-handoff-dark.png",
+    label: "Admin invite handoff dark",
+    path: "/admin?handoff=invite&url=%2Finvites%2Fscreenshot-token&email=screenshot.player%40example.local&role=player&expires=2026-05-28T12%3A00%3A00.000Z",
+    role: "admin",
+    theme: "dark",
+  },
+  {
     fileName: "gm-campaign.png",
     label: "Game Master campaign",
     path: "/campaigns/rovnost-shadows",

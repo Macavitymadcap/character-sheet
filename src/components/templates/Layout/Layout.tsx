@@ -115,6 +115,46 @@ const sheetTabsScript = /* js */ `
 })();
 `;
 
+const passwordControlsScript = /* js */ `
+(() => {
+  window.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll("[data-password-toggle]").forEach((toggle) => {
+      toggle.addEventListener("click", () => {
+        const fieldId = toggle.getAttribute("aria-controls");
+        const field = fieldId ? document.getElementById(fieldId) : null;
+        if (!field) return;
+
+        const show = field.type === "password";
+        field.type = show ? "text" : "password";
+        toggle.setAttribute("aria-pressed", String(show));
+        toggle.textContent = show ? "Hide" : "Show";
+      });
+    });
+  });
+})();
+`;
+
+const copyControlsScript = /* js */ `
+(() => {
+  window.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll("[data-copy-value]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        const value = button.getAttribute("data-copy-value") || "";
+        const fieldId = button.getAttribute("aria-controls");
+        const field = fieldId ? document.getElementById(fieldId) : null;
+        try {
+          await navigator.clipboard.writeText(value);
+          button.textContent = "Copied";
+        } catch {
+          if (field && "select" in field) field.select();
+          button.textContent = "Select URL";
+        }
+      });
+    });
+  });
+})();
+`;
+
 interface LayoutProps {
   children: unknown;
   title: string;
@@ -129,6 +169,8 @@ export const Layout = ({ children, title }: LayoutProps) => {
         <title>{title}</title>
         <script>{raw(themeScript)}</script>
         <script>{raw(sheetTabsScript)}</script>
+        <script>{raw(passwordControlsScript)}</script>
+        <script>{raw(copyControlsScript)}</script>
         <script src="https://unpkg.com/htmx.org@1.9.12"></script>
         <style>{raw(appStyles)}</style>
       </head>
