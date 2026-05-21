@@ -6,10 +6,11 @@ import { createInMemoryApp, login, startLocalServer, waitForHttp } from "./lib/l
 export const pa11yTargets = [
   { label: "home", path: "/", role: "public" },
   { label: "login", path: "/login", role: "public" },
+  { label: "local characters", path: "/local/characters", role: "public" },
   { label: "player roster", path: "/characters", role: "player" },
   { label: "sheet", path: "/sheet/lynott", role: "player" },
-  { label: "rules", path: "/rules?type=spell&level=1", role: "player" },
-  { label: "rule detail", path: "/rules/spell/bless", role: "player" },
+  { label: "rules", path: "/rules?type=spell&level=1", role: "public" },
+  { label: "rule detail", path: "/rules/spell/bless", role: "public" },
   { label: "wiki", path: "/campaigns/rovnost-shadows/wiki/factions-guide", role: "player" },
   { label: "logout", path: "/logout", role: "player" },
   { label: "campaign", path: "/campaigns/rovnost-shadows", role: "game_master" },

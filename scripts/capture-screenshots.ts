@@ -8,6 +8,20 @@ import { createInMemoryApp, login, startLocalServer, waitForHttp } from "./lib/l
 
 export const sheetScreenshotTargets = [
   {
+    fileName: "home-public-light.png",
+    label: "Public home light",
+    path: "/",
+    role: "public",
+    theme: "light",
+  },
+  {
+    fileName: "home-public-dark.png",
+    label: "Public home dark",
+    path: "/",
+    role: "public",
+    theme: "dark",
+  },
+  {
     fileName: "lynott-sheet-light.png",
     label: "Lynott sheet light",
     path: "/sheet/lynott",
@@ -162,17 +176,17 @@ export const sheetScreenshotTargets = [
   {
     action: "scroll-rules-results",
     fileName: "rules-spells.png",
-    label: "Rules spell list",
+    label: "Public rules spell list",
     path: "/rules?type=spell&level=1",
-    role: "player",
+    role: "public",
     theme: "light",
   },
   {
     action: "scroll-rule-detail",
     fileName: "rules-bless.png",
-    label: "Rules Bless detail",
+    label: "Public Rules Bless detail",
     path: "/rules/spell/bless",
-    role: "player",
+    role: "public",
     theme: "light",
   },
   {
@@ -236,6 +250,7 @@ export async function captureSheetScreenshots(
         game_master: gmCookie,
         mira_player: miraPlayerCookie,
         player: playerCookie,
+        public: "",
       }[target.role];
 
       if ("prepare" in target && target.prepare === "edited-sheet") {
@@ -326,6 +341,12 @@ async function scrollIntoView(page: Page, selector: string, offset = -72) {
 }
 
 async function setSessionCookie(page: Page, baseUrl: string, cookie: string) {
+  if (!cookie) {
+    const { hostname } = new URL(baseUrl);
+    await page.deleteCookie({ name: "character_sheet_session", domain: hostname, path: "/" });
+    return;
+  }
+
   const [name, value] = cookie.split("=");
   if (!name || !value) throw new Error("Could not parse login cookie for screenshots.");
 

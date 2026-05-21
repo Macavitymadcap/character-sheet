@@ -6,6 +6,20 @@ describe("sheet screenshot targets", () => {
     expect(sheetScreenshotTargets.every((target) => !("capture" in target))).toBe(true);
     expect(sheetScreenshotTargets).toEqual([
       {
+        fileName: "home-public-light.png",
+        label: "Public home light",
+        path: "/",
+        role: "public",
+        theme: "light",
+      },
+      {
+        fileName: "home-public-dark.png",
+        label: "Public home dark",
+        path: "/",
+        role: "public",
+        theme: "dark",
+      },
+      {
         fileName: "lynott-sheet-light.png",
         label: "Lynott sheet light",
         path: "/sheet/lynott",
@@ -160,17 +174,17 @@ describe("sheet screenshot targets", () => {
       {
         action: "scroll-rules-results",
         fileName: "rules-spells.png",
-        label: "Rules spell list",
+        label: "Public rules spell list",
         path: "/rules?type=spell&level=1",
-        role: "player",
+        role: "public",
         theme: "light",
       },
       {
         action: "scroll-rule-detail",
         fileName: "rules-bless.png",
-        label: "Rules Bless detail",
+        label: "Public Rules Bless detail",
         path: "/rules/spell/bless",
-        role: "player",
+        role: "public",
         theme: "light",
       },
       {

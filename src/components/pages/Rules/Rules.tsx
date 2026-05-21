@@ -9,7 +9,7 @@ interface RulesPageProps {
   counts: RuleEntityTypeCount[];
   filters: RuleSearchFilters;
   rules: RuleSummary[];
-  user: Pick<AuthUser, "displayName" | "role">;
+  user?: Pick<AuthUser, "displayName" | "role">;
 }
 
 interface RulesDetailPageProps {
@@ -17,7 +17,7 @@ interface RulesDetailPageProps {
   counts: RuleEntityTypeCount[];
   filters: RuleSearchFilters;
   rule: RuleDetail;
-  user: Pick<AuthUser, "displayName" | "role">;
+  user?: Pick<AuthUser, "displayName" | "role">;
 }
 
 export const RulesPage = ({ appName, counts, filters, rules, user }: RulesPageProps) => (

@@ -81,6 +81,10 @@ describe("createApp", () => {
     expect(html).toContain('<html lang="en-GB">');
     expect(html).toContain("<title>Campaign Ledger</title>");
     expect(html).toContain('<h1 id="home-heading">Campaign Ledger</h1>');
+    expect(html).toContain('<a class="action-link" href="/rules">Browse SRD rules</a>');
+    expect(html).toContain('href="/local/characters"');
+    expect(html).toContain('href="/local/campaigns"');
+    expect(html).toContain('<a class="popover-menu-item" href="/rules" role="menuitem">Rules</a>');
     expect(html).toContain('<a class="popover-menu-item" href="/login" role="menuitem">Sign in</a>');
   });
 
@@ -98,11 +102,28 @@ describe("createApp", () => {
     const adminHtml = await admin.text();
 
     expect(player.status).toBe(200);
-    expect(playerHtml).toContain('<a class="action-link" href="/characters">Continue</a>');
+    expect(playerHtml).toContain('<a class="action-link action-link-secondary" href="/characters">Continue</a>');
     expect(gm.status).toBe(200);
-    expect(gmHtml).toContain('<a class="action-link" href="/campaigns/rovnost-shadows">Continue</a>');
+    expect(gmHtml).toContain(
+      '<a class="action-link action-link-secondary" href="/campaigns/rovnost-shadows">Continue</a>',
+    );
     expect(admin.status).toBe(200);
-    expect(adminHtml).toContain('<a class="action-link" href="/admin">Continue</a>');
+    expect(adminHtml).toContain('<a class="action-link action-link-secondary" href="/admin">Continue</a>');
+  });
+
+  test("serves public local play entry points", async () => {
+    const { app } = createTestApp("Campaign Ledger");
+    const characters = await app.request("/local/characters");
+    const campaigns = await app.request("/local/campaigns");
+    const charactersHtml = await characters.text();
+    const campaignsHtml = await campaigns.text();
+
+    expect(characters.status).toBe(200);
+    expect(charactersHtml).toContain("<title>Local characters - Campaign Ledger</title>");
+    expect(charactersHtml).toContain("Browser-local character tracking");
+    expect(campaigns.status).toBe(200);
+    expect(campaignsHtml).toContain("<title>Local campaigns - Campaign Ledger</title>");
+    expect(campaignsHtml).toContain("Browser-local campaign tracking");
   });
 
   test("renders Lynott's authenticated sheet page with stable shell anchors", async () => {
@@ -187,13 +208,19 @@ describe("createApp", () => {
     expect(missing.status).toBe(404);
   });
 
-  test("serves authenticated rules browsing and detail pages", async () => {
+  test("serves public SRD rules while protecting non-SRD rules", async () => {
     const { app, sessionService } = createTestApp("Campaign Ledger");
     const session = sessionService.createSession("user_lynott_player");
     const importer = new RulesImportService(runtime!.repositories.rulesSeedRepository);
     await importer.importFromLocalSource("docs/rules/srd-5.1-fixtures");
 
-    const unauthenticated = await app.request("/rules");
+    const publicList = await app.request("/rules?type=spell&level=1&q=bless");
+    const publicListHtml = await publicList.text();
+    const publicNonSrdList = await app.request("/rules?q=mage+hand");
+    const publicNonSrdListHtml = await publicNonSrdList.text();
+    const publicDetail = await app.request("/rules/spell/bless");
+    const publicDetailHtml = await publicDetail.text();
+    const publicNonSrdDetail = await app.request("/rules/spell/mage-hand");
     const list = await app.request("/rules?type=spell&level=1&q=bless", {
       headers: { cookie: session.cookie },
     });
@@ -213,8 +240,20 @@ describe("createApp", () => {
       headers: { cookie: session.cookie },
     });
 
-    expect(unauthenticated.status).toBe(303);
-    expect(unauthenticated.headers.get("location")).toBe("/login");
+    expect(publicList.status).toBe(200);
+    expect(publicListHtml).toContain("Bless");
+    expect(publicListHtml).toContain("SRD");
+    expect(publicListHtml).toContain("Visitor");
+    expect(publicListHtml).toContain(
+      '<a class="popover-menu-item" href="/rules" role="menuitem" aria-current="page">Rules</a>',
+    );
+    expect(publicNonSrdList.status).toBe(200);
+    expect(publicNonSrdListHtml).toContain("0 rules");
+    expect(publicNonSrdListHtml).not.toContain("Mage Hand");
+    expect(publicDetail.status).toBe(200);
+    expect(publicDetailHtml).toContain("<h1 id=\"rule-detail-heading\" class=\"panel-heading\">Bless</h1>");
+    expect(publicDetailHtml).toContain("You bless up to three creatures");
+    expect(publicNonSrdDetail.status).toBe(404);
     expect(list.status).toBe(200);
     expect(listHtml).toContain("<h1 id=\"rules-heading\" class=\"panel-heading\">Rules</h1>");
     expect(listHtml).toContain("Bless");

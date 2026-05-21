@@ -40,7 +40,16 @@ describe("SiteHeader", () => {
     expect(html).toContain(
       '<a class="popover-menu-item" href="/" role="menuitem" aria-current="page">Home</a>',
     );
+    expect(html).toContain('<a class="popover-menu-item" href="/rules" role="menuitem">Rules</a>');
     expect(html).toContain('<a class="popover-menu-item" href="/login" role="menuitem">Sign in</a>');
+  });
+
+  test("marks public rules navigation as current for visitors", () => {
+    const html = render(<SiteHeader appName="Campaign Ledger" currentSection="rules" />);
+
+    expect(html).toContain(
+      '<a class="popover-menu-item" href="/rules" role="menuitem" aria-current="page">Rules</a>',
+    );
   });
 
   test("renders role-specific navigation", () => {

@@ -11,6 +11,7 @@ import { CharactersPage } from "./components/pages/Characters";
 import { HomePage } from "./components/pages/Home";
 import { InviteAcceptPage } from "./components/pages/InviteAccept";
 import { LoginPage } from "./components/pages/Login";
+import { LocalPlayPage } from "./components/pages/LocalPlay";
 import { LogoutPage } from "./components/pages/Logout";
 import { PasswordResetPage } from "./components/pages/PasswordReset";
 import { RulesDetailPage, RulesPage } from "./components/pages/Rules";
@@ -29,6 +30,7 @@ import { isSheetTabId } from "./components/organisms/SheetTabs";
 import type {
   AuthRepository,
   AbilityName,
+  AuthUser,
   CampaignContentRepository,
   CampaignContentVisibility,
   CampaignRepository,
@@ -94,48 +96,53 @@ export const createApp = (dependencies: AppDependencies) => {
     return context.html(<LoginPage appName={dependencies.appName} />);
   });
 
+  app.get("/local/characters", (context) =>
+    context.html(<LocalPlayPage appName={dependencies.appName} kind="characters" />),
+  );
+
+  app.get("/local/campaigns", (context) =>
+    context.html(<LocalPlayPage appName={dependencies.appName} kind="campaigns" />),
+  );
+
   app.get("/rules", (context) => {
     const session = readSession(context.req.header("cookie"));
-    if (!session) return context.redirect("/login", 303);
-
     const filters = parseRuleFilters(context);
+    const accessFilters = publicRuleAccessFilters(session);
+    const rulesFilters = { ...filters, ...accessFilters };
 
     return context.html(
       <RulesPage
         appName={dependencies.appName}
-        counts={dependencies.rulesRepository.listRuleEntityTypes()}
+        counts={dependencies.rulesRepository.listRuleEntityTypes(accessFilters)}
         filters={filters}
-        rules={dependencies.rulesRepository.listRules(filters)}
-        user={session.user}
+        rules={dependencies.rulesRepository.listRules(rulesFilters)}
+        user={session?.user}
       />,
     );
   });
 
   app.get("/rules/:entityType/:slug", (context) => {
     const session = readSession(context.req.header("cookie"));
-    if (!session) return context.redirect("/login", 303);
 
     const entityType = parseRuleEntityType(context.req.param("entityType"));
     if (!entityType) return context.text("Not found", 404);
 
-    const rule = dependencies.rulesRepository.getRuleDetail(entityType, context.req.param("slug"));
+    const accessFilters = publicRuleAccessFilters(session);
+    const rule = dependencies.rulesRepository.getRuleDetail(entityType, context.req.param("slug"), accessFilters);
     if (!rule) return context.text("Not found", 404);
 
     return context.html(
       <RulesDetailPage
         appName={dependencies.appName}
-        counts={dependencies.rulesRepository.listRuleEntityTypes()}
+        counts={dependencies.rulesRepository.listRuleEntityTypes(accessFilters)}
         filters={parseRuleFilters(context)}
         rule={rule}
-        user={session.user}
+        user={session?.user}
       />,
     );
   });
 
   app.get("/rules/:entityType", (context) => {
-    const session = readSession(context.req.header("cookie"));
-    if (!session) return context.redirect("/login", 303);
-
     const entityType = parseRuleEntityType(context.req.param("entityType"));
     if (!entityType) return context.text("Not found", 404);
 
@@ -1727,6 +1734,10 @@ async function parseCharacterCreateForm(
       subclassName: parseFormString(body.subclassName) || null,
     },
   };
+}
+
+function publicRuleAccessFilters(session: { user: AuthUser } | null) {
+  return session ? {} : { contentCategory: "srd" as const };
 }
 
 function membersWithDisplayNames(dependencies: AppDependencies, campaignId: string) {

@@ -506,8 +506,8 @@ export interface CharacterRuleLink {
 }
 
 export interface RulesRepository {
-  getRuleDetail(entityType: RuleEntityType, slug: string): RuleDetail | null;
-  listRuleEntityTypes(): RuleEntityTypeCount[];
+  getRuleDetail(entityType: RuleEntityType, slug: string, filters?: RuleAccessFilters): RuleDetail | null;
+  listRuleEntityTypes(filters?: RuleAccessFilters): RuleEntityTypeCount[];
   listRuleLinksForCharacter(characterId: string): CharacterRuleLink[];
   listRules(filters?: RuleSearchFilters): RuleSummary[];
 }
@@ -565,11 +565,16 @@ export interface RulesSeedRepository {
 }
 
 export interface RuleSearchFilters {
+  contentCategory?: RulesContentCategory;
   entityType?: RuleEntityType;
   equipmentCategory?: string;
   query?: string;
   sourceSlug?: string;
   spellLevel?: number;
+}
+
+export interface RuleAccessFilters {
+  contentCategory?: RulesContentCategory;
 }
 
 export interface RuleEntityTypeCount {

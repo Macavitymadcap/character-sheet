@@ -13,7 +13,11 @@ describe("HomePage", () => {
     expect(html).toContain('<a class="popover-menu-item" href="/login" role="menuitem">Sign in</a>');
     expect(html).toContain('<h1 id="home-heading">Campaign Ledger</h1>');
     expect(html).toContain("Rovnost Shadows");
-    expect(html).toContain('<a class="action-link" href="/login">Sign in</a>');
+    expect(html).toContain("Public SRD rules");
+    expect(html).toContain('<a class="action-link" href="/rules">Browse SRD rules</a>');
+    expect(html).toContain('<a class="action-link action-link-secondary" href="/local/characters">Local characters</a>');
+    expect(html).toContain('<a class="action-link action-link-secondary" href="/local/campaigns">Local campaigns</a>');
+    expect(html).toContain('<a class="action-link action-link-secondary" href="/login">Sign in</a>');
   });
 
   test("drops the scaffold sheet summary and status chips", () => {
@@ -36,8 +40,8 @@ describe("HomePage", () => {
       <HomePage appName="Campaign Ledger" user={{ displayName: "Admin", role: "admin" }} />,
     );
 
-    expect(player).toContain('<a class="action-link" href="/characters">Continue</a>');
-    expect(gm).toContain('<a class="action-link" href="/campaigns/rovnost-shadows">Continue</a>');
-    expect(admin).toContain('<a class="action-link" href="/admin">Continue</a>');
+    expect(player).toContain('<a class="action-link action-link-secondary" href="/characters">Continue</a>');
+    expect(gm).toContain('<a class="action-link action-link-secondary" href="/campaigns/rovnost-shadows">Continue</a>');
+    expect(admin).toContain('<a class="action-link action-link-secondary" href="/admin">Continue</a>');
   });
 });

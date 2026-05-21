@@ -21,15 +21,25 @@ export const HomePage = ({ appName, user }: HomePageProps) => {
             <p class="home-kicker">Rovnost Shadows</p>
             <h1 id="home-heading">{appName}</h1>
             <p>
-              Local table tools for Lynott, the Game Master, and campaign administration.
+              Public SRD rules, browser-local play tools, and signed-in campaign records for
+              Rovnost table nights.
             </p>
             <div class="home-actions">
+              <a class="action-link" href="/rules">
+                Browse SRD rules
+              </a>
+              <a class="action-link action-link-secondary" href="/local/characters">
+                Local characters
+              </a>
+              <a class="action-link action-link-secondary" href="/local/campaigns">
+                Local campaigns
+              </a>
               {user ? (
-                <a class="action-link" href={getDestination(user.role)}>
+                <a class="action-link action-link-secondary" href={getDestination(user.role)}>
                   Continue
                 </a>
               ) : (
-                <a class="action-link" href="/login">
+                <a class="action-link action-link-secondary" href="/login">
                   Sign in
                 </a>
               )}

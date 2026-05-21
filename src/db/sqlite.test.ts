@@ -729,9 +729,11 @@ describe("SQLite repositories", () => {
     expect(entityTypeCounts).toContainEqual({ count: 1, entityType: "action" });
     expect(entityTypeCounts).toContainEqual({ count: 1, entityType: "species" });
     expect(entityTypeCounts).toContainEqual({ count: 9, entityType: "spell" });
+    expect(rules.listRuleEntityTypes({ contentCategory: "srd" })).toContainEqual({ count: 1, entityType: "spell" });
     expect(rules.listRules({ entityType: "spell", spellLevel: 1 }).map((rule) => rule.slug)).toEqual([
       "bless",
     ]);
+    expect(rules.listRules({ contentCategory: "srd", query: "mage hand" }).map((rule) => rule.slug)).toEqual([]);
     expect(rules.listRules({ entityType: "equipment", equipmentCategory: "armour" })).toEqual([
       expect.objectContaining({
         contentCategory: "srd",
@@ -756,6 +758,7 @@ describe("SQLite repositories", () => {
       provenance: expect.objectContaining({ srdVersion: "5.1" }),
       slug: "bless",
     });
+    expect(rules.getRuleDetail("spell", "mage-hand", { contentCategory: "srd" })).toBeNull();
     expect(rules.getRuleDetail("spell", "missing")).toBeNull();
   });
 
