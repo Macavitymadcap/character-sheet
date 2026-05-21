@@ -29,10 +29,16 @@ afterEach(() => {
   runtime.close();
 });
 
-const postForm = (path: string, body: Record<string, string>, cookie?: string) =>
+const postForm = (
+  path: string,
+  body: Record<string, string>,
+  cookie?: string,
+  headers: Record<string, string> = {},
+) =>
   app.request(path, {
     body: new URLSearchParams(body),
     headers: {
+      ...headers,
       ...(cookie ? { cookie } : {}),
       "Content-Type": "application/x-www-form-urlencoded",
     },
@@ -65,6 +71,7 @@ describe("admin flows (e2e)", () => {
       "/admin/invites",
       { email: "new.player@example.local", role: "player" },
       adminCookie,
+      { Accept: "application/json" },
     );
     expect(inviteResponse.status).toBe(201);
     const invite = (await inviteResponse.json()) as { token: string };
@@ -76,13 +83,14 @@ describe("admin flows (e2e)", () => {
     const acceptInvite = await postForm(`/invites/${invite.token}`, {
       displayName: "New Player",
       password: "new-password",
+      passwordConfirmation: "new-password",
     });
     expect(acceptInvite.status).toBe(303);
 
     await login("new.player@example.local", "new-password");
 
     const resetTokenResponse = await app.request("/admin/users/user_lynott_player/password-reset", {
-      headers: { cookie: adminCookie },
+      headers: { accept: "application/json", cookie: adminCookie },
       method: "POST",
     });
     expect(resetTokenResponse.status).toBe(201);
@@ -94,6 +102,7 @@ describe("admin flows (e2e)", () => {
 
     const useReset = await postForm(`/password-reset/${resetToken.token}`, {
       password: "lynott-new-password",
+      passwordConfirmation: "lynott-new-password",
     });
     expect(useReset.status).toBe(303);
 
@@ -125,4 +134,3 @@ describe("admin flows (e2e)", () => {
     expect(forbiddenPatch.status).toBe(403);
   });
 });
-
