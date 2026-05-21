@@ -71,6 +71,11 @@ export const createApp = (dependencies: AppDependencies) => {
     return "/characters";
   };
 
+  const absoluteUrl = (context: Context, path: string) => new URL(path, context.req.url).toString();
+
+  const wantsJson = (context: Context) =>
+    context.req.header("accept")?.includes("application/json") ?? false;
+
   const getSheetByRef = (characterRef: string) =>
     dependencies.characterRepository.getSheetBySlug(characterRef) ??
     dependencies.characterRepository.getSheetById(characterRef);
@@ -193,6 +198,7 @@ export const createApp = (dependencies: AppDependencies) => {
     return context.html(
       <AdminPage
         appName={dependencies.appName}
+        handoff={parseAdminHandoff(context)}
         invites={dependencies.authRepository.listInvites()}
         resetTokens={dependencies.authRepository.listPasswordResetTokens()}
         users={dependencies.authRepository.listUserSummaries()}
@@ -661,14 +667,23 @@ export const createApp = (dependencies: AppDependencies) => {
       role,
     });
 
-    return context.json(
-      {
-        email: invite.email,
-        id: invite.id,
-        role: invite.role,
-        token: invite.token,
-      },
-      201,
+    const inviteUrl = absoluteUrl(context, `/invites/${invite.token}`);
+    if (wantsJson(context)) {
+      return context.json(
+        {
+          email: invite.email,
+          id: invite.id,
+          inviteUrl,
+          role: invite.role,
+          token: invite.token,
+        },
+        201,
+      );
+    }
+
+    return context.redirect(
+      `/admin?handoff=invite&url=${encodeURIComponent(inviteUrl)}&email=${encodeURIComponent(invite.email)}&role=${invite.role}&expires=${encodeURIComponent(invite.expiresAt.toISOString())}`,
+      303,
     );
   });
 
@@ -729,13 +744,23 @@ export const createApp = (dependencies: AppDependencies) => {
       userId: context.req.param("userId"),
     });
 
-    return context.json(
-      {
-        id: reset.id,
-        token: reset.token,
-        userId: reset.userId,
-      },
-      201,
+    const resetUrl = absoluteUrl(context, `/password-reset/${reset.token}`);
+    const targetUser = dependencies.authRepository.findUserById(reset.userId);
+    if (wantsJson(context)) {
+      return context.json(
+        {
+          id: reset.id,
+          resetUrl,
+          token: reset.token,
+          userId: reset.userId,
+        },
+        201,
+      );
+    }
+
+    return context.redirect(
+      `/admin?handoff=password_reset&url=${encodeURIComponent(resetUrl)}&user=${encodeURIComponent(targetUser?.displayName ?? reset.userId)}&expires=${encodeURIComponent(reset.expiresAt.toISOString())}`,
+      303,
     );
   });
 
@@ -772,7 +797,22 @@ export const createApp = (dependencies: AppDependencies) => {
     const body = await context.req.parseBody();
     const displayName = String(body.displayName ?? "");
     const password = String(body.password ?? "");
+    const passwordConfirmation = String(body.passwordConfirmation ?? "");
     if (!displayName.trim() || !password) return context.text("Missing fields", 400);
+    if (password !== passwordConfirmation) {
+      const invite = dependencies.authService.readInvite(context.req.param("token"));
+      if (!invite) return context.text("Not found", 404);
+      context.status(400);
+      return context.html(
+        <InviteAcceptPage
+          appName={dependencies.appName}
+          email={invite.email}
+          error="Passwords do not match."
+          role={invite.role}
+          token={context.req.param("token")}
+        />,
+      );
+    }
 
     try {
       dependencies.authService.acceptInvite({ displayName, password, token: context.req.param("token") });
@@ -795,7 +835,20 @@ export const createApp = (dependencies: AppDependencies) => {
   app.post("/password-reset/:token", async (context) => {
     const body = await context.req.parseBody();
     const password = String(body.password ?? "");
+    const passwordConfirmation = String(body.passwordConfirmation ?? "");
     if (!password) return context.text("Missing password", 400);
+    if (password !== passwordConfirmation) {
+      const reset = dependencies.authService.readPasswordResetToken(context.req.param("token"));
+      if (!reset) return context.text("Not found", 404);
+      context.status(400);
+      return context.html(
+        <PasswordResetPage
+          appName={dependencies.appName}
+          error="Passwords do not match."
+          token={context.req.param("token")}
+        />,
+      );
+    }
 
     try {
       dependencies.authService.usePasswordResetToken({ password, token: context.req.param("token") });
@@ -1696,6 +1749,55 @@ export const createApp = (dependencies: AppDependencies) => {
 
 function isUserRole(role: string): role is UserRole {
   return role === "admin" || role === "game_master" || role === "player";
+}
+
+function parseAdminHandoff(context: Context) {
+  const type = context.req.query("handoff");
+  const url = parseFormString(context.req.query("url"));
+  const expires = parseFormString(context.req.query("expires"));
+  if (!url || !expires) return undefined;
+
+  const requestUrl = new URL(context.req.url);
+  let handoffUrl: URL;
+  try {
+    handoffUrl = new URL(url, requestUrl);
+  } catch {
+    return undefined;
+  }
+  if (handoffUrl.origin !== requestUrl.origin) return undefined;
+
+  const expiresAt = new Date(expires);
+  if (Number.isNaN(expiresAt.getTime())) return undefined;
+
+  if (type === "invite") {
+    if (!handoffUrl.pathname.startsWith("/invites/")) return undefined;
+    const email = parseFormString(context.req.query("email"));
+    const role = parseFormString(context.req.query("role"));
+    if (!email || !role || !isUserRole(role)) return undefined;
+
+    return {
+      email,
+      expiresAt,
+      role,
+      type,
+      url: handoffUrl.toString(),
+    } as const;
+  }
+
+  if (type === "password_reset") {
+    if (!handoffUrl.pathname.startsWith("/password-reset/")) return undefined;
+    const userDisplayName = parseFormString(context.req.query("user"));
+    if (!userDisplayName) return undefined;
+
+    return {
+      expiresAt,
+      type,
+      url: handoffUrl.toString(),
+      userDisplayName,
+    } as const;
+  }
+
+  return undefined;
 }
 
 async function parseCharacterCreateForm(

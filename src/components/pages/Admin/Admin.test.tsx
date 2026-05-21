@@ -9,6 +9,13 @@ describe("AdminPage", () => {
     const html = render(
       <AdminPage
         appName="Campaign Ledger"
+        handoff={{
+          email: "new.player@example.local",
+          expiresAt: new Date("2026-05-23T12:00:00.000Z"),
+          role: "player",
+          type: "invite",
+          url: "http://localhost/invites/token",
+        }}
         invites={[]}
         resetTokens={[]}
         users={[
@@ -32,6 +39,11 @@ describe("AdminPage", () => {
       '<a class="popover-menu-item" href="/admin" role="menuitem" aria-current="page">Admin</a>',
     );
     expect(html).toContain("Admin");
+    expect(html).toContain("Campaign Ledger does not send email.");
+    expect(html).toContain("Invite ready");
+    expect(html).toContain("http://localhost/invites/token");
+    expect(html).toContain('aria-controls="admin-handoff-url"');
+    expect(html).toContain("Copy URL");
     expect(html).toContain("Site Admin");
     expect(html).toContain('<section class="panel" data-width="default" aria-labelledby="admin-heading">');
     expect(html).toContain('<form class="form-stack" action="/admin/invites" method="post">');
@@ -47,6 +59,47 @@ describe("AdminPage", () => {
     expect(html).toContain('<table class="sheet-table admin-invites-table">');
     expect(html).toContain("Password reset tokens");
     expect(html).toContain('<table class="sheet-table admin-reset-tokens-table">');
+  });
+
+  test("renders token status rows with user-readable reset targets", () => {
+    const html = render(
+      <AdminPage
+        appName="Campaign Ledger"
+        invites={[
+          {
+            acceptedAt: null,
+            email: "invitee@example.local",
+            expiresAt: new Date("2026-05-23T12:00:00.000Z"),
+            id: "invite-1",
+            role: "player",
+          },
+        ]}
+        resetTokens={[
+          {
+            expiresAt: new Date("2026-05-22T12:00:00.000Z"),
+            id: "reset-1",
+            usedAt: null,
+            userId: "user_lynott_player",
+          },
+        ]}
+        users={[
+          {
+            campaignCount: 1,
+            characterCount: 2,
+            displayName: "Lynott Player",
+            email: "lynott@example.local",
+            id: "user_lynott_player",
+            role: "player",
+            status: "active",
+          },
+        ]}
+        user={{ displayName: "Site Admin", role: "admin" }}
+      />,
+    );
+
+    expect(html).toContain("invitee@example.local");
+    expect(html).toContain("Waiting");
+    expect(html).toContain("Lynott Player (lynott@example.local)");
   });
 
   test("keeps admin tables compressed and scrollable on mobile", () => {

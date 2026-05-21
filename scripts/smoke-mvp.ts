@@ -231,6 +231,7 @@ export async function runMvpSmoke() {
     const invite = await requestText(`${baseUrl}/admin/invites`, {
       body: new URLSearchParams({ email: "smoke-player@example.local", role: "player" }),
       cookie: adminCookie,
+      headers: { Accept: "application/json" },
       method: "POST",
     });
     assertResponse("admin invite creation", invite.response, 201);
@@ -246,6 +247,7 @@ export async function runMvpSmoke() {
       body: new URLSearchParams({
         displayName: "Smoke Invited Player",
         password: "smoke-invite-password",
+        passwordConfirmation: "smoke-invite-password",
       }),
       method: "POST",
     });
@@ -257,6 +259,7 @@ export async function runMvpSmoke() {
 
     const reset = await requestText(`${baseUrl}/admin/users/user_mira_player/password-reset`, {
       cookie: adminCookie,
+      headers: { Accept: "application/json" },
       method: "POST",
     });
     assertResponse("admin password reset preparation", reset.response, 201);
@@ -269,7 +272,10 @@ export async function runMvpSmoke() {
       "Reset password",
     );
     const resetUse = await requestText(`${baseUrl}/password-reset/${resetJson.token}`, {
-      body: new URLSearchParams({ password: "smoke-reset-password" }),
+      body: new URLSearchParams({
+        password: "smoke-reset-password",
+        passwordConfirmation: "smoke-reset-password",
+      }),
       method: "POST",
     });
     assertResponse("operator password reset", resetUse.response, 303);

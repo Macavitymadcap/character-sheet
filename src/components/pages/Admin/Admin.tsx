@@ -30,8 +30,24 @@ interface AdminResetTokenRow {
   userId: string;
 }
 
+type AdminTokenHandoff =
+  | {
+      email: string;
+      expiresAt: Date;
+      role: AuthUser["role"];
+      type: "invite";
+      url: string;
+    }
+  | {
+      expiresAt: Date;
+      type: "password_reset";
+      url: string;
+      userDisplayName: string;
+    };
+
 interface AdminPageProps {
   appName: string;
+  handoff?: AdminTokenHandoff;
   invites: AdminInviteRow[];
   resetTokens: AdminResetTokenRow[];
   users: AdminUserRow[];
@@ -40,7 +56,9 @@ interface AdminPageProps {
 
 const formatDate = (date: Date | null) => (date ? date.toISOString().slice(0, 10) : "—");
 
-export const AdminPage = ({ appName, invites, resetTokens, users, user }: AdminPageProps) => {
+export const AdminPage = ({ appName, handoff, invites, resetTokens, users, user }: AdminPageProps) => {
+  const userLabels = new Map(users.map((row) => [row.id, `${row.displayName} (${row.email})`]));
+
   return (
     <Layout title={appName}>
       <div class="shell admin-page-shell">
@@ -50,6 +68,46 @@ export const AdminPage = ({ appName, invites, resetTokens, users, user }: AdminP
             <h1 id="admin-heading" class="panel-heading">
               Admin
             </h1>
+            <p class="admin-copy">Create links here and send them manually. Campaign Ledger does not send email.</p>
+
+            {handoff ? (
+              <section class="admin-handoff" aria-labelledby="handoff-heading">
+                <div>
+                  <p class="admin-kicker">
+                    {handoff.type === "invite" ? "Invite ready" : "Password reset ready"}
+                  </p>
+                  <h2 id="handoff-heading">
+                    {handoff.type === "invite" ? "Invite link" : "Password reset link"}
+                  </h2>
+                  <p>
+                    {handoff.type === "invite"
+                      ? `${handoff.email} (${handoff.role.replace("_", " ")})`
+                      : handoff.userDisplayName}
+                  </p>
+                  <p>
+                    Expires {formatDate(handoff.expiresAt)}. Copy the full URL and send it through
+                    your table's usual channel.
+                  </p>
+                </div>
+                <div class="admin-copy-url">
+                  <input
+                    id="admin-handoff-url"
+                    readonly
+                    value={handoff.url}
+                    aria-label="Generated handoff URL"
+                  />
+                  <button
+                    class="button"
+                    data-variant="ghost"
+                    type="button"
+                    aria-controls="admin-handoff-url"
+                    data-copy-value={handoff.url}
+                  >
+                    Copy URL
+                  </button>
+                </div>
+              </section>
+            ) : null}
 
             <section aria-labelledby="invite-heading">
               <h2 id="invite-heading">Create invite</h2>
@@ -128,6 +186,7 @@ export const AdminPage = ({ appName, invites, resetTokens, users, user }: AdminP
                       <th scope="col">Role</th>
                       <th scope="col">Expires</th>
                       <th scope="col">Accepted</th>
+                      <th scope="col">Status</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -137,6 +196,7 @@ export const AdminPage = ({ appName, invites, resetTokens, users, user }: AdminP
                         <td>{invite.role.replace("_", " ")}</td>
                         <td>{formatDate(invite.expiresAt)}</td>
                         <td>{formatDate(invite.acceptedAt)}</td>
+                        <td>{invite.acceptedAt ? "Accepted" : "Waiting"}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -153,14 +213,16 @@ export const AdminPage = ({ appName, invites, resetTokens, users, user }: AdminP
                       <th scope="col">User</th>
                       <th scope="col">Expires</th>
                       <th scope="col">Used</th>
+                      <th scope="col">Status</th>
                     </tr>
                   </thead>
                   <tbody>
                     {resetTokens.map((token) => (
                       <tr>
-                        <td>{token.userId}</td>
+                        <td>{userLabels.get(token.userId) ?? token.userId}</td>
                         <td>{formatDate(token.expiresAt)}</td>
                         <td>{formatDate(token.usedAt)}</td>
+                        <td>{token.usedAt ? "Used" : "Waiting"}</td>
                       </tr>
                     ))}
                   </tbody>

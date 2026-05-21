@@ -1,6 +1,7 @@
 import { Button } from "../../atoms/Button";
 import { Panel } from "../../atoms/Panel";
 import { FormField } from "../../molecules/FormField";
+import { PasswordField } from "../../molecules/PasswordField";
 import { SiteHeader } from "../../molecules/SiteHeader";
 import { Layout } from "../../templates/Layout";
 
@@ -33,13 +34,11 @@ export const LoginPage = ({ appName, error }: LoginPageProps) => {
                 required
                 type="email"
               />
-              <FormField
+              <PasswordField
                 autocomplete="current-password"
                 id="password"
                 label="Password"
                 name="password"
-                required
-                type="password"
               />
               <Button type="submit">Sign in</Button>
             </form>
