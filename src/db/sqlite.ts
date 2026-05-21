@@ -41,6 +41,8 @@ import type {
   PasswordResetToken,
   RulesRepository,
   RulesContentCategory,
+  RulesSourceSummary,
+  RulesSourceVisibility,
   RuleDetail,
   RuleAccessFilters,
   RulesSeedRepository,
@@ -316,11 +318,14 @@ interface RuleLinkRow {
 
 interface RuleSourceRow {
   abbreviation: string;
+  campaign_ids: string | null;
   content_category: RulesContentCategory;
   id: string;
   name: string;
   precedence: number;
+  public_export_eligible: number;
   slug: string;
+  visibility: RulesSourceVisibility;
 }
 
 interface RuleEntityRow {
@@ -332,16 +337,19 @@ interface RuleEntityRow {
 }
 
 interface RuleSummaryRow {
+  campaign_ids: string | null;
   content_category: RulesContentCategory;
   data_json: string | null;
   entity_type: RuleEntityType;
   id: string;
   mechanic_type: string | null;
   name: string;
+  public_export_eligible: number;
   slug: string;
   source_abbreviation: string;
   source_name: string;
   source_slug: string;
+  source_visibility: RulesSourceVisibility;
 }
 
 interface RuleEntityTypeCountRow {
@@ -2106,16 +2114,15 @@ class SqliteRulesRepository implements RulesRepository {
   }
 
   listRuleEntityTypes(filters: RuleAccessFilters = {}): RuleEntityTypeCount[] {
-    const values: RulesContentCategory[] = [];
-    const contentCategoryClause = filters.contentCategory ? "where sources.content_category = ?" : "";
-    if (filters.contentCategory) values.push(filters.contentCategory);
+    const { clause, values } = ruleAccessWhereClause(filters);
 
     return this.database
-      .query<RuleEntityTypeCountRow, RulesContentCategory[]>(
-        `select entity_type, count(*) as count
+      .query<RuleEntityTypeCountRow, Array<RulesContentCategory | string>>(
+        `select entity_type, count(distinct rules_entities.id) as count
          from rules_entities
          inner join rules_sources sources on sources.id = rules_entities.source_id
-         ${contentCategoryClause}
+         left join campaign_rules_sources campaign_sources on campaign_sources.source_id = sources.id
+         ${clause}
          group by entity_type
          order by entity_type`,
       )
@@ -2185,13 +2192,35 @@ class SqliteRulesRepository implements RulesRepository {
       });
   }
 
-  private ruleRows(filters: RuleAccessFilters = {}) {
-    const values: RulesContentCategory[] = [];
-    const contentCategoryClause = filters.contentCategory ? "where sources.content_category = ?" : "";
-    if (filters.contentCategory) values.push(filters.contentCategory);
+  listRuleSources(filters: RuleAccessFilters = {}): RulesSourceSummary[] {
+    const { clause, values } = ruleAccessWhereClause(filters);
 
     return this.database
-      .query<RuleSummaryRow, RulesContentCategory[]>(
+      .query<RuleSourceRow, Array<RulesContentCategory | string>>(
+        `select sources.id,
+          sources.slug,
+          sources.name,
+          sources.abbreviation,
+          sources.content_category,
+          sources.visibility,
+          sources.public_export_eligible,
+          sources.precedence,
+          group_concat(distinct campaign_sources.campaign_id) as campaign_ids
+        from rules_sources sources
+        left join campaign_rules_sources campaign_sources on campaign_sources.source_id = sources.id
+        ${clause}
+        group by sources.id
+        order by sources.visibility, sources.content_category, sources.name`,
+      )
+      .all(...values)
+      .map(toRuleSourceSummary);
+  }
+
+  private ruleRows(filters: RuleAccessFilters = {}) {
+    const { clause, values } = ruleAccessWhereClause(filters);
+
+    return this.database
+      .query<RuleSummaryRow, Array<RulesContentCategory | string>>(
         `select entities.id,
           entities.slug,
           entities.entity_type,
@@ -2200,16 +2229,62 @@ class SqliteRulesRepository implements RulesRepository {
           sources.name as source_name,
           sources.abbreviation as source_abbreviation,
           sources.content_category,
+          sources.visibility as source_visibility,
+          sources.public_export_eligible,
+          group_concat(distinct campaign_sources.campaign_id) as campaign_ids,
           mechanics.mechanic_type,
           mechanics.data_json
         from rules_entities entities
         inner join rules_sources sources on sources.id = entities.source_id
+        left join campaign_rules_sources campaign_sources on campaign_sources.source_id = sources.id
         left join rule_mechanics mechanics on mechanics.rules_entity_id = entities.id
-        ${contentCategoryClause}
+        ${clause}
+        group by entities.id, mechanics.id
         order by entities.entity_type, entities.name, mechanics.id`,
       )
       .all(...values);
   }
+}
+
+function ruleAccessWhereClause(filters: RuleAccessFilters = {}) {
+  const clauses: string[] = [];
+  const values: Array<RulesContentCategory | string> = [];
+  if (filters.contentCategory) {
+    clauses.push("sources.content_category = ?");
+    values.push(filters.contentCategory);
+  }
+  const campaignIds = filters.campaignIds?.filter(Boolean) ?? [];
+  if (campaignIds.length > 0) {
+    clauses.push(
+      `(sources.visibility = 'public' or campaign_sources.campaign_id in (${campaignIds.map(() => "?").join(", ")}))`,
+    );
+    values.push(...campaignIds);
+  } else {
+    clauses.push("sources.visibility = 'public'");
+  }
+
+  return {
+    clause: clauses.length ? `where ${clauses.join(" and ")}` : "",
+    values,
+  };
+}
+
+function parseCampaignIds(value: string | null) {
+  return value ? value.split(",").filter(Boolean).sort() : [];
+}
+
+function toRuleSourceSummary(row: RuleSourceRow): RulesSourceSummary & { precedence: number } {
+  return {
+    abbreviation: row.abbreviation,
+    campaignIds: parseCampaignIds(row.campaign_ids),
+    contentCategory: row.content_category,
+    id: row.id,
+    name: row.name,
+    precedence: row.precedence,
+    publicExportEligible: row.public_export_eligible === 1,
+    slug: row.slug,
+    visibility: row.visibility,
+  };
 }
 
 function toRuleSummary(row: RuleSummaryRow): RuleSummary {
@@ -2222,15 +2297,18 @@ function toRuleSummary(row: RuleSummaryRow): RuleSummary {
       : "";
 
   return {
+    campaignIds: parseCampaignIds(row.campaign_ids),
     contentCategory: row.content_category,
     description,
     entityType: row.entity_type,
     id: row.id,
     name: row.name,
+    publicExportEligible: row.public_export_eligible === 1,
     slug: row.slug,
     sourceAbbreviation: row.source_abbreviation,
     sourceName: row.source_name,
     sourceSlug: row.source_slug,
+    sourceVisibility: row.source_visibility,
     tags,
   };
 }
@@ -2295,41 +2373,59 @@ class SqliteRulesSeedRepository implements RulesSeedRepository {
 
   private upsertSource(source: RuleEntitySeedInput["source"]) {
     const sourceId = source.id ?? ruleSourceId(source.slug);
+    const contentCategory = source.contentCategory ?? "third_party";
+    const visibility = source.visibility ?? "public";
+    const publicExportEligible = source.publicExportEligible ?? contentCategory === "srd";
 
     this.database.run(
-      `insert into rules_sources (id, slug, name, abbreviation, content_category, precedence)
-       values (?, ?, ?, ?, ?, ?)
+      `insert into rules_sources (id, slug, name, abbreviation, content_category, visibility, public_export_eligible, precedence)
+       values (?, ?, ?, ?, ?, ?, ?, ?)
        on conflict(slug) do update set
          name = excluded.name,
          abbreviation = excluded.abbreviation,
          content_category = excluded.content_category,
+         visibility = excluded.visibility,
+         public_export_eligible = excluded.public_export_eligible,
          precedence = excluded.precedence`,
       [
         sourceId,
         source.slug,
         source.name,
         source.abbreviation,
-        source.contentCategory ?? "third_party",
+        contentCategory,
+        visibility,
+        publicExportEligible ? 1 : 0,
         source.precedence,
       ],
     );
+    for (const campaignId of source.campaignIds ?? []) {
+      this.database.run(
+        "insert or ignore into campaign_rules_sources (campaign_id, source_id) values (?, ?)",
+        [campaignId, sourceId],
+      );
+    }
 
     const row = this.database
       .query<RuleSourceRow, [string]>(
-        "select id, slug, name, abbreviation, content_category, precedence from rules_sources where slug = ?",
+        `select sources.id,
+          sources.slug,
+          sources.name,
+          sources.abbreviation,
+          sources.content_category,
+          sources.visibility,
+          sources.public_export_eligible,
+          sources.precedence,
+          group_concat(distinct campaign_sources.campaign_id) as campaign_ids
+        from rules_sources sources
+        left join campaign_rules_sources campaign_sources on campaign_sources.source_id = sources.id
+        where sources.slug = ?
+        group by sources.id`,
       )
       .get(source.slug);
 
     if (!row) throw new Error(`Could not upsert rules source ${source.slug}`);
 
-    return {
-      abbreviation: row.abbreviation,
-      contentCategory: row.content_category,
-      id: row.id,
-      name: row.name,
-      precedence: row.precedence,
-      slug: row.slug,
-    };
+    return toRuleSourceSummary(row);
   }
 
   private getEntityByNaturalKey(

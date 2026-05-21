@@ -514,6 +514,7 @@ export interface RulesRepository {
   listRuleEntityTypes(filters?: RuleAccessFilters): RuleEntityTypeCount[];
   listRuleLinksForCharacter(characterId: string): CharacterRuleLink[];
   listRules(filters?: RuleSearchFilters): RuleSummary[];
+  listRuleSources(filters?: RuleAccessFilters): RulesSourceSummary[];
 }
 
 export type RuleEntityType =
@@ -536,11 +537,14 @@ export type RuleEntityType =
 
 export interface RulesSourceSeedInput {
   abbreviation: string;
+  campaignIds?: string[];
   contentCategory?: RulesContentCategory;
   id?: string;
   name: string;
   precedence: number;
+  publicExportEligible?: boolean;
   slug: string;
+  visibility?: RulesSourceVisibility;
 }
 
 export interface RuleMechanicSeedInput {
@@ -559,16 +563,29 @@ export interface RuleEntitySeedInput {
 
 export interface UpsertedRuleEntity extends RuleEntitySeedInput {
   id: string;
-  source: RulesSourceSeedInput & { contentCategory: RulesContentCategory; id: string };
+  source: RulesSourceSummary & { precedence: number };
 }
 
 export type RulesContentCategory = "local" | "srd" | "third_party";
+export type RulesSourceVisibility = "campaign" | "public";
+
+export interface RulesSourceSummary {
+  abbreviation: string;
+  campaignIds: string[];
+  contentCategory: RulesContentCategory;
+  id: string;
+  name: string;
+  publicExportEligible: boolean;
+  slug: string;
+  visibility: RulesSourceVisibility;
+}
 
 export interface RulesSeedRepository {
   upsertRuleEntity(entity: RuleEntitySeedInput): UpsertedRuleEntity;
 }
 
 export interface RuleSearchFilters {
+  campaignIds?: string[];
   contentCategory?: RulesContentCategory;
   entityType?: RuleEntityType;
   equipmentCategory?: string;
@@ -578,6 +595,7 @@ export interface RuleSearchFilters {
 }
 
 export interface RuleAccessFilters {
+  campaignIds?: string[];
   contentCategory?: RulesContentCategory;
 }
 
@@ -592,15 +610,18 @@ export interface RuleMechanicReadModel {
 }
 
 export interface RuleSummary {
+  campaignIds: string[];
   contentCategory: RulesContentCategory;
   description: string;
   entityType: RuleEntityType;
   id: string;
   name: string;
+  publicExportEligible: boolean;
   slug: string;
   sourceAbbreviation: string;
   sourceName: string;
   sourceSlug: string;
+  sourceVisibility: RulesSourceVisibility;
   tags: string[];
 }
 

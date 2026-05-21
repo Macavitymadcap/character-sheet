@@ -283,6 +283,55 @@ describe("createApp", () => {
     expect(missing.status).toBe(404);
   });
 
+  test("serves campaign-scoped private rules only to campaign members", async () => {
+    const { app, sessionService } = createTestApp("Campaign Ledger");
+    const playerSession = sessionService.createSession("user_lynott_player");
+    const adminSession = sessionService.createSession("user_site_admin");
+    const gmSession = sessionService.createSession("user_game_master");
+    const importer = new RulesImportService(runtime!.repositories.rulesSeedRepository);
+    await importer.importFromLocalSource("docs/rules/srd-5.1-fixtures/spells/level-1/bless.md");
+    await importer.importFromLocalSource("docs/rules/backgrounds/special-ops.md", {
+      campaignId: "campaign_rovnost_shadows",
+      source: {
+        abbreviation: "Rovnost",
+        contentCategory: "local",
+        id: "rules_source_rovnost_private",
+        name: "Rovnost Private Notes",
+        slug: "rovnost-private",
+      },
+    });
+
+    const publicList = await app.request("/rules?q=special+ops");
+    const publicDetail = await app.request("/rules/background/special-operations");
+    const adminList = await app.request("/rules?q=special+ops", {
+      headers: { cookie: adminSession.cookie },
+    });
+    const playerList = await app.request("/rules?q=special+ops", {
+      headers: { cookie: playerSession.cookie },
+    });
+    const playerDetail = await app.request("/rules/background/special-operations", {
+      headers: { cookie: playerSession.cookie },
+    });
+    const campaign = await app.request("/campaigns/rovnost-shadows", {
+      headers: { cookie: gmSession.cookie },
+    });
+
+    expect(await publicList.text()).toContain("0 rules");
+    expect(publicDetail.status).toBe(404);
+    expect(await adminList.text()).toContain("0 rules");
+    const playerListHtml = await playerList.text();
+    expect(playerListHtml).toContain("Special Operations");
+    expect(playerListHtml).toContain("Campaign scoped");
+    const playerDetailHtml = await playerDetail.text();
+    expect(playerDetail.status).toBe(200);
+    expect(playerDetailHtml).toContain("Rovnost Private Notes");
+    expect(playerDetailHtml).toContain("Not public exportable");
+    const campaignHtml = await campaign.text();
+    expect(campaignHtml).toContain("Rules sources");
+    expect(campaignHtml).toContain("Rovnost Private Notes");
+    expect(campaignHtml).toContain("Campaign scoped");
+  });
+
   test("updates header resources through HTMX fragments", async () => {
     const { app, sessionService } = createTestApp("Campaign Ledger");
     const session = sessionService.createSession("user_lynott_player");

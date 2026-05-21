@@ -213,6 +213,22 @@ describe("sheet screenshot targets", () => {
         theme: "light",
       },
       {
+        action: "scroll-campaign-rules-sources",
+        fileName: "gm-campaign-rules-sources-light.png",
+        label: "Game Master campaign rules sources light",
+        path: "/campaigns/rovnost-shadows",
+        role: "game_master",
+        theme: "light",
+      },
+      {
+        action: "scroll-campaign-rules-sources",
+        fileName: "gm-campaign-rules-sources-dark.png",
+        label: "Game Master campaign rules sources dark",
+        path: "/campaigns/rovnost-shadows",
+        role: "game_master",
+        theme: "dark",
+      },
+      {
         fileName: "wiki-factions-image.png",
         label: "Wiki page with image",
         path: "/campaigns/rovnost-shadows/wiki/factions-guide",

@@ -114,6 +114,24 @@ export const campaignStyles = /* css */ `
   gap: 0.75rem;
 }
 
+.campaign-source-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.campaign-source-item {
+  border: 1px solid var(--border-colour);
+  border-radius: 0.5rem;
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.75rem;
+}
+
+.campaign-source-item h3 {
+  font-size: 1rem;
+  margin: 0;
+}
+
 .campaign-session-item {
   border-block-start: 1px solid var(--border-colour);
   padding-block-start: 0.75rem;

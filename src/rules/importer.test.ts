@@ -134,6 +134,53 @@ describe("rules importer", () => {
     }
   });
 
+  test("imports campaign-scoped private sources without public export eligibility", async () => {
+    let runtime: SqliteDatabaseRuntime | undefined;
+    const root = mkdtempSync(join(tmpdir(), "rules-private-importer-"));
+    const backgroundPath = join(root, "backgrounds", "secret-agent.md");
+    mkdirSync(join(root, "backgrounds"), { recursive: true });
+    writeFileSync(
+      backgroundPath,
+      "# Secret Agent\n\n**Skill Proficiencies:** Stealth\n\nA synthetic private fixture.",
+    );
+
+    try {
+      runtime = createSqliteDatabase({ path: ":memory:" });
+      const importer = new RulesImportService(runtime.repositories.rulesSeedRepository);
+      const result = await importer.importFromLocalSource(root, {
+        campaignId: "campaign_rovnost_shadows",
+        source: {
+          abbreviation: "Rovnost",
+          contentCategory: "local",
+          id: "rules_source_rovnost_private",
+          name: "Rovnost Private Notes",
+          slug: "rovnost-private",
+        },
+      });
+
+      expect(result.sourceCounts).toEqual({ "rovnost-private": 1 });
+      expect(result.entities[0]?.source).toMatchObject({
+        campaignIds: ["campaign_rovnost_shadows"],
+        contentCategory: "local",
+        publicExportEligible: false,
+        visibility: "campaign",
+      });
+      expect(
+        runtime.repositories.rulesRepository.getRuleDetail("background", "secret-agent"),
+      ).toBeNull();
+      expect(
+        runtime.repositories.rulesRepository.getRuleDetail("background", "secret-agent", {
+          campaignIds: ["campaign_rovnost_shadows"],
+        }),
+      ).toMatchObject({
+        name: "Secret Agent",
+        sourceName: "Rovnost Private Notes",
+      });
+    } finally {
+      runtime?.close();
+    }
+  });
+
   test("imports every markdown file from a local directory", async () => {
     let runtime: SqliteDatabaseRuntime | undefined;
     const root = mkdtempSync(join(tmpdir(), "rules-importer-"));

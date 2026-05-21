@@ -1,5 +1,5 @@
 import { renderCampaignMarkdown } from "../../../campaigns/wiki";
-import type { AuthUser, CampaignImageAsset, CampaignMember, CampaignSessionRecord, CampaignSummary, CampaignWikiPage } from "../../../db";
+import type { AuthUser, CampaignImageAsset, CampaignMember, CampaignSessionRecord, CampaignSummary, CampaignWikiPage, RulesSourceSummary } from "../../../db";
 import { Panel } from "../../atoms/Panel";
 import { SiteHeader } from "../../molecules/SiteHeader";
 import { Layout } from "../../templates/Layout";
@@ -10,6 +10,7 @@ interface CampaignPageProps {
   gameMasterDisplayName: string;
   members: CampaignMember[];
   imageAssets: CampaignImageAsset[];
+  ruleSources: RulesSourceSummary[];
   sessions: CampaignSessionRecord[];
   user: Pick<AuthUser, "displayName" | "role"> &
     Partial<Pick<AuthUser, "campaignRoles" | "capabilities">>;
@@ -17,7 +18,7 @@ interface CampaignPageProps {
   wikiPages: CampaignWikiPage[];
 }
 
-export const CampaignPage = ({ appName, campaign, gameMasterDisplayName, imageAssets, members, sessions, user, viewerRole, wikiPages }: CampaignPageProps) => {
+export const CampaignPage = ({ appName, campaign, gameMasterDisplayName, imageAssets, members, ruleSources, sessions, user, viewerRole, wikiPages }: CampaignPageProps) => {
   const canManageCampaign = viewerRole === "game_master";
 
   return (
@@ -96,6 +97,25 @@ export const CampaignPage = ({ appName, campaign, gameMasterDisplayName, imageAs
                   <figcaption>{asset.title}{asset.caption ? ` - ${asset.caption}` : ""}</figcaption>
                 </figure>
               ))}
+            </div>
+          </Panel> : null}
+          {canManageCampaign ? <Panel labelledBy="campaign-rules-sources-heading">
+            <div class="campaign-heading">
+              <p class="campaign-kicker">Game Master</p>
+              <h2 id="campaign-rules-sources-heading" class="panel-heading">Rules sources</h2>
+            </div>
+            <div class="campaign-source-list">
+              {ruleSources.length > 0 ? ruleSources.map((source) => (
+                <article class="campaign-source-item">
+                  <h3>{source.name}</h3>
+                  <div class="campaign-tag-list" aria-label={`${source.name} rules source metadata`}>
+                    <span>{formatRulesCategory(source.contentCategory)}</span>
+                    <span>{source.visibility === "campaign" ? "Campaign scoped" : "Public source"}</span>
+                    <span>{source.publicExportEligible ? "Exportable" : "Not public exportable"}</span>
+                    <span>{source.abbreviation}</span>
+                  </div>
+                </article>
+              )) : <p class="campaign-empty-state">No campaign rules sources attached.</p>}
             </div>
           </Panel> : null}
           {canManageCampaign ? <Panel labelledBy="campaign-wiki-create-heading">
@@ -247,3 +267,10 @@ export const CampaignWikiDetailPage = ({ appName, campaign, cover, galleryAssets
     </div>
   </Layout>
 );
+
+function formatRulesCategory(category: RulesSourceSummary["contentCategory"]) {
+  if (category === "srd") return "SRD";
+  if (category === "local") return "Local";
+
+  return "Non-SRD";
+}

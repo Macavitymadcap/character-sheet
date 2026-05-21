@@ -29,6 +29,7 @@ describe("MVP smoke workflow config", () => {
       "campaign sessions",
       "campaign wiki",
       "combined admin campaign access",
+      "campaign private rules sources",
       "protected seeded assets",
       "image upload",
       "admin invite handoff",

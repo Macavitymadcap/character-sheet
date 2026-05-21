@@ -28,6 +28,18 @@ describe("CampaignPage", () => {
             userId: "user_lynott_player",
           },
         ]}
+        ruleSources={[
+          {
+            abbreviation: "Rovnost",
+            campaignIds: ["campaign_rovnost_shadows"],
+            contentCategory: "local",
+            id: "rules_source_rovnost",
+            name: "Rovnost Private Notes",
+            publicExportEligible: false,
+            slug: "rovnost-private",
+            visibility: "campaign",
+          },
+        ]}
         sessions={[]}
         user={{ displayName: "Game Master", role: "game_master" }}
         viewerRole="game_master"
@@ -43,5 +55,8 @@ describe("CampaignPage", () => {
     expect(html).toContain('<h1 id="campaign-heading" class="panel-heading">Rovnost Shadows</h1>');
     expect(html).toContain("<dt>Members</dt>");
     expect(html).toContain("<dd>2</dd>");
+    expect(html).toContain("Rules sources");
+    expect(html).toContain("Campaign scoped");
+    expect(html).toContain("Not public exportable");
   });
 });

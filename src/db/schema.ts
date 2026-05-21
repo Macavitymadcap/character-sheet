@@ -294,7 +294,16 @@ CREATE TABLE IF NOT EXISTS rules_sources (
   name TEXT NOT NULL,
   abbreviation TEXT NOT NULL,
   content_category TEXT NOT NULL DEFAULT 'third_party' CHECK (content_category IN ('srd', 'local', 'third_party')),
+  visibility TEXT NOT NULL DEFAULT 'public' CHECK (visibility IN ('public', 'campaign')),
+  public_export_eligible INTEGER NOT NULL DEFAULT 0 CHECK (public_export_eligible IN (0, 1)),
   precedence INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS campaign_rules_sources (
+  campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+  source_id TEXT NOT NULL REFERENCES rules_sources(id) ON DELETE CASCADE,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (campaign_id, source_id)
 );
 
 CREATE TABLE IF NOT EXISTS rules_entities (
@@ -339,6 +348,9 @@ const migrationStatements = [
   "ALTER TABLE campaign_factions ADD COLUMN connections_json TEXT NOT NULL DEFAULT '[]'",
   "ALTER TABLE campaign_factions ADD COLUMN wiki_page_id TEXT REFERENCES campaign_wiki_pages(id) ON DELETE SET NULL",
   "ALTER TABLE rules_sources ADD COLUMN content_category TEXT NOT NULL DEFAULT 'third_party'",
+  "ALTER TABLE rules_sources ADD COLUMN visibility TEXT NOT NULL DEFAULT 'public'",
+  "ALTER TABLE rules_sources ADD COLUMN public_export_eligible INTEGER NOT NULL DEFAULT 0",
+  "UPDATE rules_sources SET public_export_eligible = 1 WHERE content_category = 'srd'",
 ];
 
 const triggers = /* sql */ `

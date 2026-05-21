@@ -788,6 +788,48 @@ describe("SQLite repositories", () => {
     expect(rules.getRuleDetail("spell", "missing")).toBeNull();
   });
 
+  test("scopes private rules sources to campaign members", async () => {
+    runtime = createSqliteDatabase({ path: ":memory:" });
+    const importer = new RulesImportService(runtime.repositories.rulesSeedRepository);
+    await importer.importFromLocalSource("docs/rules/srd-5.1-fixtures/spells/level-1/bless.md");
+    await importer.importFromLocalSource("docs/rules/backgrounds/special-ops.md", {
+      campaignId: "campaign_rovnost_shadows",
+      publicExportEligible: false,
+      source: {
+        abbreviation: "Rovnost",
+        contentCategory: "local",
+        id: "rules_source_rovnost_private",
+        name: "Rovnost Private Notes",
+        slug: "rovnost-private",
+      },
+      visibility: "campaign",
+    });
+    const rules = runtime.repositories.rulesRepository;
+
+    expect(rules.listRules({ contentCategory: "srd" }).map((rule) => rule.slug)).toEqual(["bless"]);
+    expect(rules.listRules().map((rule) => rule.slug)).not.toContain("special-operations");
+    expect(rules.getRuleDetail("background", "special-operations")).toBeNull();
+    expect(rules.listRules({ campaignIds: ["campaign_rovnost_shadows"] }).map((rule) => rule.slug))
+      .toContain("special-operations");
+    expect(
+      rules.getRuleDetail("background", "special-operations", { campaignIds: ["campaign_rovnost_shadows"] }),
+    ).toMatchObject({
+      contentCategory: "local",
+      name: "Special Operations",
+      publicExportEligible: false,
+      sourceName: "Rovnost Private Notes",
+      sourceVisibility: "campaign",
+    });
+    expect(rules.listRuleSources({ campaignIds: ["campaign_rovnost_shadows"] })).toContainEqual(
+      expect.objectContaining({
+        campaignIds: ["campaign_rovnost_shadows"],
+        name: "Rovnost Private Notes",
+        publicExportEligible: false,
+        visibility: "campaign",
+      }),
+    );
+  });
+
   test("lists group-use character rosters for players and Game Masters", () => {
     runtime = createSqliteDatabase({ path: ":memory:" });
     const characters = runtime.repositories.characterRepository;

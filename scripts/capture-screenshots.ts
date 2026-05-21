@@ -215,6 +215,22 @@ export const sheetScreenshotTargets = [
     theme: "light",
   },
   {
+    action: "scroll-campaign-rules-sources",
+    fileName: "gm-campaign-rules-sources-light.png",
+    label: "Game Master campaign rules sources light",
+    path: "/campaigns/rovnost-shadows",
+    role: "game_master",
+    theme: "light",
+  },
+  {
+    action: "scroll-campaign-rules-sources",
+    fileName: "gm-campaign-rules-sources-dark.png",
+    label: "Game Master campaign rules sources dark",
+    path: "/campaigns/rovnost-shadows",
+    role: "game_master",
+    theme: "dark",
+  },
+  {
     fileName: "wiki-factions-image.png",
     label: "Wiki page with image",
     path: "/campaigns/rovnost-shadows/wiki/factions-guide",
@@ -278,6 +294,17 @@ export async function captureSheetScreenshots(
     await mkdir(outputDir, { recursive: true });
     await new RulesImportService(runtime.databaseRuntime.repositories.rulesSeedRepository)
       .importFromLocalSource("docs/rules/srd-5.1-fixtures");
+    await new RulesImportService(runtime.databaseRuntime.repositories.rulesSeedRepository)
+      .importFromLocalSource("docs/rules/backgrounds/special-ops.md", {
+        campaignId: "campaign_rovnost_shadows",
+        source: {
+          abbreviation: "Rovnost",
+          contentCategory: "local",
+          id: "rules_source_rovnost_private",
+          name: "Rovnost Private Notes",
+          slug: "rovnost-private",
+        },
+      });
     await writeSeedAssetPlaceholders();
 
     const playerCookie = await login(baseUrl, "lynott@example.local");
@@ -337,6 +364,7 @@ async function runScreenshotAction(
     | "edit-strength"
     | "open-menu"
     | "roll-stealth"
+    | "scroll-campaign-rules-sources"
     | "scroll-local-list"
     | "scroll-admin-users"
     | "scroll-roster-table"
@@ -351,6 +379,11 @@ async function runScreenshotAction(
 
   if (action === "scroll-admin-users") {
     await scrollIntoView(page, ".admin-users-table");
+    return;
+  }
+
+  if (action === "scroll-campaign-rules-sources") {
+    await scrollIntoView(page, "#campaign-rules-sources-heading", -96);
     return;
   }
 
