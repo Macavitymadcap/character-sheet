@@ -59,6 +59,8 @@ export class AuthService {
     if (!verified) return null;
 
     return {
+      capabilities: user.capabilities,
+      campaignRoles: user.campaignRoles,
       displayName: user.displayName,
       email: user.email,
       id: user.id,
@@ -112,6 +114,8 @@ export class AuthService {
       email: invite.email,
       id: userId,
       passwordHash,
+      capabilities: invite.role === "admin" ? ["admin"] : [],
+      campaignRoles: [],
       role: invite.role,
       status: "active",
     });

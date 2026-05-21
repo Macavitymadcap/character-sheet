@@ -28,6 +28,7 @@ describe("MVP smoke workflow config", () => {
       "public local play storage import/export",
       "campaign sessions",
       "campaign wiki",
+      "combined admin campaign access",
       "protected seeded assets",
       "image upload",
       "admin invite handoff",

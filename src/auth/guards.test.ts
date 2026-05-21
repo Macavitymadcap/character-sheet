@@ -12,10 +12,29 @@ const session = (role: AuthSession["user"]["role"], userId = `user_${role}`): Au
   expiresAt: new Date("2026-05-17T12:00:00.000Z"),
   id: `session_${role}`,
   user: {
+    capabilities: role === "admin" ? ["admin"] : [],
+    campaignRoles: role === "game_master" ? ["game_master"] : role === "player" ? ["player"] : [],
     displayName: role,
     email: `${role}@example.local`,
     id: userId,
     role,
+    status: "active",
+  },
+});
+
+const combinedSession = (
+  userId: string,
+  campaignRoles: AuthSession["user"]["campaignRoles"],
+): AuthSession => ({
+  expiresAt: new Date("2026-05-17T12:00:00.000Z"),
+  id: `session_${userId}`,
+  user: {
+    capabilities: ["admin"],
+    campaignRoles,
+    displayName: userId,
+    email: `${userId}@example.local`,
+    id: userId,
+    role: "admin",
     status: "active",
   },
 });
@@ -47,6 +66,16 @@ describe("role guards", () => {
   test("allows matching roles and rejects disallowed roles", () => {
     expect(requireRole(session("admin"), ["admin"]).ok).toBeTrue();
     expect(requireRole(session("game_master"), ["admin"]).ok).toBeFalse();
+  });
+
+  test("allows admin capability alongside campaign roles", () => {
+    const adminPlayer = combinedSession("user_admin_player", ["player"]);
+    const adminGameMaster = combinedSession("user_admin_gm", ["game_master"]);
+
+    expect(requireRole(adminPlayer, ["admin"]).ok).toBeTrue();
+    expect(requireRole(adminPlayer, ["player"]).ok).toBeTrue();
+    expect(requireRole(adminGameMaster, ["admin"]).ok).toBeTrue();
+    expect(requireRole(adminGameMaster, ["game_master"]).ok).toBeTrue();
   });
 
   test("requires authentication before role checks", () => {
@@ -105,6 +134,30 @@ describe("sheet access guards", () => {
 
     expect(gm.ok).toBeTrue();
     expect(admin).toEqual({ ok: false, reason: "forbidden" });
+  });
+
+  test("uses campaign membership, not admin capability, for combined sheet access", () => {
+    const adminPlayer = requireSheetAccess({
+      characterId: "character_1",
+      campaignRepository: campaignRepository([
+        { campaignId: "campaign_1", role: "player", userId: "user_admin_player" },
+      ]),
+      characterRepository: characterRepository("other_user"),
+      permission: "write",
+      session: combinedSession("user_admin_player", ["player"]),
+    });
+    const adminGameMaster = requireSheetAccess({
+      characterId: "character_1",
+      campaignRepository: campaignRepository([
+        { campaignId: "campaign_1", role: "game_master", userId: "user_admin_gm" },
+      ]),
+      characterRepository: characterRepository("other_user"),
+      permission: "write",
+      session: combinedSession("user_admin_gm", ["game_master"]),
+    });
+
+    expect(adminPlayer).toEqual({ ok: false, reason: "forbidden" });
+    expect(adminGameMaster.ok).toBeTrue();
   });
 
   test("rejects Game Masters who do not belong to the character campaign", () => {
@@ -174,6 +227,27 @@ describe("campaign access guards", () => {
         session: session("player", "user_elsewhere"),
       }),
     ).toEqual({ ok: false, reason: "forbidden" });
+  });
+
+  test("does not let admin capability bypass campaign membership", () => {
+    const campaigns = campaignRepository(members);
+
+    expect(
+      requireCampaignAccess({
+        campaignId: "campaign_1",
+        campaignRepository: campaigns,
+        permission: "read",
+        session: session("admin", "user_site_admin"),
+      }),
+    ).toEqual({ ok: false, reason: "forbidden" });
+    expect(
+      requireCampaignAccess({
+        campaignId: "campaign_1",
+        campaignRepository: campaigns,
+        permission: "read",
+        session: combinedSession("user_admin_player", ["player"]),
+      }).ok,
+    ).toBeFalse();
   });
 
   test("filters player-visible and Game-Master-only campaign content", () => {

@@ -24,6 +24,8 @@ describe("SQLite repositories", () => {
 
     expect(users).toEqual([
       {
+        capabilities: [],
+        campaignRoles: ["player"],
         displayName: "Lynott Player",
         email: "lynott@example.local",
         id: "user_lynott_player",
@@ -31,6 +33,8 @@ describe("SQLite repositories", () => {
         status: "active",
       },
       {
+        capabilities: [],
+        campaignRoles: ["game_master"],
         displayName: "Campaign GM",
         email: "gm@example.local",
         id: "user_game_master",
@@ -38,6 +42,8 @@ describe("SQLite repositories", () => {
         status: "active",
       },
       {
+        capabilities: [],
+        campaignRoles: ["player"],
         displayName: "Mira Player",
         email: "mira@example.local",
         id: "user_mira_player",
@@ -45,9 +51,29 @@ describe("SQLite repositories", () => {
         status: "active",
       },
       {
+        capabilities: ["admin"],
+        campaignRoles: [],
         displayName: "Site Admin",
         email: "admin@example.local",
         id: "user_site_admin",
+        role: "admin",
+        status: "active",
+      },
+      {
+        capabilities: ["admin"],
+        campaignRoles: ["game_master"],
+        displayName: "Admin Game Master",
+        email: "admin.gm@example.local",
+        id: "user_admin_gm",
+        role: "admin",
+        status: "active",
+      },
+      {
+        capabilities: ["admin"],
+        campaignRoles: ["player"],
+        displayName: "Admin Player",
+        email: "admin.player@example.local",
+        id: "user_admin_player",
         role: "admin",
         status: "active",
       },

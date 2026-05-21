@@ -2,7 +2,14 @@ import { mkdir } from "node:fs/promises";
 import { dirname } from "node:path";
 import { Hono, type Context } from "hono";
 import { assetStorageRoot } from "./assets";
-import { AuthService, requireCampaignAccess, requireRole, requireSheetAccess, SessionService } from "./auth";
+import {
+  AuthService,
+  requireCampaignAccess,
+  requireRole,
+  requireSheetAccess,
+  SessionService,
+  userHasAccessRole,
+} from "./auth";
 import { isCampaignWikiPageType, normaliseGoogleDocsMarkdown } from "./campaigns/wiki";
 import { isRestType, planRestResourceUpdates } from "./characters/rests";
 import { AdminPage } from "./components/pages/Admin";
@@ -64,9 +71,9 @@ export const createApp = (dependencies: AppDependencies) => {
   const readSession = (cookieHeader: string | undefined) =>
     dependencies.sessionService.readSession(cookieHeader);
 
-  const defaultRouteForRole = (role: UserRole) => {
-    if (role === "admin") return "/admin";
-    if (role === "game_master") return "/campaigns/rovnost-shadows";
+  const defaultRouteForUser = (user: AuthUser) => {
+    if (userHasAccessRole(user, "admin")) return "/admin";
+    if (userHasAccessRole(user, "game_master")) return "/campaigns/rovnost-shadows";
 
     return "/characters";
   };
@@ -79,6 +86,21 @@ export const createApp = (dependencies: AppDependencies) => {
   const getSheetByRef = (characterRef: string) =>
     dependencies.characterRepository.getSheetBySlug(characterRef) ??
     dependencies.characterRepository.getSheetById(characterRef);
+
+  const campaignViewerRole = (campaignId: string, userId: string): "game_master" | "player" | null =>
+    dependencies.campaignRepository
+      .listMembers(campaignId)
+      .find((member) => member.userId === userId)?.role ?? null;
+
+  const sheetViewerRole = (
+    characterId: string,
+    session: NonNullable<ReturnType<typeof readSession>>,
+  ): UserRole => {
+    const access = dependencies.characterRepository.getAccessContext(characterId);
+    if (access?.ownerUserId === session.user.id) return "player";
+
+    return access ? campaignViewerRole(access.campaignId, session.user.id) ?? session.user.role : session.user.role;
+  };
 
   const guardResponse = (context: Context, result: ReturnType<typeof requireRole>) => {
     if (result.ok) return null;
@@ -96,7 +118,7 @@ export const createApp = (dependencies: AppDependencies) => {
 
   app.get("/login", (context) => {
     const session = readSession(context.req.header("cookie"));
-    if (session) return context.redirect(defaultRouteForRole(session.user.role), 303);
+    if (session) return context.redirect(defaultRouteForUser(session.user), 303);
 
     return context.html(<LoginPage appName={dependencies.appName} />);
   });
@@ -172,7 +194,7 @@ export const createApp = (dependencies: AppDependencies) => {
     const session = dependencies.sessionService.createSession(user.id);
     context.header("Set-Cookie", session.cookie);
 
-    return context.redirect(defaultRouteForRole(user.role), 303);
+    return context.redirect(defaultRouteForUser(user), 303);
   });
 
   app.get("/logout", (context) => {
@@ -224,6 +246,8 @@ export const createApp = (dependencies: AppDependencies) => {
     });
     const guarded = guardResponse(context, guard);
     if (guarded) return guarded;
+    const viewerRole = campaignViewerRole(campaign.id, session.user.id);
+    if (!viewerRole) return context.text("Forbidden", 403);
 
     return context.html(
       <CampaignPage
@@ -233,11 +257,12 @@ export const createApp = (dependencies: AppDependencies) => {
           dependencies.authRepository.findUserById(campaign.gmUserId)?.displayName ??
           campaign.gmUserId
         }
-        imageAssets={dependencies.campaignContentRepository.listImageAssetsForCampaign(campaign.id, session.user.role)}
+        imageAssets={dependencies.campaignContentRepository.listImageAssetsForCampaign(campaign.id, viewerRole)}
         members={dependencies.campaignRepository.listMembers(campaign.id)}
-        sessions={dependencies.campaignContentRepository.listSessionsForCampaign(campaign.id, session.user.role)}
+        sessions={dependencies.campaignContentRepository.listSessionsForCampaign(campaign.id, viewerRole)}
         user={session.user}
-        wikiPages={dependencies.campaignContentRepository.listWikiPagesForCampaign(campaign.id, session.user.role)}
+        viewerRole={viewerRole}
+        wikiPages={dependencies.campaignContentRepository.listWikiPagesForCampaign(campaign.id, viewerRole)}
       />,
     );
   });
@@ -259,11 +284,13 @@ export const createApp = (dependencies: AppDependencies) => {
     });
     const guarded = guardResponse(context, guard);
     if (guarded) return guarded;
+    const viewerRole = campaignViewerRole(campaign.id, session.user.id);
+    if (!viewerRole) return context.text("Forbidden", 403);
 
     const page = dependencies.campaignContentRepository.getWikiPageBySlug(
       campaign.id,
       context.req.param("wikiSlug"),
-      session.user.role,
+      viewerRole,
     );
     if (!page) return context.text("Not found", 404);
 
@@ -271,7 +298,7 @@ export const createApp = (dependencies: AppDependencies) => {
       ? dependencies.campaignContentRepository.getImageAssetById(
           campaign.id,
           page.coverImageAssetId,
-          session.user.role,
+          viewerRole,
         )
       : null;
 
@@ -284,13 +311,13 @@ export const createApp = (dependencies: AppDependencies) => {
           campaign.id,
           page.id,
           "gallery",
-          session.user.role,
+          viewerRole,
         )}
         inlineAssets={dependencies.campaignContentRepository.listImageAssetsForWikiPage(
           campaign.id,
           page.id,
           "inline",
-          session.user.role,
+          viewerRole,
         )}
         page={page}
         user={session.user}
@@ -315,11 +342,13 @@ export const createApp = (dependencies: AppDependencies) => {
     });
     const guarded = guardResponse(context, guard);
     if (guarded) return guarded;
+    const viewerRole = campaignViewerRole(campaign.id, session.user.id);
+    if (!viewerRole) return context.text("Forbidden", 403);
 
     const asset = dependencies.campaignContentRepository.getImageAssetById(
       campaign.id,
       context.req.param("assetId"),
-      session.user.role,
+      viewerRole,
     );
     if (!asset) return context.text("Not found", 404);
 
@@ -887,7 +916,7 @@ export const createApp = (dependencies: AppDependencies) => {
         campaignFactions={campaignFactionsForSheet(dependencies, sheet.id)}
         equipment={dependencies.characterRepository.listEquipment(sheet.id)}
         factionChoice={dependencies.campaignContentRepository.getCharacterFactionChoice(sheet.id)}
-        notes={dependencies.notesRepository.listNotesForCharacter(sheet.id, session.user.role)}
+        notes={dependencies.notesRepository.listNotesForCharacter(sheet.id, sheetViewerRole(sheet.id, session))}
         resources={dependencies.characterRepository.listResources(sheet.id)}
         ruleLinks={dependencies.rulesRepository.listRuleLinksForCharacter(sheet.id)}
         sheet={sheet}
@@ -926,7 +955,7 @@ export const createApp = (dependencies: AppDependencies) => {
         campaignFactions={campaignFactionsForSheet(dependencies, sheet.id)}
         equipment={dependencies.characterRepository.listEquipment(sheet.id)}
         factionChoice={dependencies.campaignContentRepository.getCharacterFactionChoice(sheet.id)}
-        notes={dependencies.notesRepository.listNotesForCharacter(sheet.id, session.user.role)}
+        notes={dependencies.notesRepository.listNotesForCharacter(sheet.id, sheetViewerRole(sheet.id, session))}
         resources={dependencies.characterRepository.listResources(sheet.id)}
         ruleLinks={dependencies.rulesRepository.listRuleLinksForCharacter(sheet.id)}
         sheet={sheet}
@@ -961,7 +990,7 @@ export const createApp = (dependencies: AppDependencies) => {
         campaignFactions={campaignFactionsForSheet(dependencies, sheet.id)}
         equipment={dependencies.characterRepository.listEquipment(sheet.id)}
         factionChoice={dependencies.campaignContentRepository.getCharacterFactionChoice(sheet.id)}
-        notes={dependencies.notesRepository.listNotesForCharacter(sheet.id, session.user.role)}
+        notes={dependencies.notesRepository.listNotesForCharacter(sheet.id, sheetViewerRole(sheet.id, session))}
         resources={dependencies.characterRepository.listResources(sheet.id)}
         ruleLinks={dependencies.rulesRepository.listRuleLinksForCharacter(sheet.id)}
         sheet={sheet}
@@ -1364,7 +1393,7 @@ export const createApp = (dependencies: AppDependencies) => {
           campaignFactions={campaignFactionsForSheet(dependencies, sheet.id)}
           equipment={dependencies.characterRepository.listEquipment(sheet.id)}
           factionChoice={dependencies.campaignContentRepository.getCharacterFactionChoice(sheet.id)}
-          notes={dependencies.notesRepository.listNotesForCharacter(sheet.id, session.user.role)}
+          notes={dependencies.notesRepository.listNotesForCharacter(sheet.id, sheetViewerRole(sheet.id, session))}
           resources={updatedResources}
           ruleLinks={dependencies.rulesRepository.listRuleLinksForCharacter(sheet.id)}
           sheet={updatedSheet}
@@ -1445,7 +1474,7 @@ export const createApp = (dependencies: AppDependencies) => {
         campaignFactions={campaignFactionsForSheet(dependencies, sheet.id)}
         equipment={dependencies.characterRepository.listEquipment(sheet.id)}
         factionChoice={dependencies.campaignContentRepository.getCharacterFactionChoice(sheet.id)}
-        notes={dependencies.notesRepository.listNotesForCharacter(sheet.id, session.user.role)}
+        notes={dependencies.notesRepository.listNotesForCharacter(sheet.id, sheetViewerRole(sheet.id, session))}
         resources={dependencies.characterRepository.listResources(sheet.id)}
         ruleLinks={dependencies.rulesRepository.listRuleLinksForCharacter(sheet.id)}
         sheet={updatedSheet}
@@ -1475,11 +1504,12 @@ export const createApp = (dependencies: AppDependencies) => {
     const noteBody = parseFormString(body.body);
     const noteTitle = parseFormText(body.title);
     if (noteBody === null || !noteTitle) return context.text("Invalid note", 400);
+    const viewerRole = sheetViewerRole(sheet.id, session);
 
     const note = dependencies.notesRepository.updateNote(
       sheet.id,
       context.req.param("noteId"),
-      session.user.role,
+      viewerRole,
       { body: noteBody, title: noteTitle },
     );
     if (!note) return context.text("Not found", 404);
@@ -1493,7 +1523,7 @@ export const createApp = (dependencies: AppDependencies) => {
         campaignFactions={campaignFactionsForSheet(dependencies, sheet.id)}
         equipment={dependencies.characterRepository.listEquipment(sheet.id)}
         factionChoice={dependencies.campaignContentRepository.getCharacterFactionChoice(sheet.id)}
-        notes={dependencies.notesRepository.listNotesForCharacter(sheet.id, session.user.role)}
+        notes={dependencies.notesRepository.listNotesForCharacter(sheet.id, viewerRole)}
         resources={dependencies.characterRepository.listResources(sheet.id)}
         ruleLinks={dependencies.rulesRepository.listRuleLinksForCharacter(sheet.id)}
         sheet={updatedSheet}
@@ -1524,7 +1554,8 @@ export const createApp = (dependencies: AppDependencies) => {
     const noteBody = parseFormString(body.body);
     const visibility = parseNoteVisibility(body.visibility);
     if (!title || noteBody === null || !visibility) return context.text("Invalid note", 400);
-    if (session.user.role === "player" && visibility === "game_master") {
+    const viewerRole = sheetViewerRole(sheet.id, session);
+    if (viewerRole === "player" && visibility === "game_master") {
       return context.text("Forbidden", 403);
     }
 
@@ -1539,7 +1570,7 @@ export const createApp = (dependencies: AppDependencies) => {
     const updatedSheet = dependencies.characterRepository.getSheetById(sheet.id);
     if (!updatedSheet) return context.text("Not found", 404);
 
-    return renderSheetTabPanel(context, dependencies, updatedSheet, session.user.role, "notes");
+    return renderSheetTabPanel(context, dependencies, updatedSheet, viewerRole, "notes");
   });
 
   app.post("/sheet/:characterRef/notes/:noteId/delete", async (context) => {
@@ -1562,14 +1593,14 @@ export const createApp = (dependencies: AppDependencies) => {
     const deleted = dependencies.notesRepository.deleteNote(
       sheet.id,
       context.req.param("noteId"),
-      session.user.role,
+      sheetViewerRole(sheet.id, session),
     );
     if (!deleted) return context.text("Not found", 404);
 
     const updatedSheet = dependencies.characterRepository.getSheetById(sheet.id);
     if (!updatedSheet) return context.text("Not found", 404);
 
-    return renderSheetTabPanel(context, dependencies, updatedSheet, session.user.role, "notes");
+    return renderSheetTabPanel(context, dependencies, updatedSheet, sheetViewerRole(updatedSheet.id, session), "notes");
   });
 
   app.patch("/sheet/:characterRef/faction", async (context) => {
@@ -1606,7 +1637,7 @@ export const createApp = (dependencies: AppDependencies) => {
     const updatedSheet = dependencies.characterRepository.getSheetById(sheet.id);
     if (!updatedSheet) return context.text("Not found", 404);
 
-    return renderSheetTabPanel(context, dependencies, updatedSheet, session.user.role, "background");
+    return renderSheetTabPanel(context, dependencies, updatedSheet, sheetViewerRole(updatedSheet.id, session), "background");
   });
 
   app.post("/sheet/:characterRef/conditions", async (context) => {
@@ -1736,7 +1767,7 @@ export const createApp = (dependencies: AppDependencies) => {
         equipment={dependencies.characterRepository.listEquipment(sheet.id)}
         factionChoice={dependencies.campaignContentRepository.getCharacterFactionChoice(sheet.id)}
         header={<SheetHeader resources={updatedResources} sheet={updatedSheet} />}
-        notes={dependencies.notesRepository.listNotesForCharacter(sheet.id, session.user.role)}
+        notes={dependencies.notesRepository.listNotesForCharacter(sheet.id, sheetViewerRole(sheet.id, session))}
         resources={updatedResources}
         ruleLinks={dependencies.rulesRepository.listRuleLinksForCharacter(sheet.id)}
         sheet={updatedSheet}
@@ -1962,7 +1993,29 @@ async function updateSheetRow(
   const updatedSheet = dependencies.characterRepository.getSheetById(sheet.id);
   if (!updated || !updatedSheet) return context.text("Not found", 404);
 
-  return renderSheetTabPanel(context, dependencies, updatedSheet, session.user.role, tabId);
+  return renderSheetTabPanel(
+    context,
+    dependencies,
+    updatedSheet,
+    sheetViewerRoleForDependencies(dependencies, updatedSheet.id, session),
+    tabId,
+  );
+}
+
+function sheetViewerRoleForDependencies(
+  dependencies: AppDependencies,
+  characterId: string,
+  session: NonNullable<ReturnType<SessionService["readSession"]>>,
+): UserRole {
+  const access = dependencies.characterRepository.getAccessContext(characterId);
+  if (access?.ownerUserId === session.user.id) return "player";
+  const membership = access
+    ? dependencies.campaignRepository
+        .listMembers(access.campaignId)
+        .find((member) => member.userId === session.user.id)
+    : null;
+
+  return membership?.role ?? session.user.role;
 }
 
 function parseSheetSummaryForm(

@@ -97,6 +97,20 @@ const users = [
     "admin",
     new PasswordService().hashPassword("password123", "seed-user-site-admin"),
   ],
+  [
+    "user_admin_player",
+    "admin.player@example.local",
+    "Admin Player",
+    "admin",
+    new PasswordService().hashPassword("password123", "seed-user-admin-player"),
+  ],
+  [
+    "user_admin_gm",
+    "admin.gm@example.local",
+    "Admin Game Master",
+    "admin",
+    new PasswordService().hashPassword("password123", "seed-user-admin-game-master"),
+  ],
 ];
 
 const abilities: AbilitySeed[] = [
@@ -857,6 +871,8 @@ export const seedDatabase = (database: Database) => {
   database.run("PRAGMA foreign_keys = ON");
 
   for (const user of users) {
+    const userId = user[0];
+    if (!userId) continue;
     database.run(
       `insert into users (id, email, display_name, role, password_hash)
        values (?, ?, ?, ?, ?)
@@ -868,6 +884,12 @@ export const seedDatabase = (database: Database) => {
          status = 'active'`,
       user,
     );
+    if (user[3] === "admin") {
+      database.run(
+        "insert or ignore into user_capabilities (user_id, capability) values (?, 'admin')",
+        [userId],
+      );
+    }
   }
 
   database.run(
@@ -879,6 +901,8 @@ export const seedDatabase = (database: Database) => {
     ["campaign_rovnost_shadows", "user_game_master", "game_master"],
     ["campaign_rovnost_shadows", "user_lynott_player", "player"],
     ["campaign_rovnost_shadows", "user_mira_player", "player"],
+    ["campaign_rovnost_shadows", "user_admin_player", "player"],
+    ["campaign_rovnost_shadows", "user_admin_gm", "game_master"],
   ]) {
     database.run(
       "insert or ignore into campaign_members (campaign_id, user_id, role) values (?, ?, ?)",

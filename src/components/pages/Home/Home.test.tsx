@@ -44,4 +44,22 @@ describe("HomePage", () => {
     expect(gm).toContain('<a class="action-link action-link-secondary" href="/campaigns/rovnost-shadows">Continue</a>');
     expect(admin).toContain('<a class="action-link action-link-secondary" href="/admin">Continue</a>');
   });
+
+  test("keeps combined admin users on the admin destination while showing campaign navigation", () => {
+    const html = render(
+      <HomePage
+        appName="Campaign Ledger"
+        user={{
+          capabilities: ["admin"],
+          campaignRoles: ["game_master"],
+          displayName: "Admin Game Master",
+          role: "admin",
+        }}
+      />,
+    );
+
+    expect(html).toContain('<a class="action-link action-link-secondary" href="/admin">Continue</a>');
+    expect(html).toContain("Admin + Game Master");
+    expect(html).toContain('href="/campaigns/rovnost-shadows"');
+  });
 });

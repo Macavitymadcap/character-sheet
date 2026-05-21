@@ -156,6 +156,49 @@ describe("admin and sheet guards", () => {
     expect(adminSheetWrite.status).toBe(403);
   });
 
+  test("supports combined admin and campaign membership without admin play bypass", async () => {
+    const adminCookie = await login("admin@example.local");
+    const adminPlayerCookie = await login("admin.player@example.local");
+    const adminGameMasterCookie = await login("admin.gm@example.local");
+
+    const adminOnlyCampaign = await app.request("/campaigns/rovnost-shadows", {
+      headers: { cookie: adminCookie },
+    });
+    const adminPlayerAdmin = await app.request("/admin", {
+      headers: { cookie: adminPlayerCookie },
+    });
+    const adminPlayerRoster = await app.request("/characters", {
+      headers: { cookie: adminPlayerCookie },
+    });
+    const adminPlayerCampaign = await app.request("/campaigns/rovnost-shadows", {
+      headers: { cookie: adminPlayerCookie },
+    });
+    const adminGameMasterAdmin = await app.request("/admin", {
+      headers: { cookie: adminGameMasterCookie },
+    });
+    const adminGameMasterCampaign = await app.request("/campaigns/rovnost-shadows", {
+      headers: { cookie: adminGameMasterCookie },
+    });
+    const adminGameMasterNotes = await app.request("/sheet/lynott/tabs/notes", {
+      headers: { cookie: adminGameMasterCookie },
+    });
+
+    expect(adminOnlyCampaign.status).toBe(403);
+    expect(adminPlayerAdmin.status).toBe(200);
+    expect(await adminPlayerAdmin.text()).toContain("Admin");
+    expect(adminPlayerRoster.status).toBe(200);
+    expect(await adminPlayerRoster.text()).toContain("Player roster");
+    expect(adminPlayerCampaign.status).toBe(200);
+    const adminPlayerCampaignHtml = await adminPlayerCampaign.text();
+    expect(adminPlayerCampaignHtml).toContain("Factions Guide");
+    expect(adminPlayerCampaignHtml).not.toContain("Add wiki page");
+    expect(adminGameMasterAdmin.status).toBe(200);
+    expect(adminGameMasterCampaign.status).toBe(200);
+    expect(await adminGameMasterCampaign.text()).toContain("Add wiki page");
+    expect(adminGameMasterNotes.status).toBe(200);
+    expect(await adminGameMasterNotes.text()).toContain("Game Master notes");
+  });
+
   test("prevents players from writing other users' sheets", async () => {
     runtime.database.run(
       "insert into characters (id, slug, owner_user_id, campaign_id, name, species, background, level, proficiency_bonus, armour_class, initiative, speed_ft, hit_point_max, hit_point_current) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -303,6 +346,8 @@ describe("admin and sheet guards", () => {
     expect(await selfDisable.text()).toBe("Cannot disable your own account");
 
     runtime.repositories.authRepository.createUser({
+      capabilities: ["admin"],
+      campaignRoles: [],
       displayName: "Backup Admin",
       email: "backup.admin@example.local",
       id: "user_backup_admin",

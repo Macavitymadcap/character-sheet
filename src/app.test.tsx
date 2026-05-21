@@ -1044,6 +1044,8 @@ describe("createApp", () => {
     expect(asset).toBeDefined();
 
     const outsider = runtime?.repositories.authRepository.createUser({
+      capabilities: [],
+      campaignRoles: [],
       displayName: "Campaign Outsider",
       email: "outsider@example.local",
       id: "user_campaign_outsider",

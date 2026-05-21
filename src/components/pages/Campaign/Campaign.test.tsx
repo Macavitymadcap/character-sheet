@@ -30,6 +30,7 @@ describe("CampaignPage", () => {
         ]}
         sessions={[]}
         user={{ displayName: "Game Master", role: "game_master" }}
+        viewerRole="game_master"
         wikiPages={[]}
       />,
     );

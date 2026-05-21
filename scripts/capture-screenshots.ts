@@ -22,6 +22,22 @@ export const sheetScreenshotTargets = [
     theme: "dark",
   },
   {
+    action: "open-menu",
+    fileName: "home-admin-player-menu-light.png",
+    label: "Combined admin player menu light",
+    path: "/",
+    role: "admin_player",
+    theme: "light",
+  },
+  {
+    action: "open-menu",
+    fileName: "home-admin-player-menu-dark.png",
+    label: "Combined admin player menu dark",
+    path: "/",
+    role: "admin_player",
+    theme: "dark",
+  },
+  {
     action: "scroll-local-list",
     fileName: "local-characters-light.png",
     label: "Local characters light",
@@ -268,6 +284,7 @@ export async function captureSheetScreenshots(
     const miraPlayerCookie = await login(baseUrl, "mira@example.local");
     const gmCookie = await login(baseUrl, "gm@example.local");
     const adminCookie = await login(baseUrl, "admin@example.local");
+    const adminPlayerCookie = await login(baseUrl, "admin.player@example.local");
     browser = await puppeteer.launch({
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
     });
@@ -279,6 +296,7 @@ export async function captureSheetScreenshots(
       const path = resolve(outputDir, target.fileName);
       const cookie = {
         admin: adminCookie,
+        admin_player: adminPlayerCookie,
         game_master: gmCookie,
         mira_player: miraPlayerCookie,
         player: playerCookie,
@@ -317,6 +335,7 @@ async function runScreenshotAction(
   action:
     | "edit-stealth"
     | "edit-strength"
+    | "open-menu"
     | "roll-stealth"
     | "scroll-local-list"
     | "scroll-admin-users"
@@ -324,6 +343,12 @@ async function runScreenshotAction(
     | "scroll-rule-detail"
     | "scroll-rules-results",
 ) {
+  if (action === "open-menu") {
+    await page.click(".popover-menu-trigger");
+    await page.waitForSelector("#site-menu-panel:popover-open");
+    return;
+  }
+
   if (action === "scroll-admin-users") {
     await scrollIntoView(page, ".admin-users-table");
     return;

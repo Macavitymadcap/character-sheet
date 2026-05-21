@@ -78,4 +78,25 @@ describe("SiteHeader", () => {
       '<a class="popover-menu-item" href="/admin" role="menuitem" aria-current="page">Admin</a>',
     );
   });
+
+  test("renders combined admin and campaign access", () => {
+    const html = render(
+      <SiteHeader
+        appName="Campaign Ledger"
+        currentSection="admin"
+        user={{
+          capabilities: ["admin"],
+          campaignRoles: ["player"],
+          displayName: "Admin Player",
+          role: "admin",
+        }}
+      />,
+    );
+
+    expect(html).toContain("Admin + Player");
+    expect(html).toContain(
+      '<a class="popover-menu-item" href="/admin" role="menuitem" aria-current="page">Admin</a>',
+    );
+    expect(html).toContain('<a class="popover-menu-item" href="/characters" role="menuitem">Characters</a>');
+  });
 });

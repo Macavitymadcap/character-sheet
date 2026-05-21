@@ -10,6 +10,7 @@ import type {
   AuthRepository,
   AuthUser,
   AuthUserWithPassword,
+  CampaignMemberRole,
   CampaignContentRepository,
   CampaignContentVisibility,
   CampaignFaction,
@@ -50,6 +51,7 @@ import type {
   RuleSearchFilters,
   RuleSummary,
   StoredSession,
+  UserCapability,
   UpsertedRuleEntity,
   UserRole,
   UserStatus,
@@ -440,8 +442,16 @@ class SqliteAuthRepository implements AuthRepository {
       "insert into users (id, email, display_name, role, password_hash, status) values (?, ?, ?, ?, ?, ?)",
       [user.id, user.email, user.displayName, user.role, user.passwordHash, user.status],
     );
+    for (const capability of this.compatibleCapabilities(user)) {
+      this.database.run(
+        "insert or ignore into user_capabilities (user_id, capability) values (?, ?)",
+        [user.id, capability],
+      );
+    }
 
     return {
+      capabilities: this.compatibleCapabilities(user),
+      campaignRoles: [],
       displayName: user.displayName,
       email: user.email,
       id: user.id,
@@ -496,7 +506,13 @@ class SqliteAuthRepository implements AuthRepository {
   countActiveAdmins(): number {
     const row = this.database
       .query<{ count: number }, []>(
-        "select count(1) as count from users where role = 'admin' and status = 'active'",
+        `select count(distinct users.id) as count
+         from users
+         left join user_capabilities
+           on user_capabilities.user_id = users.id
+          and user_capabilities.capability = 'admin'
+         where users.status = 'active'
+           and (users.role = 'admin' or user_capabilities.capability = 'admin')`,
       )
       .get();
 
@@ -514,7 +530,7 @@ class SqliteAuthRepository implements AuthRepository {
       )
       .get(email);
 
-    return row ? toAuthUser(row) : null;
+    return row ? this.toAuthUser(row) : null;
   }
 
   findInviteByTokenHash(tokenHash: string): LocalInvite | null {
@@ -575,7 +591,7 @@ class SqliteAuthRepository implements AuthRepository {
       .query<UserRow, [string]>("select id, email, display_name, role, status from users where id = ?")
       .get(id);
 
-    return row ? toAuthUser(row) : null;
+    return row ? this.toAuthUser(row) : null;
   }
 
   findUserWithPasswordByEmail(email: string): AuthUserWithPassword | null {
@@ -587,7 +603,7 @@ class SqliteAuthRepository implements AuthRepository {
 
     return row && row.password_hash
       ? {
-          ...toAuthUser(row),
+          ...this.toAuthUser(row),
           passwordHash: row.password_hash,
         }
       : null;
@@ -607,7 +623,7 @@ class SqliteAuthRepository implements AuthRepository {
          end, email`,
       )
       .all()
-      .map(toAuthUser);
+      .map((row) => this.toAuthUser(row));
   }
 
   listInvites(): LocalInvite[] {
@@ -663,6 +679,8 @@ class SqliteAuthRepository implements AuthRepository {
       .map((row) => ({
         campaignCount: row.campaign_count ?? 0,
         characterCount: row.character_count ?? 0,
+        capabilities: this.listUserCapabilities(row.id),
+        campaignRoles: this.listCampaignRoles(row.id),
         displayName: row.display_name,
         email: row.email,
         id: row.id,
@@ -686,6 +704,55 @@ class SqliteAuthRepository implements AuthRepository {
       toSqlDate(usedAt),
       tokenId,
     ]);
+  }
+
+  private compatibleCapabilities(user: Pick<AuthUser, "capabilities" | "role">): UserCapability[] {
+    const capabilities = new Set(user.capabilities ?? []);
+    if (user.role === "admin") capabilities.add("admin");
+
+    return [...capabilities].sort();
+  }
+
+  private listCampaignRoles(userId: string): CampaignMemberRole[] {
+    return this.database
+      .query<{ role: CampaignMemberRole }, [string]>(
+        `select distinct role
+         from campaign_members
+         where user_id = ?
+         order by role`,
+      )
+      .all(userId)
+      .map((row) => row.role);
+  }
+
+  private listUserCapabilities(userId: string): UserCapability[] {
+    const capabilities = this.database
+      .query<{ capability: UserCapability }, [string]>(
+        `select capability
+         from user_capabilities
+         where user_id = ?
+         order by capability`,
+      )
+      .all(userId)
+      .map((row) => row.capability);
+    const row = this.database
+      .query<Pick<UserRow, "role">, [string]>("select role from users where id = ?")
+      .get(userId);
+    if (row?.role === "admin" && !capabilities.includes("admin")) capabilities.push("admin");
+
+    return capabilities;
+  }
+
+  private toAuthUser(row: UserRow): AuthUser {
+    return {
+      capabilities: this.listUserCapabilities(row.id),
+      campaignRoles: this.listCampaignRoles(row.id),
+      displayName: row.display_name,
+      email: row.email,
+      id: row.id,
+      role: row.role,
+      status: row.status,
+    };
   }
 }
 
@@ -2278,16 +2345,6 @@ class SqliteRulesSeedRepository implements RulesSeedRepository {
       )
       .get(sourceId, entityType, slug);
   }
-}
-
-function toAuthUser(row: UserRow): AuthUser {
-  return {
-    displayName: row.display_name,
-    email: row.email,
-    id: row.id,
-    role: row.role,
-    status: row.status,
-  };
 }
 
 function toCharacterResource(row: CharacterResourceRow): CharacterResource {
