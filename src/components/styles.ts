@@ -20,6 +20,7 @@ import { campaignStyles } from "./pages/Campaign/Campaign.styles";
 import { charactersStyles } from "./pages/Characters/Characters.styles";
 import { homeStyles } from "./pages/Home/Home.styles";
 import { loginStyles } from "./pages/Login/Login.styles";
+import { localPlayStyles } from "./pages/LocalPlay/LocalPlay.styles";
 import { rulesStyles } from "./pages/Rules/Rules.styles";
 import { sheetStyles } from "./pages/Sheet/Sheet.styles";
 import { layoutStyles } from "./templates/Layout/Layout.styles";
@@ -47,6 +48,7 @@ export const appStyles = [
   campaignStyles,
   charactersStyles,
   loginStyles,
+  localPlayStyles,
   rulesStyles,
   adminStyles,
   sheetStyles,

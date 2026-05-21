@@ -25,6 +25,7 @@ describe("MVP smoke workflow config", () => {
       "player roster character creation",
       "sheet tabs",
       "SRD rules browsing",
+      "public local play storage import/export",
       "campaign sessions",
       "campaign wiki",
       "protected seeded assets",
