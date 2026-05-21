@@ -10,11 +10,8 @@ const checks: Check[] = [
   { label: "Typecheck", command: ["bun", "run", "typecheck"] },
   { label: "Tests", command: ["bun", "run", "test"] },
   { label: "Accessibility", command: ["bun", "run", "test:a11y"] },
-  { label: "MVP smoke", command: ["bun", "-e", "import { runMvpSmoke } from './scripts/smoke-mvp'; await runMvpSmoke();"] },
-  {
-    label: "Sheet screenshots",
-    command: ["bun", "-e", "import { captureSheetScreenshots } from './scripts/capture-screenshots'; await captureSheetScreenshots();"],
-  },
+  { label: "MVP smoke", command: ["bun", "run", "smoke:mvp"] },
+  { label: "Sheet screenshots", command: ["bun", "run", "screenshots:sheet"] },
 ];
 
 for (const check of checks) {

@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 import { mkdir } from "node:fs/promises";
 import { resolve } from "node:path";
-import puppeteer, { type Browser, type Page } from "puppeteer";
+import type { Browser, Page } from "puppeteer";
 import { writeSeedAssetPlaceholders } from "../src/assets";
 import { RulesImportService } from "../src/rules";
 import { createInMemoryApp, login, startLocalServer, waitForHttp } from "./lib/local-app";
@@ -350,6 +350,7 @@ export async function captureSheetScreenshots(
     const gmCookie = await login(baseUrl, "gm@example.local");
     const adminCookie = await login(baseUrl, "admin@example.local");
     const adminPlayerCookie = await login(baseUrl, "admin.player@example.local");
+    const { default: puppeteer } = await import("puppeteer");
     browser = await puppeteer.launch({
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
     });

@@ -2149,7 +2149,7 @@ class SqliteRulesRepository implements RulesRepository {
           sources.content_category,
           sources.name as source_name,
           sources.slug as source_slug,
-          mechanics.data_json ->> '$.searchableText' as description,
+          mechanics.data_json ->> '$.description' as description,
           mechanics.data_json ->> '$.actionTiming' as action_timing_json,
           mechanics.data_json ->> '$.resetCadence' as reset_cadence,
           mechanics.data_json ->> '$.charges' as charges

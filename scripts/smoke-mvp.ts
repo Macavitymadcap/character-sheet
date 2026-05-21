@@ -1,5 +1,4 @@
 #!/usr/bin/env bun
-import puppeteer from "puppeteer";
 import { writeSeedAssetPlaceholders } from "../src/assets";
 import { RulesImportService } from "../src/rules";
 import { createInMemoryApp, login, requestText, startLocalServer, waitForHttp } from "./lib/local-app";
@@ -357,6 +356,7 @@ export async function runMvpSmoke() {
 }
 
 async function verifyLocalPlayBrowserStorage(baseUrl: string) {
+  const { default: puppeteer } = await import("puppeteer");
   const browser = await puppeteer.launch({
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });
