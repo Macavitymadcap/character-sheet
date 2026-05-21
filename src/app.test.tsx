@@ -120,10 +120,11 @@ describe("createApp", () => {
 
     expect(characters.status).toBe(200);
     expect(charactersHtml).toContain("<title>Local characters - Campaign Ledger</title>");
-    expect(charactersHtml).toContain("Browser-local character tracking");
+    expect(charactersHtml).toContain("Track a quick character on this device");
+    expect(charactersHtml).toContain("campaign-ledger.local-play.v1");
     expect(campaigns.status).toBe(200);
     expect(campaignsHtml).toContain("<title>Local campaigns - Campaign Ledger</title>");
-    expect(campaignsHtml).toContain("Browser-local campaign tracking");
+    expect(campaignsHtml).toContain("Track a quick campaign record on this device");
   });
 
   test("renders Lynott's authenticated sheet page with stable shell anchors", async () => {

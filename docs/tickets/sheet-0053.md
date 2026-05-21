@@ -44,3 +44,11 @@ import so the data is portable and honestly presented as local-only.
 - Invalid imports fail with a readable error and do not overwrite existing local data.
 - The UI is clear that browser-local data is not server-backed.
 - `bun run verify` passes.
+
+## Implementation Notes
+
+- Browser-local data is stored under `campaign-ledger.local-play.v1`.
+- JSON exports use schema `campaign-ledger.local-play`, version `1`, and include `characters`,
+  `campaigns`, `metadata.source = "browser-local"`, and `exportedAt`.
+- Import validation lives in `src/local-play/document.ts`; invalid imports report a readable error
+  in the local-play page and do not replace the current browser storage document.

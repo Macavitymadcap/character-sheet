@@ -7,6 +7,7 @@ export const pa11yTargets = [
   { label: "home", path: "/", role: "public" },
   { label: "login", path: "/login", role: "public" },
   { label: "local characters", path: "/local/characters", role: "public" },
+  { label: "local campaigns", path: "/local/campaigns", role: "public" },
   { label: "player roster", path: "/characters", role: "player" },
   { label: "sheet", path: "/sheet/lynott", role: "player" },
   { label: "rules", path: "/rules?type=spell&level=1", role: "public" },

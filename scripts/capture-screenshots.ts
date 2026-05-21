@@ -22,6 +22,24 @@ export const sheetScreenshotTargets = [
     theme: "dark",
   },
   {
+    action: "scroll-local-list",
+    fileName: "local-characters-light.png",
+    label: "Local characters light",
+    path: "/local/characters",
+    prepare: "local-play",
+    role: "public",
+    theme: "light",
+  },
+  {
+    action: "scroll-local-list",
+    fileName: "local-campaigns-dark.png",
+    label: "Local campaigns dark",
+    path: "/local/campaigns",
+    prepare: "local-play",
+    role: "public",
+    theme: "dark",
+  },
+  {
     fileName: "lynott-sheet-light.png",
     label: "Lynott sheet light",
     path: "/sheet/lynott",
@@ -255,6 +273,8 @@ export async function captureSheetScreenshots(
 
       if ("prepare" in target && target.prepare === "edited-sheet") {
         await prepareEditedSheet(baseUrl, playerCookie);
+      } else if ("prepare" in target && target.prepare === "local-play") {
+        await prepareLocalPlay(page, baseUrl);
       }
       await setTheme(page, baseUrl, target.theme);
       await setSessionCookie(page, baseUrl, cookie);
@@ -284,6 +304,7 @@ async function runScreenshotAction(
     | "edit-stealth"
     | "edit-strength"
     | "roll-stealth"
+    | "scroll-local-list"
     | "scroll-admin-users"
     | "scroll-roster-table"
     | "scroll-rule-detail"
@@ -291,6 +312,11 @@ async function runScreenshotAction(
 ) {
   if (action === "scroll-admin-users") {
     await scrollIntoView(page, ".admin-users-table");
+    return;
+  }
+
+  if (action === "scroll-local-list") {
+    await scrollIntoView(page, "#local-play-list-heading", -72);
     return;
   }
 
@@ -362,6 +388,43 @@ async function setTheme(page: Page, baseUrl: string, theme: "dark" | "light") {
 
     storage?.setItem("character-sheet-theme", nextTheme);
   }, theme);
+}
+
+async function prepareLocalPlay(page: Page, baseUrl: string) {
+  await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
+  await page.evaluate(() => {
+    const now = "2026-05-21T12:00:00.000Z";
+    const storage = (globalThis as {
+      localStorage?: { setItem: (key: string, value: string) => void };
+    }).localStorage;
+
+    storage?.setItem("campaign-ledger.local-play.v1", JSON.stringify({
+      campaigns: [
+        {
+          currentScene: "Clockwork lights over Rovnost",
+          id: "local-campaign-screenshot",
+          name: "Local Rovnost Notes",
+          notes: "Track session beats here, then export before clearing browser data.",
+          updatedAt: now,
+        },
+      ],
+      characters: [
+        {
+          className: "Cleric",
+          id: "local-character-screenshot",
+          level: 3,
+          name: "Mira Local",
+          notes: "Bless prepared for the market crossing.",
+          species: "Human",
+          updatedAt: now,
+        },
+      ],
+      exportedAt: now,
+      metadata: { source: "browser-local" },
+      schema: "campaign-ledger.local-play",
+      version: 1,
+    }));
+  });
 }
 
 async function prepareEditedSheet(baseUrl: string, cookie: string) {

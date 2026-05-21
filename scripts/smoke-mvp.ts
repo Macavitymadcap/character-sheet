@@ -1,4 +1,5 @@
 #!/usr/bin/env bun
+import puppeteer from "puppeteer";
 import { writeSeedAssetPlaceholders } from "../src/assets";
 import { RulesImportService } from "../src/rules";
 import { createInMemoryApp, login, requestText, startLocalServer, waitForHttp } from "./lib/local-app";
@@ -21,6 +22,7 @@ export const hostedRehearsalSmokeCoverage = [
   "player roster character creation",
   "sheet tabs",
   "SRD rules browsing",
+  "public local play storage import/export",
   "campaign sessions",
   "campaign wiki",
   "protected seeded assets",
@@ -129,6 +131,7 @@ export async function runMvpSmoke() {
     }
     await assertContains("public rules browse", `${baseUrl}/rules?type=spell&level=1`, "", "Bless");
     await assertContains("public rule detail", `${baseUrl}/rules/spell/bless`, "", "You bless up to three creatures");
+    await verifyLocalPlayBrowserStorage(baseUrl);
     await assertContains("signed-in rules browse", `${baseUrl}/rules?type=spell&level=1`, playerCookie, "Bless");
     await assertContains("sheet rule link", `${baseUrl}/sheet/lynott/tabs/spellcasting`, playerCookie, "/rules/spell/mage-hand");
 
@@ -280,6 +283,95 @@ export async function runMvpSmoke() {
     server.stop(true);
     runtime.close();
   }
+}
+
+async function verifyLocalPlayBrowserStorage(baseUrl: string) {
+  const browser = await puppeteer.launch({
+    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+  });
+
+  try {
+    const page = await browser.newPage();
+    await page.goto(`${baseUrl}/local/characters`, { waitUntil: "domcontentloaded" });
+    await page.type("#local-play-name", "Smoke Local");
+    await page.type("#local-play-species", "Human");
+    await page.type("#local-play-class", "Cleric");
+    await page.click("#local-play-level", { count: 3 });
+    await page.type("#local-play-level", "2");
+    await page.type("#local-play-notes", "Browser-only character smoke note.");
+    await page.click('button[type="submit"]');
+    await page.waitForFunction('document.body.textContent?.includes("Smoke Local")');
+    await page.click("[data-local-play-edit]");
+    await page.waitForFunction('document.body.textContent?.includes("Editing Smoke Local.")');
+    await page.evaluate('document.querySelector("#local-play-notes").value = ""');
+    await page.type("#local-play-notes", "Browser-only character smoke note, edited.");
+    await page.click('button[type="submit"]');
+    await page.waitForFunction('document.body.textContent?.includes("edited.")');
+
+    await page.goto(`${baseUrl}/local/campaigns`, { waitUntil: "domcontentloaded" });
+    await page.type("#local-play-name", "Smoke Campaign");
+    await page.type("#local-play-scene", "Testing the import table");
+    await page.type("#local-play-notes", "Browser-only campaign smoke note.");
+    await page.click('button[type="submit"]');
+    await page.waitForFunction('document.body.textContent?.includes("Smoke Campaign")');
+    await page.click("[data-local-play-export]");
+    await page.waitForFunction('document.body.textContent?.includes("Export prepared as a JSON file.")');
+
+    const exportedValue = await page.evaluate('localStorage.getItem("campaign-ledger.local-play.v1")');
+    const exported = typeof exportedValue === "string" ? exportedValue : "";
+    if (typeof exported !== "string" || exported.length === 0) {
+      throw new Error("Local play smoke did not write browser storage.");
+    }
+
+    await page.evaluate('localStorage.removeItem("campaign-ledger.local-play.v1")');
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await page.waitForFunction('document.body.textContent?.includes("No local campaigns yet.")');
+    await page.evaluate(fileImportScript(exported));
+    await page.waitForFunction('document.body.textContent?.includes("Import complete.")');
+    await page.waitForFunction('document.body.textContent?.includes("Smoke Campaign")');
+    page.once("dialog", async (dialog) => {
+      if (!dialog.message().includes("replace 2 records")) {
+        throw new Error(`Unexpected local play import confirmation: ${dialog.message()}`);
+      }
+      await dialog.dismiss();
+    });
+    await page.evaluate(fileImportScript(exported));
+    await page.waitForFunction('document.body.textContent?.includes("Import cancelled. Local data was not changed.")');
+
+    await page.goto(`${baseUrl}/local/characters`, { waitUntil: "domcontentloaded" });
+    await page.waitForFunction('document.body.textContent?.includes("Smoke Local")');
+    page.once("dialog", async (dialog) => {
+      if (!dialog.message().includes("Delete Smoke Local")) {
+        throw new Error(`Unexpected local play delete confirmation: ${dialog.message()}`);
+      }
+      await dialog.accept();
+    });
+    await page.click("[data-local-play-delete]");
+    await page.waitForFunction('document.body.textContent?.includes("Smoke Local deleted from this browser.")');
+    await page.waitForFunction('!document.body.textContent?.includes("Browser-only character smoke note, edited.")');
+
+    await page.evaluate('localStorage.setItem("campaign-ledger.local-play.v1", "not-json")');
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await page.evaluate(fileImportScript("{}"));
+    await page.waitForFunction(
+      'document.body.textContent?.includes("Import is not a Campaign Ledger local-play export.")',
+    );
+  } finally {
+    await browser.close();
+  }
+}
+
+function fileImportScript(json: string) {
+  return `
+    (() => {
+      const input = document.querySelector("[data-local-play-import]");
+      if (!input) throw new Error("Local play import input was not found.");
+      const transfer = new DataTransfer();
+      transfer.items.add(new File([${JSON.stringify(json)}], "campaign-ledger-local-play.json", { type: "application/json" }));
+      input.files = transfer.files;
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    })()
+  `;
 }
 
 async function assertContains(label: string, url: string, cookie: string, expected: string) {
