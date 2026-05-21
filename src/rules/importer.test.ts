@@ -163,7 +163,7 @@ describe("rules importer", () => {
         .query<{ count: number; id: string }, []>(
           `select count(*) as count, id
            from rules_entities
-           where slug = 'cure-wounds' and entity_type = 'spell'`,
+           where source_id = 'rules_source_phb' and slug = 'cure-wounds' and entity_type = 'spell'`,
         )
         .get();
       const mechanics = runtime.database

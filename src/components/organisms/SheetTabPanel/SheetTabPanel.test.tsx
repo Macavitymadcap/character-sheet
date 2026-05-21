@@ -143,6 +143,21 @@ const ruleLinks: CharacterRuleLink[] = [
     sourceName: "Player's Handbook",
     sourceSlug: "players-handbook",
   },
+  {
+    actionTiming: [],
+    charges: "",
+    contentCategory: "srd",
+    description: "The Armor table collects common armour categories and shield rules.",
+    entityName: "Armor",
+    entitySlug: "armor",
+    entityType: "equipment",
+    prepared: false,
+    resetCadence: "",
+    selected: true,
+    selectionType: "equipment_rule",
+    sourceName: "Systems Reference Document 5.1",
+    sourceSlug: "srd-5-1",
+  },
 ];
 
 const campaignFactions: CampaignFaction[] = [
@@ -233,7 +248,10 @@ describe("SheetTabPanel", () => {
     expect(spellcasting).toContain('aria-label="Spend one 1st-level spell slots"');
     expect(features).toContain("Repeating Shot");
     expect(features).toContain('<details class="accordion-item" name="feature-list">');
+    expect(features).not.toContain("Armor");
     expect(equipmentTab).toContain("Range 30/90 ft.");
+    expect(equipmentTab).toContain("Equipment rules");
+    expect(equipmentTab).toContain("The Armor table collects");
     expect(backgroundTab).toContain("Jonas Blarendon");
     expect(backgroundTab).toContain("Sergeant Kora Steelheart");
     expect(backgroundTab).toContain("Faction connection");

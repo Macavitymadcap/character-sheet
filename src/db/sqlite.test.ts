@@ -590,6 +590,27 @@ describe("SQLite repositories", () => {
     await importer.importFromLocalSource("docs/rules/classes/artificer/infusions/repeating-shot.md");
     await importer.importFromLocalSource("docs/rules/spells/level-0/mage-hand.md");
     await importer.importFromLocalSource("docs/rules/spells/level-1/shield.md");
+    await importer.importFromLocalSource("docs/rules/srd-5.1");
+    await importer.importFromLocalSource("docs/rules/srd-5.1-fixtures/spells/level-1/bless.md");
+    const srdSource = {
+      abbreviation: "SRD 5.1",
+      contentCategory: "srd" as const,
+      id: "rules_source_srd_5_1",
+      name: "Systems Reference Document 5.1",
+      precedence: 15,
+      slug: "srd-5-1",
+    };
+    for (const rulePath of [
+      "docs/rules/spells/level-0/guidance.md",
+      "docs/rules/spells/level-0/resistance.md",
+      "docs/rules/spells/level-0/spare-the-dying.md",
+      "docs/rules/spells/level-1/cure-wounds.md",
+      "docs/rules/spells/level-1/detect-magic.md",
+      "docs/rules/spells/level-1/purify-food-and-drink.md",
+      "docs/rules/spells/level-1/sanctuary.md",
+    ]) {
+      await importer.importFromLocalSource(rulePath, { publicExportEligible: true, source: srdSource });
+    }
 
     expect(runtime.repositories.campaignRepository.getCampaignBySlug("rovnost-shadows")).toEqual({
       gmUserId: "user_game_master",
@@ -761,6 +782,66 @@ describe("SQLite repositories", () => {
       actionTiming: ["Reaction"],
       description: expect.stringContaining("invisible barrier of magical force"),
     });
+    const miraRuleLinks = runtime.repositories.rulesRepository.listRuleLinksForCharacter("character_mira_voss");
+    expect(miraRuleLinks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          entityName: "Cleric",
+          entityType: "class",
+          prepared: false,
+          selected: true,
+          selectionType: "class",
+          sourceName: "Systems Reference Document 5.1",
+        }),
+        expect.objectContaining({
+          entityName: "Life Domain",
+          entityType: "class_feature",
+          selected: true,
+          selectionType: "subclass",
+          sourceName: "Systems Reference Document 5.1",
+        }),
+        expect.objectContaining({
+          entityName: "Spellcasting Focus",
+          entityType: "class_feature",
+          selected: true,
+          selectionType: "class_feature",
+          sourceName: "Systems Reference Document 5.1",
+        }),
+        expect.objectContaining({
+          entityName: "Medium Armor",
+          entityType: "equipment",
+          selected: true,
+          selectionType: "equipment_rule",
+          sourceName: "Systems Reference Document 5.1",
+        }),
+        expect.objectContaining({
+          entityName: "Guidance",
+          entityType: "spell",
+          prepared: true,
+          selectionType: "known_cantrip",
+          sourceName: "Systems Reference Document 5.1",
+        }),
+        expect.objectContaining({
+          description: expect.stringContaining("bless up to three creatures"),
+          entityName: "Bless",
+          prepared: true,
+          selectionType: "domain_spell",
+        }),
+        expect.objectContaining({
+          description: expect.stringContaining("regains a number of hit points"),
+          entityName: "Cure Wounds",
+          prepared: true,
+          selectionType: "domain_spell",
+        }),
+        expect.objectContaining({
+          description: expect.stringContaining("ward a creature"),
+          entityName: "Sanctuary",
+          prepared: true,
+          selectionType: "prepared_spell",
+        }),
+      ]),
+    );
+    expect(miraRuleLinks.map((link) => link.entityName)).not.toContain("Eldritch Cannon");
   });
 
   test("lists and filters imported SRD rules for browsing", async () => {
@@ -772,8 +853,8 @@ describe("SQLite repositories", () => {
     const entityTypeCounts = rules.listRuleEntityTypes();
     expect(entityTypeCounts).toContainEqual({ count: 1, entityType: "action" });
     expect(entityTypeCounts).toContainEqual({ count: 1, entityType: "species" });
-    expect(entityTypeCounts).toContainEqual({ count: 9, entityType: "spell" });
-    expect(rules.listRuleEntityTypes({ contentCategory: "srd" })).toContainEqual({ count: 1, entityType: "spell" });
+    expect(entityTypeCounts).toContainEqual({ count: 22, entityType: "spell" });
+    expect(rules.listRuleEntityTypes({ contentCategory: "srd" })).toContainEqual({ count: 8, entityType: "spell" });
     expect(rules.listRules({ entityType: "spell", spellLevel: 1 }).map((rule) => rule.slug)).toEqual([
       "bless",
     ]);
@@ -824,7 +905,9 @@ describe("SQLite repositories", () => {
     });
     const rules = runtime.repositories.rulesRepository;
 
-    expect(rules.listRules({ contentCategory: "srd" }).map((rule) => rule.slug)).toEqual(["bless"]);
+    expect(rules.listRules({ contentCategory: "srd" }).map((rule) => rule.slug)).toEqual(
+      expect.arrayContaining(["bless", "cleric", "life-domain"]),
+    );
     expect(rules.listRules().map((rule) => rule.slug)).not.toContain("special-operations");
     expect(rules.getRuleDetail("background", "special-operations")).toBeNull();
     expect(rules.listRules({ campaignIds: ["campaign_rovnost_shadows"] }).map((rule) => rule.slug))
@@ -879,8 +962,19 @@ describe("SQLite repositories", () => {
       expect.objectContaining({ id: "character_lynott_magulbisson", name: "Lynott Magulbisson" }),
       expect.objectContaining({ id: "character_mira_voss", name: "Mira Voss" }),
     ]);
-    expect(characters.listResources("character_mira_voss").map((resource) => resource.key)).toEqual(
-      standardCharacterResourceKeysForHitDie(8),
+    expect(characters.listResources("character_mira_voss").map((resource) => resource.key)).toEqual([
+      ...standardCharacterResourceKeysForHitDie(8),
+      "spell_slots_1",
+    ]);
+    expect(characters.getSheetById("character_mira_voss")?.abilities).toContainEqual(
+      expect.objectContaining({ ability: "wisdom", modifier: 3, saveModifier: 5, saveProficient: true }),
+    );
+    expect(characters.listEquipment("character_mira_voss")).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ equipped: true, name: "Scale mail" }),
+        expect.objectContaining({ equipped: true, name: "Shield with holy symbol" }),
+        expect.objectContaining({ name: "Mace" }),
+      ]),
     );
   });
 
