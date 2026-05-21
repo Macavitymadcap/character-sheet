@@ -1,18 +1,16 @@
 import { Button } from "../../atoms/Button";
 import { Panel } from "../../atoms/Panel";
 import { FormField } from "../../molecules/FormField";
-import { PasswordField } from "../../molecules/PasswordField";
 import { Layout } from "../../templates/Layout";
 
 interface InviteAcceptPageProps {
   appName: string;
   email: string;
-  error?: string;
   role: string;
   token: string;
 }
 
-export const InviteAcceptPage = ({ appName, email, error, role, token }: InviteAcceptPageProps) => {
+export const InviteAcceptPage = ({ appName, email, role, token }: InviteAcceptPageProps) => {
   return (
     <Layout title={appName}>
       <div class="shell login-shell">
@@ -24,11 +22,6 @@ export const InviteAcceptPage = ({ appName, email, error, role, token }: InviteA
             <p class="login-lede">
               {email} ({role.replace("_", " ")})
             </p>
-            {error ? (
-              <p class="form-error" role="alert">
-                {error}
-              </p>
-            ) : null}
             <form class="form-stack" action={`/invites/${token}`} method="post">
               <FormField
                 id="invite-display-name"
@@ -37,18 +30,7 @@ export const InviteAcceptPage = ({ appName, email, error, role, token }: InviteA
                 required
                 type="text"
               />
-              <PasswordField
-                autocomplete="new-password"
-                id="invite-password"
-                label="Password"
-                name="password"
-              />
-              <PasswordField
-                autocomplete="new-password"
-                id="invite-password-confirmation"
-                label="Confirm password"
-                name="passwordConfirmation"
-              />
+              <FormField id="invite-password" label="Password" name="password" required type="password" />
               <Button type="submit">Create account</Button>
             </form>
           </Panel>
@@ -57,3 +39,4 @@ export const InviteAcceptPage = ({ appName, email, error, role, token }: InviteA
     </Layout>
   );
 };
+

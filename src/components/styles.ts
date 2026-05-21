@@ -8,7 +8,6 @@ import { compactListStyles } from "./molecules/CompactList/CompactList.styles";
 import { diceRollerStyles } from "./molecules/DiceRoller/DiceRoller.styles";
 import { formFieldStyles } from "./molecules/FormField/FormField.styles";
 import { labelledOutputStyles } from "./molecules/LabelledOutput/LabelledOutput.styles";
-import { passwordFieldStyles } from "./molecules/PasswordField/PasswordField.styles";
 import { popoverMenuStyles } from "./molecules/PopoverMenu/PopoverMenu.styles";
 import { siteHeaderStyles } from "./molecules/SiteHeader/SiteHeader.styles";
 import { coreTabStyles } from "./organisms/CoreTab/CoreTab.styles";
@@ -35,7 +34,6 @@ export const appStyles = [
   diceRollerStyles,
   iconStyles,
   labelledOutputStyles,
-  passwordFieldStyles,
   popoverMenuStyles,
   panelStyles,
   switchStyles,

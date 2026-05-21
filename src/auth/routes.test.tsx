@@ -29,16 +29,10 @@ afterEach(() => {
   runtime.close();
 });
 
-const postForm = (
-  path: string,
-  body: Record<string, string>,
-  cookie?: string,
-  headers: Record<string, string> = {},
-) =>
+const postForm = (path: string, body: Record<string, string>, cookie?: string) =>
   app.request(path, {
     body: new URLSearchParams(body),
     headers: {
-      ...headers,
       ...(cookie ? { cookie } : {}),
       "Content-Type": "application/x-www-form-urlencoded",
     },
@@ -201,11 +195,10 @@ describe("admin and sheet guards", () => {
       "/admin/invites",
       { email: "new.player@example.local", role: "player" },
       adminCookie,
-      { Accept: "application/json" },
     );
     const invite = (await inviteResponse.json()) as { token: string };
     const resetResponse = await app.request("/admin/users/user_lynott_player/password-reset", {
-      headers: { accept: "application/json", cookie: adminCookie },
+      headers: { cookie: adminCookie },
       method: "POST",
     });
     const reset = (await resetResponse.json()) as { token: string };
@@ -219,12 +212,10 @@ describe("admin and sheet guards", () => {
     expect(inviteResponse.status).toBe(201);
     expect(invite).toMatchObject({
       email: "new.player@example.local",
-      inviteUrl: expect.stringContaining("/invites/"),
       role: "player",
     });
     expect(resetResponse.status).toBe(201);
     expect(reset).toMatchObject({
-      resetUrl: expect.stringContaining("/password-reset/"),
       userId: "user_lynott_player",
     });
     expect(readInvite.status).toBe(200);
@@ -236,59 +227,6 @@ describe("admin and sheet guards", () => {
     expect(await readReset.json()).toMatchObject({
       userId: "user_lynott_player",
     });
-  });
-
-  test("returns admin handoff links for browser invite and reset form submissions", async () => {
-    const adminCookie = await login("admin@example.local");
-    const inviteResponse = await postForm(
-      "/admin/invites",
-      { email: "browser.player@example.local", role: "player" },
-      adminCookie,
-    );
-    const resetResponse = await app.request("/admin/users/user_lynott_player/password-reset", {
-      headers: { cookie: adminCookie },
-      method: "POST",
-    });
-
-    expect(inviteResponse.status).toBe(303);
-    expect(inviteResponse.headers.get("location")).toContain("/admin?handoff=invite");
-    expect(inviteResponse.headers.get("location")).toContain("browser.player%40example.local");
-    expect(resetResponse.status).toBe(303);
-    expect(resetResponse.headers.get("location")).toContain("/admin?handoff=password_reset");
-
-    const inviteAdminPage = await app.request(inviteResponse.headers.get("location") ?? "", {
-      headers: { cookie: adminCookie },
-    });
-    const inviteHtml = await inviteAdminPage.text();
-    expect(inviteHtml).toContain("Invite ready");
-    expect(inviteHtml).toContain("/invites/");
-    expect(inviteHtml).toContain("Copy URL");
-    expect(inviteHtml).toContain("does not send email");
-  });
-
-  test("ignores external admin handoff URLs", async () => {
-    const adminCookie = await login("admin@example.local");
-
-    const externalResponse = await app.request(
-      "/admin?handoff=invite&url=https%3A%2F%2Fevil.example%2Finvites%2Ftoken&email=browser.player%40example.local&role=player&expires=2026-05-28T12%3A00%3A00.000Z",
-      {
-        headers: { cookie: adminCookie },
-      },
-    );
-    const malformedResponse = await app.request(
-      "/admin?handoff=invite&url=http%3A%2F%2F%5Bbad&email=browser.player%40example.local&role=player&expires=2026-05-28T12%3A00%3A00.000Z",
-      {
-        headers: { cookie: adminCookie },
-      },
-    );
-    const html = await externalResponse.text();
-    const malformedHtml = await malformedResponse.text();
-
-    expect(externalResponse.status).toBe(200);
-    expect(html).not.toContain("Invite ready");
-    expect(html).not.toContain("evil.example");
-    expect(malformedResponse.status).toBe(200);
-    expect(malformedHtml).not.toContain("Invite ready");
   });
 
   test("keeps admins from disabling themselves while allowing other admin status changes", async () => {
@@ -329,14 +267,12 @@ describe("admin and sheet guards", () => {
       "/admin/invites",
       { email: "new.player@example.local", role: "player" },
       adminCookie,
-      { Accept: "application/json" },
     );
     const invite = (await inviteResponse.json()) as { token: string };
 
     const accept = await postForm(`/invites/${invite.token}`, {
       displayName: "New Player",
       password: "new-password",
-      passwordConfirmation: "new-password",
     });
 
     expect(accept.status).toBe(303);
@@ -354,15 +290,12 @@ describe("admin and sheet guards", () => {
   test("lets password reset token holders set a new password", async () => {
     const adminCookie = await login("admin@example.local");
     const resetResponse = await app.request("/admin/users/user_lynott_player/password-reset", {
-      headers: { accept: "application/json", cookie: adminCookie },
+      headers: { cookie: adminCookie },
       method: "POST",
     });
     const reset = (await resetResponse.json()) as { token: string };
 
-    const useToken = await postForm(`/password-reset/${reset.token}`, {
-      password: "new-password",
-      passwordConfirmation: "new-password",
-    });
+    const useToken = await postForm(`/password-reset/${reset.token}`, { password: "new-password" });
 
     expect(useToken.status).toBe(303);
     expect(useToken.headers.get("location")).toBe("/login");
@@ -374,36 +307,5 @@ describe("admin and sheet guards", () => {
 
     expect(loginResponse.status).toBe(303);
     expect(loginResponse.headers.get("set-cookie")).toContain("character_sheet_session=");
-  });
-
-  test("rejects invite and reset password confirmation mismatches with form errors", async () => {
-    const adminCookie = await login("admin@example.local");
-    const inviteResponse = await postForm(
-      "/admin/invites",
-      { email: "mismatch.player@example.local", role: "player" },
-      adminCookie,
-      { Accept: "application/json" },
-    );
-    const invite = (await inviteResponse.json()) as { token: string };
-    const inviteMismatch = await postForm(`/invites/${invite.token}`, {
-      displayName: "Mismatch Player",
-      password: "one-password",
-      passwordConfirmation: "another-password",
-    });
-
-    const resetResponse = await app.request("/admin/users/user_lynott_player/password-reset", {
-      headers: { accept: "application/json", cookie: adminCookie },
-      method: "POST",
-    });
-    const reset = (await resetResponse.json()) as { token: string };
-    const resetMismatch = await postForm(`/password-reset/${reset.token}`, {
-      password: "one-password",
-      passwordConfirmation: "another-password",
-    });
-
-    expect(inviteMismatch.status).toBe(400);
-    expect(await inviteMismatch.text()).toContain("Passwords do not match.");
-    expect(resetMismatch.status).toBe(400);
-    expect(await resetMismatch.text()).toContain("Passwords do not match.");
   });
 });

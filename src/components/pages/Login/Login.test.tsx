@@ -17,8 +17,6 @@ describe("LoginPage", () => {
     expect(html).toContain('action="/login"');
     expect(html).toContain('name="email"');
     expect(html).toContain('name="password"');
-    expect(html).toContain("data-password-toggle");
-    expect(html).toContain('aria-controls="password"');
     expect(html).toContain('<button class="button" data-variant="primary" type="submit">Sign in</button>');
   });
 
