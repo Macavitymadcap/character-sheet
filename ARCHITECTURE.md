@@ -2,25 +2,27 @@
 
 Campaign Ledger is a local-first D&D 5e sheet app built with Hono, HTMX, Bun, TypeScript, JSX, and SQLite.
 
-The first MVP supports a seeded local workflow for Lynott Magulbisson, one Game Master, and one admin. It is intentionally designed as a server-rendered application, not a static markdown viewer: the database stores both durable character state and structured rules data, routes own mutation and permission checks, JSX components own semantic markup, and HTMX owns focused fragment swaps.
+The first MVP supports a seeded local workflow for Lynott Magulbisson, Mira Voss, one Game Master, and one admin. It is intentionally designed as a server-rendered application, not a static markdown viewer: the database stores both durable character state and structured rules data, routes own mutation and permission checks, JSX components own semantic markup, and HTMX owns focused fragment swaps.
 
-Railway deployment is active in `sheet-0030` as a hosted rehearsal of the existing SQLite app. A Postgres migration remains out of scope. The MVP should keep running locally with SQLite and keep the architecture compatible with a later database adapter.
+Railway deployment has a hosted rehearsal path from `sheet-0030` for the existing SQLite app. `sheet-0050` adds the campaign companion layer: public SRD rules, browser-local play, admin handoff, capability combinations, campaign private rules, richer rules rendering, Mira sheet content, and compact table-use layouts. A Postgres migration remains out of scope. The MVP should keep running locally with SQLite and keep the architecture compatible with a later database adapter.
 
 ## Goals
 
 - Keep runtime setup separate from app construction.
 - Use SQLite as the local source of truth for users, sheets, notes, mutable state, and structured rules data.
-- Seed enough D&D 2014 rules data to support Lynott without importing the whole rules corpus.
+- Seed enough D&D 2014 rules data to support Lynott and Mira, and import the accepted SRD 5.1 corpus for public rules browsing.
 - Normalise official 2014 material to the most recent 2014 reprint when sources overlap.
 - Use British English in user-facing copy, code naming, and CSS custom properties.
-- Enforce role-based access for player, Game Master, and admin flows.
+- Enforce capability-aware access for player, Game Master, and admin flows, including combined admin/player or admin/Game Master users.
 - Render full pages and HTMX fragments from the same component tree.
 - Keep persistence behind repository and service interfaces so a later Postgres epic does not rewrite route code.
 - Use a TDD approach for repositories, services, routes, components, HTMX contracts, accessibility, and screenshots.
 
 ## Core Shape
 
-The app follows the `pace-calculator` template. The full MVP source tree is expected to grow towards this shape as tickets land:
+The app follows the `pace-calculator`/Hyper-Dank template lineage. `sheet-0040` is planned to replace matching app-local framework pieces with the current Hyper-Dank packages where public contracts fit Campaign Ledger. Domain routes, schemas, repositories, sheet controls, campaign flows, and product copy stay app-owned.
+
+The full MVP source tree is expected to grow towards this shape as tickets land:
 
 ```text
 src/
@@ -116,6 +118,10 @@ The MVP page set:
 - `/login` login form using the shared site shell.
 - `/logout` sign-out confirmation page using the shared site shell.
 - `POST /logout` logout route that clears the session and redirects to `/`.
+- `/local/characters` public browser-local character tracking with export/import.
+- `/local/campaigns` public browser-local campaign tracking with export/import.
+- `/rules` public SRD rules browse route, with signed-in campaign scope added where permitted.
+- `/rules/:entityType/:slug` public SRD detail route, with private campaign rules protected by membership.
 - `/campaigns/:campaignSlug` campaign shell with player-visible wiki pages and Game Master-only management forms.
 - `/campaigns/:campaignSlug/wiki/:wikiSlug` campaign wiki detail page filtered by player or Game Master visibility.
 - `/campaigns/:campaignSlug/assets/:assetId` protected image asset route backed by app-managed local storage.
@@ -131,7 +137,7 @@ The MVP page set:
 - `POST /sheet/:characterId/notes` note creation route that returns the notes tab panel.
 - `PATCH /sheet/:characterId/notes/:noteId` note update route that returns the notes tab panel.
 - `POST /sheet/:characterId/notes/:noteId/delete` note delete route that returns the notes tab panel.
-- `/admin` admin shell with local invite creation.
+- `/admin` admin shell with account status, invite links, reset links, and compact management cards.
 
 The site header is sticky and contains:
 
@@ -173,11 +179,11 @@ The MVP has no more than ten users. It starts with four seeded users:
 | Role | Initial user | Permissions |
 | --- | --- | --- |
 | Player | Lynott player | Manage their character roster, create manual campaign characters, read Lynott's sheet, and update table-use state such as resources, conditions, equipment, rests, rolls, and their existing player note. |
-| Player | Mira player | Seeded second player used to prove group roster, campaign membership, manual character creation, and faction-choice behaviour. |
+| Player | Mira player | Seeded second player with cleric-derived spells, actions, equipment, rule links, and group roster/campaign membership coverage. |
 | Game Master | Campaign GM | Manage the campaign roster, create manual characters for player members, read and update sheet state and existing player/Game Master notes, plus view the seeded campaign shell. |
-| Admin | Site admin | Access the admin shell, create local invite tokens, and use local password-reset token routes by known user id. |
+| Admin | Site admin | Access the admin shell, create local invite/reset links, and manage user status. Admin capability can coexist with campaign membership, but admin alone does not grant sheet play-edit or campaign access. |
 
-Permission checks should live in shared guards, not scattered through components. Components may hide unavailable controls, but routes must enforce access. Campaign guards centralise membership checks, Game Master management checks, character ownership, and player-visible versus Game-Master-only campaign content.
+Permission checks should live in shared guards, not scattered through components. Components may hide unavailable controls, but routes must enforce access. Campaign guards centralise membership checks, Game Master management checks, character ownership, and player-visible versus Game-Master-only campaign content. Admin checks are capability-based so combined admin/player and admin/Game Master users can keep both their admin tooling and their campaign access without treating admin as a campaign bypass.
 
 Local authentication uses PBKDF2 password hashes, SQLite-backed sessions, and HTTP-only signed cookies. Seeded development users share the local-only password documented in `README.md`; production-grade password rotation and external identity providers remain out of scope for this MVP.
 
@@ -278,8 +284,8 @@ The importer lives behind `RulesImportService` and `RulesSeedRepository`. The SR
 contract in `docs/rules-srd-import.md` keeps the epic offline and local-first: full corpus files
 belong under `docs/rules/srd-5.1/`, contract fixtures live under
 `docs/rules/srd-5.1-fixtures/`, and unsupported files are reported without failing the import.
-Rule sources are categorised as `srd`, `local`, or `third_party` so the app can import SRD data
-without deleting or mislabelling Lynott's existing non-SRD rules.
+Rule sources are categorised as `srd`, `local`, `third_party`, or campaign-scoped private material
+so the app can import SRD data without deleting or mislabelling existing non-SRD rules.
 Runtime rules reads stay behind `RulesRepository`, which exposes type counts, filtered/searchable
 summaries, detail lookups, and character rule links for route and sheet rendering.
 
@@ -294,6 +300,17 @@ The seed data must support Lynott as described in `docs/characters/Lynott-Magulb
 - Known and prepared spells needed by the sheet, including artificer and Artillerist spells.
 - Known and active infusions, including Enhanced Defence and Repeating Shot.
 - Equipment, false identities, background, NPCs, and notes.
+
+## Mira MVP Coverage
+
+The seed data must support Mira Voss as a credible table-use cleric until a broader character
+builder exists:
+
+- Cleric-derived class data, hit dice, spellcasting ability, armour, shield, hit points, and saves.
+- Prepared cantrips and levelled spells with imported SRD rule links where available.
+- Spell slots, class resources, equipment, actions, and feature disclosures that render playable
+  rule text instead of placeholder notes.
+- Character ownership and roster membership independent from Lynott.
 
 ## Component Model
 
@@ -328,7 +345,7 @@ Development should be tests first where practical:
 - Route tests call `app.request()` and assert status codes, redirects, session cookies, role enforcement, validation failures, full pages, and HTMX fragments.
 - Component tests render JSX to strings and assert semantic HTML, labels, headings, ARIA, HTMX attributes, and empty states.
 - Accessibility tests run Pa11y against public, player, Game Master, wiki, roster, sheet, rules, logout, and admin pages once a runnable app exists.
-- Screenshot tests capture sheet, roster, campaign, rules, wiki, faction, and edited-sheet states for user-facing UI changes.
+- Screenshot tests capture public home, local play, sheet, roster, campaign, rules, wiki, faction, admin, compact edit, roll result, and edited-sheet states for user-facing UI changes.
 - MVP smoke tests exercise seeded login, player and Game Master character creation, sheet navigation, manual edits, resource mutation, note saving, faction selection, SRD fixture imports, rules browsing, sheet rule links, session records, wiki reads and writes, image assets, role pages, admin account preparation, and logout.
 
 The minimum verification before a source-code ticket is complete:
@@ -337,7 +354,7 @@ The minimum verification before a source-code ticket is complete:
 bun run verify
 ```
 
-The accessibility script currently checks public `/` and `/login`, player `/characters`, `/sheet/lynott`, `/rules`, `/rules/spell/bless`, `/campaigns/rovnost-shadows/wiki/factions-guide`, and `/logout`, Game Master `/campaigns/rovnost-shadows` and `/campaigns/rovnost-shadows/characters`, and admin `/admin`. The MVP smoke script renders every sheet tab fragment directly and walks the group-use flows for character creation, manual edits, notes, faction choice, SRD fixture import, rules browsing, sheet rule links, sessions, wiki, protected seeded assets, image upload, admin account preparation, and logout protection. The screenshot script captures sheet, roster, campaign, rules, wiki, faction, and edited-sheet states to `docs/pr-screenshots/` by default. [Hosted Rehearsal Acceptance](./docs/operations/hosted-rehearsal-acceptance.md) records the final `sheet-0030` acceptance checklist.
+The accessibility script currently checks public `/`, `/login`, `/local/characters`, `/local/campaigns`, `/rules`, and `/rules/spell/bless`, player `/characters`, `/sheet/lynott`, `/campaigns/rovnost-shadows/wiki/factions-guide`, and `/logout`, Game Master `/campaigns/rovnost-shadows` and `/campaigns/rovnost-shadows/characters`, and admin `/admin`. The MVP smoke script renders every sheet tab fragment directly and walks the group-use flows for character creation, manual edits, notes, faction choice, full SRD import, public browser-local play import/export, rules browsing, private campaign rules, sheet rule links, Mira content, sessions, wiki, protected seeded assets, image upload, combined admin campaign access, admin account handoff, and logout protection. The screenshot script captures public home, local play, sheet, roster, campaign, rules, wiki, faction, admin, compact edit, roll result, and edited-sheet states to `docs/pr-screenshots/` by default for deliberate PR evidence refreshes; `bun run verify` overrides `SCREENSHOT_DIR` to a temporary directory so routine acceptance runs do not churn committed screenshots. [Hosted Rehearsal Acceptance](./docs/operations/hosted-rehearsal-acceptance.md) records the final `sheet-0030` acceptance checklist; [Campaign Companion Acceptance](./docs/operations/campaign-companion-acceptance.md) records the completed `sheet-0050` acceptance checklist and follow-ups.
 
 ## Pipeline
 
@@ -357,7 +374,7 @@ flowchart LR
     I -- "No" --> J["Epic PR into main"]
 ```
 
-Release automation can be added after the MVP scaffold exists. The group-use MVP is ready for local checkout, seed, verification, table rehearsal, and imported SRD 5.1 rules. `sheet-0020` completed the full SRD rules roadmap slice. The roadmap now reserves `sheet-0030` for Railway deployment with seeded hosted accounts/passwords, `sheet-0050` for campaign companion, public play, and rules-content product work, and `sheet-0040` for Hyper-Dank package adoption.
+Release automation can be added after the MVP scaffold exists. The group-use MVP is ready for local checkout, seed, verification, table rehearsal, public SRD browsing, browser-local play, campaign private rules, and imported SRD 5.1 rules. `sheet-0020` completed the full SRD rules roadmap slice. `sheet-0030` completed the Railway rehearsal path. `sheet-0050` completed the campaign companion, public play, and rules-content product slice. The next planned roadmap slice is `sheet-0040` for Hyper-Dank package adoption.
 
 ## Design Decisions
 
@@ -367,6 +384,6 @@ Release automation can be added after the MVP scaffold exists. The group-use MVP
 - Local password auth is in scope now; external identity providers are not.
 - Admin invite and password reset flows are local workflows without email delivery in this epic.
 - Live 5e.tools fetching is out of scope; local imports are available through `bun run import:rules`, and `sheet-0020` expanded that path to the full SRD 5.1 local corpus.
-- Character deletion, campaign subpage splitting (`sheet-0037`), wiki-management polish, image-management polish, faction-management UI, production secrets, Postgres, email delivery, and Hyper-Dank adoption are deferred to later epics. Railway deployment is the focus of `sheet-0030`; public SRD access, browser-local public play, richer campaign rules content, and the broader app rename are planned in `sheet-0050`.
+- Character deletion, campaign subpage splitting (`sheet-0037`), wiki-management polish, image-management polish, faction-management UI, production secrets, Postgres, and email delivery are deferred to later epics. Hyper-Dank package adoption is planned as `sheet-0040` before the next large Game Master prep/content-import epic.
 - British English is required across copy, docs, code naming, and CSS variables.
 - The first implementation sequence is documentation and tickets, then source code through accepted tickets.

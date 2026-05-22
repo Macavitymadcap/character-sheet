@@ -2,7 +2,7 @@
 
 A local-first D&D 5e campaign ledger for character sheets, campaign records, and table-use rules, built as a Hono + HTMX + SQLite application.
 
-The first MVP focuses on a small table: one player character, one Game Master, and one admin. It runs locally with SQLite, uses server-rendered HTML fragments for sheet interactions, and stores D&D 2014 rules data in structured database tables rather than treating markdown as the runtime source of truth. The group-use campaign work now adds multiple players, multiple campaign characters, local character creation, wiki pages, image assets, factions, faction choices, and session records.
+The first MVP focuses on a small table: player characters, one Game Master, and one admin. It runs locally with SQLite, uses server-rendered HTML fragments for sheet interactions, and stores D&D 2014 rules data in structured database tables rather than treating markdown as the runtime source of truth. The campaign companion work now adds public SRD rules, browser-local play tools, multiple players, multiple campaign characters, local character creation, wiki pages, image assets, factions, faction choices, session records, campaign-scoped private rules, and compact table-use UX.
 
 For the architecture and data model, see [ARCHITECTURE.md](./ARCHITECTURE.md). For the contribution and ticket workflow, see [CONTRIBUTING.md](./CONTRIBUTING.md).
 
@@ -10,15 +10,16 @@ For the architecture and data model, see [ARCHITECTURE.md](./ARCHITECTURE.md). F
 
 - Local SQLite persistence with enough data to support Lynott, a second seeded player, a Game Master, and an admin.
 - Password-based local authentication with seeded users, sessions, admin invites, and admin-triggered password reset tokens.
+- Public SRD rules browsing and browser-local character/campaign tracking with versioned export/import for signed-out visitors.
 - Role-based access:
   - Seeded players can manage their character roster, create manual campaign characters, read their own sheets, and update table-use state such as hit points, resources, conditions, equipment, rolls, rests, and player-visible notes.
   - The seeded Game Master can manage the campaign roster, create manual campaign characters for player members, read and update sheet state, manage player/Game Master notes, and maintain campaign session records.
-  - The seeded admin can access the admin shell, create local invite tokens, and use the local password-reset token endpoint when a target user id is known.
+  - The seeded admin can access the admin shell, create local invite links, prepare password reset links, and also keep player or Game Master campaign membership when explicitly granted.
 - A mobile-first sheet page with sticky site and character headers, compact combat/resource controls, dark mode, and tabbed sheet sections.
-- Structured D&D 2014 rules data seeded from local sources, normalised to the most recent 2014 official reprint where a rule appears in multiple books.
+- Structured D&D 2014 rules data seeded from local sources, normalised to the most recent 2014 official reprint where a rule appears in multiple books, with public SRD visibility separated from local/private campaign material.
 - British English in product copy, docs, code naming, and CSS custom properties.
 
-The MVP remains intentionally local-first in its data model, but `sheet-0030` now adds the first Railway hosted-rehearsal path. Character deletion UI, richer rule-mechanics rendering, hosted backup/reset automation, and migration from SQLite to Postgres are deferred to later tickets or epics. The current schema and repositories already include the group-use foundations those flows will need.
+The MVP remains intentionally local-first in its data model, while `sheet-0030` adds the first Railway hosted-rehearsal path and `sheet-0050` completes the public campaign companion slice. Character deletion UI, campaign subpage splitting, hosted backup/reset automation, production email delivery, and migration from SQLite to Postgres are deferred to later tickets or epics. The current schema and repositories already include the group-use foundations those flows will need.
 
 ## Stack
 
@@ -29,7 +30,7 @@ The MVP remains intentionally local-first in its data model, but `sheet-0030` no
 - SQLite through Bun's SQLite APIs for local persistence.
 - Pa11y and screenshots for accessibility and visual review once the UI exists.
 
-The app follows the `pace-calculator` template: runtime setup stays separate from `createApp()`, repositories hide database details from routes and components, components own semantic markup, and HTMX attributes make browser interaction visible in HTML. The current `pace-calculator` Hyper-Dank packages remain a pattern reference rather than runtime dependencies for this app.
+The app follows the `pace-calculator`/Hyper-Dank template lineage: runtime setup stays separate from `createApp()`, repositories hide database details from routes and components, components own semantic markup, and HTMX attributes make browser interaction visible in HTML. The current Hyper-Dank packages remain a pattern reference rather than runtime dependencies for this app until the planned `sheet-0040` adoption epic.
 
 ## Local Setup
 
@@ -42,13 +43,15 @@ bun run dev
 
 For a fresh local database, run `bun run seed` before signing in. App startup only applies schema bootstrap; it does not reseed mutable records.
 
-The development server should default to `http://localhost:3000`. The root page is public, keeps the shared header for signed-in users, and links to sign in or continue to the user's role workspace. The login route still sends users to their default role home after successful sign in:
+The development server should default to `http://localhost:3000`. The root page is public, keeps the shared header for signed-in users, and links to public SRD rules, browser-local characters/campaigns, sign-in, or the user's role workspace. The login route still sends users to their default role home after successful sign in:
 
 | Role | Default route |
 | --- | --- |
 | Player | `/characters` |
 | Game Master | `/campaigns/rovnost-shadows` |
 | Admin | `/admin` |
+
+Signed-out visitors can browse public SRD rules at `/rules`, open public rule details such as `/rules/spell/bless`, and use browser-local play at `/local/characters` and `/local/campaigns`. Local-play data stays in browser storage until exported or imported by the user.
 
 After signing in as a seeded player, their roster and manual create-character form are available at `/characters`. Game Masters can manage the campaign roster and create characters for player members at `/campaigns/rovnost-shadows/characters`.
 
@@ -64,7 +67,7 @@ The notes tab creates, updates, and deletes visible player or Game Master notes 
 
 The Game Master campaign page lists campaign session records and includes local forms for creating, updating, and deleting table prep or recap entries with player-visible or Game-Master-only visibility.
 
-The local group-use workflow is ready for table rehearsal: seed the database, sign in as Lynott or Mira to create player-owned characters, use the Game Master account to manage the campaign roster, sessions, wiki pages, image assets, and faction context, and use the admin account to prepare invite and password-reset tokens. The hosted Railway work in `sheet-0030` rehearses that same MVP remotely without changing the local-first data model.
+The local group-use workflow is ready for table rehearsal: seed the database, sign in as Lynott or Mira to create player-owned characters, use the Game Master account to manage the campaign roster, sessions, wiki pages, image assets, private campaign rules sources, and faction context, and use the admin account to prepare invite and password-reset links. The hosted Railway work in `sheet-0030` rehearses that same MVP remotely without changing the local-first data model.
 
 Current environment variables:
 
@@ -81,7 +84,7 @@ SQLite database files and sidecar files should remain ignored by Git.
 
 For Railway rehearsal setup, including hosted values for these variables, see [Railway Hosted Rehearsal](./docs/deployment/railway.md).
 For manual hosted user preparation, invite handoff, and password-reset handoff, see [Hosted Account Operator Runbook](./docs/operations/hosted-account-runbook.md).
-For the final local and hosted browser acceptance checklist, see [Hosted Rehearsal Acceptance](./docs/operations/hosted-rehearsal-acceptance.md).
+For the final local and hosted browser acceptance checklist, see [Hosted Rehearsal Acceptance](./docs/operations/hosted-rehearsal-acceptance.md). For the completed campaign companion epic acceptance record, see [Campaign Companion Acceptance](./docs/operations/campaign-companion-acceptance.md).
 
 Local seed users are available for development:
 
@@ -121,17 +124,17 @@ bun run typecheck
 bun run verify
 ```
 
-`bun run verify` runs typecheck, component and route tests, documentation reference checks, accessibility checks, the group-use MVP smoke workflow, and screenshot capture in sequence. It is the local acceptance gate for the first hosted rehearsal.
+`bun run verify` runs typecheck, component and route tests, documentation reference checks, accessibility checks, the group-use MVP smoke workflow, and screenshot capture in sequence. It writes verification screenshots to a temporary directory by default so acceptance runs do not churn committed PR evidence images. It is the local acceptance gate for the first hosted rehearsal.
 
 `bun run hosted:data -- migrate` applies the SQLite schema without seed data, which is what normal hosted startup relies on. `prepare`, `backup`, and `restore` are reserved for hosted rehearsal operations and are documented in [Railway Hosted Rehearsal](./docs/deployment/railway.md).
 
-Hosted account setup stays manual for this epic. Admin-created invite and password-reset tokens are copied from the admin response and shared privately by the operator; no email delivery is implied or configured. See [Hosted Account Operator Runbook](./docs/operations/hosted-account-runbook.md).
+Hosted account setup stays manual for this epic. Admin-created invite and password-reset links are copied from the admin UI and shared privately by the operator; no email delivery is implied or configured. See [Hosted Account Operator Runbook](./docs/operations/hosted-account-runbook.md).
 
-`bun run test:a11y` starts an in-memory app on an available local port and runs Pa11y against public `/` and `/login`, player `/characters`, `/sheet/lynott`, `/rules`, `/rules/spell/bless`, `/campaigns/rovnost-shadows/wiki/factions-guide`, and `/logout`, Game Master `/campaigns/rovnost-shadows` and `/campaigns/rovnost-shadows/characters`, and admin `/admin`.
+`bun run test:a11y` starts an in-memory app on an available local port and runs Pa11y against public `/`, `/login`, `/local/characters`, `/local/campaigns`, `/rules`, and `/rules/spell/bless`, player `/characters`, `/sheet/lynott`, `/campaigns/rovnost-shadows/wiki/factions-guide`, and `/logout`, Game Master `/campaigns/rovnost-shadows` and `/campaigns/rovnost-shadows/characters`, and admin `/admin`.
 
-`bun run smoke:mvp` starts an in-memory app and walks the seeded group-use workflow: player login, roster character creation, manual sheet editing, resource mutation, player notes, faction selection, every sheet tab fragment, SRD fixture import, rules browsing, sheet rule links, logout protection, Game Master roster creation, campaign session creation, wiki reads and writes, protected seeded asset reads, image upload, and admin invite/password-reset preparation.
+`bun run smoke:mvp` starts an in-memory app and walks the seeded group-use workflow: player login, roster character creation, manual sheet editing, resource mutation, player notes, faction selection, every sheet tab fragment, full SRD import, public and signed-in rules browsing, browser-local play export/import, sheet rule links, logout protection, Game Master roster creation, campaign session creation, wiki reads and writes, campaign private rules, protected seeded asset reads, image upload, combined admin campaign access, and admin invite/password-reset handoff.
 
-`bun run screenshots:sheet` captures Lynott's sheet in light and dark mode, the Background tab faction picker, the player roster, the Game Master campaign page, rules list/detail pages, a wiki page with image references, and an edited sheet state. Screenshots are written to `docs/pr-screenshots/` by default, which is ignored by Git. Set `SCREENSHOT_DIR` to write them elsewhere.
+`bun run screenshots:sheet` captures public home, local play, Lynott's sheet in light and dark mode, core/skills edit states, roll results, Mira spellcasting, the Background tab faction picker, player and admin roster/cards, the Game Master campaign page, campaign assets and rules sources, rules list/detail pages, a wiki page with image references, and edited sheet states. Screenshots are written to `docs/pr-screenshots/` by default for deliberate PR evidence refreshes. Set `SCREENSHOT_DIR` to write them elsewhere.
 
 `bun run import:rules` imports local markdown or JSON rule files from `docs/rules` by default into the configured SQLite database. Pass a path to import one file or directory:
 
@@ -150,11 +153,11 @@ bun run protect:branches
 
 The SRD import contract is documented in [SRD 5.1 Rules Import Contract](./docs/rules-srd-import.md). The full local SRD corpus lives under `docs/rules/srd-5.1/`; `docs/rules/srd-5.1-fixtures/` contains small parser-contract fixtures only. Existing Lynott rules from non-SRD sources remain supported as local or third-party rule-source categories.
 
-Signed-in users can browse imported rules at `/rules`, filter by type, spell level, equipment category, and search text, and open detail pages such as `/rules/spell/bless`. Sheet spell and feature entries link back to their rule detail pages where imported rule links exist.
+Public users can browse SRD rules at `/rules`, filter by type, spell level, equipment category, and search text, and open public detail pages such as `/rules/spell/bless`. Signed-in campaign members can also see permitted local or campaign-scoped private sources. Sheet spell and feature entries link back to their rule detail pages where imported rule links exist.
 
 ## Deployment Readiness
 
-The current app is ready for fresh local checkout, seed, verification, Railway deployment rehearsal, and table-use rehearsal with SQLite, Railway volume-backed asset storage, manual hosted account handoff, and imported SRD 5.1 rules. `sheet-0020` completed the SRD rules roadmap slice. `sheet-0030` is the active Railway deployment epic; the first runtime configuration lives in [`railway.json`](./railway.json), with service setup documented in [Railway Hosted Rehearsal](./docs/deployment/railway.md) and final acceptance in [Hosted Rehearsal Acceptance](./docs/operations/hosted-rehearsal-acceptance.md). `sheet-0037` captures campaign subpage splitting after the rehearsal, `sheet-0050` plans the next campaign companion, public play, and rules-content product slice, and the roadmap still reserves `sheet-0040` for Hyper-Dank package adoption.
+The current app is ready for fresh local checkout, seed, verification, Railway deployment rehearsal, and table-use rehearsal with SQLite, Railway volume-backed asset storage, manual hosted account handoff, imported SRD 5.1 rules, public browser-local play, campaign-scoped private rules, richer Mira sheet data, and compact table-use surfaces. `sheet-0020` completed the SRD rules roadmap slice. `sheet-0030` completed the Railway rehearsal path; the first runtime configuration lives in [`railway.json`](./railway.json), with service setup documented in [Railway Hosted Rehearsal](./docs/deployment/railway.md) and final acceptance in [Hosted Rehearsal Acceptance](./docs/operations/hosted-rehearsal-acceptance.md). `sheet-0050` completed the campaign companion, public play, and rules-content product slice. The next planned epic is `sheet-0040` Hyper-Dank package adoption so future Game Master prep work can build on shared framework primitives instead of expanding app-local scaffolding.
 
 ## TDD Approach
 
