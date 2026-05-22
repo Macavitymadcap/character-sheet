@@ -30,7 +30,7 @@ The MVP remains intentionally local-first in its data model, while `sheet-0030` 
 - SQLite through Bun's SQLite APIs for local persistence.
 - Pa11y and screenshots for accessibility and visual review once the UI exists.
 
-The app follows the `pace-calculator`/Hyper-Dank template lineage: runtime setup stays separate from `createApp()`, repositories hide database details from routes and components, components own semantic markup, and HTMX attributes make browser interaction visible in HTML. The current Hyper-Dank packages remain a pattern reference rather than runtime dependencies for this app until the planned `sheet-0040` adoption epic.
+The app follows the Hyper-Dank template lineage: runtime setup stays separate from `createApp()`, repositories hide database details from routes and components, components own semantic markup, and HTMX attributes make browser interaction visible in HTML. `sheet-0040` is now planned to adopt the current Hyper-Dank packages as runtime dependencies where their public contracts fit Campaign Ledger.
 
 ## Local Setup
 
@@ -209,6 +209,14 @@ Development tickets should be implemented tests first wherever the boundary is t
 - [Ticket sheet-0035](./docs/tickets/sheet-0035.md)
 - [Ticket sheet-0036](./docs/tickets/sheet-0036.md)
 - [Ticket sheet-0037](./docs/tickets/sheet-0037.md)
+- [Epic sheet-0040](./docs/epics/sheet-0040.md)
+- [Ticket sheet-0041](./docs/tickets/sheet-0041.md)
+- [Ticket sheet-0042](./docs/tickets/sheet-0042.md)
+- [Ticket sheet-0043](./docs/tickets/sheet-0043.md)
+- [Ticket sheet-0044](./docs/tickets/sheet-0044.md)
+- [Ticket sheet-0045](./docs/tickets/sheet-0045.md)
+- [Ticket sheet-0046](./docs/tickets/sheet-0046.md)
+- [Ticket sheet-0047](./docs/tickets/sheet-0047.md)
 - [Epic sheet-0050](./docs/epics/sheet-0050.md)
 - [Ticket sheet-0051](./docs/tickets/sheet-0051.md)
 - [Ticket sheet-0052](./docs/tickets/sheet-0052.md)

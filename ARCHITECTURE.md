@@ -20,7 +20,11 @@ Railway deployment has a hosted rehearsal path from `sheet-0030` for the existin
 
 ## Core Shape
 
-The app follows the `pace-calculator`/Hyper-Dank template lineage. `sheet-0040` is planned to replace matching app-local framework pieces with the current Hyper-Dank packages where public contracts fit Campaign Ledger. Domain routes, schemas, repositories, sheet controls, campaign flows, and product copy stay app-owned.
+The app follows the Hyper-Dank template lineage. `sheet-0040` is planned to replace matching
+app-local framework pieces with the current Hyper-Dank packages: `@macavitymadcap/hyper-dank-ui`,
+`@macavitymadcap/hyper-dank-data`, `@macavitymadcap/hyper-dank-transport`, and
+`@macavitymadcap/hyper-dank-automation`. Domain routes, schemas, repositories, sheet controls,
+campaign flows, and product copy stay app-owned.
 
 The full MVP source tree is expected to grow towards this shape as tickets land:
 
@@ -374,7 +378,7 @@ flowchart LR
     I -- "No" --> J["Epic PR into main"]
 ```
 
-Release automation can be added after the MVP scaffold exists. The group-use MVP is ready for local checkout, seed, verification, table rehearsal, public SRD browsing, browser-local play, campaign private rules, and imported SRD 5.1 rules. `sheet-0020` completed the full SRD rules roadmap slice. `sheet-0030` completed the Railway rehearsal path. `sheet-0050` completed the campaign companion, public play, and rules-content product slice. The next planned roadmap slice is `sheet-0040` for Hyper-Dank package adoption.
+Release automation can be added after the MVP scaffold exists. The group-use MVP is ready for local checkout, seed, verification, table rehearsal, public SRD browsing, browser-local play, campaign private rules, and imported SRD 5.1 rules. `sheet-0020` completed the full SRD rules roadmap slice. `sheet-0030` completed the Railway rehearsal path. `sheet-0050` completed the campaign companion, public play, and rules-content product slice. The next planned roadmap slice is `sheet-0040` for Hyper-Dank package adoption so later product work can reuse shared UI, transport, data, and automation primitives.
 
 ## Design Decisions
 
