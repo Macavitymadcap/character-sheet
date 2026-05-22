@@ -29,7 +29,7 @@ The MVP remains intentionally local-first in its data model, but `sheet-0030` no
 - SQLite through Bun's SQLite APIs for local persistence.
 - Pa11y and screenshots for accessibility and visual review once the UI exists.
 
-The app follows the `pace-calculator` template: runtime setup stays separate from `createApp()`, repositories hide database details from routes and components, components own semantic markup, and HTMX attributes make browser interaction visible in HTML. The current `pace-calculator` Hyper-Dank packages remain a pattern reference rather than runtime dependencies for this app.
+The app follows the Hyper-Dank template lineage: runtime setup stays separate from `createApp()`, repositories hide database details from routes and components, components own semantic markup, and HTMX attributes make browser interaction visible in HTML. `sheet-0040` is now planned to adopt the current Hyper-Dank packages as runtime dependencies where their public contracts fit Campaign Ledger.
 
 ## Local Setup
 
@@ -154,7 +154,7 @@ Signed-in users can browse imported rules at `/rules`, filter by type, spell lev
 
 ## Deployment Readiness
 
-The current app is ready for fresh local checkout, seed, verification, Railway deployment rehearsal, and table-use rehearsal with SQLite, Railway volume-backed asset storage, manual hosted account handoff, and imported SRD 5.1 rules. `sheet-0020` completed the SRD rules roadmap slice. `sheet-0030` is the active Railway deployment epic; the first runtime configuration lives in [`railway.json`](./railway.json), with service setup documented in [Railway Hosted Rehearsal](./docs/deployment/railway.md) and final acceptance in [Hosted Rehearsal Acceptance](./docs/operations/hosted-rehearsal-acceptance.md). `sheet-0037` captures campaign subpage splitting after the rehearsal, `sheet-0050` plans the next campaign companion, public play, and rules-content product slice, and the roadmap still reserves `sheet-0040` for Hyper-Dank package adoption.
+The current app is ready for fresh local checkout, seed, verification, Railway deployment rehearsal, and table-use rehearsal with SQLite, Railway volume-backed asset storage, manual hosted account handoff, and imported SRD 5.1 rules. `sheet-0020` completed the SRD rules roadmap slice. `sheet-0030` completed the Railway rehearsal path; the first runtime configuration lives in [`railway.json`](./railway.json), with service setup documented in [Railway Hosted Rehearsal](./docs/deployment/railway.md) and final acceptance in [Hosted Rehearsal Acceptance](./docs/operations/hosted-rehearsal-acceptance.md). `sheet-0050` is the current campaign companion, public play, and rules-content product slice. The next planned epic is `sheet-0040` Hyper-Dank package adoption so future GM prep work can build on shared framework primitives instead of expanding app-local scaffolding.
 
 ## TDD Approach
 
@@ -206,6 +206,14 @@ Development tickets should be implemented tests first wherever the boundary is t
 - [Ticket sheet-0035](./docs/tickets/sheet-0035.md)
 - [Ticket sheet-0036](./docs/tickets/sheet-0036.md)
 - [Ticket sheet-0037](./docs/tickets/sheet-0037.md)
+- [Epic sheet-0040](./docs/epics/sheet-0040.md)
+- [Ticket sheet-0041](./docs/tickets/sheet-0041.md)
+- [Ticket sheet-0042](./docs/tickets/sheet-0042.md)
+- [Ticket sheet-0043](./docs/tickets/sheet-0043.md)
+- [Ticket sheet-0044](./docs/tickets/sheet-0044.md)
+- [Ticket sheet-0045](./docs/tickets/sheet-0045.md)
+- [Ticket sheet-0046](./docs/tickets/sheet-0046.md)
+- [Ticket sheet-0047](./docs/tickets/sheet-0047.md)
 - [Epic sheet-0050](./docs/epics/sheet-0050.md)
 - [Ticket sheet-0051](./docs/tickets/sheet-0051.md)
 - [Ticket sheet-0052](./docs/tickets/sheet-0052.md)

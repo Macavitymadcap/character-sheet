@@ -7,9 +7,10 @@ Rovnost table play. The epic should make public SRD rules and local browser-back
 without sign-in, improve admin account handoff, support admin access alongside player or Game Master
 membership, and fill the most obvious rules and seeded-character gaps.
 
-This is a product and content epic, not a platform-adoption epic. `sheet-0040` remains reserved for
-Hyper-Dank package adoption. Railway, SQLite, Hono, HTMX, and the current local-first import model
-remain the baseline.
+This is a product and content epic, not a platform-adoption epic. `sheet-0040` should follow this
+epic as the next planned roadmap slice so Campaign Ledger can adopt the current Hyper-Dank packages
+before the next large Game Master prep and content-import epic. Railway, SQLite, Hono, HTMX, and the
+current local-first import model remain the baseline for this epic.
 
 ## Goals
 
@@ -44,7 +45,7 @@ remain the baseline.
 - No full guided character builder, levelling engine, or automatic class/species/background grant
   engine.
 - No Postgres migration or broader deployment re-architecture.
-- No Hyper-Dank package migration; that stays in `sheet-0040`.
+- No Hyper-Dank package migration; that follows in `sheet-0040`.
 - No complete visual redesign of the sheet page outside the compact surfaces named in this epic.
 
 ## Users And Permissions
@@ -212,8 +213,9 @@ through `sheet-0060` should branch from `sheet-0050`, open pull requests back in
 and be squash-merged there before the accumulated epic branch targets `main`.
 
 `sheet-0037` can land before or during this epic if campaign-page density blocks the compact
-campaign work. `sheet-0040` should wait unless platform adoption becomes a hard dependency for one
-of the UI tickets.
+campaign work. `sheet-0040` should be the next planned epic after this product slice, before the
+Game Master prep/private NPC/Google Docs import epic, so future product work builds on shared
+Hyper-Dank primitives instead of expanding app-local framework code.
 
 ## Test And Verification Strategy
 

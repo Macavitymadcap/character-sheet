@@ -4,7 +4,7 @@ Campaign Ledger is a local-first D&D 5e sheet app built with Hono, HTMX, Bun, Ty
 
 The first MVP supports a seeded local workflow for Lynott Magulbisson, one Game Master, and one admin. It is intentionally designed as a server-rendered application, not a static markdown viewer: the database stores both durable character state and structured rules data, routes own mutation and permission checks, JSX components own semantic markup, and HTMX owns focused fragment swaps.
 
-Railway deployment is active in `sheet-0030` as a hosted rehearsal of the existing SQLite app. A Postgres migration remains out of scope. The MVP should keep running locally with SQLite and keep the architecture compatible with a later database adapter.
+Railway deployment has a hosted rehearsal path from `sheet-0030` for the existing SQLite app. A Postgres migration remains out of scope. The MVP should keep running locally with SQLite and keep the architecture compatible with a later database adapter.
 
 ## Goals
 
@@ -20,7 +20,13 @@ Railway deployment is active in `sheet-0030` as a hosted rehearsal of the existi
 
 ## Core Shape
 
-The app follows the `pace-calculator` template. The full MVP source tree is expected to grow towards this shape as tickets land:
+The app follows the Hyper-Dank template lineage. `sheet-0040` is planned to replace matching
+app-local framework pieces with the current Hyper-Dank packages: `@macavitymadcap/hyper-dank-ui`,
+`@macavitymadcap/hyper-dank-data`, `@macavitymadcap/hyper-dank-transport`, and
+`@macavitymadcap/hyper-dank-automation`. Domain routes, schemas, repositories, sheet controls,
+campaign flows, and product copy stay app-owned.
+
+The full MVP source tree is expected to grow towards this shape as tickets land:
 
 ```text
 src/
@@ -357,7 +363,7 @@ flowchart LR
     I -- "No" --> J["Epic PR into main"]
 ```
 
-Release automation can be added after the MVP scaffold exists. The group-use MVP is ready for local checkout, seed, verification, table rehearsal, and imported SRD 5.1 rules. `sheet-0020` completed the full SRD rules roadmap slice. The roadmap now reserves `sheet-0030` for Railway deployment with seeded hosted accounts/passwords, `sheet-0050` for campaign companion, public play, and rules-content product work, and `sheet-0040` for Hyper-Dank package adoption.
+Release automation can be added after the MVP scaffold exists. The group-use MVP is ready for local checkout, seed, verification, table rehearsal, and imported SRD 5.1 rules. `sheet-0020` completed the full SRD rules roadmap slice. `sheet-0030` completed the Railway rehearsal path. `sheet-0050` is the current campaign companion, public play, and rules-content product work. The next planned epic is `sheet-0040` for Hyper-Dank package adoption so later product work can reuse shared UI, transport, data, and automation primitives.
 
 ## Design Decisions
 
@@ -367,6 +373,6 @@ Release automation can be added after the MVP scaffold exists. The group-use MVP
 - Local password auth is in scope now; external identity providers are not.
 - Admin invite and password reset flows are local workflows without email delivery in this epic.
 - Live 5e.tools fetching is out of scope; local imports are available through `bun run import:rules`, and `sheet-0020` expanded that path to the full SRD 5.1 local corpus.
-- Character deletion, campaign subpage splitting (`sheet-0037`), wiki-management polish, image-management polish, faction-management UI, production secrets, Postgres, email delivery, and Hyper-Dank adoption are deferred to later epics. Railway deployment is the focus of `sheet-0030`; public SRD access, browser-local public play, richer campaign rules content, and the broader app rename are planned in `sheet-0050`.
+- Character deletion, campaign subpage splitting (`sheet-0037`), wiki-management polish, image-management polish, faction-management UI, production secrets, Postgres, and email delivery are deferred to later epics. Hyper-Dank package adoption is planned as `sheet-0040` before the next large Game Master prep/content-import epic.
 - British English is required across copy, docs, code naming, and CSS variables.
 - The first implementation sequence is documentation and tickets, then source code through accepted tickets.
