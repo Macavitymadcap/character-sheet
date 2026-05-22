@@ -15,7 +15,7 @@ local-tarball route before any app code migrates to them.
 
 - Run Hyper-Dank `bun run pack:packages` and use the generated tarballs as Campaign Ledger's initial
   package source.
-- Add the required Hyper-Dank package dependencies from those local tarballs without assuming npm
+- Added the required Hyper-Dank package dependencies from those local tarballs without assuming npm
   registry publication.
 - Expected tarballs from the current Hyper-Dank package versions are:
   - `../hyper-dank/.cache/packages/macavitymadcap-hyper-dank-ui-0.1.0.tgz`
@@ -24,10 +24,11 @@ local-tarball route before any app code migrates to them.
   - `../hyper-dank/.cache/packages/macavitymadcap-hyper-dank-automation-0.1.0.tgz`
 - Keep `hono` and `typescript` available for package peers. Add `@playwright/test` only if this
   ticket or later automation work uses Playwright-backed Hyper-Dank automation helpers.
-- Add a compatibility script or test that imports the packages through public package names.
+- Added `scripts/hyper-dank-compat.test.tsx` and `bun run test:hyper-dank` to import the packages
+  through public package names.
 - Keep the first dependency change narrow; do not migrate UI, transport, data, or automation code in
   this ticket.
-- Update README and architecture notes with the chosen package-consumption boundary.
+- Updated README and architecture notes with the chosen package-consumption boundary.
 
 ## Interfaces
 
@@ -50,3 +51,13 @@ local-tarball route before any app code migrates to them.
 - The docs explain why the tarball route is temporary while npm publication is still unavailable.
 - No Campaign Ledger runtime behaviour changes in this ticket.
 - `bun run verify` passes.
+
+## Acceptance Notes
+
+- Hyper-Dank packages were packed from the sibling `../hyper-dank` checkout with `bun run
+  pack:packages`.
+- Campaign Ledger now resolves `@macavitymadcap/hyper-dank-ui`,
+  `@macavitymadcap/hyper-dank-data`, `@macavitymadcap/hyper-dank-transport`, and
+  `@macavitymadcap/hyper-dank-automation` from local tarballs.
+- `bun run test:hyper-dank` and `bun run verify` pass with no runtime migration beyond dependency
+  resolution and public import coverage.

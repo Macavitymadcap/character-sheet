@@ -15,11 +15,16 @@
     "start": "bun src/index.ts",
     "test": "bun test",
     "test:a11y": "bun scripts/test-a11y.ts",
+    "test:hyper-dank": "bun test scripts/hyper-dank-compat.test.tsx",
     "test:watch": "bun test --watch",
     "typecheck": "tsc --noEmit",
     "verify": "bun scripts/verify.ts"
   },
   "dependencies": {
+    "@macavitymadcap/hyper-dank-automation": "../hyper-dank/.cache/packages/macavitymadcap-hyper-dank-automation-0.1.0.tgz",
+    "@macavitymadcap/hyper-dank-data": "../hyper-dank/.cache/packages/macavitymadcap-hyper-dank-data-0.1.0.tgz",
+    "@macavitymadcap/hyper-dank-transport": "../hyper-dank/.cache/packages/macavitymadcap-hyper-dank-transport-0.1.0.tgz",
+    "@macavitymadcap/hyper-dank-ui": "../hyper-dank/.cache/packages/macavitymadcap-hyper-dank-ui-0.1.0.tgz",
     "hono": "^4.0.0"
   },
   "devDependencies": {

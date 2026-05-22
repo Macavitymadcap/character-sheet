@@ -32,6 +32,12 @@ The MVP remains intentionally local-first in its data model, while `sheet-0030` 
 
 The app follows the Hyper-Dank template lineage: runtime setup stays separate from `createApp()`, repositories hide database details from routes and components, components own semantic markup, and HTMX attributes make browser interaction visible in HTML. `sheet-0040` is now planned to adopt the current Hyper-Dank packages as runtime dependencies where their public contracts fit Campaign Ledger.
 
+`sheet-0041` starts that adoption through Hyper-Dank's local package tarballs because the packages
+are not registry-published yet. From this checkout, use `bun --cwd ../hyper-dank run pack:packages`,
+then `bun install` here to resolve the tarball dependencies recorded in `package.json`.
+`bun run test:hyper-dank` verifies Campaign Ledger imports the shared packages through public
+package paths only.
+
 ## Local Setup
 
 Install dependencies and start the local development server:
