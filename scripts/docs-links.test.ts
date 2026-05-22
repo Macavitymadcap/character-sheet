@@ -115,6 +115,7 @@ describe("documentation references", () => {
     expect(acceptance).toContain("Admin invite and password-reset handoff now surfaces complete local links.");
     expect(acceptance).toContain("Mira Voss has cleric-derived spells, actions, resources, equipment, and rule links.");
     expect(acceptance).toContain("Campaign-scoped private rules sources remain hidden from public routes.");
+    expect(acceptance).toContain("Routine `bun run verify` screenshots are written to a temporary directory");
     expect(acceptance).toContain("sheet-0040");
     expect(acceptance).toContain("sheet-0037");
   });

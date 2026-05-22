@@ -124,7 +124,7 @@ bun run typecheck
 bun run verify
 ```
 
-`bun run verify` runs typecheck, component and route tests, documentation reference checks, accessibility checks, the group-use MVP smoke workflow, and screenshot capture in sequence. It is the local acceptance gate for the first hosted rehearsal.
+`bun run verify` runs typecheck, component and route tests, documentation reference checks, accessibility checks, the group-use MVP smoke workflow, and screenshot capture in sequence. It writes verification screenshots to a temporary directory by default so acceptance runs do not churn committed PR evidence images. It is the local acceptance gate for the first hosted rehearsal.
 
 `bun run hosted:data -- migrate` applies the SQLite schema without seed data, which is what normal hosted startup relies on. `prepare`, `backup`, and `restore` are reserved for hosted rehearsal operations and are documented in [Railway Hosted Rehearsal](./docs/deployment/railway.md).
 
@@ -134,7 +134,7 @@ Hosted account setup stays manual for this epic. Admin-created invite and passwo
 
 `bun run smoke:mvp` starts an in-memory app and walks the seeded group-use workflow: player login, roster character creation, manual sheet editing, resource mutation, player notes, faction selection, every sheet tab fragment, full SRD import, public and signed-in rules browsing, browser-local play export/import, sheet rule links, logout protection, Game Master roster creation, campaign session creation, wiki reads and writes, campaign private rules, protected seeded asset reads, image upload, combined admin campaign access, and admin invite/password-reset handoff.
 
-`bun run screenshots:sheet` captures public home, local play, Lynott's sheet in light and dark mode, core/skills edit states, roll results, Mira spellcasting, the Background tab faction picker, player and admin roster/cards, the Game Master campaign page, campaign assets and rules sources, rules list/detail pages, a wiki page with image references, and edited sheet states. Screenshots are written to `docs/pr-screenshots/` by default, which is ignored by Git. Set `SCREENSHOT_DIR` to write them elsewhere.
+`bun run screenshots:sheet` captures public home, local play, Lynott's sheet in light and dark mode, core/skills edit states, roll results, Mira spellcasting, the Background tab faction picker, player and admin roster/cards, the Game Master campaign page, campaign assets and rules sources, rules list/detail pages, a wiki page with image references, and edited sheet states. Screenshots are written to `docs/pr-screenshots/` by default for deliberate PR evidence refreshes. Set `SCREENSHOT_DIR` to write them elsewhere.
 
 `bun run import:rules` imports local markdown or JSON rule files from `docs/rules` by default into the configured SQLite database. Pass a path to import one file or directory:
 

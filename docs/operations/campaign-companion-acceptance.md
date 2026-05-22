@@ -39,6 +39,10 @@ That command covers:
 | MVP smoke | Seeded sign-in, public SRD rules, browser-local play import/export, player and Game Master character creation, sheet tabs, rule links, private campaign rules, Mira content, campaign sessions/wiki/assets, combined admin campaign access, admin handoff, and logout protection. |
 | Screenshots | Public home, combined admin/player menu, local play, sheet light/dark states, core and skills edit states, roll results, Mira spellcasting, rosters, admin cards, campaign assets/rules sources, wiki images, rules list/detail, and edited sheet states. |
 
+Routine `bun run verify` screenshots are written to a temporary directory to avoid changing the
+tracked PR evidence images. Use `bun run screenshots:sheet` when a PR intentionally needs to refresh
+`docs/pr-screenshots/`.
+
 ## Deferred Follow-Ups
 
 - `sheet-0037` remains the named campaign-density follow-up for splitting sessions, wiki, images,
