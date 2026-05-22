@@ -11,16 +11,16 @@ documentation updates, and follow-up boundaries.
 
 ## Implementation
 
-- Update README, architecture, deployment, operations, and ticket docs to reflect delivered
-  behaviour.
-- Confirm the new app name, public SRD rules, local play, admin handoff, combined access, campaign
-  private sources, richer rules, Mira content, and compact UX are accurately documented.
-- Extend smoke coverage for the full public-to-signed-in campaign companion workflow.
-- Extend accessibility and screenshot coverage for all new public, admin, campaign, rules, sheet,
-  and local-play surfaces.
-- Record any deferred work explicitly rather than leaving UX/content gaps implied.
-- Resolve any local test-server port-selection instability encountered during planning if it still
-  blocks verification.
+- Updated README, architecture, operations, and ticket docs to reflect delivered behaviour.
+- Confirmed the new app name, public SRD rules, local play, admin handoff, combined access,
+  campaign private sources, richer rules, Mira content, and compact UX are accurately documented.
+- Confirmed smoke coverage for the full public-to-signed-in campaign companion workflow.
+- Confirmed accessibility and screenshot coverage for public, admin, campaign, rules, sheet, and
+  local-play surfaces.
+- Recorded deferred work explicitly in
+  [Campaign Companion Acceptance](../operations/campaign-companion-acceptance.md).
+- Local test-server port selection is already covered by `scripts/lib/local-app.test.ts`, and it no
+  longer blocks verification.
 
 ## Tests First
 
@@ -39,3 +39,9 @@ documentation updates, and follow-up boundaries.
 - Mira and rule detail surfaces are credible for table play.
 - Compact UX changes are covered by screenshots and accessibility checks.
 - README and architecture docs describe delivered scope and deferred follow-ups accurately.
+
+## Acceptance Notes
+
+- Final acceptance record: [Campaign Companion Acceptance](../operations/campaign-companion-acceptance.md).
+- `sheet-0037` remains the campaign-density follow-up.
+- `sheet-0040` is the next planned roadmap slice for Hyper-Dank package adoption.
