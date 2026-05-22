@@ -1,4 +1,4 @@
-import type { CharacterAbility, CharacterSheetReadModel } from "../../../db";
+import type { ArmourClassSource, CharacterAbility, CharacterDefence, CharacterSense, CharacterSheetReadModel } from "../../../db";
 import { formatModifier } from "../../../characters/calculations";
 import { Icon } from "../../atoms/Icon";
 import { DiceRoller } from "../../molecules/DiceRoller";
@@ -38,29 +38,7 @@ export const CoreTab = ({ sheet }: CoreTabProps) => {
             <dt>Speed</dt>
             <dd>{sheet.speedFeet} ft</dd>
           </div>
-          {sheet.senses.map((sense) => (
-            <div>
-              <dt>{sense.label}</dt>
-              <dd>
-                {sense.value}
-                {sense.id ? (
-                  <details class="row-edit-disclosure">
-                    <summary>Edit</summary>
-                    <form
-                      class="sheet-edit-form row-edit-form"
-                      hx-patch={`/sheet/${sheet.slug}/senses/${sense.id}`}
-                      hx-target="#sheet-tab-panel"
-                      hx-swap="outerHTML"
-                    >
-                      <label>Label <input name="label" type="text" value={sense.label} /></label>
-                      <label>Value <input name="value" type="text" value={sense.value} /></label>
-                      <button type="submit">Save</button>
-                    </form>
-                  </details>
-                ) : null}
-              </dd>
-            </div>
-          ))}
+          {sheet.senses.map((sense) => <SenseReadCard sense={sense} sheet={sheet} />)}
         </dl>
       </section>
 
@@ -80,55 +58,10 @@ export const CoreTab = ({ sheet }: CoreTabProps) => {
               </span>
             </dd>
           </div>
-          {sheet.armourClassBreakdown.map((source) => (
-            <div>
-              <dt>{source.label}</dt>
-              <dd>
-                {source.value}
-                {source.id ? (
-                  <details class="row-edit-disclosure">
-                    <summary>Edit</summary>
-                    <form
-                      class="sheet-edit-form row-edit-form"
-                      hx-patch={`/sheet/${sheet.slug}/armour/${source.id}`}
-                      hx-target="#sheet-tab-panel"
-                      hx-swap="outerHTML"
-                    >
-                      <label>Label <input name="label" type="text" value={source.label} /></label>
-                      <label>Value <input name="value" type="number" value={source.value} /></label>
-                      <label>Notes <input name="notes" type="text" value={source.notes} /></label>
-                      <button type="submit">Save</button>
-                    </form>
-                  </details>
-                ) : null}
-              </dd>
-            </div>
-          ))}
+          {sheet.armourClassBreakdown.map((source) => <ArmourReadCard sheet={sheet} source={source} />)}
           {sheet.defences
             .filter((defence) => defence.type !== "armour")
-            .map((defence) => (
-              <div>
-                <dt>{defence.label}</dt>
-                <dd>
-                  {formatDefenceDetail(defence.detail)}
-                  {defence.id ? (
-                    <details class="row-edit-disclosure">
-                      <summary>Edit</summary>
-                      <form
-                        class="sheet-edit-form row-edit-form"
-                        hx-patch={`/sheet/${sheet.slug}/defences/${defence.id}`}
-                        hx-target="#sheet-tab-panel"
-                        hx-swap="outerHTML"
-                      >
-                        <label>Label <input name="label" type="text" value={defence.label} /></label>
-                        <label>Detail <input name="detail" type="text" value={defence.detail} /></label>
-                        <button type="submit">Save</button>
-                      </form>
-                    </details>
-                  ) : null}
-                </dd>
-              </div>
-            ))}
+            .map((defence) => <DefenceReadCard defence={defence} sheet={sheet} />)}
         </dl>
       </section>
     </div>
@@ -217,6 +150,175 @@ export const AbilityEditRow = ({
   </tr>
 );
 
+export const SenseReadCard = ({ sense, sheet }: { sense: CharacterSense; sheet: CharacterSheetReadModel }) => (
+  <div id={senseCardId(sense)}>
+    <dt>{sense.label}</dt>
+    <dd class="sheet-inline-read">
+      <span>{sense.value}</span>
+      {sense.id ? (
+        <button
+          class="row-edit-button"
+          type="button"
+          hx-get={`/sheet/${sheet.slug}/senses/${sense.id}/edit`}
+          hx-target={`#${senseCardId(sense)}`}
+          hx-swap="outerHTML"
+          aria-label={`Edit ${sense.label}`}
+        >
+          Edit
+        </button>
+      ) : null}
+    </dd>
+  </div>
+);
+
+export const SenseEditCard = ({ sense, sheet }: { sense: CharacterSense; sheet: CharacterSheetReadModel }) => (
+  <div id={senseCardId(sense)} class="inline-edit-card">
+    <dt>Edit {sense.label}</dt>
+    <dd>
+      <form
+        class="sheet-edit-form core-card-edit-form"
+        hx-patch={`/sheet/${sheet.slug}/senses/${sense.id}`}
+        hx-target={`#${senseCardId(sense)}`}
+        hx-swap="outerHTML"
+      >
+        <label>
+          <span>Label</span>
+          <input name="label" type="text" value={sense.label} />
+        </label>
+        <label>
+          <span>Value</span>
+          <input name="value" type="text" value={sense.value} />
+        </label>
+        <div class="core-card-edit-actions">
+          <button type="submit">Save</button>
+          <button
+            type="button"
+            hx-get={`/sheet/${sheet.slug}/senses/${sense.id}`}
+            hx-target={`#${senseCardId(sense)}`}
+            hx-swap="outerHTML"
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
+    </dd>
+  </div>
+);
+
+export const ArmourReadCard = ({ sheet, source }: { sheet: CharacterSheetReadModel; source: ArmourClassSource }) => (
+  <div id={armourCardId(source)}>
+    <dt>{source.label}</dt>
+    <dd class="sheet-inline-read">
+      <span>{source.value}</span>
+      {source.id ? (
+        <button
+          class="row-edit-button"
+          type="button"
+          hx-get={`/sheet/${sheet.slug}/armour/${source.id}/edit`}
+          hx-target={`#${armourCardId(source)}`}
+          hx-swap="outerHTML"
+          aria-label={`Edit ${source.label}`}
+        >
+          Edit
+        </button>
+      ) : null}
+    </dd>
+  </div>
+);
+
+export const ArmourEditCard = ({ sheet, source }: { sheet: CharacterSheetReadModel; source: ArmourClassSource }) => (
+  <div id={armourCardId(source)} class="inline-edit-card">
+    <dt>Edit {source.label}</dt>
+    <dd>
+      <form
+        class="sheet-edit-form core-card-edit-form"
+        hx-patch={`/sheet/${sheet.slug}/armour/${source.id}`}
+        hx-target={`#${armourCardId(source)}`}
+        hx-swap="outerHTML"
+      >
+        <label>
+          <span>Label</span>
+          <input name="label" type="text" value={source.label} />
+        </label>
+        <label>
+          <span>Value</span>
+          <input name="value" type="number" value={source.value} />
+        </label>
+        <label class="core-card-edit-field-wide">
+          <span>Notes</span>
+          <input name="notes" type="text" value={source.notes} />
+        </label>
+        <div class="core-card-edit-actions">
+          <button type="submit">Save</button>
+          <button
+            type="button"
+            hx-get={`/sheet/${sheet.slug}/armour/${source.id}`}
+            hx-target={`#${armourCardId(source)}`}
+            hx-swap="outerHTML"
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
+    </dd>
+  </div>
+);
+
+export const DefenceReadCard = ({ defence, sheet }: { defence: CharacterDefence; sheet: CharacterSheetReadModel }) => (
+  <div id={defenceCardId(defence)}>
+    <dt>{defence.label}</dt>
+    <dd class="sheet-inline-read">
+      <span>{formatDefenceDetail(defence.detail)}</span>
+      {defence.id ? (
+        <button
+          class="row-edit-button"
+          type="button"
+          hx-get={`/sheet/${sheet.slug}/defences/${defence.id}/edit`}
+          hx-target={`#${defenceCardId(defence)}`}
+          hx-swap="outerHTML"
+          aria-label={`Edit ${defence.label}`}
+        >
+          Edit
+        </button>
+      ) : null}
+    </dd>
+  </div>
+);
+
+export const DefenceEditCard = ({ defence, sheet }: { defence: CharacterDefence; sheet: CharacterSheetReadModel }) => (
+  <div id={defenceCardId(defence)} class="inline-edit-card">
+    <dt>Edit {defence.label}</dt>
+    <dd>
+      <form
+        class="sheet-edit-form core-card-edit-form"
+        hx-patch={`/sheet/${sheet.slug}/defences/${defence.id}`}
+        hx-target={`#${defenceCardId(defence)}`}
+        hx-swap="outerHTML"
+      >
+        <label>
+          <span>Label</span>
+          <input name="label" type="text" value={defence.label} />
+        </label>
+        <label>
+          <span>Detail</span>
+          <input name="detail" type="text" value={defence.detail} />
+        </label>
+        <div class="core-card-edit-actions">
+          <button type="submit">Save</button>
+          <button
+            type="button"
+            hx-get={`/sheet/${sheet.slug}/defences/${defence.id}`}
+            hx-target={`#${defenceCardId(defence)}`}
+            hx-swap="outerHTML"
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
+    </dd>
+  </div>
+);
+
 function renderSaveProficiencyIcon(isProficient: boolean) {
   return isProficient ? (
     <Icon name="check_circle" label="Proficient" tone="success" />
@@ -274,4 +376,23 @@ function formatAbilityShort(ability: CharacterAbility["ability"]) {
 
 function abilityRowId(ability: CharacterAbility["ability"]) {
   return `ability-row-${ability}`;
+}
+
+function senseCardId(sense: CharacterSense) {
+  return `sense-card-${sense.id ?? slugify(sense.label)}`;
+}
+
+function armourCardId(source: ArmourClassSource) {
+  return `armour-card-${source.id ?? slugify(source.label)}`;
+}
+
+function defenceCardId(defence: CharacterDefence) {
+  return `defence-card-${defence.id ?? slugify(defence.label)}`;
+}
+
+function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }

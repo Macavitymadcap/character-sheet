@@ -134,6 +134,78 @@ export const coreTabStyles = /* css */ `
   text-align: center;
 }
 
+.sheet-description-grid .sheet-inline-read {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  justify-content: space-between;
+}
+
+.inline-edit-card {
+  background: var(--stat-background-colour);
+}
+
+.core-card-edit-form {
+  display: grid;
+  gap: 0.55rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.core-card-edit-form label {
+  color: var(--muted-text-colour);
+  display: grid;
+  font-size: 0.78rem;
+  font-weight: 900;
+  gap: 0.25rem;
+  text-transform: uppercase;
+}
+
+.core-card-edit-form input {
+  background: var(--surface-colour);
+  border: 1px solid var(--border-colour);
+  border-radius: 0.35rem;
+  color: var(--heading-colour);
+  font-size: 0.92rem;
+  font-weight: 800;
+  min-height: 2.15rem;
+  min-width: 0;
+  padding: 0.35rem 0.45rem;
+  width: 100%;
+}
+
+.core-card-edit-form input:focus {
+  border-color: var(--focus-border-colour);
+  outline: 2px solid color-mix(in srgb, var(--focus-border-colour) 28%, transparent);
+  outline-offset: 1px;
+}
+
+.core-card-edit-field-wide {
+  grid-column: 1 / -1;
+}
+
+.core-card-edit-actions {
+  display: grid;
+  gap: 0.35rem;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.core-card-edit-actions button {
+  background: var(--action-background-colour);
+  border: 1px solid var(--action-border-colour);
+  border-radius: 0.35rem;
+  color: var(--action-text-colour);
+  cursor: pointer;
+  font-weight: 900;
+  min-height: 2.1rem;
+  padding: 0.35rem 0.5rem;
+}
+
+.core-card-edit-actions button:hover {
+  border-color: var(--focus-border-colour);
+}
+
 .armour-defence-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
@@ -246,10 +318,15 @@ export const coreTabStyles = /* css */ `
     min-width: 2.35rem;
     padding-inline: 0.3rem;
   }
+
 }
 
 @media (max-width: 340px) {
   .sheet-description-grid-compact {
+    grid-template-columns: 1fr;
+  }
+
+  .core-card-edit-form {
     grid-template-columns: 1fr;
   }
 }

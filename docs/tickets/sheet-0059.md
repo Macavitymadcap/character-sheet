@@ -29,6 +29,19 @@ campaign image, and roll popover workflows.
 - Give roll popovers a distinct visual treatment and keep results close to the triggering roll.
 - Add screenshots for each changed state in light and dark modes where relevant.
 
+## Implementation Notes
+
+- Admin user, invite, and reset-token tables keep their dense desktop layout and switch to compact
+  mobile cards at 360px.
+- Player and Game Master rosters keep the desktop table and switch to compact mobile character
+  cards so owner, level, species, and background stay visible without horizontal scrolling.
+- Core tab senses, armour sources, and defences now use focused HTMX read/edit card swaps rather
+  than nested disclosure forms inside the read card.
+- Campaign image cards now show explicit asset state chips for seeded/uploaded, visibility,
+  dimensions, and local fallback behaviour.
+- Dice roll popovers use a stronger action-coloured panel treatment so the roller reads as an
+  active overlay instead of another passive sheet panel.
+
 ## Interfaces
 
 - Components/pages: `AdminPage`, `CampaignPage`, campaign wiki/images/session surfaces,

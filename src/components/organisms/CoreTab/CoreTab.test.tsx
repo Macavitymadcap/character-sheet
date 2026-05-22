@@ -11,13 +11,13 @@ const sheet: CharacterSheetReadModel = {
   ],
   armourClass: 17,
   armourClassBreakdown: [
-    { label: "Breastplate", notes: "Medium armour base AC.", value: 14 },
-    { label: "Dexterity bonus", notes: "Breastplate maximum Dexterity bonus.", value: 2 },
-    { label: "Enhanced Defence", notes: "Active armour infusion.", value: 1 },
+    { id: "ac_breastplate", label: "Breastplate", notes: "Medium armour base AC.", value: 14 },
+    { id: "ac_dexterity", label: "Dexterity bonus", notes: "Breastplate maximum Dexterity bonus.", value: 2 },
+    { id: "ac_enhanced_defence", label: "Enhanced Defence", notes: "Active armour infusion.", value: 1 },
   ],
   background: "Special Operations",
   classes: [],
-  defences: [{ detail: "None currently recorded.", label: "Resistances", type: "resistance" }],
+  defences: [{ detail: "None currently recorded.", id: "defence_resistances", label: "Resistances", type: "resistance" }],
   hitPoints: { current: 31, max: 31, temporary: 0 },
   id: "character_lynott_magulbisson",
   initiative: 3,
@@ -26,8 +26,8 @@ const sheet: CharacterSheetReadModel = {
   proficiencies: [],
   proficiencyBonus: 2,
   senses: [
-    { label: "Darkvision", value: "60 ft" },
-    { label: "Passive perception", value: "13" },
+    { id: "sense_darkvision", label: "Darkvision", value: "60 ft" },
+    { id: "sense_passive_perception", label: "Passive perception", value: "13" },
   ],
   skills: [],
   slug: "lynott",
@@ -53,12 +53,16 @@ describe("CoreTab", () => {
     expect(html).toContain("<dt>Speed</dt>");
     expect(html).toContain("<dd>30 ft</dd>");
     expect(html).toContain("<dt>Darkvision</dt>");
-    expect(html).toContain("<dd>60 ft</dd>");
+    expect(html).toContain('<dd class="sheet-inline-read"><span>60 ft</span>');
+    expect(html).toContain('hx-get="/sheet/lynott/senses/sense_darkvision/edit"');
+    expect(html).toContain('hx-target="#sense-card-sense_darkvision"');
     expect(html).toContain("<dt>Armour</dt>");
     expect(html).toContain('class="armour-class-shield" aria-label="Armour class 17"');
     expect(html).toContain("<strong>17</strong>");
     expect(html).toContain("<strong>Breastplate</strong>");
     expect(html).toContain("(14 + 2 + 1 = 17)");
+    expect(html).toContain('hx-get="/sheet/lynott/armour/ac_breastplate/edit"');
     expect(html).toContain("<dt>Resistances</dt>");
+    expect(html).toContain('hx-get="/sheet/lynott/defences/defence_resistances/edit"');
   });
 });

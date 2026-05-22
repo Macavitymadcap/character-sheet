@@ -187,6 +187,27 @@ export const campaignStyles = /* css */ `
   padding: 0.75rem;
 }
 
+.campaign-asset-list figcaption strong,
+.campaign-asset-list figcaption > span:not(.campaign-asset-status) {
+  overflow-wrap: anywhere;
+}
+
+.campaign-asset-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.campaign-asset-status span {
+  background: var(--stat-background-colour);
+  border: 1px solid var(--border-colour);
+  border-radius: 999px;
+  color: var(--muted-text-colour);
+  font-size: 0.72rem;
+  font-weight: 850;
+  padding: 0.1rem 0.45rem;
+}
+
 .campaign-wiki-card h3 {
   font-size: 1rem;
   margin: 0;

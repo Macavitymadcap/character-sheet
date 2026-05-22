@@ -102,10 +102,14 @@ describe("AdminPage", () => {
     expect(html).toContain("Lynott Player (lynott@example.local)");
   });
 
-  test("keeps admin tables compressed and scrollable on mobile", () => {
+  test("switches admin tables to compact cards on mobile", () => {
     expect(adminStyles).toContain(".admin-users-table {\n  min-width: 44rem;");
+    expect(adminStyles).toContain(".admin-compact-list");
+    expect(adminStyles).toContain(".admin-compact-card dl");
+    expect(adminStyles).toContain(".admin-compact-actions");
     expect(adminStyles).toContain("@media (max-width: 760px)");
-    expect(adminStyles).toContain(".admin-users-table {\n    min-width: 46rem;");
-    expect(adminStyles).toContain("white-space: nowrap;");
+    expect(adminStyles).toContain(".admin-compact-list {\n    display: grid;");
+    expect(adminStyles).toContain(".admin-table-wrap {\n    display: none;");
+    expect(adminStyles).toContain("overflow-wrap: anywhere;");
   });
 });

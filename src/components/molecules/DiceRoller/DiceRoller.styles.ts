@@ -22,10 +22,11 @@ export const diceRollerStyles = /* css */ `
 }
 
 .dice-roller-panel {
-  background: var(--surface-colour);
-  border: 1px solid var(--border-colour);
+  background: color-mix(in srgb, var(--action-background-colour) 12%, var(--surface-colour));
+  border: 2px solid var(--action-border-colour);
   border-radius: 0.5rem;
-  box-shadow: 0 1rem 2.5rem var(--shadow-colour);
+  box-sizing: border-box;
+  box-shadow: 0 0.8rem 0 var(--shadow-colour), 0 1.25rem 2.5rem var(--shadow-colour);
   color: var(--heading-colour);
   margin: 0;
   min-width: min(16rem, calc(100vw - 1.5rem));
@@ -67,14 +68,24 @@ export const diceRollerStyles = /* css */ `
   background: var(--stat-background-colour);
   border: 1px solid var(--border-colour);
   border-radius: 0.35rem;
+  box-sizing: border-box;
   color: var(--heading-colour);
   font-weight: 800;
   min-height: 1.9rem;
+  min-width: 0;
   padding: 0.28rem 0.4rem;
+  width: 100%;
 }
 
 .dice-roller-extra-field input {
+  appearance: textfield;
   text-align: center;
+}
+
+.dice-roller-extra-field input::-webkit-inner-spin-button,
+.dice-roller-extra-field input::-webkit-outer-spin-button {
+  appearance: none;
+  margin: 0;
 }
 
 .dice-roller-form button {
@@ -88,8 +99,8 @@ export const diceRollerStyles = /* css */ `
 }
 
 .dice-roll-result {
-  background: var(--stat-background-colour);
-  border: 1px solid var(--border-colour);
+  background: color-mix(in srgb, var(--action-background-colour) 14%, var(--stat-background-colour));
+  border: 1px solid var(--action-border-colour);
   border-radius: 0.4rem;
   display: block;
   font-weight: 900;
@@ -107,13 +118,18 @@ export const diceRollerStyles = /* css */ `
   }
 
   .dice-roller-panel {
-    inset: auto 0.75rem 1rem auto;
+    inset: 50% 0.75rem auto 0.75rem;
     margin: 0;
     max-height: calc(100vh - 2rem);
     min-width: 0;
     overflow: auto;
     position: fixed;
-    width: min(19rem, calc(100vw - 1.5rem));
+    transform: translateY(-50%);
+    width: auto;
+  }
+
+  .dice-roller-fields {
+    grid-template-columns: minmax(0, 1fr) 6rem;
   }
 
   .dice-roll-result {

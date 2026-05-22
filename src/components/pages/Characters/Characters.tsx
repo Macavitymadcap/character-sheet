@@ -83,34 +83,54 @@ export const CharactersPage = ({
               {characters.length === 0 ? (
                 <p class="empty-state">No characters yet.</p>
               ) : (
-                <div class="table-scroll">
-                  <table class="sheet-table characters-table">
-                    <thead>
-                      <tr>
-                        <th scope="col">Name</th>
-                        <th scope="col">Owner</th>
-                        <th scope="col">Level</th>
-                        <th scope="col">Class</th>
-                        <th scope="col">Species</th>
-                        <th scope="col">Background</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {characters.map((character) => (
-                        <tr>
-                          <td>
+                <>
+                  <div class="character-roster-cards" aria-label="Compact roster">
+                    {characters.map((character) => (
+                      <article class="character-roster-card">
+                        <div>
+                          <h3>
                             <a class="character-roster-link" href={`/sheet/${character.slug}`}>{character.name}</a>
-                          </td>
-                          <td>{character.ownerDisplayName}</td>
-                          <td>{character.level}</td>
-                          <td>{character.classSummary}</td>
-                          <td>{character.species}</td>
-                          <td>{character.background}</td>
+                          </h3>
+                          <p>{character.classSummary}</p>
+                        </div>
+                        <dl>
+                          <div><dt>Owner</dt><dd>{character.ownerDisplayName}</dd></div>
+                          <div><dt>Level</dt><dd>{character.level}</dd></div>
+                          <div><dt>Species</dt><dd>{character.species}</dd></div>
+                          <div><dt>Background</dt><dd>{character.background}</dd></div>
+                        </dl>
+                      </article>
+                    ))}
+                  </div>
+                  <div class="table-scroll character-roster-table-wrap">
+                    <table class="sheet-table characters-table">
+                      <thead>
+                        <tr>
+                          <th scope="col">Name</th>
+                          <th scope="col">Owner</th>
+                          <th scope="col">Level</th>
+                          <th scope="col">Class</th>
+                          <th scope="col">Species</th>
+                          <th scope="col">Background</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody>
+                        {characters.map((character) => (
+                          <tr>
+                            <td>
+                              <a class="character-roster-link" href={`/sheet/${character.slug}`}>{character.name}</a>
+                            </td>
+                            <td>{character.ownerDisplayName}</td>
+                            <td>{character.level}</td>
+                            <td>{character.classSummary}</td>
+                            <td>{character.species}</td>
+                            <td>{character.background}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
               )}
             </section>
           </Panel>
