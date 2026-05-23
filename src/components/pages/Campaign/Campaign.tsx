@@ -344,7 +344,7 @@ export const CampaignPlayerPreviewPage = ({
         <Panel labelledBy="campaign-visibility-audit-heading">
           <div class="campaign-heading">
             <p class="campaign-kicker">Visibility audit</p>
-            <h2 id="campaign-visibility-audit-heading" class="panel-heading">Visible to players</h2>
+            <h2 id="campaign-visibility-audit-heading" class="panel-heading">Visible to {previewDisplayName ?? "the previewed player"}</h2>
           </div>
           <div class="campaign-audit-grid">
             {auditItems.map((item) => (
@@ -367,6 +367,7 @@ export const CampaignPlayerPreviewPage = ({
                 <div class="campaign-wiki-card-body">
                   <p class="campaign-kicker">{page.pageType}</p>
                   <h3><a href={`/campaigns/${campaign.slug}/wiki/${page.slug}`}>{page.title}</a></h3>
+                  <p class="campaign-card-copy">{previewText(page.bodyMarkdown)}</p>
                   <div class="campaign-tag-list" aria-label={`${page.title} tags`}>
                     {page.tags.map((tag) => <span>{tag}</span>)}
                   </div>
@@ -396,6 +397,7 @@ export const CampaignPlayerPreviewPage = ({
               <article class="campaign-source-item">
                 <h3>{session.title}</h3>
                 <p class="campaign-help-text">{session.summary || "No public summary."}</p>
+                {session.body ? <p class="campaign-card-copy">{previewText(session.body)}</p> : null}
                 <div class="campaign-tag-list">
                   <span>{session.sessionDate ?? "No date"}</span>
                   <span>Player visible</span>
@@ -439,6 +441,14 @@ export const CampaignPlayerPreviewPage = ({
                   <span>{notes.length} visible</span>
                   <span>{character.ownerDisplayName}</span>
                 </div>
+                <div class="campaign-note-preview-list">
+                  {notes.map((note) => (
+                    <section>
+                      <h4>{note.title}</h4>
+                      <p>{previewText(note.body)}</p>
+                    </section>
+                  ))}
+                </div>
               </article>
             ))}
           </div>
@@ -448,6 +458,16 @@ export const CampaignPlayerPreviewPage = ({
     </div>
   </Layout>
 );
+
+function previewText(value: string, maxLength = 160) {
+  const text = value
+    .replace(/!\[[^\]]*]\([^)]*\)/g, "")
+    .replace(/[#*_`>[\]()]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return text.length > maxLength ? `${text.slice(0, maxLength - 1).trim()}...` : text;
+}
 
 interface NpcListPageProps {
   appName: string;

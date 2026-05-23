@@ -1321,9 +1321,14 @@ describe("createApp", () => {
     expect(previewHtml).toContain("<title>Player preview - Rovnost Shadows - Campaign Ledger</title>");
     expect(previewHtml).toContain("Previewing as Lynott Player");
     expect(previewHtml).toContain("Visibility audit");
+    expect(previewHtml).toContain("Visible to Lynott Player");
     expect(previewHtml).toContain("Magister Vallen");
     expect(previewHtml).toContain("Selected players");
     expect(previewHtml).toContain("Factions Guide");
+    expect(previewHtml).toContain("The Skywrights");
+    expect(previewHtml).toContain("Review lines, veils, table logistics");
+    expect(previewHtml).toContain("Player notes");
+    expect(previewHtml).toContain("Keep the false identities ready");
     expect(previewHtml).not.toContain("Game Master reference.");
     expect(previewHtml).not.toContain("Keep Vallen private until the table has enough leverage.");
     expect(previewHtml).not.toContain("Disabled Skybridge Rumour");

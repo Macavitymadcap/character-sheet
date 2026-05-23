@@ -273,6 +273,31 @@ export const campaignStyles = /* css */ `
   margin: 0;
 }
 
+.campaign-card-copy,
+.campaign-note-preview-list p {
+  color: var(--muted-text-colour);
+  font-weight: 750;
+  margin: 0;
+}
+
+.campaign-note-preview-list {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.campaign-note-preview-list section {
+  border-block-start: 1px solid var(--border-colour);
+  display: grid;
+  gap: 0.25rem;
+  padding-block-start: 0.55rem;
+}
+
+.campaign-note-preview-list h4 {
+  color: var(--heading-colour);
+  font-size: 0.95rem;
+  margin: 0;
+}
+
 .campaign-session-item {
   border-block-start: 1px solid var(--border-colour);
   padding-block-start: 0.75rem;

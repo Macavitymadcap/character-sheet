@@ -288,11 +288,16 @@ describe("CampaignPage", () => {
     expect(html).toContain("<title>Player preview - Rovnost Shadows - Campaign Ledger</title>");
     expect(html).toContain("Previewing as Lynott Player");
     expect(html).toContain("Visibility audit");
+    expect(html).toContain("Visible to Lynott Player");
     expect(html).toContain("1 visible");
     expect(html).toContain("2 hidden");
     expect(html).toContain("Magister Vallen");
     expect(html).toContain("Rovnost cover");
     expect(html).toContain("Lynott Magulbisson");
+    expect(html).toContain("Visible notes.");
+    expect(html).toContain("The public recap.");
+    expect(html).toContain("Clue");
+    expect(html).toContain("Player-facing clue.");
     expect(html).toContain('href="/campaigns/rovnost-shadows/prep"');
   });
 });
