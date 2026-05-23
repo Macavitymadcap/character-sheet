@@ -8,7 +8,7 @@ describe("LabelledOutput", () => {
     const html = render(<LabelledOutput label="Armour class" value="17" />);
 
     expect(html).toContain('<div class="labelled-output">');
-    expect(html).toContain('<span class="labelled-output-label">Armour class</span>');
-    expect(html).toContain('<strong class="labelled-output-value">17</strong>');
+    expect(html).toContain('<output class="labelled-output-label">Armour class</output>');
+    expect(html).toContain('<output class="labelled-output-value">17</output>');
   });
 });

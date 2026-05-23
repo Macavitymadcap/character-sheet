@@ -5,7 +5,7 @@ export const formFieldStyles = /* css */ `
   gap: 0.5rem;
 }
 
-.form-field label {
+.form-field > span {
   color: var(--muted-text-colour);
   font-weight: 700;
 }

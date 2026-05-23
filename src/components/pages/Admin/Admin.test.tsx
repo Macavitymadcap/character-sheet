@@ -50,9 +50,9 @@ describe("AdminPage", () => {
     expect(html).toContain('action="/admin/invites"');
     expect(html).toContain('name="email"');
     expect(html).toContain('name="role"');
-    expect(html).toContain(
-      '<button class="button" data-variant="primary" type="submit">Create invite</button>',
-    );
+    expect(html).toContain('type="submit"');
+    expect(html).toContain('data-variant="primary"');
+    expect(html).toContain("Create invite</button>");
     expect(html).toContain("Users");
     expect(html).toContain('<table class="sheet-table admin-users-table">');
     expect(html).toContain("Invites");

@@ -11,11 +11,13 @@ imports where the public component contracts match Campaign Ledger.
 
 ## Implementation
 
-- Migrate compatible generic primitives such as `Badge`, `Button`, `Panel`, `Switch`, `Accordion`,
-  `CompactList`, `FormField`, `LabelledOutput`, and `PopoverMenu`.
+- Migrate compatible generic primitives such as `Badge`, `Button`, `Panel`, `CompactList`,
+  `FormField`, and `LabelledOutput`.
 - Preserve Campaign Ledger class hooks, accessible names, HTMX attributes, and visual density.
 - Keep app-owned components where they contain domain behaviour, including dice controls, sheet
   tabs, site header, password flows, and campaign-specific layouts.
+- Keep `Switch`, `Accordion`, and `PopoverMenu` local until their icon, title, and sheet-rule
+  contracts can move without a visual or semantic reset.
 - Remove local generic component files only after all imports and tests have moved.
 - Refresh screenshots for touched light and dark states.
 
@@ -38,3 +40,13 @@ imports where the public component contracts match Campaign Ledger.
 - No visual reset or table-use regression is introduced.
 - Light and dark screenshots cover the changed surfaces.
 - `bun run verify` passes.
+
+## Acceptance Notes
+
+- `Badge`, `Button`, `Panel`, `CompactList`, `FormField`, and `LabelledOutput` now resolve through
+  `@macavitymadcap/hyper-dank-ui` while preserving existing Campaign Ledger import paths and local
+  CSS hooks.
+- Button coverage now proves HTMX passthrough attributes from the shared primitive.
+- `Switch`, `Accordion`, and `PopoverMenu` remain app-owned for this ticket because their current
+  Campaign Ledger contracts include custom icons, non-string rule title links, and menu rendering
+  details that are not safe to swap in this slice.
