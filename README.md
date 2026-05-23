@@ -123,7 +123,7 @@ Local seed users are available for development:
 | Game Master | `gm@example.local` | `password123` |
 | Admin | `admin@example.local` | `password123` |
 
-The seeded Rovnost campaign also includes initial roster, wiki, image asset, session, faction, and character faction-choice records. Image assets store app-managed relative storage keys such as `campaigns/rovnost-shadows/cover.png`; absolute local source paths are rejected by the schema. Hosted preparation writes deterministic placeholder files for seeded campaign assets under `CAMPAIGN_LEDGER_ASSET_ROOT`, falling back to `CHARACTER_SHEET_ASSET_ROOT` for existing environments, and missing seeded files render a readable protected fallback instead of a broken image. To replace seeded placeholders locally, copy the known file to the matching relative path under the asset root; for new table photos, use the Game Master image library upload form.
+The seeded Rovnost campaign also includes initial roster, wiki, image asset, session, faction, and character faction-choice records. Image assets store app-managed relative storage keys such as `campaigns/rovnost-shadows/cover.png`; absolute local source paths are rejected by the schema. Hosted preparation copies the bundled Rovnost seed images under `CAMPAIGN_LEDGER_ASSET_ROOT`, falling back to `CHARACTER_SHEET_ASSET_ROOT` for existing environments, and missing seeded files render a readable protected fallback instead of a broken image. To replace seeded art locally, copy the known file to the matching relative path under the asset root; for new table photos, use the Game Master image library upload form.
 
 ## Rename Notes
 

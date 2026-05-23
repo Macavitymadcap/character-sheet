@@ -1085,7 +1085,7 @@ describe("SQLite repositories", () => {
     expect(
       content.listImageAssetsForCampaign(campaignId, "player").map((asset) => asset.storageKey),
     ).toEqual([
-      "campaigns/rovnost-shadows/astril-map.webp",
+      "campaigns/rovnost-shadows/astril-map.png",
       "campaigns/rovnost-shadows/cover.png",
       "campaigns/rovnost-shadows/faction-sigils.png",
       "campaigns/rovnost-shadows/skywright-sigil.png",
@@ -1093,7 +1093,7 @@ describe("SQLite repositories", () => {
     expect(
       content.listImageAssetsForCampaign(campaignId, "game_master").map((asset) => asset.storageKey),
     ).toEqual([
-      "campaigns/rovnost-shadows/astril-map.webp",
+      "campaigns/rovnost-shadows/astril-map.png",
       "campaigns/rovnost-shadows/cover.png",
       "campaigns/rovnost-shadows/faction-sigils.png",
       "campaigns/rovnost-shadows/magister-vallen.png",

@@ -37,7 +37,7 @@ describe("hosted data operations", () => {
     expect(database.query("select storage_key as storageKey from campaign_image_assets where id = ?").get("asset_skywright_sigil"))
       .toEqual({ storageKey: "campaigns/rovnost-shadows/skywright-sigil.png" });
     expect((await stat(join(assetRoot, "campaigns/rovnost-shadows/skywright-sigil.png"))).size).toBeGreaterThan(0);
-    expect((await stat(join(assetRoot, "campaigns/rovnost-shadows/astril-map.webp"))).size).toBeGreaterThan(0);
+    expect((await stat(join(assetRoot, "campaigns/rovnost-shadows/astril-map.png"))).size).toBeGreaterThan(0);
     database.close();
   });
 
