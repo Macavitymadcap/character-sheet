@@ -195,6 +195,22 @@ describe("createApp", () => {
     expect(response.headers.get("location")).toBeNull();
   });
 
+  test("keeps auth cookies on HTMX login redirects", async () => {
+    const { app } = createTestApp("Campaign Ledger");
+    const response = await app.request("/login", {
+      body: new URLSearchParams({ email: "lynott@example.local", password: "password123" }),
+      headers: {
+        ...formHeaders(),
+        "HX-Request": "true",
+      },
+      method: "POST",
+    });
+
+    expect(response.status).toBe(204);
+    expect(response.headers.get("HX-Redirect")).toBe("/characters");
+    expect(response.headers.get("set-cookie")).toStartWith("character_sheet_session=");
+  });
+
   test("serves sheet tab panels as HTMX fragment-only HTML", async () => {
     const { app, sessionService } = createTestApp("Campaign Ledger");
     const session = sessionService.createSession("user_lynott_player");
