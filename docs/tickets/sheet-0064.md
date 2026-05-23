@@ -70,3 +70,14 @@ flowchart TD
 - NPC list and detail screens are scannable on mobile and desktop.
 - Screenshots and accessibility checks cover the new GM-facing NPC workflow.
 - `bun run verify` passes.
+
+## Implementation Notes
+
+- Added full-page Game Master prep, NPC list, and NPC detail routes using the `sheet-0063`
+  repository boundary.
+- Added create, edit, reveal, and hide POST flows for NPC dossiers.
+- Kept player NPC detail reads limited to revealed summaries while Game Masters see private dossier
+  fields and edit controls.
+- Linked the campaign overview to the prep and NPC workspaces instead of adding more management
+  forms to the overview page.
+- Added Pa11y and screenshot targets for prep, NPC list, and NPC detail surfaces.

@@ -82,7 +82,11 @@ The sheet header includes HTMX-backed hit point controls for current and tempora
 
 The notes tab creates, updates, and deletes visible player or Game Master notes through HTMX panel refreshes. Player users can manage player-visible notes for their own characters; Game Masters can manage both player and Game Master notes for campaign characters.
 
-The Game Master campaign page lists campaign session records and includes local forms for creating, updating, and deleting table prep or recap entries with player-visible or Game-Master-only visibility.
+The Game Master campaign page links to the focused prep workspace at `/campaigns/rovnost-shadows/prep`.
+The NPC workspace at `/campaigns/rovnost-shadows/npcs` lets the Game Master create, edit, review,
+reveal, and hide private NPC dossiers while player routes only show revealed summaries. The campaign
+page still lists campaign session records and includes local forms for creating, updating, and
+deleting table prep or recap entries with player-visible or Game-Master-only visibility.
 
 The local group-use workflow is ready for table rehearsal: seed the database, sign in as Lynott or Mira to create player-owned characters, use the Game Master account to manage the campaign roster, sessions, wiki pages, image assets, private campaign rules sources, and faction context, and use the admin account to prepare invite and password-reset links. The hosted Railway work in `sheet-0030` rehearses that same MVP remotely without changing the local-first data model.
 
@@ -147,7 +151,7 @@ bun run verify
 
 Hosted account setup stays manual for this epic. Admin-created invite and password-reset links are copied from the admin UI and shared privately by the operator; no email delivery is implied or configured. See [Hosted Account Operator Runbook](./docs/operations/hosted-account-runbook.md).
 
-`bun run test:a11y` starts an in-memory app on an available local port and runs Pa11y against public `/`, `/login`, `/local/characters`, `/local/campaigns`, `/rules`, and `/rules/spell/bless`, player `/characters`, `/sheet/lynott`, `/campaigns/rovnost-shadows/wiki/factions-guide`, and `/logout`, Game Master `/campaigns/rovnost-shadows` and `/campaigns/rovnost-shadows/characters`, and admin `/admin`.
+`bun run test:a11y` starts an in-memory app on an available local port and runs Pa11y against public `/`, `/login`, `/local/characters`, `/local/campaigns`, `/rules`, and `/rules/spell/bless`, player `/characters`, `/sheet/lynott`, `/campaigns/rovnost-shadows/wiki/factions-guide`, and `/logout`, Game Master `/campaigns/rovnost-shadows`, `/campaigns/rovnost-shadows/prep`, `/campaigns/rovnost-shadows/npcs`, `/campaigns/rovnost-shadows/npcs/magister-vallen`, and `/campaigns/rovnost-shadows/characters`, and admin `/admin`.
 
 `bun run smoke:mvp` starts an in-memory app and walks the seeded group-use workflow: player login, roster character creation, manual sheet editing, resource mutation, player notes, faction selection, every sheet tab fragment, full SRD import, public and signed-in rules browsing, browser-local play export/import, sheet rule links, logout protection, Game Master roster creation, campaign session creation, wiki reads and writes, campaign private rules, protected seeded asset reads, image upload, combined admin campaign access, and admin invite/password-reset handoff.
 

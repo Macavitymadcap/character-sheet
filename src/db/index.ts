@@ -9,6 +9,8 @@ export type {
   CampaignFaction,
   CampaignImageAsset,
   CampaignMember,
+  CampaignNpcDossier,
+  CampaignNpcSummary,
   CampaignRepository,
   CampaignSessionRecord,
   CampaignSummary,

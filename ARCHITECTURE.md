@@ -149,8 +149,14 @@ The MVP page set:
 - `/rules` public SRD rules browse route, with signed-in campaign scope added where permitted.
 - `/rules/:entityType/:slug` public SRD detail route, with private campaign rules protected by membership.
 - `/campaigns/:campaignSlug` campaign shell with player-visible wiki pages and Game Master-only management forms.
+- `/campaigns/:campaignSlug/prep` Game Master prep workspace with links into focused preparation tools.
+- `/campaigns/:campaignSlug/npcs` Game Master NPC dossier list and create form.
+- `/campaigns/:campaignSlug/npcs/:npcSlug` NPC detail route, showing full private dossiers to Game Masters and revealed summaries to players.
 - `/campaigns/:campaignSlug/wiki/:wikiSlug` campaign wiki detail page filtered by player or Game Master visibility.
 - `/campaigns/:campaignSlug/assets/:assetId` protected image asset route backed by app-managed local storage.
+- `POST /campaigns/:campaignSlug/npcs` Game Master NPC creation route.
+- `POST /campaigns/:campaignSlug/npcs/:npcId` Game Master NPC update route.
+- `POST /campaigns/:campaignSlug/npcs/:npcId/reveal` Game Master NPC reveal/hide route.
 - `POST /campaigns/:campaignSlug/wiki` Game Master wiki page creation route.
 - `POST /campaigns/:campaignSlug/assets` Game Master image upload route for PNG, JPEG, and WebP files.
 - `POST /campaigns/:campaignSlug/sessions` Game Master session creation route.
@@ -398,7 +404,7 @@ Hyper-Dank package adoption tickets should also run the focused compatibility ga
 bun run test:hyper-dank
 ```
 
-The accessibility script currently checks public `/`, `/login`, `/local/characters`, `/local/campaigns`, `/rules`, and `/rules/spell/bless`, player `/characters`, `/sheet/lynott`, `/campaigns/rovnost-shadows/wiki/factions-guide`, and `/logout`, Game Master `/campaigns/rovnost-shadows` and `/campaigns/rovnost-shadows/characters`, and admin `/admin`. The MVP smoke script renders every sheet tab fragment directly and walks the group-use flows for character creation, manual edits, notes, faction choice, full SRD import, public browser-local play import/export, rules browsing, private campaign rules, sheet rule links, Mira content, sessions, wiki, protected seeded assets, image upload, combined admin campaign access, admin account handoff, and logout protection. The screenshot script captures public home, local play, sheet, roster, campaign, rules, wiki, faction, admin, compact edit, roll result, and edited-sheet states to `docs/pr-screenshots/` by default for deliberate PR evidence refreshes; `bun run verify` overrides `SCREENSHOT_DIR` to a temporary directory so routine acceptance runs do not churn committed screenshots. [Hosted Rehearsal Acceptance](./docs/operations/hosted-rehearsal-acceptance.md) records the final `sheet-0030` acceptance checklist; [Campaign Companion Acceptance](./docs/operations/campaign-companion-acceptance.md) records the completed `sheet-0050` acceptance checklist and follow-ups.
+The accessibility script currently checks public `/`, `/login`, `/local/characters`, `/local/campaigns`, `/rules`, and `/rules/spell/bless`, player `/characters`, `/sheet/lynott`, `/campaigns/rovnost-shadows/wiki/factions-guide`, and `/logout`, Game Master `/campaigns/rovnost-shadows`, `/campaigns/rovnost-shadows/prep`, `/campaigns/rovnost-shadows/npcs`, `/campaigns/rovnost-shadows/npcs/magister-vallen`, and `/campaigns/rovnost-shadows/characters`, and admin `/admin`. The MVP smoke script renders every sheet tab fragment directly and walks the group-use flows for character creation, manual edits, notes, faction choice, full SRD import, public browser-local play import/export, rules browsing, private campaign rules, sheet rule links, Mira content, sessions, wiki, protected seeded assets, image upload, combined admin campaign access, admin account handoff, and logout protection. The screenshot script captures public home, local play, sheet, roster, campaign, Game Master prep/NPC, rules, wiki, faction, admin, compact edit, roll result, and edited-sheet states to `docs/pr-screenshots/` by default for deliberate PR evidence refreshes; `bun run verify` overrides `SCREENSHOT_DIR` to a temporary directory so routine acceptance runs do not churn committed screenshots. [Hosted Rehearsal Acceptance](./docs/operations/hosted-rehearsal-acceptance.md) records the final `sheet-0030` acceptance checklist; [Campaign Companion Acceptance](./docs/operations/campaign-companion-acceptance.md) records the completed `sheet-0050` acceptance checklist and follow-ups.
 [Hyper-Dank Adoption Acceptance](./docs/operations/hyper-dank-adoption-acceptance.md) records the
 completed `sheet-0040` package-adoption checklist, compatibility coverage, visual evidence, and
 remaining app-owned boundaries.

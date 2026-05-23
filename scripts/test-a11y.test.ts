@@ -15,6 +15,9 @@ describe("Pa11y targets", () => {
       { label: "wiki", path: "/campaigns/rovnost-shadows/wiki/factions-guide", role: "player" },
       { label: "logout", path: "/logout", role: "player" },
       { label: "campaign", path: "/campaigns/rovnost-shadows", role: "game_master" },
+      { label: "gm prep", path: "/campaigns/rovnost-shadows/prep", role: "game_master" },
+      { label: "gm npcs", path: "/campaigns/rovnost-shadows/npcs", role: "game_master" },
+      { label: "gm npc detail", path: "/campaigns/rovnost-shadows/npcs/magister-vallen", role: "game_master" },
       { label: "gm roster", path: "/campaigns/rovnost-shadows/characters", role: "game_master" },
       { label: "admin", path: "/admin", role: "admin" },
     ]);
@@ -24,6 +27,9 @@ describe("Pa11y targets", () => {
     expect(pa11yTargets.map((target) => target.label)).toEqual(expect.arrayContaining([
       "admin",
       "campaign",
+      "gm npc detail",
+      "gm npcs",
+      "gm prep",
       "gm roster",
       "login",
       "local campaigns",
