@@ -1,62 +1,66 @@
 #!/usr/bin/env bun
-import { spawn } from "node:child_process";
 import { rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { runAsync } from "@macavitymadcap/hyper-dank-automation";
 
-interface Check {
+export interface Check {
   command: string[];
   env?: Record<string, string>;
   label: string;
 }
 
-const configuredVerificationScreenshotDir = process.env.VERIFY_SCREENSHOT_DIR;
-const verificationScreenshotDir = configuredVerificationScreenshotDir
-  ?? join(tmpdir(), "campaign-ledger-verify-screenshots");
-
-const checks: Check[] = [
-  { label: "Typecheck", command: ["bun", "run", "typecheck"] },
-  { label: "Tests", command: ["bun", "run", "test"] },
-  { label: "Accessibility", command: ["bun", "run", "test:a11y"] },
-  { label: "MVP smoke", command: ["bun", "run", "smoke:mvp"] },
-  {
-    label: "Sheet screenshots",
-    command: ["bun", "run", "screenshots:sheet"],
-    env: { SCREENSHOT_DIR: verificationScreenshotDir },
-  },
-];
-
-if (!configuredVerificationScreenshotDir) {
-  rmSync(verificationScreenshotDir, { force: true, recursive: true });
+export function resolveVerificationScreenshotDir(env: NodeJS.ProcessEnv = process.env) {
+  return env.VERIFY_SCREENSHOT_DIR ?? join(tmpdir(), "campaign-ledger-verify-screenshots");
 }
 
-for (const check of checks) {
-  console.log(`\n== ${check.label} ==`);
-
-  const exitCode = await runCommand(check);
-
-  if (exitCode !== 0) {
-    console.error(`${check.label} failed with exit code ${exitCode}.`);
-    process.exit(exitCode);
-  }
+export function buildVerificationChecks(env: NodeJS.ProcessEnv = process.env): Check[] {
+  return [
+    { label: "Typecheck", command: ["bun", "run", "typecheck"] },
+    { label: "Tests", command: ["bun", "run", "test"] },
+    { label: "Accessibility", command: ["bun", "run", "test:a11y"] },
+    { label: "MVP smoke", command: ["bun", "run", "smoke:mvp"] },
+    {
+      label: "Sheet screenshots",
+      command: ["bun", "run", "screenshots:sheet"],
+      env: { SCREENSHOT_DIR: resolveVerificationScreenshotDir(env) },
+    },
+  ];
 }
 
-console.log("\nVerification complete.");
+export async function runVerification(checks = buildVerificationChecks()) {
+  for (const check of checks) {
+    console.log(`\n== ${check.label} ==`);
 
-function runCommand(check: Check) {
-  return new Promise<number>((resolve, reject) => {
-    const { command } = check;
-    const [executable, ...args] = command;
-    if (!executable) {
-      reject(new Error("Cannot run an empty command."));
-      return;
+    const exitCode = await runCommand(check);
+
+    if (exitCode !== 0) {
+      console.error(`${check.label} failed with exit code ${exitCode}.`);
+      process.exit(exitCode);
     }
+  }
 
-    const env = { ...process.env, ...check.env };
-    delete env.npm_lifecycle_event;
-    const child = spawn(executable, args, { env, stdio: "inherit" });
+  console.log("\nVerification complete.");
+}
 
-    child.on("error", reject);
-    child.on("close", (code) => resolve(code ?? 1));
+async function runCommand(check: Check) {
+  const [executable, ...args] = check.command;
+  if (!executable) throw new Error("Cannot run an empty command.");
+
+  const env = { ...process.env, ...check.env };
+  delete env.npm_lifecycle_event;
+
+  return runAsync(executable, args, {
+    allowFailure: true,
+    env,
+    stdio: "inherit",
   });
+}
+
+if (import.meta.main) {
+  if (!process.env.VERIFY_SCREENSHOT_DIR) {
+    rmSync(resolveVerificationScreenshotDir(), { force: true, recursive: true });
+  }
+
+  await runVerification();
 }

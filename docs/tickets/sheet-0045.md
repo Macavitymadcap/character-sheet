@@ -39,3 +39,14 @@ while preserving Campaign Ledger's app-specific targets and evidence.
 - Campaign Ledger-specific target lists and smoke flows remain local and visible.
 - `bun run verify` does not churn committed PR screenshots.
 - `bun run verify` passes.
+
+## Acceptance Notes
+
+- `scripts/verify.ts` now uses Hyper-Dank's `runAsync` command helper while preserving Campaign
+  Ledger's visible gate order.
+- Verification checks are exported for script tests, including the routine temporary
+  `SCREENSHOT_DIR` behaviour and explicit `VERIFY_SCREENSHOT_DIR` override.
+- `scripts/test-a11y.ts` now uses Hyper-Dank's Pa11y target runner while keeping Campaign Ledger's
+  route list, login cookies, seed setup, and Pa11y config local.
+- Screenshot targets, smoke workflow coverage, local app setup, and PR evidence screenshots remain
+  app-owned.

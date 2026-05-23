@@ -1,4 +1,5 @@
 #!/usr/bin/env bun
+import { runPa11y, runPa11yTargets } from "@macavitymadcap/hyper-dank-automation";
 import { writeSeedAssetPlaceholders } from "../src/assets";
 import { RulesImportService } from "../src/rules";
 import { createInMemoryApp, login, startLocalServer, waitForHttp } from "./lib/local-app";
@@ -39,28 +40,26 @@ if (import.meta.main) {
       public: "",
     };
 
-    for (const target of pa11yTargets) {
-      await runPa11y(target.label, `${baseUrl}${target.path}`, cookies[target.role]);
-    }
+    await runPa11yTargets(
+      pa11yTargets.map((target) => ({
+        cookie: cookies[target.role],
+        name: target.label,
+        path: target.path,
+      })),
+      {
+        baseUrl,
+        configPath: "scripts/pa11y-config.cjs",
+        executable: "./node_modules/.bin/pa11y",
+        runner: async (url, options) => {
+          const label = pa11yTargets.find((target) => `${baseUrl}${target.path}` === url)?.label ?? url;
+          console.log(`Running Pa11y: ${label} (${url})`);
+          await runPa11y(url, options);
+        },
+        stdio: "inherit",
+      },
+    );
   } finally {
     server.stop(true);
     runtime.close();
   }
-}
-
-async function runPa11y(label: string, url: string, cookie = "") {
-  console.log(`Running Pa11y: ${label} (${url})`);
-  const child = Bun.spawn(
-    ["./node_modules/.bin/pa11y", url, "--config", "scripts/pa11y-config.cjs"],
-    {
-      env: {
-        ...Bun.env,
-        PA11Y_COOKIE: cookie,
-      },
-      stderr: "inherit",
-      stdout: "inherit",
-    },
-  );
-  const exitCode = await child.exited;
-  if (exitCode !== 0) throw new Error(`Pa11y failed for ${label}`);
 }
