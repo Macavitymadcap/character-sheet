@@ -36,3 +36,14 @@ helpers while preserving Campaign Ledger permissions and response contracts.
 - Player, Game Master, admin, public, and local-play routes keep their current behaviour.
 - HTMX fragments and redirects remain stable.
 - `bun run verify` passes.
+
+## Acceptance Notes
+
+- `src/app.tsx` now imports `FormValues`, `HttpResponder`, and `routeParam` from
+  `@macavitymadcap/hyper-dank-transport`.
+- Character creation, login, admin invite/status, and campaign-session forms use `FormValues`
+  where the shared parser preserves Campaign Ledger validation copy.
+- Action redirects that can be triggered by HTMX now flow through `HttpResponder`, returning
+  `HX-Redirect` for HTMX requests while preserving `303` redirects for normal form posts.
+- Route parameter reads for the migrated rule, campaign, asset, character, and session paths use
+  the shared `routeParam` helper.

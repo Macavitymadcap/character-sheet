@@ -1,5 +1,10 @@
 import { mkdir } from "node:fs/promises";
 import { dirname } from "node:path";
+import {
+  FormValues,
+  HttpResponder,
+  routeParam,
+} from "@macavitymadcap/hyper-dank-transport";
 import { Hono, type Context } from "hono";
 import { assetStorageRoot } from "./assets";
 import {
@@ -74,6 +79,7 @@ export interface AppDependencies {
 
 export const createApp = (dependencies: AppDependencies) => {
   const app = new Hono();
+  const responder = new HttpResponder();
 
   app.get("/healthz", (context) => context.json({ ok: true }));
 
@@ -119,6 +125,9 @@ export const createApp = (dependencies: AppDependencies) => {
     return context.text("Forbidden", 403);
   };
 
+  const redirectAfterAction = (context: Context, location: string) =>
+    responder.redirectAfterAction(context, location);
+
   app.get("/", (context) => {
     const session = readSession(context.req.header("cookie"));
 
@@ -160,11 +169,11 @@ export const createApp = (dependencies: AppDependencies) => {
   app.get("/rules/:entityType/:slug", (context) => {
     const session = readSession(context.req.header("cookie"));
 
-    const entityType = parseRuleEntityType(context.req.param("entityType"));
+    const entityType = parseRuleEntityType(routeParam(context, "entityType"));
     if (!entityType) return context.text("Not found", 404);
 
     const accessFilters = ruleAccessFilters(dependencies, session);
-    const rule = dependencies.rulesRepository.getRuleDetail(entityType, context.req.param("slug"), accessFilters);
+    const rule = dependencies.rulesRepository.getRuleDetail(entityType, routeParam(context, "slug"), accessFilters);
     if (!rule) return context.text("Not found", 404);
 
     return context.html(
@@ -179,7 +188,7 @@ export const createApp = (dependencies: AppDependencies) => {
   });
 
   app.get("/rules/:entityType", (context) => {
-    const entityType = parseRuleEntityType(context.req.param("entityType"));
+    const entityType = parseRuleEntityType(routeParam(context, "entityType"));
     if (!entityType) return context.text("Not found", 404);
 
     const query = new URLSearchParams(context.req.query()).toString();
@@ -188,9 +197,9 @@ export const createApp = (dependencies: AppDependencies) => {
   });
 
   app.post("/login", async (context) => {
-    const body = await context.req.parseBody();
-    const email = String(body.email ?? "");
-    const password = String(body.password ?? "");
+    const form = await FormValues.from(context);
+    const email = form.string("email");
+    const password = form.string("password");
     const user = dependencies.authService.verifyCredentials(email, password);
 
     if (!user) {
@@ -203,7 +212,7 @@ export const createApp = (dependencies: AppDependencies) => {
     const session = dependencies.sessionService.createSession(user.id);
     context.header("Set-Cookie", session.cookie);
 
-    return context.redirect(defaultRouteForUser(user), 303);
+    return redirectAfterAction(context, defaultRouteForUser(user));
   });
 
   app.get("/logout", (context) => {
@@ -216,7 +225,7 @@ export const createApp = (dependencies: AppDependencies) => {
     dependencies.sessionService.logout(context.req.header("cookie"));
     context.header("Set-Cookie", dependencies.sessionService.clearCookie());
 
-    return context.redirect("/", 303);
+    return redirectAfterAction(context, "/");
   });
 
   app.get("/admin", (context) => {
@@ -243,7 +252,7 @@ export const createApp = (dependencies: AppDependencies) => {
     if (!session) return context.redirect("/login", 303);
 
     const campaign = dependencies.campaignRepository.getCampaignBySlug(
-      context.req.param("campaignSlug"),
+      routeParam(context, "campaignSlug"),
     );
     if (!campaign) return context.text("Not found", 404);
 
@@ -282,7 +291,7 @@ export const createApp = (dependencies: AppDependencies) => {
     if (!session) return context.redirect("/login", 303);
 
     const campaign = dependencies.campaignRepository.getCampaignBySlug(
-      context.req.param("campaignSlug"),
+      routeParam(context, "campaignSlug"),
     );
     if (!campaign) return context.text("Not found", 404);
 
@@ -299,7 +308,7 @@ export const createApp = (dependencies: AppDependencies) => {
 
     const page = dependencies.campaignContentRepository.getWikiPageBySlug(
       campaign.id,
-      context.req.param("wikiSlug"),
+      routeParam(context, "wikiSlug"),
       viewerRole,
     );
     if (!page) return context.text("Not found", 404);
@@ -340,7 +349,7 @@ export const createApp = (dependencies: AppDependencies) => {
     if (!session) return context.redirect("/login", 303);
 
     const campaign = dependencies.campaignRepository.getCampaignBySlug(
-      context.req.param("campaignSlug"),
+      routeParam(context, "campaignSlug"),
     );
     if (!campaign) return context.text("Not found", 404);
 
@@ -357,7 +366,7 @@ export const createApp = (dependencies: AppDependencies) => {
 
     const asset = dependencies.campaignContentRepository.getImageAssetById(
       campaign.id,
-      context.req.param("assetId"),
+      routeParam(context, "assetId"),
       viewerRole,
     );
     if (!asset) return context.text("Not found", 404);
@@ -385,7 +394,7 @@ export const createApp = (dependencies: AppDependencies) => {
     if (!session) return context.redirect("/login", 303);
 
     const campaign = dependencies.campaignRepository.getCampaignBySlug(
-      context.req.param("campaignSlug"),
+      routeParam(context, "campaignSlug"),
     );
     if (!campaign) return context.text("Not found", 404);
 
@@ -406,7 +415,7 @@ export const createApp = (dependencies: AppDependencies) => {
       campaignId: campaign.id,
     });
 
-    return context.redirect(`/campaigns/${campaign.slug}`, 303);
+    return redirectAfterAction(context, `/campaigns/${campaign.slug}`);
   });
 
   app.post("/campaigns/:campaignSlug/assets", async (context) => {
@@ -414,7 +423,7 @@ export const createApp = (dependencies: AppDependencies) => {
     if (!session) return context.redirect("/login", 303);
 
     const campaign = dependencies.campaignRepository.getCampaignBySlug(
-      context.req.param("campaignSlug"),
+      routeParam(context, "campaignSlug"),
     );
     if (!campaign) return context.text("Not found", 404);
 
@@ -435,7 +444,7 @@ export const createApp = (dependencies: AppDependencies) => {
       campaignId: campaign.id,
     });
 
-    return context.redirect(`/campaigns/${campaign.slug}`, 303);
+    return redirectAfterAction(context, `/campaigns/${campaign.slug}`);
   });
 
   app.post("/campaigns/:campaignSlug/sessions", async (context) => {
@@ -443,7 +452,7 @@ export const createApp = (dependencies: AppDependencies) => {
     if (!session) return context.redirect("/login", 303);
 
     const campaign = dependencies.campaignRepository.getCampaignBySlug(
-      context.req.param("campaignSlug"),
+      routeParam(context, "campaignSlug"),
     );
     if (!campaign) return context.text("Not found", 404);
 
@@ -456,8 +465,7 @@ export const createApp = (dependencies: AppDependencies) => {
     const guarded = guardResponse(context, guard);
     if (guarded) return guarded;
 
-    const body = await context.req.parseBody();
-    const parsed = parseCampaignSessionForm(body);
+    const parsed = parseCampaignSessionForm(await FormValues.from(context));
     if (!parsed.ok) return context.text(parsed.message, 400);
 
     dependencies.campaignContentRepository.createSession({
@@ -466,7 +474,7 @@ export const createApp = (dependencies: AppDependencies) => {
       createdByUserId: session.user.id,
     });
 
-    return context.redirect(`/campaigns/${campaign.slug}`, 303);
+    return redirectAfterAction(context, `/campaigns/${campaign.slug}`);
   });
 
   app.post("/campaigns/:campaignSlug/sessions/:sessionId", async (context) => {
@@ -474,7 +482,7 @@ export const createApp = (dependencies: AppDependencies) => {
     if (!session) return context.redirect("/login", 303);
 
     const campaign = dependencies.campaignRepository.getCampaignBySlug(
-      context.req.param("campaignSlug"),
+      routeParam(context, "campaignSlug"),
     );
     if (!campaign) return context.text("Not found", 404);
 
@@ -487,18 +495,17 @@ export const createApp = (dependencies: AppDependencies) => {
     const guarded = guardResponse(context, guard);
     if (guarded) return guarded;
 
-    const body = await context.req.parseBody();
-    const parsed = parseCampaignSessionForm(body);
+    const parsed = parseCampaignSessionForm(await FormValues.from(context));
     if (!parsed.ok) return context.text(parsed.message, 400);
 
     const updated = dependencies.campaignContentRepository.updateSession(
       campaign.id,
-      context.req.param("sessionId"),
+      routeParam(context, "sessionId"),
       parsed.value,
     );
     if (!updated) return context.text("Not found", 404);
 
-    return context.redirect(`/campaigns/${campaign.slug}`, 303);
+    return redirectAfterAction(context, `/campaigns/${campaign.slug}`);
   });
 
   app.post("/campaigns/:campaignSlug/sessions/:sessionId/delete", (context) => {
@@ -506,7 +513,7 @@ export const createApp = (dependencies: AppDependencies) => {
     if (!session) return context.redirect("/login", 303);
 
     const campaign = dependencies.campaignRepository.getCampaignBySlug(
-      context.req.param("campaignSlug"),
+      routeParam(context, "campaignSlug"),
     );
     if (!campaign) return context.text("Not found", 404);
 
@@ -521,11 +528,11 @@ export const createApp = (dependencies: AppDependencies) => {
 
     const deleted = dependencies.campaignContentRepository.deleteSession(
       campaign.id,
-      context.req.param("sessionId"),
+      routeParam(context, "sessionId"),
     );
     if (!deleted) return context.text("Not found", 404);
 
-    return context.redirect(`/campaigns/${campaign.slug}`, 303);
+    return redirectAfterAction(context, `/campaigns/${campaign.slug}`);
   });
 
   app.get("/characters", (context) => {
@@ -585,7 +592,7 @@ export const createApp = (dependencies: AppDependencies) => {
 
     const sheet = dependencies.characterRepository.createCharacter(input.value);
 
-    return context.redirect(`/sheet/${sheet.slug}`, 303);
+    return redirectAfterAction(context, `/sheet/${sheet.slug}`);
   });
 
   app.get("/campaigns/:campaignSlug/characters", (context) => {
@@ -593,7 +600,7 @@ export const createApp = (dependencies: AppDependencies) => {
     if (!session) return context.redirect("/login", 303);
 
     const campaign = dependencies.campaignRepository.getCampaignBySlug(
-      context.req.param("campaignSlug"),
+      routeParam(context, "campaignSlug"),
     );
     if (!campaign) return context.text("Not found", 404);
 
@@ -624,7 +631,7 @@ export const createApp = (dependencies: AppDependencies) => {
     if (!session) return context.redirect("/login", 303);
 
     const campaign = dependencies.campaignRepository.getCampaignBySlug(
-      context.req.param("campaignSlug"),
+      routeParam(context, "campaignSlug"),
     );
     if (!campaign) return context.text("Not found", 404);
 
@@ -654,7 +661,7 @@ export const createApp = (dependencies: AppDependencies) => {
     if (!session) return context.redirect("/login", 303);
 
     const campaign = dependencies.campaignRepository.getCampaignBySlug(
-      context.req.param("campaignSlug"),
+      routeParam(context, "campaignSlug"),
     );
     if (!campaign) return context.text("Not found", 404);
 
@@ -667,8 +674,8 @@ export const createApp = (dependencies: AppDependencies) => {
     const guarded = guardResponse(context, guard);
     if (guarded) return guarded;
 
-    const body = await context.req.parseBody();
-    const ownerUserId = parseFormText(body.ownerUserId);
+    const form = await FormValues.from(context);
+    const ownerUserId = parseFormText(form.string("ownerUserId"));
     const owner = ownerUserId
       ? dependencies.campaignRepository
           .listMembers(campaign.id)
@@ -677,7 +684,7 @@ export const createApp = (dependencies: AppDependencies) => {
     if (!owner) return context.text("Invalid owner", 400);
 
     const input = await parseCharacterCreateForm(context, {
-      body,
+      form,
       campaignId: campaign.id,
       ownerUserId: owner.userId,
     });
@@ -685,7 +692,7 @@ export const createApp = (dependencies: AppDependencies) => {
 
     const sheet = dependencies.characterRepository.createCharacter(input.value);
 
-    return context.redirect(`/sheet/${sheet.slug}`, 303);
+    return redirectAfterAction(context, `/sheet/${sheet.slug}`);
   });
 
   app.post("/admin/invites", async (context) => {
@@ -695,9 +702,9 @@ export const createApp = (dependencies: AppDependencies) => {
     if (guarded) return guarded;
     if (!session) return context.redirect("/login", 303);
 
-    const body = await context.req.parseBody();
-    const email = String(body.email ?? "");
-    const role = String(body.role ?? "");
+    const form = await FormValues.from(context);
+    const email = form.string("email");
+    const role = form.string("role");
     if (!isUserRole(role)) return context.text("Invalid role", 400);
 
     const invite = dependencies.authService.createInvite({
@@ -720,9 +727,9 @@ export const createApp = (dependencies: AppDependencies) => {
       );
     }
 
-    return context.redirect(
+    return redirectAfterAction(
+      context,
       `/admin?handoff=invite&url=${encodeURIComponent(inviteUrl)}&email=${encodeURIComponent(invite.email)}&role=${invite.role}&expires=${encodeURIComponent(invite.expiresAt.toISOString())}`,
-      303,
     );
   });
 
@@ -732,11 +739,11 @@ export const createApp = (dependencies: AppDependencies) => {
     const guarded = guardResponse(context, guard);
     if (guarded) return guarded;
 
-    const body = await context.req.parseBody();
-    const status = String(body.status ?? "");
+    const form = await FormValues.from(context);
+    const status = form.string("status");
     if (status !== "active" && status !== "disabled") return context.text("Invalid status", 400);
 
-    const targetUser = dependencies.authRepository.findUserById(context.req.param("userId"));
+    const targetUser = dependencies.authRepository.findUserById(routeParam(context, "userId"));
     if (!targetUser) return context.text("Not found", 404);
     if (targetUser.id === session?.user.id && status === "disabled") {
       return context.text("Cannot disable your own account", 400);
@@ -752,7 +759,7 @@ export const createApp = (dependencies: AppDependencies) => {
 
     dependencies.authRepository.updateUserStatus(targetUser.id, status);
 
-    return context.redirect("/admin", 303);
+    return redirectAfterAction(context, "/admin");
   });
 
   app.get("/admin/invites/:token", (context) => {
@@ -2024,18 +2031,18 @@ function parseAdminHandoff(context: Context) {
 async function parseCharacterCreateForm(
   context: Context,
   options: {
-    body?: Awaited<ReturnType<Context["req"]["parseBody"]>>;
+    form?: FormValues;
     campaignId: string;
     ownerUserId: string;
   },
 ): Promise<{ ok: true; value: CreateCharacterInput } | { ok: false; message: string }> {
-  const body = options.body ?? await context.req.parseBody();
-  const name = parseFormText(body.name);
-  const species = parseFormText(body.species);
-  const className = parseFormText(body.className);
-  const background = parseFormText(body.background);
-  const level = parseFormNumber(body.level);
-  const hitPointMax = parseFormNumber(body.hitPointMax);
+  const form = options.form ?? await FormValues.from(context);
+  const name = parseFormText(form.string("name"));
+  const species = parseFormText(form.string("species"));
+  const className = parseFormText(form.string("className"));
+  const background = parseFormText(form.string("background"));
+  const level = parseFormNumber(form.string("level"));
+  const hitPointMax = parseFormNumber(form.string("hitPointMax"));
   if (!name || !species || !className || !background || level === null || hitPointMax === null) {
     return { ok: false, message: "Missing character fields" };
   }
@@ -2054,7 +2061,7 @@ async function parseCharacterCreateForm(
       name,
       ownerUserId: options.ownerUserId,
       species,
-      subclassName: parseFormString(body.subclassName) || null,
+      subclassName: parseFormString(form.optionalString("subclassName")) || null,
     },
   };
 }
@@ -2304,7 +2311,7 @@ function parseNoteVisibility(value: unknown) {
 }
 
 function parseCampaignSessionForm(
-  body: Awaited<ReturnType<Context["req"]["parseBody"]>>,
+  form: FormValues,
 ): {
   ok: true;
   value: {
@@ -2315,11 +2322,11 @@ function parseCampaignSessionForm(
     visibility: CampaignContentVisibility;
   };
 } | { ok: false; message: string } {
-  const title = parseFormText(body.title);
-  const sessionDate = parseFormString(body.sessionDate);
-  const summary = parseFormString(body.summary);
-  const textBody = parseFormString(body.body);
-  const visibility = parseNoteVisibility(body.visibility);
+  const title = parseFormText(form.string("title"));
+  const sessionDate = parseFormString(form.optionalString("sessionDate"));
+  const summary = parseFormString(form.optionalString("summary"));
+  const textBody = parseFormString(form.optionalString("body"));
+  const visibility = parseNoteVisibility(form.string("visibility"));
   if (!title || summary === null || textBody === null || !visibility) {
     return { ok: false, message: "Invalid session" };
   }
