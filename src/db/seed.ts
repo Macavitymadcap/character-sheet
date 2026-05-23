@@ -882,7 +882,7 @@ const campaignNpcs: CampaignNpcSeed[] = [
     "npc_magister_vallen",
     "magister-vallen",
     "Magister Vallen",
-    "game_master",
+    "selected",
     "A senior magistrate linked to the pressure around Rovnost's factory districts.",
     "Keep Vallen private until the table has enough faction context.",
     "Vallen is using licences as leverage.",
@@ -895,6 +895,10 @@ const campaignNpcs: CampaignNpcSeed[] = [
     null,
   ],
 ];
+
+const campaignNpcPlayerAccess = [
+  ["npc_magister_vallen", "user_lynott_player"],
+] as const;
 
 const campaignSessions: CampaignSessionSeed[] = [
   [
@@ -1666,6 +1670,13 @@ export const seedDatabase = (database: Database) => {
          rules_entity_id = excluded.rules_entity_id,
          updated_at = CURRENT_TIMESTAMP`,
       [npc[0], "campaign_rovnost_shadows", ...npc.slice(1)],
+    );
+  }
+
+  for (const [npcId, userId] of campaignNpcPlayerAccess) {
+    database.run(
+      "insert or ignore into campaign_npc_player_access (npc_id, user_id) values (?, ?)",
+      [npcId, userId],
     );
   }
 

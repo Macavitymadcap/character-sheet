@@ -33,6 +33,7 @@ export type {
   CreateCharacterInput,
   LocalInvite,
   NotesRepository,
+  NpcVisibility,
   PasswordResetToken,
   RulesRepository,
   RulesSeedRepository,

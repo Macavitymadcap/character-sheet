@@ -168,6 +168,45 @@ export const campaignStyles = /* css */ `
   margin: 0;
 }
 
+.campaign-help-text {
+  color: var(--muted-text-colour);
+  font-weight: 750;
+  margin: 0;
+}
+
+.campaign-help-text a {
+  color: var(--heading-colour);
+}
+
+.campaign-checkbox-list {
+  border: 1px solid var(--border-colour);
+  border-radius: 0.4rem;
+  display: grid;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0.65rem;
+}
+
+.campaign-checkbox-list legend {
+  color: var(--muted-text-colour);
+  font-size: 0.82rem;
+  font-weight: 850;
+  padding-inline: 0.25rem;
+}
+
+.campaign-checkbox-list label {
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  font-size: 0.92rem;
+  gap: 0.45rem;
+}
+
+.campaign-checkbox-list input {
+  inline-size: auto;
+  min-height: auto;
+}
+
 .campaign-npc-portrait-frame {
   border: 1px solid var(--border-colour);
   border-radius: 0.4rem;

@@ -1200,6 +1200,9 @@ describe("createApp", () => {
     const playerPrep = await app.request("/campaigns/rovnost-shadows/prep", {
       headers: { cookie: playerCookie },
     });
+    const playerEmptyNpcList = await app.request("/campaigns/rovnost-shadows/npcs", {
+      headers: { cookie: playerCookie },
+    });
     const outsiderNpcList = await app.request("/campaigns/rovnost-shadows/npcs", {
       headers: { cookie: outsiderCookie },
     });
@@ -1216,7 +1219,7 @@ describe("createApp", () => {
         rulesEntityId: "",
         sceneNotes: "Use during the chase.",
         secrets: "Working for the Tidebound.",
-        visibility: "game_master",
+        visibility: "private",
       }),
       headers: formHeaders(gmCookie),
       method: "POST",
@@ -1246,13 +1249,20 @@ describe("createApp", () => {
         rulesEntityId: "",
         sceneNotes: "Use at the lock gate.",
         secrets: "Still connected to Tidebound.",
-        visibility: "game_master",
+        selectedPlayerIds: "user_lynott_player",
+        visibility: "selected",
       }),
       headers: formHeaders(gmCookie),
       method: "POST",
     });
+    const selectedVisibleToLynott = runtime?.repositories.campaignContentRepository
+      .listNpcSummariesForCampaign("campaign_rovnost_shadows", "player", "user_lynott_player")
+      .some((npc) => npc.id === createdNpc?.id);
+    const selectedHiddenFromMira = runtime?.repositories.campaignContentRepository
+      .listNpcSummariesForCampaign("campaign_rovnost_shadows", "player", "user_mira_player")
+      .some((npc) => npc.id === createdNpc?.id);
     const revealed = await app.request(`/campaigns/rovnost-shadows/npcs/${createdNpc?.id}/reveal`, {
-      body: new URLSearchParams({ visibility: "player" }),
+      body: new URLSearchParams({ visibility: "public" }),
       headers: formHeaders(gmCookie),
       method: "POST",
     });
@@ -1261,7 +1271,7 @@ describe("createApp", () => {
     });
     const playerVisibleHtml = await playerVisibleDetail.text();
     const hiddenAgain = await app.request(`/campaigns/rovnost-shadows/npcs/${createdNpc?.id}/reveal`, {
-      body: new URLSearchParams({ visibility: "game_master" }),
+      body: new URLSearchParams({ visibility: "private" }),
       headers: formHeaders(gmCookie),
       method: "POST",
     });
@@ -1270,14 +1280,17 @@ describe("createApp", () => {
     expect(prepHtml).toContain("Prep workspace");
     expect(prepHtml).toContain('href="/campaigns/rovnost-shadows/npcs"');
     expect(playerPrep.status).toBe(403);
+    expect(playerEmptyNpcList.status).toBe(200);
     expect(outsiderNpcList.status).toBe(403);
     expect(created.status).toBe(303);
     expect(created.headers.get("location")).toBe("/campaigns/rovnost-shadows/npcs/canal-broker");
     expect(detail.status).toBe(200);
     expect(detailHtml).toContain("Only the Game Master should see this.");
-    expect(detailHtml).toContain("Reveal to players");
+    expect(detailHtml).toContain("Make public");
     expect(playerHiddenDetail.status).toBe(404);
     expect(updated.status).toBe(303);
+    expect(selectedVisibleToLynott).toBe(true);
+    expect(selectedHiddenFromMira).toBe(false);
     expect(revealed.status).toBe(303);
     expect(playerVisibleDetail.status).toBe(200);
     expect(playerVisibleHtml).toContain("A broker with leverage in the canal districts.");
@@ -1286,7 +1299,7 @@ describe("createApp", () => {
     expect(hiddenAgain.status).toBe(303);
     expect(
       runtime?.repositories.campaignContentRepository
-        .listNpcSummariesForCampaign("campaign_rovnost_shadows", "player")
+        .listNpcSummariesForCampaign("campaign_rovnost_shadows", "player", "user_lynott_player")
         .some((npc) => npc.id === createdNpc?.id),
     ).toBe(false);
   });

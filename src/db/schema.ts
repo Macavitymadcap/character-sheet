@@ -131,7 +131,7 @@ CREATE TABLE IF NOT EXISTS campaign_npcs (
   campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
   slug TEXT NOT NULL,
   name TEXT NOT NULL,
-  visibility TEXT NOT NULL DEFAULT 'game_master' CHECK (visibility IN ('player', 'game_master')),
+  visibility TEXT NOT NULL DEFAULT 'private' CHECK (visibility IN ('public', 'private', 'selected')),
   public_summary TEXT NOT NULL DEFAULT '',
   gm_notes TEXT NOT NULL DEFAULT '',
   secrets TEXT NOT NULL DEFAULT '',
@@ -145,6 +145,13 @@ CREATE TABLE IF NOT EXISTS campaign_npcs (
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   UNIQUE (campaign_id, slug)
+);
+
+CREATE TABLE IF NOT EXISTS campaign_npc_player_access (
+  npc_id TEXT NOT NULL REFERENCES campaign_npcs(id) ON DELETE CASCADE,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (npc_id, user_id)
 );
 
 CREATE TABLE IF NOT EXISTS campaign_factions (
@@ -372,6 +379,12 @@ const migrationStatements = [
   "ALTER TABLE rules_sources ADD COLUMN visibility TEXT NOT NULL DEFAULT 'public'",
   "ALTER TABLE rules_sources ADD COLUMN public_export_eligible INTEGER NOT NULL DEFAULT 0",
   "UPDATE rules_sources SET public_export_eligible = 1 WHERE content_category = 'srd'",
+  `CREATE TABLE IF NOT EXISTS campaign_npc_player_access (
+    npc_id TEXT NOT NULL REFERENCES campaign_npcs(id) ON DELETE CASCADE,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (npc_id, user_id)
+  )`,
 ];
 
 const triggers = /* sql */ `
@@ -466,6 +479,7 @@ export const bootstrapDatabase = (database: Database) => {
       if (!isDuplicateColumnError(error)) throw error;
     }
   }
+  migrateCampaignNpcVisibility(database);
   relaxCharacterFactionChoiceFactionId(database);
   database.exec(triggers);
 };
@@ -496,5 +510,67 @@ function relaxCharacterFactionChoiceFactionId(database: Database) {
 
     DROP TABLE character_faction_choices;
     ALTER TABLE character_faction_choices_relaxed RENAME TO character_faction_choices;
+  `);
+}
+
+function migrateCampaignNpcVisibility(database: Database) {
+  const createSql = database
+    .query<{ sql: string | null }, [string]>("select sql from sqlite_master where type = 'table' and name = ?")
+    .get("campaign_npcs")?.sql ?? "";
+  if (createSql.includes("visibility IN ('public', 'private', 'selected')")) {
+    database.run("update campaign_npcs set visibility = 'public' where visibility = 'player'");
+    database.run("update campaign_npcs set visibility = 'private' where visibility = 'game_master'");
+    return;
+  }
+
+  database.exec(/* sql */ `
+    CREATE TABLE IF NOT EXISTS campaign_npcs_new (
+      id TEXT PRIMARY KEY,
+      campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+      slug TEXT NOT NULL,
+      name TEXT NOT NULL,
+      visibility TEXT NOT NULL DEFAULT 'private' CHECK (visibility IN ('public', 'private', 'selected')),
+      public_summary TEXT NOT NULL DEFAULT '',
+      gm_notes TEXT NOT NULL DEFAULT '',
+      secrets TEXT NOT NULL DEFAULT '',
+      motivations TEXT NOT NULL DEFAULT '',
+      hooks TEXT NOT NULL DEFAULT '',
+      scene_notes TEXT NOT NULL DEFAULT '',
+      reveal_notes TEXT NOT NULL DEFAULT '',
+      portrait_image_asset_id TEXT REFERENCES campaign_image_assets(id) ON DELETE SET NULL,
+      public_wiki_page_id TEXT REFERENCES campaign_wiki_pages(id) ON DELETE SET NULL,
+      rules_entity_id TEXT REFERENCES rules_entities(id) ON DELETE SET NULL,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE (campaign_id, slug)
+    );
+
+    INSERT OR IGNORE INTO campaign_npcs_new (
+      id, campaign_id, slug, name, visibility, public_summary, gm_notes, secrets,
+      motivations, hooks, scene_notes, reveal_notes, portrait_image_asset_id,
+      public_wiki_page_id, rules_entity_id, created_at, updated_at
+    )
+    SELECT
+      id,
+      campaign_id,
+      slug,
+      name,
+      CASE visibility WHEN 'player' THEN 'public' WHEN 'game_master' THEN 'private' ELSE visibility END,
+      public_summary,
+      gm_notes,
+      secrets,
+      motivations,
+      hooks,
+      scene_notes,
+      reveal_notes,
+      portrait_image_asset_id,
+      public_wiki_page_id,
+      rules_entity_id,
+      created_at,
+      updated_at
+    FROM campaign_npcs;
+
+    DROP TABLE campaign_npcs;
+    ALTER TABLE campaign_npcs_new RENAME TO campaign_npcs;
   `);
 }

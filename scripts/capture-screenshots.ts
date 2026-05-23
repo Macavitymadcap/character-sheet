@@ -304,6 +304,20 @@ export const sheetScreenshotTargets = [
     theme: "dark",
   },
   {
+    fileName: "player-npc-list-light.png",
+    label: "Player NPC list light",
+    path: "/campaigns/rovnost-shadows/npcs",
+    role: "player",
+    theme: "light",
+  },
+  {
+    fileName: "player-npc-list-dark.png",
+    label: "Player NPC list dark",
+    path: "/campaigns/rovnost-shadows/npcs",
+    role: "player",
+    theme: "dark",
+  },
+  {
     fileName: "gm-npc-detail-light.png",
     label: "Game Master NPC detail light",
     path: "/campaigns/rovnost-shadows/npcs/magister-vallen",

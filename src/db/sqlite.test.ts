@@ -1246,7 +1246,8 @@ describe("SQLite repositories", () => {
       rulesEntityId: null,
       sceneNotes: "Use during the canal chase.",
       secrets: "Actually works for the Tidebound.",
-      visibility: "game_master",
+      selectedPlayerIds: [],
+      visibility: "private",
     });
 
     expect(privateNpc).toMatchObject({
@@ -1255,7 +1256,7 @@ describe("SQLite repositories", () => {
       portraitImageAssetId: "asset_magister_vallen",
       publicWikiPageId: "wiki_rovnost_factions",
       slug: "dockside-contact",
-      visibility: "game_master",
+      visibility: "private",
     });
     expect(content.listNpcDossiersForCampaign(campaignId, "game_master")).toContainEqual(
       privateNpc,
@@ -1263,16 +1264,17 @@ describe("SQLite repositories", () => {
     expect(content.getNpcDossierBySlug(campaignId, "magister-vallen", "game_master")).toMatchObject({
       gmNotes: "Keep Vallen private until the table has enough faction context.",
       portraitImageAssetId: "asset_magister_vallen",
-      visibility: "game_master",
+      selectedPlayerIds: ["user_lynott_player"],
+      visibility: "selected",
     });
     expect(content.listNpcSummariesForCampaign(campaignId, "player")).toEqual([]);
     expect(content.getNpcDossierBySlug(campaignId, privateNpc.slug, "player")).toBeNull();
 
-    const revealed = content.revealNpcDossier(campaignId, privateNpc.id, "player");
+    const revealed = content.revealNpcDossier(campaignId, privateNpc.id, "public");
 
     expect(revealed).toMatchObject({
       id: privateNpc.id,
-      visibility: "player",
+      visibility: "public",
     });
     expect(content.listNpcSummariesForCampaign(campaignId, "player")).toEqual([
       {
@@ -1283,7 +1285,7 @@ describe("SQLite repositories", () => {
         publicSummary: "A quiet contact in the harbour district.",
         publicWikiPageId: "wiki_rovnost_factions",
         slug: "dockside-contact",
-        visibility: "player",
+        visibility: "public",
       },
     ]);
     expect(content.getNpcSummaryBySlug(campaignId, privateNpc.slug, "player")).not.toHaveProperty(
@@ -1305,16 +1307,22 @@ describe("SQLite repositories", () => {
       rulesEntityId: null,
       sceneNotes: "Use in the market.",
       secrets: "Still Tidebound.",
-      visibility: "game_master",
+      selectedPlayerIds: ["user_lynott_player"],
+      visibility: "selected",
     });
 
     expect(updated).toMatchObject({
       gmNotes: "Now suspects Lynott.",
       portraitImageAssetId: null,
       publicSummary: "A harbour contact with useful rumours.",
-      visibility: "game_master",
+      selectedPlayerIds: ["user_lynott_player"],
+      visibility: "selected",
     });
     expect(content.listNpcSummariesForCampaign(campaignId, "player")).toEqual([]);
+    expect(content.listNpcSummariesForCampaign(campaignId, "player", "user_lynott_player"))
+      .toContainEqual(expect.objectContaining({ id: privateNpc.id, visibility: "selected" }));
+    expect(content.listNpcSummariesForCampaign(campaignId, "player", "user_mira_player"))
+      .not.toContainEqual(expect.objectContaining({ id: privateNpc.id }));
 
     runtime.database.run(
       "insert into campaigns (id, slug, name, gm_user_id) values (?, ?, ?, ?)",
@@ -1374,7 +1382,8 @@ describe("SQLite repositories", () => {
         rulesEntityId: null,
         sceneNotes: "",
         secrets: "",
-        visibility: "game_master",
+        selectedPlayerIds: [],
+        visibility: "private",
       }),
     ).toThrow("NPC links must belong to the same campaign");
     expect(
@@ -1390,7 +1399,8 @@ describe("SQLite repositories", () => {
         rulesEntityId: null,
         sceneNotes: "",
         secrets: "",
-        visibility: "game_master",
+        selectedPlayerIds: [],
+        visibility: "private",
       }),
     ).toBeNull();
     expect(
@@ -1406,7 +1416,8 @@ describe("SQLite repositories", () => {
         rulesEntityId: "rule_elsewhere_contact",
         sceneNotes: "",
         secrets: "",
-        visibility: "game_master",
+        selectedPlayerIds: [],
+        visibility: "private",
       }),
     ).toBeNull();
   });

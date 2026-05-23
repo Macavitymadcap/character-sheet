@@ -117,8 +117,9 @@ describe("CampaignPage", () => {
       rulesEntityId: null,
       sceneNotes: "Use at the lock gate.",
       secrets: "Works for Tidebound.",
+      selectedPlayerIds: ["user_lynott_player"],
       slug: "canal-broker",
-      visibility: "game_master" as const,
+      visibility: "selected" as const,
     };
     const list = render(
       <NpcListPage
@@ -138,8 +139,15 @@ describe("CampaignPage", () => {
           width: 768,
         }]}
         npcs={[npc]}
+        playerMembers={[{
+          campaignId: "campaign_rovnost_shadows",
+          displayName: "Lynott Player",
+          role: "player",
+          userId: "user_lynott_player",
+        }]}
         rules={[]}
         user={user}
+        viewerRole="game_master"
         wikiPages={[]}
       />,
     );
@@ -161,6 +169,12 @@ describe("CampaignPage", () => {
           width: 768,
         }]}
         npc={npc}
+        playerMembers={[{
+          campaignId: "campaign_rovnost_shadows",
+          displayName: "Lynott Player",
+          role: "player",
+          userId: "user_lynott_player",
+        }]}
         rules={[]}
         user={user}
         viewerRole="game_master"
@@ -171,11 +185,12 @@ describe("CampaignPage", () => {
     expect(list).toContain("<title>NPCs - Rovnost Shadows - Campaign Ledger</title>");
     expect(list).toContain('action="/campaigns/rovnost-shadows/npcs"');
     expect(list).toContain('href="/campaigns/rovnost-shadows/npcs/canal-broker"');
-    expect(list).toContain("Game Master only");
+    expect(list).toContain("Selected players");
     expect(detail).toContain("Private motive.");
     expect(detail).toContain("Portrait: Canal Broker portrait");
     expect(detail).toContain("Works for Tidebound.");
-    expect(detail).toContain("Reveal to players");
+    expect(detail).toContain("Make public");
+    expect(detail).toContain("Lynott Player");
     expect(detail).toContain('action="/campaigns/rovnost-shadows/npcs/npc_1"');
   });
 });

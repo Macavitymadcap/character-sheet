@@ -58,6 +58,7 @@ import type {
   CharacterRepository,
   CreateCharacterInput,
   NotesRepository,
+  NpcVisibility,
   RuleSummary,
   RuleEntityType,
   RuleSearchFilters,
@@ -315,7 +316,7 @@ export const createApp = (dependencies: AppDependencies) => {
         appName={dependencies.appName}
         campaign={campaign}
         npcCount={npcs.length}
-        privateNpcCount={npcs.filter((npc) => npc.visibility === "game_master").length}
+        privateNpcCount={npcs.filter((npc) => npc.visibility === "private").length}
         user={session.user}
       />,
     );
@@ -333,21 +334,27 @@ export const createApp = (dependencies: AppDependencies) => {
     const guard = requireCampaignAccess({
       campaignId: campaign.id,
       campaignRepository: dependencies.campaignRepository,
-      permission: "manage",
+      permission: "read",
       session,
     });
     const guarded = guardResponse(context, guard);
     if (guarded) return guarded;
+    const viewerRole = campaignViewerRole(campaign.id, session.user.id);
+    if (!viewerRole) return context.text("Forbidden", 403);
 
     return context.html(
       <NpcListPage
         appName={dependencies.appName}
         campaign={campaign}
-        imageAssets={dependencies.campaignContentRepository.listImageAssetsForCampaign(campaign.id, "game_master")}
-        npcs={dependencies.campaignContentRepository.listNpcDossiersForCampaign(campaign.id, "game_master")}
+        imageAssets={dependencies.campaignContentRepository.listImageAssetsForCampaign(campaign.id, viewerRole)}
+        npcs={viewerRole === "game_master"
+          ? dependencies.campaignContentRepository.listNpcDossiersForCampaign(campaign.id, viewerRole)
+          : dependencies.campaignContentRepository.listNpcSummariesForCampaign(campaign.id, viewerRole, session.user.id)}
+        playerMembers={membersWithDisplayNames(dependencies, campaign.id).filter((member) => member.role === "player")}
         rules={statBlockRulesForCampaign(dependencies, campaign.id)}
         user={session.user}
-        wikiPages={dependencies.campaignContentRepository.listWikiPagesForCampaign(campaign.id, "game_master")}
+        viewerRole={viewerRole}
+        wikiPages={dependencies.campaignContentRepository.listWikiPagesForCampaign(campaign.id, viewerRole)}
       />,
     );
   });
@@ -374,7 +381,7 @@ export const createApp = (dependencies: AppDependencies) => {
 
     const npc = viewerRole === "game_master"
       ? dependencies.campaignContentRepository.getNpcDossierBySlug(campaign.id, routeParam(context, "npcSlug"), viewerRole)
-      : dependencies.campaignContentRepository.getNpcSummaryBySlug(campaign.id, routeParam(context, "npcSlug"), viewerRole);
+      : dependencies.campaignContentRepository.getNpcSummaryBySlug(campaign.id, routeParam(context, "npcSlug"), viewerRole, session.user.id);
     if (!npc) return context.text("Not found", 404);
 
     return context.html(
@@ -383,6 +390,7 @@ export const createApp = (dependencies: AppDependencies) => {
         campaign={campaign}
         imageAssets={dependencies.campaignContentRepository.listImageAssetsForCampaign(campaign.id, viewerRole)}
         npc={npc}
+        playerMembers={membersWithDisplayNames(dependencies, campaign.id).filter((member) => member.role === "player")}
         rules={statBlockRulesForCampaign(dependencies, campaign.id)}
         user={session.user}
         viewerRole={viewerRole}
@@ -409,7 +417,7 @@ export const createApp = (dependencies: AppDependencies) => {
     const guarded = guardResponse(context, guard);
     if (guarded) return guarded;
 
-    const parsed = parseCampaignNpcForm(await FormValues.from(context));
+    const parsed = parseCampaignNpcForm(await context.req.parseBody({ all: true }));
     if (!parsed.ok) return context.text(parsed.message, 400);
 
     try {
@@ -442,7 +450,7 @@ export const createApp = (dependencies: AppDependencies) => {
     const guarded = guardResponse(context, guard);
     if (guarded) return guarded;
 
-    const parsed = parseCampaignNpcForm(await FormValues.from(context));
+    const parsed = parseCampaignNpcForm(await context.req.parseBody({ all: true }));
     if (!parsed.ok) return context.text(parsed.message, 400);
 
     const npc = dependencies.campaignContentRepository.updateNpcDossier(
@@ -474,7 +482,7 @@ export const createApp = (dependencies: AppDependencies) => {
     if (guarded) return guarded;
 
     const form = await FormValues.from(context);
-    const visibility = parseNoteVisibility(form.string("visibility"));
+    const visibility = parseNpcVisibility(form.string("visibility"));
     if (!visibility) return context.text("Invalid NPC visibility", 400);
 
     const npc = dependencies.campaignContentRepository.revealNpcDossier(
@@ -574,6 +582,14 @@ export const createApp = (dependencies: AppDependencies) => {
 
     const file = Bun.file(`${assetStorageRoot()}/${asset.storageKey}`);
     if (!(await file.exists())) {
+      return new Response(missingSeedAssetSvg(asset.title), {
+        headers: {
+          "Cache-Control": "private, max-age=300",
+          "Content-Type": "image/svg+xml",
+        },
+      });
+    }
+    if (asset.byteSize > 1024 && file.size < 1024) {
       return new Response(missingSeedAssetSvg(asset.title), {
         headers: {
           "Cache-Control": "private, max-age=300",
@@ -2518,6 +2534,14 @@ function parseNoteVisibility(value: unknown) {
   return value === "player" || value === "game_master" ? value : null;
 }
 
+function parseNpcVisibility(value: unknown): NpcVisibility | null {
+  if (value === "public" || value === "private" || value === "selected") return value;
+  if (value === "player") return "public";
+  if (value === "game_master") return "private";
+
+  return null;
+}
+
 function parseCampaignSessionForm(
   form: FormValues,
 ): {
@@ -2552,7 +2576,7 @@ function parseCampaignSessionForm(
 }
 
 function parseCampaignNpcForm(
-  form: FormValues,
+  body: Awaited<ReturnType<Context["req"]["parseBody"]>>,
 ): {
   ok: true;
   value: {
@@ -2567,12 +2591,13 @@ function parseCampaignNpcForm(
     rulesEntityId: string | null;
     sceneNotes: string;
     secrets: string;
-    visibility: CampaignContentVisibility;
+    selectedPlayerIds: string[];
+    visibility: NpcVisibility;
   };
 } | { ok: false; message: string } {
-  const name = parseFormText(form.string("name"));
-  const publicSummary = parseFormText(form.string("publicSummary"));
-  const visibility = parseNoteVisibility(form.string("visibility"));
+  const name = parseFormText(body.name);
+  const publicSummary = parseFormText(body.publicSummary);
+  const visibility = parseNpcVisibility(body.visibility);
   if (!name || !publicSummary || !visibility) {
     return { ok: false, message: "Invalid NPC" };
   }
@@ -2580,20 +2605,32 @@ function parseCampaignNpcForm(
   return {
     ok: true,
     value: {
-      gmNotes: parseFormString(form.optionalString("gmNotes")) ?? "",
-      hooks: parseFormString(form.optionalString("hooks")) ?? "",
-      motivations: parseFormString(form.optionalString("motivations")) ?? "",
+      gmNotes: parseFormString(body.gmNotes) ?? "",
+      hooks: parseFormString(body.hooks) ?? "",
+      motivations: parseFormString(body.motivations) ?? "",
       name,
-      portraitImageAssetId: parseFormString(form.optionalString("portraitImageAssetId")) || null,
+      portraitImageAssetId: parseFormString(body.portraitImageAssetId) || null,
       publicSummary,
-      publicWikiPageId: parseFormString(form.optionalString("publicWikiPageId")) || null,
-      revealNotes: parseFormString(form.optionalString("revealNotes")) ?? "",
-      rulesEntityId: parseFormString(form.optionalString("rulesEntityId")) || null,
-      sceneNotes: parseFormString(form.optionalString("sceneNotes")) ?? "",
-      secrets: parseFormString(form.optionalString("secrets")) ?? "",
+      publicWikiPageId: parseFormString(body.publicWikiPageId) || null,
+      revealNotes: parseFormString(body.revealNotes) ?? "",
+      rulesEntityId: parseFormString(body.rulesEntityId) || null,
+      sceneNotes: parseFormString(body.sceneNotes) ?? "",
+      secrets: parseFormString(body.secrets) ?? "",
+      selectedPlayerIds: parseFormStringArray(body.selectedPlayerIds),
       visibility,
     },
   };
+}
+
+function parseFormStringArray(value: unknown) {
+  if (Array.isArray(value)) {
+    return value
+      .map((entry) => parseFormString(entry))
+      .filter((entry): entry is string => Boolean(entry));
+  }
+  const single = parseFormString(value);
+
+  return single ? [single] : [];
 }
 
 function parseCampaignWikiForm(

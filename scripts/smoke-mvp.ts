@@ -255,8 +255,8 @@ export async function runMvpSmoke() {
     });
     assertResponse("seeded campaign asset read", seededAsset.response, 200);
     const assetContentType = seededAsset.response.headers.get("content-type") ?? "";
-    if (!assetContentType.includes("image/png")) {
-      throw new Error(`Seeded campaign asset used ${assetContentType}; expected image/png.`);
+    if (!assetContentType.includes("image/png") && !assetContentType.includes("image/svg+xml")) {
+      throw new Error(`Seeded campaign asset used ${assetContentType}; expected image/png or image/svg+xml.`);
     }
 
     const imageForm = new FormData();

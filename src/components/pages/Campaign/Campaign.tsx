@@ -59,7 +59,11 @@ export const CampaignPage = ({ appName, campaign, gameMasterDisplayName, imageAs
                 <a class="action-link action-link-secondary" href={`/campaigns/${campaign.slug}/prep`}>Prep workspace</a>
                 <a class="action-link action-link-secondary" href={`/campaigns/${campaign.slug}/npcs`}>NPCs</a>
               </nav>
-            ) : null}
+            ) : (
+              <nav class="campaign-action-row" aria-label="Campaign tools">
+                <a class="action-link action-link-secondary" href={`/campaigns/${campaign.slug}/npcs`}>NPCs</a>
+              </nav>
+            )}
           </Panel>
           <Panel labelledBy="campaign-wiki-heading">
             <div class="campaign-heading">
@@ -280,20 +284,22 @@ interface NpcListPageProps {
   appName: string;
   campaign: CampaignSummary;
   imageAssets: CampaignImageAsset[];
-  npcs: CampaignNpcDossier[];
+  npcs: Array<CampaignNpcDossier | CampaignNpcSummary>;
+  playerMembers: Array<CampaignMember & { displayName: string }>;
   rules: RuleSummary[];
   user: Pick<AuthUser, "displayName" | "role">;
+  viewerRole: CampaignMember["role"];
   wikiPages: CampaignWikiPage[];
 }
 
-export const NpcListPage = ({ appName, campaign, imageAssets, npcs, rules, user, wikiPages }: NpcListPageProps) => (
+export const NpcListPage = ({ appName, campaign, imageAssets, npcs, playerMembers, rules, user, viewerRole, wikiPages }: NpcListPageProps) => (
   <Layout title={`NPCs - ${campaign.name} - ${appName}`}>
     <div class="shell campaign-shell">
       <SiteHeader appName={appName} currentSection="campaign" user={user} />
       <main class="campaign-main" aria-labelledby="campaign-npcs-heading">
         <Panel labelledBy="campaign-npcs-heading">
           <div class="campaign-heading">
-            <p class="campaign-kicker">Game Master</p>
+            <p class="campaign-kicker">{viewerRole === "game_master" ? "Game Master" : "Campaign"}</p>
             <h1 id="campaign-npcs-heading" class="panel-heading">NPCs</h1>
           </div>
           <div class="campaign-npc-grid">
@@ -301,20 +307,21 @@ export const NpcListPage = ({ appName, campaign, imageAssets, npcs, rules, user,
           </div>
           {npcs.length === 0 ? <p class="campaign-empty-state">No NPC dossiers yet.</p> : null}
         </Panel>
-        <Panel labelledBy="campaign-npc-create-heading">
+        {viewerRole === "game_master" ? <Panel labelledBy="campaign-npc-create-heading">
           <div class="campaign-heading">
             <p class="campaign-kicker">Private prep</p>
             <h2 id="campaign-npc-create-heading" class="panel-heading">Add NPC</h2>
           </div>
+          <p class="campaign-help-text"><a href={`/campaigns/${campaign.slug}#campaign-assets-heading`}>Upload or manage campaign images</a> before choosing a portrait.</p>
           <NpcForm
             action={`/campaigns/${campaign.slug}/npcs`}
-            campaign={campaign}
             imageAssets={imageAssets}
+            playerMembers={playerMembers}
             rules={rules}
             submitLabel="Add NPC"
             wikiPages={wikiPages}
           />
-        </Panel>
+        </Panel> : null}
       </main>
     </div>
   </Layout>
@@ -325,13 +332,14 @@ interface NpcDetailPageProps {
   campaign: CampaignSummary;
   imageAssets: CampaignImageAsset[];
   npc: CampaignNpcDossier | CampaignNpcSummary;
+  playerMembers: Array<CampaignMember & { displayName: string }>;
   rules: RuleSummary[];
   user: Pick<AuthUser, "displayName" | "role">;
   viewerRole: CampaignMember["role"];
   wikiPages: CampaignWikiPage[];
 }
 
-export const NpcDetailPage = ({ appName, campaign, imageAssets, npc, rules, user, viewerRole, wikiPages }: NpcDetailPageProps) => {
+export const NpcDetailPage = ({ appName, campaign, imageAssets, npc, playerMembers, rules, user, viewerRole, wikiPages }: NpcDetailPageProps) => {
   const canManage = viewerRole === "game_master" && isNpcDossier(npc);
   const portrait = npc.portraitImageAssetId
     ? imageAssets.find((asset) => asset.id === npc.portraitImageAssetId)
@@ -347,7 +355,7 @@ export const NpcDetailPage = ({ appName, campaign, imageAssets, npc, rules, user
         <main class="campaign-main" aria-labelledby="campaign-npc-heading">
           <Panel labelledBy="campaign-npc-heading">
             <div class="campaign-heading">
-              <p class="campaign-kicker">{npc.visibility === "player" ? "Player visible" : "Game Master only"}</p>
+              <p class="campaign-kicker">{npcVisibilityLabel(npc.visibility)}</p>
               <h1 id="campaign-npc-heading" class="panel-heading">{npc.name}</h1>
             </div>
             {portrait ? (
@@ -359,7 +367,7 @@ export const NpcDetailPage = ({ appName, campaign, imageAssets, npc, rules, user
             <p class="campaign-npc-summary">{npc.publicSummary}</p>
             <div class="campaign-tag-list" aria-label={`${npc.name} public references`}>
               {profile ? <span>Profile: {profile.title}</span> : null}
-              <span>{npc.visibility === "player" ? "Player visible" : "Game Master only"}</span>
+              <span>{npcVisibilityLabel(npc.visibility)}</span>
             </div>
           </Panel>
           {canManage ? (
@@ -377,8 +385,8 @@ export const NpcDetailPage = ({ appName, campaign, imageAssets, npc, rules, user
                 <div><dt>Reveal notes</dt><dd>{npc.revealNotes || "None recorded."}</dd></div>
               </dl>
               <form class="campaign-session-actions" action={`/campaigns/${campaign.slug}/npcs/${npc.id}/reveal`} method="post">
-                <input type="hidden" name="visibility" value={npc.visibility === "player" ? "game_master" : "player"} />
-                <button type="submit">{npc.visibility === "player" ? "Hide from players" : "Reveal to players"}</button>
+                <input type="hidden" name="visibility" value={npc.visibility === "public" ? "private" : "public"} />
+                <button type="submit">{npc.visibility === "public" ? "Make private" : "Make public"}</button>
               </form>
             </Panel>
           ) : null}
@@ -390,9 +398,9 @@ export const NpcDetailPage = ({ appName, campaign, imageAssets, npc, rules, user
               </div>
               <NpcForm
                 action={`/campaigns/${campaign.slug}/npcs/${npc.id}`}
-                campaign={campaign}
                 imageAssets={imageAssets}
                 npc={npc}
+                playerMembers={playerMembers}
                 rules={rules}
                 submitLabel="Save NPC"
                 wikiPages={wikiPages}
@@ -405,11 +413,11 @@ export const NpcDetailPage = ({ appName, campaign, imageAssets, npc, rules, user
   );
 };
 
-function NpcSummaryCard({ campaign, npc }: { campaign: CampaignSummary; npc: CampaignNpcDossier }) {
+function NpcSummaryCard({ campaign, npc }: { campaign: CampaignSummary; npc: CampaignNpcDossier | CampaignNpcSummary }) {
   return (
     <article class="campaign-npc-card">
       <div>
-        <p class="campaign-kicker">{npc.visibility === "player" ? "Player visible" : "Game Master only"}</p>
+        <p class="campaign-kicker">{npcVisibilityLabel(npc.visibility)}</p>
         <h2><a href={`/campaigns/${campaign.slug}/npcs/${npc.slug}`}>{npc.name}</a></h2>
       </div>
       <p>{npc.publicSummary || "No public summary yet."}</p>
@@ -421,14 +429,15 @@ function NpcForm({
   action,
   imageAssets,
   npc,
+  playerMembers,
   rules,
   submitLabel,
   wikiPages,
 }: {
   action: string;
-  campaign: CampaignSummary;
   imageAssets: CampaignImageAsset[];
   npc?: CampaignNpcDossier;
+  playerMembers: Array<CampaignMember & { displayName: string }>;
   rules: RuleSummary[];
   submitLabel: string;
   wikiPages: CampaignWikiPage[];
@@ -437,9 +446,24 @@ function NpcForm({
     <form class="campaign-session-form" action={action} method="post">
       <label>Name<input name="name" required type="text" value={npc?.name ?? ""} /></label>
       <label>Visibility<select name="visibility">
-        <option value="game_master" selected={!npc || npc.visibility === "game_master"}>Game Master</option>
-        <option value="player" selected={npc?.visibility === "player"}>Player</option>
+        <option value="private" selected={!npc || npc.visibility === "private"}>Private</option>
+        <option value="public" selected={npc?.visibility === "public"}>Public</option>
+        <option value="selected" selected={npc?.visibility === "selected"}>Selected players</option>
       </select></label>
+      <fieldset class="campaign-session-form-wide campaign-checkbox-list">
+        <legend>Selected players</legend>
+        {playerMembers.map((member) => (
+          <label>
+            <input
+              checked={npc?.selectedPlayerIds.includes(member.userId)}
+              name="selectedPlayerIds"
+              type="checkbox"
+              value={member.userId}
+            />
+            <span>{member.displayName}</span>
+          </label>
+        ))}
+      </fieldset>
       <label class="campaign-session-form-wide">Public summary<textarea name="publicSummary" required rows={3}>{npc?.publicSummary ?? ""}</textarea></label>
       <label>Portrait<select name="portraitImageAssetId">
         <option value="">None</option>
@@ -466,6 +490,13 @@ function NpcForm({
 
 function isNpcDossier(npc: CampaignNpcDossier | CampaignNpcSummary): npc is CampaignNpcDossier {
   return "gmNotes" in npc;
+}
+
+function npcVisibilityLabel(visibility: CampaignNpcDossier["visibility"]) {
+  if (visibility === "public") return "Public";
+  if (visibility === "selected") return "Selected players";
+
+  return "Private";
 }
 
 interface CampaignWikiDetailPageProps {
