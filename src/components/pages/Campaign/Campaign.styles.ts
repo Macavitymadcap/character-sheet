@@ -348,6 +348,7 @@ export const campaignStyles = /* css */ `
 
 .campaign-wiki-card-body,
 .campaign-asset-list figcaption {
+  background: var(--surface-colour);
   display: grid;
   gap: 0.4rem;
   padding: 0.75rem;
@@ -358,6 +359,11 @@ export const campaignStyles = /* css */ `
   overflow-wrap: anywhere;
 }
 
+.campaign-asset-list figcaption > span:not(.campaign-asset-status) {
+  color: var(--heading-colour);
+  font-weight: 700;
+}
+
 .campaign-asset-status {
   display: flex;
   flex-wrap: wrap;
@@ -365,10 +371,10 @@ export const campaignStyles = /* css */ `
 }
 
 .campaign-asset-status span {
-  background: var(--stat-background-colour);
-  border: 1px solid var(--border-colour);
+  background: color-mix(in srgb, var(--action-background-colour) 10%, var(--stat-background-colour));
+  border: 1px solid color-mix(in srgb, var(--action-border-colour) 32%, var(--border-colour));
   border-radius: 999px;
-  color: var(--muted-text-colour);
+  color: var(--heading-colour);
   font-size: 0.72rem;
   font-weight: 850;
   padding: 0.1rem 0.45rem;
@@ -404,7 +410,7 @@ export const campaignStyles = /* css */ `
 
 .campaign-image-detail-figure figcaption {
   background: var(--stat-background-colour);
-  color: var(--muted-text-colour);
+  color: var(--heading-colour);
   font-weight: 800;
   padding: 0.65rem 0.75rem;
 }
