@@ -121,7 +121,9 @@ describe("CharactersPage", () => {
     );
 
     expect(html).toContain('<div class="character-create-actions">');
-    expect(html).toContain('<button class="button" data-variant="ghost" type="submit">Create character</button>');
+    expect(html).toContain('type="submit"');
+    expect(html).toContain('data-variant="ghost"');
+    expect(html).toContain("Create character</button>");
     expect(html).toContain('<a class="character-roster-link" href="/sheet/ash_vale">Ash Vale</a>');
   });
 

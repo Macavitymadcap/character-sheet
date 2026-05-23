@@ -16,7 +16,8 @@ describe("FormField", () => {
       />,
     );
 
-    expect(html).toContain('<label for="email">Email</label>');
+    expect(html).toContain('<label class="form-field" for="email">');
+    expect(html).toContain("<span>Email</span>");
     expect(html).toContain(
       '<input id="email" name="email" type="email" autocomplete="email" required=""/>',
     );
@@ -31,7 +32,8 @@ describe("FormField", () => {
       </FormField>,
     );
 
-    expect(html).toContain('<label for="role">Role</label>');
+    expect(html).toContain('<label class="form-field" for="role">');
+    expect(html).toContain("<span>Role</span>");
     expect(html).toContain('<select id="role" name="role">');
   });
 });
