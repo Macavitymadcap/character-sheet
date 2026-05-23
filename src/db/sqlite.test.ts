@@ -1,6 +1,11 @@
 import { afterEach, describe, expect, test } from "bun:test";
+import { describeDatabaseLifecycleContract } from "@macavitymadcap/hyper-dank-data/testing";
 import { RulesImportService } from "../rules";
-import { createSqliteDatabase, type SqliteDatabaseRuntime } from "./sqlite";
+import {
+  createSqliteDatabase,
+  createSqliteProviderRegistry,
+  type SqliteDatabaseRuntime,
+} from "./sqlite";
 import { standardCharacterResourceKeysForHitDie } from "./standard-resources";
 
 let runtime: SqliteDatabaseRuntime | undefined;
@@ -10,7 +15,25 @@ afterEach(() => {
   runtime = undefined;
 });
 
+describeDatabaseLifecycleContract("SQLite database lifecycle", "sqlite", () => ({
+  provider: createSqliteDatabase({ path: ":memory:", seed: false }),
+}));
+
 describe("SQLite repositories", () => {
+  test("creates SQLite providers through the Hyper-Dank provider registry", async () => {
+    const registry = createSqliteProviderRegistry();
+    const provider = await registry.create("sqlite", { path: ":memory:", seed: false });
+
+    try {
+      expect(registry.kinds()).toEqual(["sqlite"]);
+      expect(provider.kind).toBe("sqlite");
+      expect(provider.repositories.authRepository.listUsers()).toEqual([]);
+      expect(provider.createRepositories().authRepository.listUsers()).toEqual([]);
+    } finally {
+      provider.close();
+    }
+  });
+
   test("can bootstrap schema without seeding mutable data", () => {
     runtime = createSqliteDatabase({ path: ":memory:", seed: false });
 

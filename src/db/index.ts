@@ -57,7 +57,9 @@ export { bootstrapDatabase } from "./schema";
 export { seedDatabase } from "./seed";
 export {
   createSqliteDatabase,
+  createSqliteProviderRegistry,
   createSqliteRepositories,
+  type CreateSqliteDatabaseOptions,
   type SqliteDatabaseRuntime,
   type SqliteRepositories,
 } from "./sqlite";
