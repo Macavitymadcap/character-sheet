@@ -262,11 +262,18 @@ export const sheetScreenshotTargets = [
     theme: "dark",
   },
   {
-    fileName: "gm-campaign.png",
-    label: "Game Master campaign",
+    fileName: "gm-campaign-light.png",
+    label: "Game Master campaign light",
     path: "/campaigns/rovnost-shadows",
     role: "game_master",
     theme: "light",
+  },
+  {
+    fileName: "gm-campaign-dark.png",
+    label: "Game Master campaign dark",
+    path: "/campaigns/rovnost-shadows",
+    role: "game_master",
+    theme: "dark",
   },
   {
     fileName: "gm-prep-workspace-light.png",
@@ -274,6 +281,13 @@ export const sheetScreenshotTargets = [
     path: "/campaigns/rovnost-shadows/prep",
     role: "game_master",
     theme: "light",
+  },
+  {
+    fileName: "gm-prep-workspace-dark.png",
+    label: "Game Master prep workspace dark",
+    path: "/campaigns/rovnost-shadows/prep",
+    role: "game_master",
+    theme: "dark",
   },
   {
     fileName: "gm-npc-list-light.png",
