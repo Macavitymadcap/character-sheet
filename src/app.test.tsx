@@ -1446,9 +1446,10 @@ describe("createApp", () => {
       headers: { cookie: gmCookie },
     });
     const gmDetailHtml = await gmDetail.text();
-    const playerPrivateDetail = await app.request("/campaigns/rovnost-shadows/images/asset_magister_vallen", {
+    const playerDetail = await app.request("/campaigns/rovnost-shadows/images/asset_magister_vallen", {
       headers: { cookie: playerCookie },
     });
+    const playerDetailHtml = await playerDetail.text();
     const outsiderLibrary = await app.request("/campaigns/rovnost-shadows/images", {
       headers: { cookie: outsiderCookie },
     });
@@ -1460,12 +1461,14 @@ describe("createApp", () => {
     expect(gmHtml).toContain("1 uses");
     expect(playerLibrary.status).toBe(200);
     expect(playerHtml).toContain("Skywright sigil");
-    expect(playerHtml).not.toContain("Magister Vallen portrait");
+    expect(playerHtml).toContain("Magister Vallen portrait");
     expect(gmDetail.status).toBe(200);
     expect(gmDetailHtml).toContain("Storage key");
     expect(gmDetailHtml).toContain("Magister Vallen");
     expect(gmDetailHtml).toContain('href="/campaigns/rovnost-shadows/npcs/magister-vallen"');
-    expect(playerPrivateDetail.status).toBe(404);
+    expect(playerDetail.status).toBe(200);
+    expect(playerDetailHtml).toContain("Magister Vallen portrait.");
+    expect(playerDetailHtml).not.toContain("Storage key");
     expect(outsiderLibrary.status).toBe(403);
   });
 

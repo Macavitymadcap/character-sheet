@@ -755,8 +755,8 @@ const campaignImageAssets: CampaignImageAssetSeed[] = [
     1024,
     1536,
     "Magister Vallen portrait",
-    "Game Master reference portrait.",
-    "game_master",
+    "Magister Vallen portrait.",
+    "player",
   ],
   [
     "asset_rovnost_factions",

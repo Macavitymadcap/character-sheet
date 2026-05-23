@@ -1088,6 +1088,7 @@ describe("SQLite repositories", () => {
       "campaigns/rovnost-shadows/astril-map.png",
       "campaigns/rovnost-shadows/cover.png",
       "campaigns/rovnost-shadows/faction-sigils.png",
+      "campaigns/rovnost-shadows/magister-vallen.png",
       "campaigns/rovnost-shadows/skywright-sigil.png",
     ]);
     expect(
@@ -1307,7 +1308,7 @@ describe("SQLite repositories", () => {
         campaignId,
         id: privateNpc.id,
         name: "Dockside Contact",
-        portraitImageAssetId: null,
+        portraitImageAssetId: "asset_magister_vallen",
         publicSummary: "A quiet contact in the harbour district.",
         publicWikiPageId: "wiki_rovnost_factions",
         slug: "dockside-contact",
