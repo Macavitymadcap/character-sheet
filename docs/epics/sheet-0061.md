@@ -178,7 +178,7 @@ Drive connector can then use that importer boundary without changing the campaig
 | `sheet-0065` | Add player-preview routes and visibility audit UI for wiki pages, sessions, NPCs, notes, and images. |
 | `sheet-0066` | Add campaign image library thumbnails, image detail views, usage links, and local-file setup documentation. |
 | `sheet-0067` | Add staged Markdown/Google Docs import models, preview conversion, source metadata, and draft save flows. |
-| `sheet-0068` | Add Google Drive document selection or document-reference import against the staged importer boundary. |
+| `sheet-0068` | Add Google Docs manual export and document-reference import against the staged importer boundary, with a documented future Drive API connector. |
 | `sheet-0069` | Complete verification, accessibility, screenshots, docs, and acceptance notes for Game Master prep. |
 
 ## Branch Strategy
