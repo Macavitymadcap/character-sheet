@@ -1731,6 +1731,14 @@ class SqliteCampaignContentRepository implements CampaignContentRepository {
     secrets: string;
     visibility: CampaignContentVisibility;
   }): CampaignNpcDossier {
+    if (!this.npcLinksBelongToCampaign(input.campaignId, {
+      portraitImageAssetId: input.portraitImageAssetId,
+      publicWikiPageId: input.publicWikiPageId,
+      rulesEntityId: input.rulesEntityId,
+    })) {
+      throw new Error("NPC links must belong to the same campaign or a public rules source.");
+    }
+
     const id = `campaign_npc_${randomUUID()}`;
     const slug = uniqueCampaignNpcSlug(this.database, input.campaignId, input.name);
     this.database
@@ -2174,6 +2182,14 @@ class SqliteCampaignContentRepository implements CampaignContentRepository {
       visibility: CampaignContentVisibility;
     },
   ): CampaignNpcDossier | null {
+    if (!this.npcLinksBelongToCampaign(campaignId, {
+      portraitImageAssetId: patch.portraitImageAssetId,
+      publicWikiPageId: patch.publicWikiPageId,
+      rulesEntityId: patch.rulesEntityId,
+    })) {
+      return null;
+    }
+
     this.database
       .query<never, [
         string,
@@ -2246,6 +2262,49 @@ class SqliteCampaignContentRepository implements CampaignContentRepository {
       .get(campaignId, npcId);
 
     return row ? toCampaignNpcDossier(row) : null;
+  }
+
+  private npcLinksBelongToCampaign(
+    campaignId: string,
+    links: {
+      portraitImageAssetId: string | null;
+      publicWikiPageId: string | null;
+      rulesEntityId: string | null;
+    },
+  ) {
+    if (links.portraitImageAssetId) {
+      const asset = this.database
+        .query<{ id: string }, [string, string]>(
+          "select id from campaign_image_assets where id = ? and campaign_id = ?",
+        )
+        .get(links.portraitImageAssetId, campaignId);
+      if (!asset) return false;
+    }
+
+    if (links.publicWikiPageId) {
+      const page = this.database
+        .query<{ id: string }, [string, string]>(
+          "select id from campaign_wiki_pages where id = ? and campaign_id = ?",
+        )
+        .get(links.publicWikiPageId, campaignId);
+      if (!page) return false;
+    }
+
+    if (links.rulesEntityId) {
+      const entity = this.database
+        .query<{ id: string }, [string, string]>(
+          `select entities.id
+           from rules_entities entities
+           join rules_sources sources on sources.id = entities.source_id
+           left join campaign_rules_sources campaign_sources on campaign_sources.source_id = sources.id
+           where entities.id = ?
+             and (sources.visibility = 'public' or campaign_sources.campaign_id = ?)`,
+        )
+        .get(links.rulesEntityId, campaignId);
+      if (!entity) return false;
+    }
+
+    return true;
   }
 
   listFactionsForCampaign(campaignId: string): CampaignFaction[] {

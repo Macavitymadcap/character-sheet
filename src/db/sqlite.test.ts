@@ -1315,5 +1315,99 @@ describe("SQLite repositories", () => {
       visibility: "game_master",
     });
     expect(content.listNpcSummariesForCampaign(campaignId, "player")).toEqual([]);
+
+    runtime.database.run(
+      "insert into campaigns (id, slug, name, gm_user_id) values (?, ?, ?, ?)",
+      ["campaign_elsewhere", "elsewhere", "Elsewhere", "user_game_master"],
+    );
+    runtime.database.run(
+      "insert into campaign_image_assets (id, campaign_id, storage_key, mime_type, byte_size, width, height, alt_text, visibility) values (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [
+        "asset_elsewhere_portrait",
+        "campaign_elsewhere",
+        "campaigns/elsewhere/portrait.png",
+        "image/png",
+        123,
+        300,
+        400,
+        "Elsewhere portrait",
+        "player",
+      ],
+    );
+    runtime.database.run(
+      "insert into campaign_wiki_pages (id, campaign_id, slug, title, page_type, tags_json, visibility, body_markdown, source_title) values (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [
+        "wiki_elsewhere_profile",
+        "campaign_elsewhere",
+        "profile",
+        "Profile",
+        "npc",
+        "[]",
+        "player",
+        "Elsewhere profile.",
+        "Elsewhere",
+      ],
+    );
+    runtime.database.run(
+      "insert into rules_sources (id, slug, name, abbreviation, content_category, visibility, public_export_eligible) values (?, ?, ?, ?, ?, ?, ?)",
+      ["rules_source_elsewhere", "elsewhere", "Elsewhere", "ELW", "local", "campaign", 0],
+    );
+    runtime.database.run(
+      "insert into campaign_rules_sources (campaign_id, source_id) values (?, ?)",
+      ["campaign_elsewhere", "rules_source_elsewhere"],
+    );
+    runtime.database.run(
+      "insert into rules_entities (id, source_id, slug, entity_type, name) values (?, ?, ?, ?, ?)",
+      ["rule_elsewhere_contact", "rules_source_elsewhere", "contact", "stat_block", "Contact"],
+    );
+    expect(() =>
+      content.createNpcDossier({
+        campaignId,
+        hooks: "",
+        gmNotes: "",
+        motivations: "",
+        name: "Wrong Campaign Contact",
+        portraitImageAssetId: "asset_elsewhere_portrait",
+        publicSummary: "Wrong campaign.",
+        publicWikiPageId: null,
+        revealNotes: "",
+        rulesEntityId: null,
+        sceneNotes: "",
+        secrets: "",
+        visibility: "game_master",
+      }),
+    ).toThrow("NPC links must belong to the same campaign");
+    expect(
+      content.updateNpcDossier(campaignId, privateNpc.id, {
+        hooks: "",
+        gmNotes: "",
+        motivations: "",
+        name: "Wrong Campaign Contact",
+        portraitImageAssetId: null,
+        publicSummary: "Wrong campaign.",
+        publicWikiPageId: "wiki_elsewhere_profile",
+        revealNotes: "",
+        rulesEntityId: null,
+        sceneNotes: "",
+        secrets: "",
+        visibility: "game_master",
+      }),
+    ).toBeNull();
+    expect(
+      content.updateNpcDossier(campaignId, privateNpc.id, {
+        hooks: "",
+        gmNotes: "",
+        motivations: "",
+        name: "Wrong Campaign Contact",
+        portraitImageAssetId: null,
+        publicSummary: "Wrong campaign.",
+        publicWikiPageId: null,
+        revealNotes: "",
+        rulesEntityId: "rule_elsewhere_contact",
+        sceneNotes: "",
+        secrets: "",
+        visibility: "game_master",
+      }),
+    ).toBeNull();
   });
 });

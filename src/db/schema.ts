@@ -398,6 +398,62 @@ WHEN (
 BEGIN
   SELECT RAISE(ABORT, 'character and faction must belong to the same campaign');
 END;
+
+CREATE TRIGGER IF NOT EXISTS campaign_npcs_links_campaign_insert
+BEFORE INSERT ON campaign_npcs
+FOR EACH ROW
+WHEN (
+  (
+    NEW.portrait_image_asset_id IS NOT NULL
+    AND (SELECT campaign_id FROM campaign_image_assets WHERE id = NEW.portrait_image_asset_id) != NEW.campaign_id
+  )
+  OR (
+    NEW.public_wiki_page_id IS NOT NULL
+    AND (SELECT campaign_id FROM campaign_wiki_pages WHERE id = NEW.public_wiki_page_id) != NEW.campaign_id
+  )
+  OR (
+    NEW.rules_entity_id IS NOT NULL
+    AND NOT EXISTS (
+      SELECT 1
+      FROM rules_entities entities
+      JOIN rules_sources sources ON sources.id = entities.source_id
+      LEFT JOIN campaign_rules_sources campaign_sources ON campaign_sources.source_id = sources.id
+      WHERE entities.id = NEW.rules_entity_id
+        AND (sources.visibility = 'public' OR campaign_sources.campaign_id = NEW.campaign_id)
+    )
+  )
+)
+BEGIN
+  SELECT RAISE(ABORT, 'npc links must belong to the same campaign or a public rules source');
+END;
+
+CREATE TRIGGER IF NOT EXISTS campaign_npcs_links_campaign_update
+BEFORE UPDATE OF portrait_image_asset_id, public_wiki_page_id, rules_entity_id, campaign_id ON campaign_npcs
+FOR EACH ROW
+WHEN (
+  (
+    NEW.portrait_image_asset_id IS NOT NULL
+    AND (SELECT campaign_id FROM campaign_image_assets WHERE id = NEW.portrait_image_asset_id) != NEW.campaign_id
+  )
+  OR (
+    NEW.public_wiki_page_id IS NOT NULL
+    AND (SELECT campaign_id FROM campaign_wiki_pages WHERE id = NEW.public_wiki_page_id) != NEW.campaign_id
+  )
+  OR (
+    NEW.rules_entity_id IS NOT NULL
+    AND NOT EXISTS (
+      SELECT 1
+      FROM rules_entities entities
+      JOIN rules_sources sources ON sources.id = entities.source_id
+      LEFT JOIN campaign_rules_sources campaign_sources ON campaign_sources.source_id = sources.id
+      WHERE entities.id = NEW.rules_entity_id
+        AND (sources.visibility = 'public' OR campaign_sources.campaign_id = NEW.campaign_id)
+    )
+  )
+)
+BEGIN
+  SELECT RAISE(ABORT, 'npc links must belong to the same campaign or a public rules source');
+END;
 `;
 
 export const bootstrapDatabase = (database: Database) => {
