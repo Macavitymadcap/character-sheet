@@ -29,6 +29,8 @@ opening the full image.
 - Build new generic UI, transport, data lifecycle, and automation plumbing on the adopted Hyper-Dank
   package contracts where they fit, while keeping campaign-specific domain components and policies
   local to Campaign Ledger.
+- Move Campaign Ledger onto the Hyper-Dank git workflow, including GitHub Issues and Projects
+  integration for epics, tickets, pull requests, status tracking, and acceptance handoff.
 
 ## Non-Goals
 
@@ -82,6 +84,9 @@ flowchart TD
   becomes a wiki page, session record, NPC dossier, or draft note, sets visibility, and saves it.
 - A Game Master uses player preview before a session to confirm that secret NPCs, Game Master-only
   notes, and private images are not visible to players.
+- A maintainer starts each epic or ticket from the documented Hyper-Dank git flow, creates or links
+  the matching GitHub Issue, keeps the issue in the configured GitHub Project status column, links
+  the implementation PR, and records verification and acceptance evidence before closing the work.
 
 ## Existing Local Images
 
@@ -124,6 +129,9 @@ without opening SQLite or reading seed code.
   `@macavitymadcap/hyper-dank-data`, and `@macavitymadcap/hyper-dank-automation` contracts for
   generic controls, request/response helpers, migration lifecycle boundaries, and verification
   helpers before adding new app-local framework code.
+- Add GitHub workflow configuration and documentation for issue templates or issue forms, PR
+  checklist expectations, project field/status conventions, branch naming, and issue-to-PR links
+  following the accepted Hyper-Dank flow.
 - Add route groups, expected as:
   - `/campaigns/:campaignSlug/prep`
   - `/campaigns/:campaignSlug/npcs`
@@ -164,19 +172,20 @@ Drive connector can then use that importer boundary without changing the campaig
 
 | Ticket | Purpose |
 | --- | --- |
-| `sheet-0062` | Add Game Master prep, NPC dossier, reveal-state, and visibility schema foundations. |
-| `sheet-0063` | Build the Game Master NPC workspace, private NPC creation, editing, and player-safe reveal controls. |
-| `sheet-0064` | Add player-preview routes and visibility audit UI for wiki pages, sessions, NPCs, notes, and images. |
-| `sheet-0065` | Add campaign image library thumbnails, image detail views, usage links, and local-file setup documentation. |
-| `sheet-0066` | Add staged Markdown/Google Docs import models, preview conversion, source metadata, and draft save flows. |
-| `sheet-0067` | Add Google Drive document selection or document-reference import against the staged importer boundary. |
-| `sheet-0068` | Complete verification, accessibility, screenshots, docs, and acceptance notes for Game Master prep. |
+| `sheet-0062` | Adopt the Hyper-Dank git workflow with GitHub Issues, Projects, PR templates/checklists, branch conventions, and acceptance handoff documentation. |
+| `sheet-0063` | Add Game Master prep, NPC dossier, reveal-state, and visibility schema foundations. |
+| `sheet-0064` | Build the Game Master NPC workspace, private NPC creation, editing, and player-safe reveal controls. |
+| `sheet-0065` | Add player-preview routes and visibility audit UI for wiki pages, sessions, NPCs, notes, and images. |
+| `sheet-0066` | Add campaign image library thumbnails, image detail views, usage links, and local-file setup documentation. |
+| `sheet-0067` | Add staged Markdown/Google Docs import models, preview conversion, source metadata, and draft save flows. |
+| `sheet-0068` | Add Google Drive document selection or document-reference import against the staged importer boundary. |
+| `sheet-0069` | Complete verification, accessibility, screenshots, docs, and acceptance notes for Game Master prep. |
 
 ## Branch Strategy
 
 Create `sheet-0061` from the latest accepted `main` after `sheet-0050` has landed. Open the planning
 pull request into `main`. Once accepted, keep or recreate `sheet-0061` as the epic integration
-branch. Tickets `sheet-0062` through `sheet-0068` should branch from `sheet-0061`, open pull
+branch. Tickets `sheet-0062` through `sheet-0069` should branch from `sheet-0061`, open pull
 requests back into `sheet-0061`, and be squash-merged there before the accumulated epic branch
 targets `main`.
 
@@ -197,6 +206,8 @@ rebase or recreate it from the accepted roadmap before implementation tickets be
   visibility badges, import preview, and player-preview warnings.
 - Compatibility tests keep new shared-package usage behind the accepted public Hyper-Dank package
   paths and preserve `bun run test:hyper-dank` as a guard against accidental app-local duplication.
+- Workflow tests or documentation checks prove issue templates/forms, PR checklist guidance, project
+  field conventions, and ticket references stay linked from README or architecture docs.
 - Smoke coverage proves a Game Master can add a private NPC, attach a portrait, import a document,
   preview as player, reveal the NPC, and confirm the player can now see only the intended content.
 - Accessibility and screenshots cover the prep workspace, NPC workspace, image library, image detail,
@@ -217,6 +228,9 @@ rebase or recreate it from the accepted roadmap before implementation tickets be
 - Hyper-Dank packages are now in use, so implementation tickets should not reintroduce generic
   local primitives, request helpers, or script mechanics without first checking the accepted
   package boundary and documenting why the domain-specific local path is still needed.
+- GitHub Projects and issue automation depend on repository and account-level settings that may not
+  be fully configurable in source. The epic should document any manual setup and keep source-backed
+  templates, checklists, and scripts useful even when project automation requires a human step.
 
 ## Acceptance Criteria
 
@@ -234,3 +248,6 @@ rebase or recreate it from the accepted roadmap before implementation tickets be
   import boundaries.
 - New implementation keeps Campaign Ledger on the accepted Hyper-Dank package import paths wherever
   shared contracts fit, with app-local code reserved for campaign domain behaviour.
+- The repository has a documented Hyper-Dank-style git flow backed by GitHub Issues, Projects, PR
+  expectations, branch conventions, and acceptance evidence for the epic and its implementation
+  tickets.
