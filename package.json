@@ -18,6 +18,7 @@
     "test:hyper-dank": "bun test scripts/hyper-dank-compat.test.tsx",
     "test:watch": "bun test --watch",
     "typecheck": "tsc --noEmit",
+    "update:hyper-dank": "bun update @macavitymadcap/hyper-dank-automation @macavitymadcap/hyper-dank-data @macavitymadcap/hyper-dank-transport @macavitymadcap/hyper-dank-ui && bun run test:hyper-dank",
     "verify": "bun scripts/verify.ts"
   },
   "dependencies": {

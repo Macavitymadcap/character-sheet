@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import * as HyperDankUi from "@macavitymadcap/hyper-dank-ui";
 import { Button, type HtmxProps } from "@macavitymadcap/hyper-dank-ui";
 import {
   createProviderRegistry,
@@ -17,6 +18,30 @@ const adoptedUiWrapperPaths = [
   "src/components/molecules/CompactList/CompactList.tsx",
   "src/components/molecules/FormField/FormField.tsx",
   "src/components/molecules/LabelledOutput/LabelledOutput.tsx",
+];
+
+const appLocalComponentNames = [
+  "Accordion",
+  "Badge",
+  "Button",
+  "CompactList",
+  "DiceRoller",
+  "FormField",
+  "Icon",
+  "LabelledOutput",
+  "Panel",
+  "PasswordField",
+  "PopoverMenu",
+  "SiteHeader",
+  "Switch",
+];
+
+const reviewedUiOverlaps = [
+  ...adoptedUiWrapperPaths.map((path) => path.split("/").at(-2)),
+  "Accordion",
+  "Icon",
+  "PopoverMenu",
+  "Switch",
 ];
 
 describe("Hyper-Dank package compatibility", () => {
@@ -75,5 +100,14 @@ describe("Hyper-Dank package compatibility", () => {
       expect(source).not.toContain("return ");
       expect(source).not.toContain("<");
     }
+  });
+
+  test("flags newly available Hyper-Dank UI components that overlap local components", () => {
+    const exportedUiNames = new Set(Object.keys(HyperDankUi));
+    const unreviewedOverlaps = appLocalComponentNames
+      .filter((componentName) => exportedUiNames.has(componentName))
+      .filter((componentName) => !reviewedUiOverlaps.includes(componentName));
+
+    expect(unreviewedOverlaps).toEqual([]);
   });
 });

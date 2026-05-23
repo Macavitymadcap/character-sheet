@@ -42,6 +42,11 @@ package paths only. Local wrappers around adopted UI primitives are compatibilit
 Campaign Ledger import paths and CSS hooks; app-specific components, routes, repositories, seed data,
 and product workflows stay local.
 
+`bun install` keeps the exact Hyper-Dank versions pinned by `bun.lock`. To deliberately pick up newly
+published Hyper-Dank patches, run `bun run update:hyper-dank`, review any compatibility failures, and
+then run `bun run verify`. The compatibility check also fails when a newly exported Hyper-Dank UI
+component overlaps a Campaign Ledger local component name that has not been reviewed yet.
+
 ## Local Setup
 
 Install dependencies and start the local development server:

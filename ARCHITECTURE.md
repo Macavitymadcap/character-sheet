@@ -43,7 +43,10 @@ targets, and the temporary screenshot directory used by routine `bun run verify`
 `sheet-0046` keeps the remaining local boundary explicit: adopted generic UI components are thin
 Hyper-Dank re-export shims only when existing Campaign Ledger import paths or CSS hooks need to stay
 stable, and `scripts/lib/local-app.ts` re-exports shared automation readiness helpers while retaining
-the Campaign Ledger-specific in-memory app and HTTP server harness.
+the Campaign Ledger-specific in-memory app and HTTP server harness. Hyper-Dank version updates are
+deliberate: `bun.lock` pins the installed package versions, `bun run update:hyper-dank` refreshes the
+four shared packages, and `test:hyper-dank` flags newly exported UI components that overlap local
+Campaign Ledger component names before they are reviewed.
 
 The full MVP source tree is expected to grow towards this shape as tickets land:
 
