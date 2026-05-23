@@ -387,6 +387,9 @@ bun run test:hyper-dank
 ```
 
 The accessibility script currently checks public `/`, `/login`, `/local/characters`, `/local/campaigns`, `/rules`, and `/rules/spell/bless`, player `/characters`, `/sheet/lynott`, `/campaigns/rovnost-shadows/wiki/factions-guide`, and `/logout`, Game Master `/campaigns/rovnost-shadows` and `/campaigns/rovnost-shadows/characters`, and admin `/admin`. The MVP smoke script renders every sheet tab fragment directly and walks the group-use flows for character creation, manual edits, notes, faction choice, full SRD import, public browser-local play import/export, rules browsing, private campaign rules, sheet rule links, Mira content, sessions, wiki, protected seeded assets, image upload, combined admin campaign access, admin account handoff, and logout protection. The screenshot script captures public home, local play, sheet, roster, campaign, rules, wiki, faction, admin, compact edit, roll result, and edited-sheet states to `docs/pr-screenshots/` by default for deliberate PR evidence refreshes; `bun run verify` overrides `SCREENSHOT_DIR` to a temporary directory so routine acceptance runs do not churn committed screenshots. [Hosted Rehearsal Acceptance](./docs/operations/hosted-rehearsal-acceptance.md) records the final `sheet-0030` acceptance checklist; [Campaign Companion Acceptance](./docs/operations/campaign-companion-acceptance.md) records the completed `sheet-0050` acceptance checklist and follow-ups.
+[Hyper-Dank Adoption Acceptance](./docs/operations/hyper-dank-adoption-acceptance.md) records the
+completed `sheet-0040` package-adoption checklist, compatibility coverage, visual evidence, and
+remaining app-owned boundaries.
 
 ## Pipeline
 

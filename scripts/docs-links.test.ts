@@ -8,6 +8,7 @@ const docs = [
   "CONTRIBUTING.md",
   "docs/operations/hosted-rehearsal-acceptance.md",
   "docs/operations/campaign-companion-acceptance.md",
+  "docs/operations/hyper-dank-adoption-acceptance.md",
   "docs/operations/hosted-account-runbook.md",
   "docs/deployment/railway.md",
   "docs/tickets/sheet-0019.md",
@@ -118,5 +119,23 @@ describe("documentation references", () => {
     expect(acceptance).toContain("Routine `bun run verify` screenshots are written to a temporary directory");
     expect(acceptance).toContain("sheet-0040");
     expect(acceptance).toContain("sheet-0037");
+  });
+
+  test("Hyper-Dank adoption acceptance documents package, visual, and follow-up boundaries", async () => {
+    const acceptance = await Bun.file("docs/operations/hyper-dank-adoption-acceptance.md").text();
+    const readme = await Bun.file("README.md").text();
+    const architecture = await Bun.file("ARCHITECTURE.md").text();
+    const ticket = await Bun.file("docs/tickets/sheet-0047.md").text();
+
+    expect(readme).toContain("[Hyper-Dank Adoption Acceptance](./docs/operations/hyper-dank-adoption-acceptance.md)");
+    expect(architecture).toContain("[Hyper-Dank Adoption Acceptance](./docs/operations/hyper-dank-adoption-acceptance.md)");
+    expect(ticket).toContain("[Hyper-Dank Adoption Acceptance](../operations/hyper-dank-adoption-acceptance.md)");
+    expect(acceptance).toContain("Campaign Ledger resolves Hyper-Dank packages from npm");
+    expect(acceptance).toContain("bun run update:hyper-dank");
+    expect(acceptance).toContain("bun run test:hyper-dank");
+    expect(acceptance).toContain("Routine `bun run verify` screenshots are written to a temporary directory");
+    expect(acceptance).toContain("docs/pr-screenshots/");
+    expect(acceptance).toContain("GM/player visibility");
+    expect(acceptance).toContain("Google Docs import");
   });
 });
