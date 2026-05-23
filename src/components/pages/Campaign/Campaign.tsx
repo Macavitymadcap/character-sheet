@@ -8,6 +8,8 @@ import type {
   CampaignSessionRecord,
   CampaignSummary,
   CampaignWikiPage,
+  CharacterNote,
+  CharacterRosterItem,
   RuleSummary,
   RulesSourceSummary,
 } from "../../../db";
@@ -58,6 +60,7 @@ export const CampaignPage = ({ appName, campaign, gameMasterDisplayName, imageAs
               <nav class="campaign-action-row" aria-label="Game Master campaign tools">
                 <a class="action-link action-link-secondary" href={`/campaigns/${campaign.slug}/prep`}>Prep workspace</a>
                 <a class="action-link action-link-secondary" href={`/campaigns/${campaign.slug}/npcs`}>NPCs</a>
+                <a class="action-link action-link-secondary" href={`/campaigns/${campaign.slug}/preview/player`}>Player preview</a>
               </nav>
             ) : (
               <nav class="campaign-action-row" aria-label="Campaign tools">
@@ -273,7 +276,173 @@ export const CampaignPrepPage = ({ appName, campaign, npcCount, privateNpcCount,
               <strong>{npcCount}</strong>
               <small>{privateNpcCount} private</small>
             </a>
+            <a class="campaign-prep-link" href={`/campaigns/${campaign.slug}/preview/player`}>
+              <span>Player preview</span>
+              <strong>Audit</strong>
+              <small>Check visible prep</small>
+            </a>
           </div>
+        </Panel>
+      </main>
+    </div>
+  </Layout>
+);
+
+interface VisibilityAuditItem {
+  hidden: number;
+  href: string;
+  label: string;
+  visible: number;
+}
+
+interface CampaignPlayerPreviewPageProps {
+  appName: string;
+  auditItems: VisibilityAuditItem[];
+  campaign: CampaignSummary;
+  imageAssets: CampaignImageAsset[];
+  notesByCharacter: Array<{
+    character: CharacterRosterItem;
+    notes: CharacterNote[];
+  }>;
+  npcs: CampaignNpcSummary[];
+  previewDisplayName: string | null;
+  sessions: CampaignSessionRecord[];
+  user: Pick<AuthUser, "displayName" | "role">;
+  wikiPages: CampaignWikiPage[];
+}
+
+export const CampaignPlayerPreviewPage = ({
+  appName,
+  auditItems,
+  campaign,
+  imageAssets,
+  notesByCharacter,
+  npcs,
+  previewDisplayName,
+  sessions,
+  user,
+  wikiPages,
+}: CampaignPlayerPreviewPageProps) => (
+  <Layout title={`Player preview - ${campaign.name} - ${appName}`}>
+    <div class="shell campaign-shell">
+      <SiteHeader appName={appName} currentSection="campaign" user={user} />
+      <main class="campaign-main" aria-labelledby="campaign-preview-heading">
+        <Panel labelledBy="campaign-preview-heading">
+          <div class="campaign-heading">
+            <p class="campaign-kicker">Game Master tool</p>
+            <h1 id="campaign-preview-heading" class="panel-heading">Player preview</h1>
+          </div>
+          <p class="campaign-help-text">
+            Previewing as {previewDisplayName ?? "a player"} using the same player-visible campaign reads as the live app.
+          </p>
+          <nav class="campaign-action-row" aria-label="Preview actions">
+            <a class="action-link action-link-secondary" href={`/campaigns/${campaign.slug}`}>Campaign</a>
+            <a class="action-link action-link-secondary" href={`/campaigns/${campaign.slug}/prep`}>Prep workspace</a>
+            <a class="action-link action-link-secondary" href={`/campaigns/${campaign.slug}/npcs`}>NPCs</a>
+          </nav>
+        </Panel>
+        <Panel labelledBy="campaign-visibility-audit-heading">
+          <div class="campaign-heading">
+            <p class="campaign-kicker">Visibility audit</p>
+            <h2 id="campaign-visibility-audit-heading" class="panel-heading">Visible to players</h2>
+          </div>
+          <div class="campaign-audit-grid">
+            {auditItems.map((item) => (
+              <a class="campaign-audit-card" href={item.href}>
+                <span>{item.label}</span>
+                <strong>{item.visible} visible</strong>
+                <small>{item.hidden} hidden</small>
+              </a>
+            ))}
+          </div>
+        </Panel>
+        <Panel labelledBy="campaign-preview-wiki-heading">
+          <div class="campaign-heading">
+            <p class="campaign-kicker">Campaign wiki</p>
+            <h2 id="campaign-preview-wiki-heading" class="panel-heading">Pages</h2>
+          </div>
+          <div class="campaign-wiki-grid">
+            {wikiPages.map((page) => (
+              <article class="campaign-wiki-card">
+                <div class="campaign-wiki-card-body">
+                  <p class="campaign-kicker">{page.pageType}</p>
+                  <h3><a href={`/campaigns/${campaign.slug}/wiki/${page.slug}`}>{page.title}</a></h3>
+                  <div class="campaign-tag-list" aria-label={`${page.title} tags`}>
+                    {page.tags.map((tag) => <span>{tag}</span>)}
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+          {wikiPages.length === 0 ? <p class="campaign-empty-state">No player-visible wiki pages.</p> : null}
+        </Panel>
+        <Panel labelledBy="campaign-preview-npcs-heading">
+          <div class="campaign-heading">
+            <p class="campaign-kicker">NPCs</p>
+            <h2 id="campaign-preview-npcs-heading" class="panel-heading">Visible NPCs</h2>
+          </div>
+          <div class="campaign-npc-grid">
+            {npcs.map((npc) => <NpcSummaryCard campaign={campaign} npc={npc} />)}
+          </div>
+          {npcs.length === 0 ? <p class="campaign-empty-state">No NPCs visible to this player.</p> : null}
+        </Panel>
+        <Panel labelledBy="campaign-preview-sessions-heading">
+          <div class="campaign-heading">
+            <p class="campaign-kicker">Sessions</p>
+            <h2 id="campaign-preview-sessions-heading" class="panel-heading">Session records</h2>
+          </div>
+          <div class="campaign-source-list">
+            {sessions.map((session) => (
+              <article class="campaign-source-item">
+                <h3>{session.title}</h3>
+                <p class="campaign-help-text">{session.summary || "No public summary."}</p>
+                <div class="campaign-tag-list">
+                  <span>{session.sessionDate ?? "No date"}</span>
+                  <span>Player visible</span>
+                </div>
+              </article>
+            ))}
+          </div>
+          {sessions.length === 0 ? <p class="campaign-empty-state">No player-visible sessions.</p> : null}
+        </Panel>
+        <Panel labelledBy="campaign-preview-images-heading">
+          <div class="campaign-heading">
+            <p class="campaign-kicker">Images</p>
+            <h2 id="campaign-preview-images-heading" class="panel-heading">Player-visible images</h2>
+          </div>
+          <div class="campaign-asset-list">
+            {imageAssets.map((asset) => (
+              <figure>
+                <img alt={asset.altText} src={`/campaigns/${campaign.slug}/assets/${asset.id}`} />
+                <figcaption>
+                  <strong>{asset.title}</strong>
+                  {asset.caption ? <span>{asset.caption}</span> : null}
+                  <span class="campaign-asset-status">
+                    {assetStatusLabels(asset).map((label) => <span>{label}</span>)}
+                  </span>
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+          {imageAssets.length === 0 ? <p class="campaign-empty-state">No player-visible images.</p> : null}
+        </Panel>
+        <Panel labelledBy="campaign-preview-notes-heading">
+          <div class="campaign-heading">
+            <p class="campaign-kicker">Character notes</p>
+            <h2 id="campaign-preview-notes-heading" class="panel-heading">Player-visible notes</h2>
+          </div>
+          <div class="campaign-source-list">
+            {notesByCharacter.map(({ character, notes }) => (
+              <article class="campaign-source-item">
+                <h3>{character.name}</h3>
+                <div class="campaign-tag-list">
+                  <span>{notes.length} visible</span>
+                  <span>{character.ownerDisplayName}</span>
+                </div>
+              </article>
+            ))}
+          </div>
+          {notesByCharacter.length === 0 ? <p class="campaign-empty-state">No character notes visible to players.</p> : null}
         </Panel>
       </main>
     </div>

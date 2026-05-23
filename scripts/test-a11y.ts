@@ -18,6 +18,7 @@ export const pa11yTargets = [
   { label: "logout", path: "/logout", role: "player" },
   { label: "campaign", path: "/campaigns/rovnost-shadows", role: "game_master" },
   { label: "gm prep", path: "/campaigns/rovnost-shadows/prep", role: "game_master" },
+  { label: "gm player preview", path: "/campaigns/rovnost-shadows/preview/player", role: "game_master" },
   { label: "gm npcs", path: "/campaigns/rovnost-shadows/npcs", role: "game_master" },
   { label: "gm npc detail", path: "/campaigns/rovnost-shadows/npcs/magister-vallen", role: "game_master" },
   { label: "gm roster", path: "/campaigns/rovnost-shadows/characters", role: "game_master" },

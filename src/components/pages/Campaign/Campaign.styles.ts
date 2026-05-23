@@ -126,14 +126,16 @@ export const campaignStyles = /* css */ `
 }
 
 .campaign-prep-grid,
-.campaign-npc-grid {
+.campaign-npc-grid,
+.campaign-audit-grid {
   display: grid;
   gap: 0.75rem;
   grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
 }
 
 .campaign-prep-link,
-.campaign-npc-card {
+.campaign-npc-card,
+.campaign-audit-card {
   border: 1px solid var(--border-colour);
   border-radius: 0.5rem;
   color: var(--heading-colour);
@@ -148,7 +150,12 @@ export const campaignStyles = /* css */ `
   line-height: 1;
 }
 
+.campaign-audit-card strong {
+  font-size: 1.15rem;
+}
+
 .campaign-prep-link small,
+.campaign-audit-card small,
 .campaign-npc-card p {
   color: var(--muted-text-colour);
   font-weight: 750;
