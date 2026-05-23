@@ -29,6 +29,7 @@ describe("bootstrapDatabase", () => {
       "campaign_factions",
       "campaign_image_assets",
       "campaign_members",
+      "campaign_npcs",
       "campaign_rules_sources",
       "campaign_sessions",
       "campaign_wiki_page_assets",
@@ -323,6 +324,84 @@ describe("bootstrapDatabase", () => {
       database.run(
         "insert into character_faction_choices (character_id, faction_id, connection_note) values (?, ?, ?)",
         ["character_1", "faction_1", "Second primary choice."],
+      ),
+    ).toThrow();
+    database.run(
+      "insert into campaign_image_assets (id, campaign_id, storage_key, mime_type, byte_size, width, height, alt_text, visibility) values (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [
+        "asset_portrait",
+        "campaign_1",
+        "campaigns/campaign/portrait.png",
+        "image/png",
+        123,
+        300,
+        400,
+        "Portrait",
+        "game_master",
+      ],
+    );
+    database.run(
+      "insert into campaign_wiki_pages (id, campaign_id, slug, title, page_type, tags_json, visibility, body_markdown, source_title) values (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [
+        "wiki_profile",
+        "campaign_1",
+        "profile",
+        "Profile",
+        "npc",
+        "[]",
+        "player",
+        "Public profile.",
+        "Profile",
+      ],
+    );
+    database.run(
+      "insert into rules_sources (id, slug, name, abbreviation, content_category, visibility, public_export_eligible) values (?, ?, ?, ?, ?, ?, ?)",
+      ["rules_source_private", "private", "Private", "PRV", "local", "campaign", 0],
+    );
+    database.run(
+      "insert into campaign_rules_sources (campaign_id, source_id) values (?, ?)",
+      ["campaign_1", "rules_source_private"],
+    );
+    database.run(
+      "insert into rules_entities (id, source_id, slug, entity_type, name) values (?, ?, ?, ?, ?)",
+      ["rule_stat_block", "rules_source_private", "stat-block", "stat_block", "Stat Block"],
+    );
+    expect(() =>
+      database.run(
+        `insert into campaign_npcs (
+          id, campaign_id, slug, name, visibility, public_summary, gm_notes, secrets,
+          motivations, hooks, scene_notes, reveal_notes, portrait_image_asset_id,
+          public_wiki_page_id, rules_entity_id
+        ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          "npc_1",
+          "campaign_1",
+          "contact",
+          "Contact",
+          "game_master",
+          "Helpful contact.",
+          "Private notes.",
+          "Secret.",
+          "Motivation.",
+          "Hook.",
+          "Scene.",
+          "Reveal later.",
+          "asset_portrait",
+          "wiki_profile",
+          "rule_stat_block",
+        ],
+      ),
+    ).not.toThrow();
+    expect(() =>
+      database.run(
+        "insert into campaign_npcs (id, campaign_id, slug, name, visibility, public_summary) values (?, ?, ?, ?, ?, ?)",
+        ["npc_duplicate", "campaign_1", "contact", "Duplicate", "game_master", "Duplicate."],
+      ),
+    ).toThrow();
+    expect(() =>
+      database.run(
+        "insert into campaign_npcs (id, campaign_id, slug, name, visibility, public_summary) values (?, ?, ?, ?, ?, ?)",
+        ["npc_bad_visibility", "campaign_1", "bad", "Bad", "public", "Bad."],
       ),
     ).toThrow();
   });

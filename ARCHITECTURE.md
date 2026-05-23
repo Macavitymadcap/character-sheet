@@ -228,6 +228,13 @@ The database stores structured data for rules and sheet state. Markdown files in
 
 Campaign wiki pages store normalised Markdown and source metadata in SQLite. Rendered pages use a small safe Markdown renderer for the current Google Docs export shape: title lines, bold section headings, italic quotes, bullet lists, horizontal rules, and scene breaks. Image uploads are copied into app-managed storage under `data/assets` by default, or `CAMPAIGN_LEDGER_ASSET_ROOT` when set for tests, local overrides, or Railway volume storage at `/data/assets`. The old `CHARACTER_SHEET_ASSET_ROOT` variable remains a compatibility fallback. The database stores generated storage keys rather than raw local source paths, hosted preparation writes deterministic placeholders for seeded campaign asset keys, and asset routes enforce campaign membership and content visibility before reading files.
 
+Game Master NPC prep uses `campaign_npcs` as the foundation for private dossiers and revealed
+public summaries. Full dossiers include Game Master-only notes, secrets, motivations, hooks, scene
+notes, reveal notes, and optional links to portrait images, wiki profiles, or rules/stat-block
+entities. Player read models expose only revealed summaries, names, slugs, visibility, and safe
+portrait/profile references; private dossier fields do not leave the repository boundary for player
+views.
+
 ```mermaid
 erDiagram
     users ||--o{ sessions : owns
@@ -241,6 +248,9 @@ erDiagram
     campaigns ||--o{ campaign_image_assets : stores
     campaign_wiki_pages ||--o{ campaign_wiki_page_assets : attaches
     campaign_image_assets ||--o{ campaign_wiki_page_assets : appears_in
+    campaigns ||--o{ campaign_npcs : prepares
+    campaign_image_assets ||--o{ campaign_npcs : portraits
+    campaign_wiki_pages ||--o{ campaign_npcs : profiles
     campaigns ||--o{ campaign_factions : defines
     characters ||--o{ character_classes : has
     characters ||--o{ character_abilities : has
@@ -259,6 +269,7 @@ erDiagram
     rules_sources ||--o{ rules_entities : provides
     rules_entities ||--o{ rule_mechanics : describes
     rules_entities ||--o{ character_rule_links : selected_by
+    rules_entities ||--o{ campaign_npcs : stat_blocks
 ```
 
 ### Core Tables
@@ -274,6 +285,7 @@ erDiagram
 | `campaign_sessions` | Player-visible and Game-Master-only session records with title, slug, date, summary/body, author, and timestamps. |
 | `campaign_wiki_pages` | Campaign wiki Markdown pages with page type, tags, source metadata, and visibility. |
 | `campaign_image_assets` | App-managed image metadata with relative storage keys, dimensions, alt text, captions, and visibility. |
+| `campaign_npcs` | Game Master NPC dossiers with reveal visibility, player-safe summary fields, private notes/secrets, scene prep, and optional portrait, wiki, or stat-block links. |
 | `campaign_factions` | Rovnost faction records with motto, overview, player prompts, reputation, possible connections, rumours, optional asset links, and wiki links. |
 | `characters` | Character identity, owner, campaign, campaign-unique slug, species, background, level, and summary stats. |
 | `character_classes` | Class and subclass levels, hit dice, and spellcasting ability. |
@@ -293,7 +305,7 @@ erDiagram
 | `rule_mechanics` | Structured mechanics such as uses, dice notation, DCs, ranges, durations, conditions, and scaling. |
 | `character_rule_links` | Character selections and granted rules, such as prepared spells and known infusions. |
 
-Some schema tables intentionally land before their full management UI. `sheet-0012` adds group-use read models for rosters, wiki pages, image assets, session records, factions, and faction choices; `sheet-0014` adds player and Game Master roster pages plus manual character creation; `sheet-0016` adds note creation/update/delete flows and Game Master campaign session CRUD; `sheet-0018` adds the Background tab faction picker and selected faction summary. Character deletion, wiki management UI, image upload UI, faction-management UI, and richer rules text rendering are follow-up work.
+Some schema tables intentionally land before their full management UI. `sheet-0012` adds group-use read models for rosters, wiki pages, image assets, session records, factions, and faction choices; `sheet-0014` adds player and Game Master roster pages plus manual character creation; `sheet-0016` adds note creation/update/delete flows and Game Master campaign session CRUD; `sheet-0018` adds the Background tab faction picker and selected faction summary. `sheet-0063` adds NPC dossier storage and repository read models before the browser workspace in `sheet-0064`. Character deletion, wiki management UI, image upload UI, faction-management UI, and richer rules text rendering are follow-up work.
 
 ### Rules Data
 

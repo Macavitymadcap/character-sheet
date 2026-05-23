@@ -33,6 +33,22 @@ type CampaignImageAssetSeed = [
   string,
   string,
 ];
+type CampaignNpcSeed = [
+  string,
+  string,
+  string,
+  string,
+  string,
+  string,
+  string,
+  string,
+  string,
+  string,
+  string,
+  string | null,
+  string | null,
+  string | null,
+];
 type CampaignSessionSeed = [
   string,
   string,
@@ -861,6 +877,25 @@ const campaignWikiPageAssets: CampaignWikiPageAssetSeed[] = [
   ["wiki_astril_map", "asset_astril_map", "gallery", 10],
 ];
 
+const campaignNpcs: CampaignNpcSeed[] = [
+  [
+    "npc_magister_vallen",
+    "magister-vallen",
+    "Magister Vallen",
+    "game_master",
+    "A senior magistrate linked to the pressure around Rovnost's factory districts.",
+    "Keep Vallen private until the table has enough faction context.",
+    "Vallen is using licences as leverage.",
+    "Preserve council authority without starting open unrest.",
+    "Offers help that always creates a debt.",
+    "Use when the players investigate official exemptions.",
+    "Reveal as a public magistrate contact after the first council scene.",
+    "asset_magister_vallen",
+    "wiki_rovnost_gm_dossier",
+    null,
+  ],
+];
+
 const campaignSessions: CampaignSessionSeed[] = [
   [
     "session_rovnost_zero",
@@ -1604,6 +1639,33 @@ export const seedDatabase = (database: Database) => {
        on conflict(wiki_page_id, image_asset_id, attachment_type) do update set
          sort_order = excluded.sort_order`,
       attachment,
+    );
+  }
+
+  for (const npc of campaignNpcs) {
+    database.run(
+      `insert into campaign_npcs (
+         id, campaign_id, slug, name, visibility, public_summary, gm_notes, secrets,
+         motivations, hooks, scene_notes, reveal_notes, portrait_image_asset_id,
+         public_wiki_page_id, rules_entity_id
+       )
+       values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       on conflict(id) do update set
+         slug = excluded.slug,
+         name = excluded.name,
+         visibility = excluded.visibility,
+         public_summary = excluded.public_summary,
+         gm_notes = excluded.gm_notes,
+         secrets = excluded.secrets,
+         motivations = excluded.motivations,
+         hooks = excluded.hooks,
+         scene_notes = excluded.scene_notes,
+         reveal_notes = excluded.reveal_notes,
+         portrait_image_asset_id = excluded.portrait_image_asset_id,
+         public_wiki_page_id = excluded.public_wiki_page_id,
+         rules_entity_id = excluded.rules_entity_id,
+         updated_at = CURRENT_TIMESTAMP`,
+      [npc[0], "campaign_rovnost_shadows", ...npc.slice(1)],
     );
   }
 

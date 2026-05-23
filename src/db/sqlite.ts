@@ -20,6 +20,8 @@ import type {
   CampaignFaction,
   CampaignImageAsset,
   CampaignMember,
+  CampaignNpcDossier,
+  CampaignNpcSummary,
   CampaignRepository,
   CampaignSessionRecord,
   CampaignSummary,
@@ -280,6 +282,26 @@ interface CampaignSessionRecordRow {
   slug: string;
   summary: string;
   title: string;
+  updated_at: string;
+  visibility: CampaignContentVisibility;
+}
+
+interface CampaignNpcDossierRow {
+  campaign_id: string;
+  created_at: string;
+  gm_notes: string;
+  hooks: string;
+  id: string;
+  motivations: string;
+  name: string;
+  portrait_image_asset_id: string | null;
+  public_summary: string;
+  public_wiki_page_id: string | null;
+  reveal_notes: string;
+  rules_entity_id: string | null;
+  scene_notes: string;
+  secrets: string;
+  slug: string;
   updated_at: string;
   visibility: CampaignContentVisibility;
 }
@@ -1694,6 +1716,71 @@ class SqliteNotesRepository implements NotesRepository {
 class SqliteCampaignContentRepository implements CampaignContentRepository {
   constructor(private readonly database: Database) {}
 
+  createNpcDossier(input: {
+    campaignId: string;
+    gmNotes: string;
+    hooks: string;
+    motivations: string;
+    name: string;
+    portraitImageAssetId: string | null;
+    publicSummary: string;
+    publicWikiPageId: string | null;
+    revealNotes: string;
+    rulesEntityId: string | null;
+    sceneNotes: string;
+    secrets: string;
+    visibility: CampaignContentVisibility;
+  }): CampaignNpcDossier {
+    const id = `campaign_npc_${randomUUID()}`;
+    const slug = uniqueCampaignNpcSlug(this.database, input.campaignId, input.name);
+    this.database
+      .query<never, [
+        string,
+        string,
+        string,
+        string,
+        CampaignContentVisibility,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string | null,
+        string | null,
+        string | null,
+      ]>(
+        `insert into campaign_npcs (
+          id, campaign_id, slug, name, visibility, public_summary, gm_notes, secrets,
+          motivations, hooks, scene_notes, reveal_notes, portrait_image_asset_id,
+          public_wiki_page_id, rules_entity_id
+        ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .run(
+        id,
+        input.campaignId,
+        slug,
+        input.name,
+        input.visibility,
+        input.publicSummary,
+        input.gmNotes,
+        input.secrets,
+        input.motivations,
+        input.hooks,
+        input.sceneNotes,
+        input.revealNotes,
+        input.portraitImageAssetId,
+        input.publicWikiPageId,
+        input.rulesEntityId,
+      );
+
+    const npc = this.getNpcDossierById(input.campaignId, id);
+    if (!npc) throw new Error(`Created NPC dossier ${id} could not be read.`);
+
+    return npc;
+  }
+
   createImageAsset(input: {
     altText: string;
     byteSize: number;
@@ -1945,6 +2032,86 @@ class SqliteCampaignContentRepository implements CampaignContentRepository {
     return row ? toCampaignSessionRecord(row) : null;
   }
 
+  listNpcDossiersForCampaign(campaignId: string, viewerRole: UserRole): CampaignNpcDossier[] {
+    if (!canSeeGameMasterContent(viewerRole)) return [];
+
+    return this.database
+      .query<CampaignNpcDossierRow, [string]>(
+        `select id, campaign_id, slug, name, visibility, public_summary, gm_notes, secrets,
+          motivations, hooks, scene_notes, reveal_notes, portrait_image_asset_id,
+          public_wiki_page_id, rules_entity_id, created_at, updated_at
+         from campaign_npcs
+         where campaign_id = ?
+         order by case visibility when 'player' then 1 else 2 end, name`,
+      )
+      .all(campaignId)
+      .map(toCampaignNpcDossier);
+  }
+
+  listNpcSummariesForCampaign(campaignId: string, viewerRole: UserRole): CampaignNpcSummary[] {
+    const canSeePrivate = canSeeGameMasterContent(viewerRole);
+
+    return this.database
+      .query<CampaignNpcDossierRow, [number, number, string, number]>(
+        `select npcs.id, npcs.campaign_id, npcs.slug, npcs.name, npcs.visibility,
+          npcs.public_summary, npcs.gm_notes, npcs.secrets, npcs.motivations, npcs.hooks,
+          npcs.scene_notes, npcs.reveal_notes,
+          case when ? = 1 or portrait.visibility = 'player'
+            then npcs.portrait_image_asset_id else null end as portrait_image_asset_id,
+          case when ? = 1 or wiki.visibility = 'player'
+            then npcs.public_wiki_page_id else null end as public_wiki_page_id,
+          npcs.rules_entity_id, npcs.created_at, npcs.updated_at
+         from campaign_npcs npcs
+         left join campaign_image_assets portrait on portrait.id = npcs.portrait_image_asset_id
+         left join campaign_wiki_pages wiki on wiki.id = npcs.public_wiki_page_id
+         where npcs.campaign_id = ?
+           and (? = 1 or npcs.visibility = 'player')
+         order by npcs.name`,
+      )
+      .all(canSeePrivate, canSeePrivate, campaignId, canSeePrivate)
+      .map(toCampaignNpcSummary);
+  }
+
+  getNpcDossierBySlug(campaignId: string, slug: string, viewerRole: UserRole): CampaignNpcDossier | null {
+    if (!canSeeGameMasterContent(viewerRole)) return null;
+
+    const row = this.database
+      .query<CampaignNpcDossierRow, [string, string]>(
+        `select id, campaign_id, slug, name, visibility, public_summary, gm_notes, secrets,
+          motivations, hooks, scene_notes, reveal_notes, portrait_image_asset_id,
+          public_wiki_page_id, rules_entity_id, created_at, updated_at
+         from campaign_npcs
+         where campaign_id = ? and slug = ?`,
+      )
+      .get(campaignId, slug);
+
+    return row ? toCampaignNpcDossier(row) : null;
+  }
+
+  getNpcSummaryBySlug(campaignId: string, slug: string, viewerRole: UserRole): CampaignNpcSummary | null {
+    const canSeePrivate = canSeeGameMasterContent(viewerRole);
+    const row = this.database
+      .query<CampaignNpcDossierRow, [number, number, string, string, number]>(
+        `select npcs.id, npcs.campaign_id, npcs.slug, npcs.name, npcs.visibility,
+          npcs.public_summary, npcs.gm_notes, npcs.secrets, npcs.motivations, npcs.hooks,
+          npcs.scene_notes, npcs.reveal_notes,
+          case when ? = 1 or portrait.visibility = 'player'
+            then npcs.portrait_image_asset_id else null end as portrait_image_asset_id,
+          case when ? = 1 or wiki.visibility = 'player'
+            then npcs.public_wiki_page_id else null end as public_wiki_page_id,
+          npcs.rules_entity_id, npcs.created_at, npcs.updated_at
+         from campaign_npcs npcs
+         left join campaign_image_assets portrait on portrait.id = npcs.portrait_image_asset_id
+         left join campaign_wiki_pages wiki on wiki.id = npcs.public_wiki_page_id
+         where npcs.campaign_id = ?
+           and npcs.slug = ?
+           and (? = 1 or npcs.visibility = 'player')`,
+      )
+      .get(canSeePrivate, canSeePrivate, campaignId, slug, canSeePrivate);
+
+    return row ? toCampaignNpcSummary(row) : null;
+  }
+
   updateSession(
     campaignId: string,
     sessionId: string,
@@ -1987,6 +2154,98 @@ class SqliteCampaignContentRepository implements CampaignContentRepository {
          where campaign_id = ? and id = ?`,
       )
       .get(campaignId, sessionId);
+  }
+
+  updateNpcDossier(
+    campaignId: string,
+    npcId: string,
+    patch: {
+      gmNotes: string;
+      hooks: string;
+      motivations: string;
+      name: string;
+      portraitImageAssetId: string | null;
+      publicSummary: string;
+      publicWikiPageId: string | null;
+      revealNotes: string;
+      rulesEntityId: string | null;
+      sceneNotes: string;
+      secrets: string;
+      visibility: CampaignContentVisibility;
+    },
+  ): CampaignNpcDossier | null {
+    this.database
+      .query<never, [
+        string,
+        CampaignContentVisibility,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string | null,
+        string | null,
+        string | null,
+        string,
+        string,
+      ]>(
+        `update campaign_npcs
+         set name = ?, visibility = ?, public_summary = ?, gm_notes = ?, secrets = ?,
+           motivations = ?, hooks = ?, scene_notes = ?, reveal_notes = ?,
+           portrait_image_asset_id = ?, public_wiki_page_id = ?, rules_entity_id = ?,
+           updated_at = CURRENT_TIMESTAMP
+         where campaign_id = ? and id = ?`,
+      )
+      .run(
+        patch.name,
+        patch.visibility,
+        patch.publicSummary,
+        patch.gmNotes,
+        patch.secrets,
+        patch.motivations,
+        patch.hooks,
+        patch.sceneNotes,
+        patch.revealNotes,
+        patch.portraitImageAssetId,
+        patch.publicWikiPageId,
+        patch.rulesEntityId,
+        campaignId,
+        npcId,
+      );
+
+    return this.getNpcDossierById(campaignId, npcId);
+  }
+
+  revealNpcDossier(
+    campaignId: string,
+    npcId: string,
+    visibility: CampaignContentVisibility,
+  ): CampaignNpcDossier | null {
+    this.database
+      .query<never, [CampaignContentVisibility, string, string]>(
+        `update campaign_npcs
+         set visibility = ?, updated_at = CURRENT_TIMESTAMP
+         where campaign_id = ? and id = ?`,
+      )
+      .run(visibility, campaignId, npcId);
+
+    return this.getNpcDossierById(campaignId, npcId);
+  }
+
+  private getNpcDossierById(campaignId: string, npcId: string) {
+    const row = this.database
+      .query<CampaignNpcDossierRow, [string, string]>(
+        `select id, campaign_id, slug, name, visibility, public_summary, gm_notes, secrets,
+          motivations, hooks, scene_notes, reveal_notes, portrait_image_asset_id,
+          public_wiki_page_id, rules_entity_id, created_at, updated_at
+         from campaign_npcs
+         where campaign_id = ? and id = ?`,
+      )
+      .get(campaignId, npcId);
+
+    return row ? toCampaignNpcDossier(row) : null;
   }
 
   listFactionsForCampaign(campaignId: string): CampaignFaction[] {
@@ -2578,6 +2837,41 @@ function toCampaignSessionRecord(row: CampaignSessionRecordRow): CampaignSession
   };
 }
 
+function toCampaignNpcDossier(row: CampaignNpcDossierRow): CampaignNpcDossier {
+  return {
+    campaignId: row.campaign_id,
+    createdAt: row.created_at,
+    gmNotes: row.gm_notes,
+    hooks: row.hooks,
+    id: row.id,
+    motivations: row.motivations,
+    name: row.name,
+    portraitImageAssetId: row.portrait_image_asset_id,
+    publicSummary: row.public_summary,
+    publicWikiPageId: row.public_wiki_page_id,
+    revealNotes: row.reveal_notes,
+    rulesEntityId: row.rules_entity_id,
+    sceneNotes: row.scene_notes,
+    secrets: row.secrets,
+    slug: row.slug,
+    updatedAt: row.updated_at,
+    visibility: row.visibility,
+  };
+}
+
+function toCampaignNpcSummary(row: CampaignNpcDossierRow): CampaignNpcSummary {
+  return {
+    campaignId: row.campaign_id,
+    id: row.id,
+    name: row.name,
+    portraitImageAssetId: row.portrait_image_asset_id,
+    publicSummary: row.public_summary,
+    publicWikiPageId: row.public_wiki_page_id,
+    slug: row.slug,
+    visibility: row.visibility,
+  };
+}
+
 function toCampaignFaction(row: CampaignFactionRow): CampaignFaction {
   return {
     campaignId: row.campaign_id,
@@ -2643,6 +2937,24 @@ function uniqueCampaignWikiSlug(database: Database, campaignId: string, title: s
     database
       .query<{ id: string }, [string, string]>(
         "select id from campaign_wiki_pages where campaign_id = ? and slug = ?",
+      )
+      .get(campaignId, slug)
+  ) {
+    slug = `${base}-${suffix}`;
+    suffix += 1;
+  }
+
+  return slug;
+}
+
+function uniqueCampaignNpcSlug(database: Database, campaignId: string, name: string) {
+  const base = slugify(name).replaceAll("_", "-") || "npc";
+  let slug = base;
+  let suffix = 2;
+  while (
+    database
+      .query<{ id: string }, [string, string]>(
+        "select id from campaign_npcs where campaign_id = ? and slug = ?",
       )
       .get(campaignId, slug)
   ) {

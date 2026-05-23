@@ -126,6 +126,27 @@ CREATE TABLE IF NOT EXISTS campaign_wiki_page_assets (
   PRIMARY KEY (wiki_page_id, image_asset_id, attachment_type)
 );
 
+CREATE TABLE IF NOT EXISTS campaign_npcs (
+  id TEXT PRIMARY KEY,
+  campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+  slug TEXT NOT NULL,
+  name TEXT NOT NULL,
+  visibility TEXT NOT NULL DEFAULT 'game_master' CHECK (visibility IN ('player', 'game_master')),
+  public_summary TEXT NOT NULL DEFAULT '',
+  gm_notes TEXT NOT NULL DEFAULT '',
+  secrets TEXT NOT NULL DEFAULT '',
+  motivations TEXT NOT NULL DEFAULT '',
+  hooks TEXT NOT NULL DEFAULT '',
+  scene_notes TEXT NOT NULL DEFAULT '',
+  reveal_notes TEXT NOT NULL DEFAULT '',
+  portrait_image_asset_id TEXT REFERENCES campaign_image_assets(id) ON DELETE SET NULL,
+  public_wiki_page_id TEXT REFERENCES campaign_wiki_pages(id) ON DELETE SET NULL,
+  rules_entity_id TEXT REFERENCES rules_entities(id) ON DELETE SET NULL,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (campaign_id, slug)
+);
+
 CREATE TABLE IF NOT EXISTS campaign_factions (
   id TEXT PRIMARY KEY,
   campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
