@@ -21,10 +21,10 @@
     "verify": "bun scripts/verify.ts"
   },
   "dependencies": {
-    "@macavitymadcap/hyper-dank-automation": "./vendor/hyper-dank/macavitymadcap-hyper-dank-automation-0.1.0.tgz",
-    "@macavitymadcap/hyper-dank-data": "./vendor/hyper-dank/macavitymadcap-hyper-dank-data-0.1.0.tgz",
-    "@macavitymadcap/hyper-dank-transport": "./vendor/hyper-dank/macavitymadcap-hyper-dank-transport-0.1.0.tgz",
-    "@macavitymadcap/hyper-dank-ui": "./vendor/hyper-dank/macavitymadcap-hyper-dank-ui-0.1.0.tgz",
+    "@macavitymadcap/hyper-dank-automation": "^0.1.0",
+    "@macavitymadcap/hyper-dank-data": "^0.1.0",
+    "@macavitymadcap/hyper-dank-transport": "^0.1.0",
+    "@macavitymadcap/hyper-dank-ui": "^0.1.0",
     "hono": "^4.0.0"
   },
   "devDependencies": {

@@ -12,7 +12,7 @@ Hyper-Dank adoption epic.
 ## Implementation
 
 - Run the complete Campaign Ledger verification suite after all migrations.
-- Run the Hyper-Dank package-tarball or compatibility command used by this epic, expected as
+- Run the Hyper-Dank package or compatibility command used by this epic, expected as
   `bun run test:packages` or the narrower command documented by `sheet-0041`.
 - Refresh deliberate PR evidence screenshots for the visible surfaces changed by UI migration.
 - Confirm light and dark screenshots are paired in two-column PR tables.
@@ -28,8 +28,7 @@ Hyper-Dank adoption epic.
 ## Tests First
 
 - Add acceptance-doc checks for the final Hyper-Dank adoption note before writing the note.
-- Confirm CI and local verification use the same dependency-consumption route, or explicitly record
-  why local tarballs remain a maintainer-prepared step until package publication exists.
+- Confirm CI and local verification use the same npm dependency-consumption route.
 
 ## Acceptance Criteria
 

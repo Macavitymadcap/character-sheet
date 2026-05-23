@@ -11,15 +11,13 @@ Hyper-Dank has moved beyond the earlier `pace-calculator` template reference. Th
 framework release is `hyper-dank-v2.3.1`, with reusable packages named
 `@macavitymadcap/hyper-dank-ui`, `@macavitymadcap/hyper-dank-data`,
 `@macavitymadcap/hyper-dank-transport`, and `@macavitymadcap/hyper-dank-automation`. Those packages
-are covered by consumer-style compatibility tests in Hyper-Dank, but they are not published on npm
-as of 2026-05-23. Hyper-Dank `pace-0062` selected and proved local package tarballs as the
-supported near-term downstream route. Campaign Ledger should adopt that route first, while leaving
-npm or GitHub Packages as later distribution improvements.
+are covered by consumer-style compatibility tests in Hyper-Dank. Hyper-Dank `pace-0062` selected and
+proved local package tarballs as the supported near-term downstream route while npm publication was
+unavailable; Campaign Ledger now consumes the same public package paths from npm.
 
 ## Goals
 
-- Add Hyper-Dank packages to Campaign Ledger through Hyper-Dank's proved local-tarball consumption
-  path.
+- Add Hyper-Dank packages to Campaign Ledger through their public npm package paths.
 - Replace local generic UI atoms and molecules with `@macavitymadcap/hyper-dank-ui` where the public
   component contracts match Campaign Ledger's needs.
 - Keep Campaign Ledger-specific organisms, pages, sheet controls, dice controls, domain copy, and
@@ -40,7 +38,7 @@ npm or GitHub Packages as later distribution improvements.
 - No Postgres migration or production database re-architecture.
 - No Better Auth migration in this epic; Campaign Ledger's current local auth remains app-owned.
 - No automatic migration of domain repositories into Hyper-Dank.
-- No adoption of unpublished npm packages as if they were registry-stable.
+- No adoption of unpublished package names as if they were registry-stable.
 - No GM prep, private NPC, Google Docs import, or reveal-workflow implementation; that follows this
   epic.
 
@@ -61,12 +59,10 @@ Local inspection on 2026-05-23 found:
 - `bun run test:compat` in Hyper-Dank packs local workspace packages and runs consumer-style app
   shape tests through public package names.
 - `bun run test:packages` in Hyper-Dank packs the four packages, creates a temporary app outside the
-  Hyper-Dank workspace, installs the tarballs, typechecks public imports, resolves the UI CSS export,
+  Hyper-Dank workspace, installs the packages, typechecks public imports, resolves the UI CSS export,
   and runs a Bun smoke.
-- `npm view` returned `404 Not Found` for all four package names on 2026-05-23, so npm publication
-  must not be a Campaign Ledger assumption yet.
-- Hyper-Dank package READMEs now document the local-tarball installation route. Campaign Ledger
-  adoption should use that route rather than inventing a separate package-consumption story.
+- `npm view` returned `0.1.0` for all four package names on 2026-05-23, so Campaign Ledger now uses
+  registry dependency ranges instead of vendored tarballs.
 
 ## Adoption Map
 
@@ -81,8 +77,7 @@ Local inspection on 2026-05-23 found:
 
 ## Key Workflows
 
-- A developer can run Hyper-Dank `bun run pack:packages`, vendor the generated package tarballs in
-  Campaign Ledger, then run `bun install` and `bun run verify`.
+- A developer can install Campaign Ledger dependencies from npm, then run `bun run verify`.
 - A component migration ticket replaces a small set of generic local components with Hyper-Dank UI
   imports, keeps visible Campaign Ledger styling intact, and removes dead local files.
 - A route-helper ticket replaces duplicated request/HTMX mechanics without changing permissions,
@@ -94,7 +89,7 @@ Local inspection on 2026-05-23 found:
 
 ```mermaid
 flowchart TD
-    A["Hyper-Dank v2.3.1 packages"] --> B["Verified tarball consumption path"]
+    A["Hyper-Dank v2.3.1 packages"] --> B["Verified npm package path"]
     B --> C["Campaign Ledger package.json"]
     C --> D["UI primitives"]
     C --> E["Transport helpers"]
@@ -110,7 +105,7 @@ flowchart TD
 
 | Ticket | Purpose |
 | --- | --- |
-| `sheet-0041` | Add Hyper-Dank local-tarball dependencies and Campaign Ledger compatibility foundations. |
+| `sheet-0041` | Add Hyper-Dank package dependencies and Campaign Ledger compatibility foundations. |
 | `sheet-0042` | Adopt Hyper-Dank UI primitives for generic atoms and low-risk molecules. |
 | `sheet-0043` | Adopt Hyper-Dank transport helpers for form values, route params, HTMX detection, redirects, and fragment/page responses. |
 | `sheet-0044` | Adopt Hyper-Dank data lifecycle and migration-planning helpers where they fit SQLite without changing repositories. |
@@ -133,7 +128,7 @@ to run in parallel without adding new framework surface area.
 ## Test And Verification Strategy
 
 - Add or update compatibility tests that import Hyper-Dank packages through public package names.
-- Run Hyper-Dank `bun run test:packages` or the equivalent package-tarball smoke before implementing
+- Run Hyper-Dank `bun run test:packages` or the equivalent package smoke before implementing
   migration tickets.
 - Component tests prove migrated UI primitives preserve semantic output, HTMX attributes, class
   hooks, and accessible names.
@@ -147,8 +142,7 @@ to run in parallel without adding new framework surface area.
 
 ## Risks And Assumptions
 
-- Hyper-Dank packages are not npm-published today, so Campaign Ledger should use the proved local
-  tarball route until publication exists.
+- Hyper-Dank packages should stay on published npm dependency ranges once publication exists.
 - The shared UI package is generic by design. If a Campaign Ledger component carries domain logic,
   it should stay local.
 - CSS contracts may differ even where component names match. Migration tickets should preserve the
@@ -159,8 +153,8 @@ to run in parallel without adding new framework surface area.
 
 ## Acceptance Criteria
 
-- Campaign Ledger consumes the current Hyper-Dank packages through the documented, verified local
-  tarball route.
+- Campaign Ledger consumes the current Hyper-Dank packages through documented, verified public
+  package paths.
 - Local generic framework components and scripts are reduced where Hyper-Dank public contracts fit.
 - Domain-specific Campaign Ledger pages, sheet controls, campaign flows, auth, schemas, and
   repositories remain app-owned.

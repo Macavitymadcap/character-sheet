@@ -4,10 +4,10 @@
     "": {
       "name": "campaign-ledger",
       "dependencies": {
-        "@macavitymadcap/hyper-dank-automation": "./vendor/hyper-dank/macavitymadcap-hyper-dank-automation-0.1.0.tgz",
-        "@macavitymadcap/hyper-dank-data": "./vendor/hyper-dank/macavitymadcap-hyper-dank-data-0.1.0.tgz",
-        "@macavitymadcap/hyper-dank-transport": "./vendor/hyper-dank/macavitymadcap-hyper-dank-transport-0.1.0.tgz",
-        "@macavitymadcap/hyper-dank-ui": "./vendor/hyper-dank/macavitymadcap-hyper-dank-ui-0.1.0.tgz",
+        "@macavitymadcap/hyper-dank-automation": "^0.1.0",
+        "@macavitymadcap/hyper-dank-data": "^0.1.0",
+        "@macavitymadcap/hyper-dank-transport": "^0.1.0",
+        "@macavitymadcap/hyper-dank-ui": "^0.1.0",
         "hono": "^4.0.0",
       },
       "devDependencies": {
@@ -23,13 +23,13 @@
 
     "@babel/helper-validator-identifier": ["@babel/helper-validator-identifier@7.28.5", "", {}, "sha512-qSs4ifwzKJSV39ucNjsvc6WVHs6b7S03sOh2OcHF9UHfVPqWWALUsNUVzhSBiItjRZoLHx7nIarVjqKVusUZ1Q=="],
 
-    "@macavitymadcap/hyper-dank-automation": ["@macavitymadcap/hyper-dank-automation@./vendor/hyper-dank/macavitymadcap-hyper-dank-automation-0.1.0.tgz", { "peerDependencies": { "@playwright/test": "^1.60.0", "typescript": "^5" }, "optionalPeers": ["@playwright/test"] }],
+    "@macavitymadcap/hyper-dank-automation": ["@macavitymadcap/hyper-dank-automation@0.1.0", "", { "peerDependencies": { "@playwright/test": "^1.60.0", "typescript": "^5" }, "optionalPeers": ["@playwright/test"] }, "sha512-gbEPdbsBesHujE0PWQeteWSv5v7lgqOFMOoqQbV68SMLctSkLtErvx/4G7vKw4QYSj7o6KRH3ejtTNUxVpai1g=="],
 
-    "@macavitymadcap/hyper-dank-data": ["@macavitymadcap/hyper-dank-data@./vendor/hyper-dank/macavitymadcap-hyper-dank-data-0.1.0.tgz", { "peerDependencies": { "typescript": "^5" } }],
+    "@macavitymadcap/hyper-dank-data": ["@macavitymadcap/hyper-dank-data@0.1.0", "", { "peerDependencies": { "typescript": "^5" } }, "sha512-+WFSoHSsqAzGQXf2BDmCVJZoy4SAFlXVUFqktrO0wknTPJcPwfz1PpB4bEznwU13Ggn7qLO5f9sq8coj0vjP+Q=="],
 
-    "@macavitymadcap/hyper-dank-transport": ["@macavitymadcap/hyper-dank-transport@./vendor/hyper-dank/macavitymadcap-hyper-dank-transport-0.1.0.tgz", { "peerDependencies": { "hono": "^4.0.0", "typescript": "^5" } }],
+    "@macavitymadcap/hyper-dank-transport": ["@macavitymadcap/hyper-dank-transport@0.1.0", "", { "peerDependencies": { "hono": "^4.0.0", "typescript": "^5" } }, "sha512-dzn3bqdfvsAZPYyzToqtWlfKX+3fJiJeIE2kBWYpFB0wSwfPNkix5/xDaSUwC280ADYrNF4OZZME9c//jsYfww=="],
 
-    "@macavitymadcap/hyper-dank-ui": ["@macavitymadcap/hyper-dank-ui@./vendor/hyper-dank/macavitymadcap-hyper-dank-ui-0.1.0.tgz", { "peerDependencies": { "hono": "^4.0.0", "typescript": "^5" } }],
+    "@macavitymadcap/hyper-dank-ui": ["@macavitymadcap/hyper-dank-ui@0.1.0", "", { "peerDependencies": { "hono": "^4.0.0", "typescript": "^5" } }, "sha512-iPpySpB1FAOSQkqVwku3UGUVAiQtVKuf/MiPew9NfTI1FsyDwJ1sCo0F9XC8nfpJq+Kxzn15v2W7B2tWrVxSBA=="],
 
     "@pa11y/html_codesniffer": ["@pa11y/html_codesniffer@2.6.0", "", {}, "sha512-BKA7qG8NyaIBdCBDep0hYuYoF/bEyWJprE6EEVJOPiwj80sSiIKDT8LUVd19qKhVqNZZD3QvJIdFZ35p+vAFPg=="],
 
