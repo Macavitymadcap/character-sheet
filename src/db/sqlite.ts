@@ -2049,7 +2049,7 @@ class SqliteCampaignContentRepository implements CampaignContentRepository {
       )
       .all(campaignId, assetId)
       .map((row) => ({
-        href: `/campaigns/${campaignSlug}#campaign-factions`,
+        href: `/campaigns/${campaignSlug}`,
         id: row.id,
         label: row.label,
         type: row.usage_type,
