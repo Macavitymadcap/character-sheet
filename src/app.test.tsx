@@ -171,6 +171,46 @@ describe("createApp", () => {
     expect(response.headers.get("location")).toBe("/login");
   });
 
+  test("uses HX-Redirect for HTMX action redirects", async () => {
+    const { app, sessionService } = createTestApp("Campaign Ledger");
+    const session = sessionService.createSession("user_mira_player");
+    const response = await app.request("/characters", {
+      body: new URLSearchParams({
+        background: "Archivist",
+        className: "Wizard",
+        hitPointMax: "18",
+        level: "3",
+        name: "Ilyra Vale",
+        species: "Human",
+      }),
+      headers: {
+        ...formHeaders(session.cookie),
+        "HX-Request": "true",
+      },
+      method: "POST",
+    });
+
+    expect(response.status).toBe(204);
+    expect(response.headers.get("HX-Redirect")).toBe("/sheet/ilyra_vale");
+    expect(response.headers.get("location")).toBeNull();
+  });
+
+  test("keeps auth cookies on HTMX login redirects", async () => {
+    const { app } = createTestApp("Campaign Ledger");
+    const response = await app.request("/login", {
+      body: new URLSearchParams({ email: "lynott@example.local", password: "password123" }),
+      headers: {
+        ...formHeaders(),
+        "HX-Request": "true",
+      },
+      method: "POST",
+    });
+
+    expect(response.status).toBe(204);
+    expect(response.headers.get("HX-Redirect")).toBe("/characters");
+    expect(response.headers.get("set-cookie")).toStartWith("character_sheet_session=");
+  });
+
   test("serves sheet tab panels as HTMX fragment-only HTML", async () => {
     const { app, sessionService } = createTestApp("Campaign Ledger");
     const session = sessionService.createSession("user_lynott_player");
@@ -606,6 +646,19 @@ describe("createApp", () => {
     expect(rollHtml).toContain("Stealth: d20");
     expect(rollHtml).toContain("+ 6 =");
     expect(invalidCondition.status).toBe(400);
+  });
+
+  test("keeps invalid form values rejected after transport parsing", async () => {
+    const { app, sessionService } = createTestApp("Campaign Ledger");
+    const session = sessionService.createSession("user_lynott_player");
+    const response = await app.request("/sheet/lynott/abilities/intelligence", {
+      body: new URLSearchParams({ saveProficient: "1", score: "" }),
+      headers: formHeaders(session.cookie),
+      method: "PATCH",
+    });
+
+    expect(response.status).toBe(400);
+    expect(await response.text()).toBe("Invalid ability");
   });
 
   test("updates tab resources through HTMX panel fragments", async () => {
