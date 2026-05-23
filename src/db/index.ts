@@ -8,6 +8,7 @@ export type {
   CampaignContentVisibility,
   CampaignFaction,
   CampaignImageAsset,
+  CampaignImageAssetUsage,
   CampaignMember,
   CampaignNpcDossier,
   CampaignNpcSummary,

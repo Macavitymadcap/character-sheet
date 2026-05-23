@@ -19,6 +19,8 @@ import { isCampaignWikiPageType, normaliseGoogleDocsMarkdown } from "./campaigns
 import { isRestType, planRestResourceUpdates } from "./characters/rests";
 import { AdminPage } from "./components/pages/Admin";
 import {
+  CampaignImageDetailPage,
+  CampaignImageLibraryPage,
   CampaignPage,
   CampaignPlayerPreviewPage,
   CampaignPrepPage,
@@ -115,6 +117,14 @@ export const createApp = (dependencies: AppDependencies) => {
     dependencies.campaignRepository
       .listMembers(campaignId)
       .find((member) => member.userId === userId)?.role ?? null;
+
+  const campaignAssetFileStatus = async (asset: { byteSize: number; storageKey: string }) => {
+    const file = Bun.file(`${assetStorageRoot()}/${asset.storageKey}`);
+    if (!(await file.exists())) return "fallback" as const;
+    if (asset.byteSize > 1024 && file.size < 1024) return "fallback" as const;
+
+    return "available" as const;
+  };
 
   const sheetViewerRole = (
     characterId: string,
@@ -400,7 +410,7 @@ export const createApp = (dependencies: AppDependencies) => {
           },
           {
             hidden: allImageAssets.length - playerImageAssets.length,
-            href: `/campaigns/${campaign.slug}#campaign-assets-heading`,
+            href: `/campaigns/${campaign.slug}/images`,
             label: "Images",
             visible: playerImageAssets.length,
           },
@@ -596,6 +606,92 @@ export const createApp = (dependencies: AppDependencies) => {
     return redirectAfterAction(context, `/campaigns/${campaign.slug}/npcs/${npc.slug}`);
   });
 
+  app.get("/campaigns/:campaignSlug/images", async (context) => {
+    const session = readSession(context.req.header("cookie"));
+    if (!session) return context.redirect("/login", 303);
+
+    const campaign = dependencies.campaignRepository.getCampaignBySlug(
+      routeParam(context, "campaignSlug"),
+    );
+    if (!campaign) return context.text("Not found", 404);
+
+    const guard = requireCampaignAccess({
+      campaignId: campaign.id,
+      campaignRepository: dependencies.campaignRepository,
+      permission: "read",
+      session,
+    });
+    const guarded = guardResponse(context, guard);
+    if (guarded) return guarded;
+    const viewerRole = campaignViewerRole(campaign.id, session.user.id);
+    if (!viewerRole) return context.text("Forbidden", 403);
+
+    const assets = await Promise.all(
+      dependencies.campaignContentRepository.listImageAssetsForCampaign(campaign.id, viewerRole)
+        .map(async (asset) => ({
+          ...asset,
+          fileStatus: await campaignAssetFileStatus(asset),
+          usageCount: viewerRole === "game_master"
+            ? dependencies.campaignContentRepository.listImageAssetUsages(campaign.id, campaign.slug, asset.id).length
+            : 0,
+        })),
+    );
+
+    return context.html(
+      <CampaignImageLibraryPage
+        appName={dependencies.appName}
+        campaign={campaign}
+        imageAssets={assets}
+        user={session.user}
+        viewerRole={viewerRole}
+      />,
+    );
+  });
+
+  app.get("/campaigns/:campaignSlug/images/:assetId", async (context) => {
+    const session = readSession(context.req.header("cookie"));
+    if (!session) return context.redirect("/login", 303);
+
+    const campaign = dependencies.campaignRepository.getCampaignBySlug(
+      routeParam(context, "campaignSlug"),
+    );
+    if (!campaign) return context.text("Not found", 404);
+
+    const guard = requireCampaignAccess({
+      campaignId: campaign.id,
+      campaignRepository: dependencies.campaignRepository,
+      permission: "read",
+      session,
+    });
+    const guarded = guardResponse(context, guard);
+    if (guarded) return guarded;
+    const viewerRole = campaignViewerRole(campaign.id, session.user.id);
+    if (!viewerRole) return context.text("Forbidden", 403);
+
+    const asset = dependencies.campaignContentRepository.getImageAssetById(
+      campaign.id,
+      routeParam(context, "assetId"),
+      viewerRole,
+    );
+    if (!asset) return context.text("Not found", 404);
+
+    return context.html(
+      <CampaignImageDetailPage
+        appName={dependencies.appName}
+        asset={{
+          ...asset,
+          fileStatus: await campaignAssetFileStatus(asset),
+          usages: viewerRole === "game_master"
+            ? dependencies.campaignContentRepository.listImageAssetUsages(campaign.id, campaign.slug, asset.id)
+            : [],
+        }}
+        campaign={campaign}
+        user={session.user}
+        viewerRole={viewerRole}
+      />,
+    );
+  });
+
   app.get("/campaigns/:campaignSlug/wiki/:wikiSlug", (context) => {
     const session = readSession(context.req.header("cookie"));
     if (!session) return context.redirect("/login", 303);
@@ -681,23 +777,15 @@ export const createApp = (dependencies: AppDependencies) => {
     );
     if (!asset) return context.text("Not found", 404);
 
+    if (await campaignAssetFileStatus(asset) === "fallback") {
+      return new Response(missingSeedAssetSvg(asset.title), {
+        headers: {
+          "Cache-Control": "private, max-age=300",
+          "Content-Type": "image/svg+xml",
+        },
+      });
+    }
     const file = Bun.file(`${assetStorageRoot()}/${asset.storageKey}`);
-    if (!(await file.exists())) {
-      return new Response(missingSeedAssetSvg(asset.title), {
-        headers: {
-          "Cache-Control": "private, max-age=300",
-          "Content-Type": "image/svg+xml",
-        },
-      });
-    }
-    if (asset.byteSize > 1024 && file.size < 1024) {
-      return new Response(missingSeedAssetSvg(asset.title), {
-        headers: {
-          "Cache-Control": "private, max-age=300",
-          "Content-Type": "image/svg+xml",
-        },
-      });
-    }
 
     return new Response(file, {
       headers: {
@@ -757,12 +845,12 @@ export const createApp = (dependencies: AppDependencies) => {
     const parsed = await parseCampaignAssetForm(await context.req.parseBody(), campaign.slug);
     if (!parsed.ok) return context.text(parsed.message, 400);
 
-    dependencies.campaignContentRepository.createImageAsset({
+    const asset = dependencies.campaignContentRepository.createImageAsset({
       ...parsed.value,
       campaignId: campaign.id,
     });
 
-    return redirectAfterAction(context, `/campaigns/${campaign.slug}`);
+    return redirectAfterAction(context, `/campaigns/${campaign.slug}/images/${asset.id}`);
   });
 
   app.post("/campaigns/:campaignSlug/sessions", async (context) => {
@@ -2791,10 +2879,10 @@ async function parseCampaignAssetForm(
 } | { ok: false; message: string }> {
   const title = parseFormText(body.title);
   const altText = parseFormText(body.altText);
-  const caption = parseFormString(body.caption);
+  const caption = parseFormString(body.caption) ?? "";
   const visibility = parseNoteVisibility(body.visibility);
   const image = body.image;
-  if (!title || !altText || caption === null || !visibility || !(image instanceof File)) {
+  if (!title || !altText || !visibility || !(image instanceof File)) {
     return { ok: false, message: "Invalid image asset" };
   }
   const extension = imageExtensionForMimeType(image.type);

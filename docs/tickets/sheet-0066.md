@@ -70,13 +70,13 @@ sequenceDiagram
 
 ## Acceptance Criteria
 
-- A Game Master can upload a photo from this computer through the browser.
-- Uploaded files are copied into the app-managed asset root and stored with relative generated keys.
-- PNG, JPEG, and WebP uploads work; unsupported files and missing alt text are rejected.
-- The image library shows thumbnail cards with visibility, source, dimensions, fallback, and usage
+- [x] A Game Master can upload a photo from this computer through the browser.
+- [x] Uploaded files are copied into the app-managed asset root and stored with relative generated keys.
+- [x] PNG, JPEG, and WebP uploads work; unsupported files and missing alt text are rejected.
+- [x] The image library shows thumbnail cards with visibility, source, dimensions, fallback, and usage
   information.
-- The image detail view shows the full image and linked campaign usage from wiki, NPC, session, or
+- [x] The image detail view shows the full image and linked campaign usage from wiki, NPC, and
   faction records that reference the asset.
-- Players can only read player-visible images for campaigns they belong to.
-- Docs explain seeded-file placement and new local upload behaviour.
-- `bun run verify` passes.
+- [x] Players can only read player-visible images for campaigns they belong to.
+- [x] Docs explain seeded-file placement and new local upload behaviour.
+- [x] `bun run verify` passes.

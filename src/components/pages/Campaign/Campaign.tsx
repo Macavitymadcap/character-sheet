@@ -2,6 +2,7 @@ import { renderCampaignMarkdown } from "../../../campaigns/wiki";
 import type {
   AuthUser,
   CampaignImageAsset,
+  CampaignImageAssetUsage,
   CampaignMember,
   CampaignNpcDossier,
   CampaignNpcSummary,
@@ -29,6 +30,16 @@ interface CampaignPageProps {
     Partial<Pick<AuthUser, "campaignRoles" | "capabilities">>;
   viewerRole: CampaignMember["role"];
   wikiPages: CampaignWikiPage[];
+}
+
+export interface CampaignImageLibraryItem extends CampaignImageAsset {
+  fileStatus: "available" | "fallback";
+  usageCount: number;
+}
+
+export interface CampaignImageDetail extends CampaignImageAsset {
+  fileStatus: "available" | "fallback";
+  usages: CampaignImageAssetUsage[];
 }
 
 export const CampaignPage = ({ appName, campaign, gameMasterDisplayName, imageAssets, members, ruleSources, sessions, user, viewerRole, wikiPages }: CampaignPageProps) => {
@@ -60,6 +71,7 @@ export const CampaignPage = ({ appName, campaign, gameMasterDisplayName, imageAs
               <nav class="campaign-action-row" aria-label="Game Master campaign tools">
                 <a class="action-link action-link-secondary" href={`/campaigns/${campaign.slug}/prep`}>Prep workspace</a>
                 <a class="action-link action-link-secondary" href={`/campaigns/${campaign.slug}/npcs`}>NPCs</a>
+                <a class="action-link action-link-secondary" href={`/campaigns/${campaign.slug}/images`}>Images</a>
                 <a class="action-link action-link-secondary" href={`/campaigns/${campaign.slug}/preview/player`}>Player preview</a>
               </nav>
             ) : (
@@ -104,6 +116,7 @@ export const CampaignPage = ({ appName, campaign, gameMasterDisplayName, imageAs
               <p class="campaign-kicker">Game Master</p>
               <h2 id="campaign-assets-heading" class="panel-heading">Images</h2>
             </div>
+            <p class="campaign-help-text"><a href={`/campaigns/${campaign.slug}/images`}>Open image library</a> to review metadata, usage, and local file status.</p>
             <form class="campaign-session-form" action={`/campaigns/${campaign.slug}/assets`} method="post" enctype="multipart/form-data">
               <label>Title<input name="title" required type="text" /></label>
               <label>Alt text<input name="altText" required type="text" /></label>
@@ -275,6 +288,11 @@ export const CampaignPrepPage = ({ appName, campaign, npcCount, privateNpcCount,
               <span>NPCs</span>
               <strong>{npcCount}</strong>
               <small>{privateNpcCount} private</small>
+            </a>
+            <a class="campaign-prep-link" href={`/campaigns/${campaign.slug}/images`}>
+              <span>Images</span>
+              <strong>Library</strong>
+              <small>Uploads and usage</small>
             </a>
             <a class="campaign-prep-link" href={`/campaigns/${campaign.slug}/preview/player`}>
               <span>Player preview</span>
@@ -501,7 +519,7 @@ export const NpcListPage = ({ appName, campaign, imageAssets, npcs, playerMember
             <p class="campaign-kicker">Private prep</p>
             <h2 id="campaign-npc-create-heading" class="panel-heading">Add NPC</h2>
           </div>
-          <p class="campaign-help-text"><a href={`/campaigns/${campaign.slug}#campaign-assets-heading`}>Upload or manage campaign images</a> before choosing a portrait.</p>
+          <p class="campaign-help-text"><a href={`/campaigns/${campaign.slug}/images`}>Upload or manage campaign images</a> before choosing a portrait.</p>
           <NpcForm
             action={`/campaigns/${campaign.slug}/npcs`}
             imageAssets={imageAssets}
@@ -515,6 +533,145 @@ export const NpcListPage = ({ appName, campaign, imageAssets, npcs, playerMember
     </div>
   </Layout>
 );
+
+interface CampaignImageLibraryPageProps {
+  appName: string;
+  campaign: CampaignSummary;
+  imageAssets: CampaignImageLibraryItem[];
+  user: Pick<AuthUser, "displayName" | "role">;
+  viewerRole: CampaignMember["role"];
+}
+
+export const CampaignImageLibraryPage = ({ appName, campaign, imageAssets, user, viewerRole }: CampaignImageLibraryPageProps) => {
+  const canManage = viewerRole === "game_master";
+
+  return (
+    <Layout title={`Images - ${campaign.name} - ${appName}`}>
+      <div class="shell campaign-shell">
+        <SiteHeader appName={appName} currentSection="campaign" user={user} />
+        <main class="campaign-main" aria-labelledby="campaign-images-heading">
+          <Panel labelledBy="campaign-images-heading">
+            <a class="action-link" href={`/campaigns/${campaign.slug}`}>Back to campaign</a>
+            <div class="campaign-heading">
+              <p class="campaign-kicker">{canManage ? "Game Master" : "Campaign"}</p>
+              <h1 id="campaign-images-heading" class="panel-heading">Images</h1>
+            </div>
+            <div class="campaign-asset-list">
+              {imageAssets.map((asset) => <CampaignImageCard asset={asset} campaign={campaign} />)}
+            </div>
+            {imageAssets.length === 0 ? <p class="campaign-empty-state">No images available.</p> : null}
+          </Panel>
+          {canManage ? <Panel labelledBy="campaign-image-upload-heading">
+            <div class="campaign-heading">
+              <p class="campaign-kicker">Local photo workflow</p>
+              <h2 id="campaign-image-upload-heading" class="panel-heading">Add image</h2>
+            </div>
+            <p class="campaign-help-text">Upload PNG, JPEG, or WebP files from this computer. Campaign Ledger stores an app-managed copy, so source filenames and local paths are not exposed.</p>
+            <ImageUploadForm campaign={campaign} />
+          </Panel> : null}
+        </main>
+      </div>
+    </Layout>
+  );
+};
+
+interface CampaignImageDetailPageProps {
+  appName: string;
+  asset: CampaignImageDetail;
+  campaign: CampaignSummary;
+  user: Pick<AuthUser, "displayName" | "role">;
+  viewerRole: CampaignMember["role"];
+}
+
+export const CampaignImageDetailPage = ({ appName, asset, campaign, user, viewerRole }: CampaignImageDetailPageProps) => {
+  const canManage = viewerRole === "game_master";
+
+  return (
+    <Layout title={`${asset.title} - Images - ${campaign.name} - ${appName}`}>
+      <div class="shell campaign-shell">
+        <SiteHeader appName={appName} currentSection="campaign" user={user} />
+        <main class="campaign-main" aria-labelledby="campaign-image-detail-heading">
+          <Panel labelledBy="campaign-image-detail-heading">
+            <a class="action-link" href={`/campaigns/${campaign.slug}/images`}>Back to images</a>
+            <figure class="campaign-image-detail-figure">
+              <img alt={asset.altText} src={`/campaigns/${campaign.slug}/assets/${asset.id}`} />
+              <figcaption>{asset.caption || asset.title}</figcaption>
+            </figure>
+            <div class="campaign-heading">
+              <p class="campaign-kicker">{asset.visibility === "game_master" ? "Game Master only" : "Player visible"}</p>
+              <h1 id="campaign-image-detail-heading" class="panel-heading">{asset.title}</h1>
+            </div>
+            <p class="campaign-card-copy">{asset.altText}</p>
+            <div class="campaign-asset-status">
+              {assetStatusLabels(asset).map((label) => <span>{label}</span>)}
+              <span>{asset.fileStatus === "available" ? "File available" : "Fallback active"}</span>
+              <span>{formatByteSize(asset.byteSize)}</span>
+            </div>
+            {canManage ? (
+              <dl class="campaign-image-metadata">
+                <div><dt>Storage key</dt><dd>{asset.storageKey}</dd></div>
+                <div><dt>MIME type</dt><dd>{asset.mimeType}</dd></div>
+                <div><dt>Byte size</dt><dd>{formatByteSize(asset.byteSize)}</dd></div>
+              </dl>
+            ) : null}
+          </Panel>
+          {canManage ? <Panel labelledBy="campaign-image-usage-heading">
+            <div class="campaign-heading">
+              <p class="campaign-kicker">References</p>
+              <h2 id="campaign-image-usage-heading" class="panel-heading">Usage</h2>
+            </div>
+            {asset.usages.length > 0 ? (
+              <div class="campaign-source-list">
+                {asset.usages.map((usage) => (
+                  <article class="campaign-source-item">
+                    <p class="campaign-kicker">{usage.type}</p>
+                    <h3><a href={usage.href}>{usage.label}</a></h3>
+                  </article>
+                ))}
+              </div>
+            ) : <p class="campaign-empty-state">This image is not linked from wiki pages, NPCs, or factions yet.</p>}
+          </Panel> : null}
+        </main>
+      </div>
+    </Layout>
+  );
+};
+
+function CampaignImageCard({ asset, campaign }: { asset: CampaignImageLibraryItem; campaign: CampaignSummary }) {
+  return (
+    <figure>
+      <a href={`/campaigns/${campaign.slug}/images/${asset.id}`}>
+        <img alt={asset.altText} src={`/campaigns/${campaign.slug}/assets/${asset.id}`} />
+      </a>
+      <figcaption>
+        <strong><a href={`/campaigns/${campaign.slug}/images/${asset.id}`}>{asset.title}</a></strong>
+        {asset.caption ? <span>{asset.caption}</span> : null}
+        <span>{asset.altText}</span>
+        <span class="campaign-asset-status">
+          {assetStatusLabels(asset).map((label) => <span>{label}</span>)}
+          <span>{asset.fileStatus === "available" ? "File available" : "Fallback active"}</span>
+          <span>{formatByteSize(asset.byteSize)}</span>
+          <span>{asset.usageCount} uses</span>
+        </span>
+      </figcaption>
+    </figure>
+  );
+}
+
+function ImageUploadForm({ campaign }: { campaign: CampaignSummary }) {
+  return (
+    <form class="campaign-session-form" action={`/campaigns/${campaign.slug}/assets`} method="post" enctype="multipart/form-data">
+      <label>Title<input name="title" required type="text" /></label>
+      <label>Alt text<input name="altText" required type="text" /></label>
+      <label>Caption<input name="caption" type="text" /></label>
+      <label>Visibility<select name="visibility"><option value="player">Player</option><option value="game_master">Game Master</option></select></label>
+      <label>Width<input name="width" min="1" type="number" /></label>
+      <label>Height<input name="height" min="1" type="number" /></label>
+      <label class="campaign-session-form-wide">Image<input accept="image/png,image/jpeg,image/webp" name="image" required type="file" /></label>
+      <button type="submit">Upload image</button>
+    </form>
+  );
+}
 
 interface NpcDetailPageProps {
   appName: string;
@@ -746,5 +903,13 @@ function assetStatusLabels(asset: CampaignImageAsset) {
   const source = asset.id.startsWith("campaign_image_asset_") ? "Uploaded" : "Seeded";
   const visibility = asset.visibility === "game_master" ? "Game Master only" : "Player visible";
 
-  return [source, visibility, dimensions, "Fallback shown if file is missing locally"];
+  return [source, visibility, dimensions];
+}
+
+function formatByteSize(byteSize: number) {
+  if (byteSize < 1024) return `${byteSize} B`;
+  const kib = byteSize / 1024;
+  if (kib < 1024) return `${kib.toFixed(1)} KiB`;
+
+  return `${(kib / 1024).toFixed(1)} MiB`;
 }

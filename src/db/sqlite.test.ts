@@ -1085,15 +1085,16 @@ describe("SQLite repositories", () => {
     expect(
       content.listImageAssetsForCampaign(campaignId, "player").map((asset) => asset.storageKey),
     ).toEqual([
-      "campaigns/rovnost-shadows/astril-map.webp",
+      "campaigns/rovnost-shadows/astril-map.png",
       "campaigns/rovnost-shadows/cover.png",
       "campaigns/rovnost-shadows/faction-sigils.png",
+      "campaigns/rovnost-shadows/magister-vallen.png",
       "campaigns/rovnost-shadows/skywright-sigil.png",
     ]);
     expect(
       content.listImageAssetsForCampaign(campaignId, "game_master").map((asset) => asset.storageKey),
     ).toEqual([
-      "campaigns/rovnost-shadows/astril-map.webp",
+      "campaigns/rovnost-shadows/astril-map.png",
       "campaigns/rovnost-shadows/cover.png",
       "campaigns/rovnost-shadows/faction-sigils.png",
       "campaigns/rovnost-shadows/magister-vallen.png",
@@ -1109,6 +1110,32 @@ describe("SQLite repositories", () => {
         .listImageAssetsForWikiPage(campaignId, "wiki_rovnost_factions", "gallery", "player")
         .map((asset) => asset.id),
     ).toEqual(["asset_rovnost_factions"]);
+    expect(
+      content.listImageAssetUsages(campaignId, "rovnost-shadows", "asset_skywright_sigil"),
+    ).toEqual([
+      {
+        href: "/campaigns/rovnost-shadows/wiki/factions-guide",
+        id: "wiki_rovnost_factions",
+        label: "Factions Guide",
+        type: "wiki",
+      },
+    ]);
+    expect(
+      content.listImageAssetUsages(campaignId, "rovnost-shadows", "asset_magister_vallen"),
+    ).toEqual([
+      {
+        href: "/campaigns/rovnost-shadows/wiki/gm-dossier",
+        id: "wiki_rovnost_gm_dossier",
+        label: "Rovnost GM Dossier",
+        type: "wiki",
+      },
+      {
+        href: "/campaigns/rovnost-shadows/npcs/magister-vallen",
+        id: "npc_magister_vallen",
+        label: "Magister Vallen",
+        type: "npc",
+      },
+    ]);
 
     expect(content.listSessionsForCampaign(campaignId, "player").map((session) => session.slug)).toEqual([
       "session-zero",
@@ -1281,7 +1308,7 @@ describe("SQLite repositories", () => {
         campaignId,
         id: privateNpc.id,
         name: "Dockside Contact",
-        portraitImageAssetId: null,
+        portraitImageAssetId: "asset_magister_vallen",
         publicSummary: "A quiet contact in the harbour district.",
         publicWikiPageId: "wiki_rovnost_factions",
         slug: "dockside-contact",
