@@ -138,4 +138,37 @@ describe("documentation references", () => {
     expect(acceptance).toContain("GM/player visibility");
     expect(acceptance).toContain("Google Docs import");
   });
+
+  test("GitHub workflow templates and docs describe the Hyper-Dank flow", async () => {
+    const readme = await Bun.file("README.md").text();
+    const contributing = await Bun.file("CONTRIBUTING.md").text();
+    const architecture = await Bun.file("ARCHITECTURE.md").text();
+    const workflowDocs = await Bun.file("docs/operations/github-workflow.md").text();
+    const prTemplate = await Bun.file(".github/PULL_REQUEST_TEMPLATE.md").text();
+    const epicTemplate = await Bun.file(".github/ISSUE_TEMPLATE/epic.yml").text();
+    const ticketTemplate = await Bun.file(".github/ISSUE_TEMPLATE/ticket.yml").text();
+    const bugTemplate = await Bun.file(".github/ISSUE_TEMPLATE/bug.yml").text();
+    const followUpTemplate = await Bun.file(".github/ISSUE_TEMPLATE/follow_up.yml").text();
+
+    expect(readme).toContain("[GitHub Workflow](./docs/operations/github-workflow.md)");
+    expect(contributing).toContain("[GitHub Workflow](./docs/operations/github-workflow.md)");
+    expect(architecture).toContain("[GitHub Workflow](./docs/operations/github-workflow.md)");
+    expect(workflowDocs).toContain("GitHub Issues");
+    expect(workflowDocs).toContain("GitHub Projects");
+    expect(workflowDocs).toContain("Status");
+    expect(workflowDocs).toContain("Backlog");
+    expect(workflowDocs).toContain("In progress");
+    expect(workflowDocs).toContain("In review");
+    expect(workflowDocs).toContain("Done");
+    expect(workflowDocs).toContain("acceptance evidence");
+    expect(prTemplate).toContain("Issue:");
+    expect(prTemplate).toContain("Project:");
+    expect(prTemplate).toContain("Base branch:");
+    expect(prTemplate).toContain("Screenshot evidence");
+    expect(prTemplate).toContain("Follow-ups");
+    expect(epicTemplate).toContain("type: epic");
+    expect(ticketTemplate).toContain("type: ticket");
+    expect(bugTemplate).toContain("type: bug");
+    expect(followUpTemplate).toContain("type: follow-up");
+  });
 });

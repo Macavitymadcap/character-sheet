@@ -1,0 +1,52 @@
+name: Bug
+description: Report a user-visible defect, regression, or broken workflow.
+title: "bug: "
+labels:
+  - "type: bug"
+body:
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact
+      description: Who is affected and what breaks?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction
+      description: List concrete steps, accounts, routes, or inputs.
+      placeholder: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behaviour
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Add logs, screenshots, failing checks, or relevant links.
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - P3
+        - P2
+        - P1
+        - P0
+    validations:
+      required: true
