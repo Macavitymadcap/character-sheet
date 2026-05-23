@@ -174,7 +174,7 @@ Public users can browse SRD rules at `/rules`, filter by type, spell level, equi
 
 ## Deployment Readiness
 
-The current app is ready for fresh local checkout, seed, verification, Railway deployment rehearsal, and table-use rehearsal with SQLite, Railway volume-backed asset storage, manual hosted account handoff, imported SRD 5.1 rules, public browser-local play, campaign-scoped private rules, richer Mira sheet data, and compact table-use surfaces. `sheet-0020` completed the SRD rules roadmap slice. `sheet-0030` completed the Railway rehearsal path; the first runtime configuration lives in [`railway.json`](./railway.json), with service setup documented in [Railway Hosted Rehearsal](./docs/deployment/railway.md) and final acceptance in [Hosted Rehearsal Acceptance](./docs/operations/hosted-rehearsal-acceptance.md). `sheet-0050` completed the campaign companion, public play, and rules-content product slice. The next planned epic is `sheet-0040` Hyper-Dank package adoption so future Game Master prep work can build on shared framework primitives instead of expanding app-local scaffolding.
+The current app is ready for fresh local checkout, seed, verification, Railway deployment rehearsal, and table-use rehearsal with SQLite, Railway volume-backed asset storage, manual hosted account handoff, imported SRD 5.1 rules, public browser-local play, campaign-scoped private rules, richer Mira sheet data, and compact table-use surfaces. `sheet-0020` completed the SRD rules roadmap slice. `sheet-0030` completed the Railway rehearsal path; the first runtime configuration lives in [`railway.json`](./railway.json), with service setup documented in [Railway Hosted Rehearsal](./docs/deployment/railway.md) and final acceptance in [Hosted Rehearsal Acceptance](./docs/operations/hosted-rehearsal-acceptance.md). `sheet-0050` completed the campaign companion, public play, and rules-content product slice. `sheet-0040` completed Hyper-Dank package adoption, so the next planned epic is `sheet-0061` for Game Master prep, private NPCs, content import, and Hyper-Dank-style GitHub issue/project workflow.
 
 ## TDD Approach
 
@@ -245,3 +245,12 @@ Development tickets should be implemented tests first wherever the boundary is t
 - [Ticket sheet-0058](./docs/tickets/sheet-0058.md)
 - [Ticket sheet-0059](./docs/tickets/sheet-0059.md)
 - [Ticket sheet-0060](./docs/tickets/sheet-0060.md)
+- [Epic sheet-0061](./docs/epics/sheet-0061.md)
+- [Ticket sheet-0062](./docs/tickets/sheet-0062.md)
+- [Ticket sheet-0063](./docs/tickets/sheet-0063.md)
+- [Ticket sheet-0064](./docs/tickets/sheet-0064.md)
+- [Ticket sheet-0065](./docs/tickets/sheet-0065.md)
+- [Ticket sheet-0066](./docs/tickets/sheet-0066.md)
+- [Ticket sheet-0067](./docs/tickets/sheet-0067.md)
+- [Ticket sheet-0068](./docs/tickets/sheet-0068.md)
+- [Ticket sheet-0069](./docs/tickets/sheet-0069.md)
