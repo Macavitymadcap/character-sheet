@@ -903,7 +903,7 @@ function assetStatusLabels(asset: CampaignImageAsset) {
   const source = asset.id.startsWith("campaign_image_asset_") ? "Uploaded" : "Seeded";
   const visibility = asset.visibility === "game_master" ? "Game Master only" : "Player visible";
 
-  return [source, visibility, dimensions, "Fallback shown if file is missing locally"];
+  return [source, visibility, dimensions];
 }
 
 function formatByteSize(byteSize: number) {

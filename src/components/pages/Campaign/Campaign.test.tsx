@@ -90,7 +90,7 @@ describe("CampaignPage", () => {
     expect(html).toContain("Player visible");
     expect(html).toContain("Game Master only");
     expect(html).toContain("1200 x 800");
-    expect(html).toContain("Fallback shown if file is missing locally");
+    expect(html).not.toContain("Fallback shown if file is missing locally");
     expect(html).toContain('href="/campaigns/rovnost-shadows/prep"');
     expect(html).toContain('href="/campaigns/rovnost-shadows/npcs"');
     expect(html).toContain('href="/campaigns/rovnost-shadows/images"');
