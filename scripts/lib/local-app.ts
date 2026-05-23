@@ -1,6 +1,6 @@
-import { setTimeout as delay } from "node:timers/promises";
 import { createServer, type IncomingMessage } from "node:http";
 import { tmpdir } from "node:os";
+export { waitForHttp } from "@macavitymadcap/hyper-dank-automation";
 import type { Hono } from "hono";
 import { createApp } from "../../src/app";
 import { AuthService, PasswordService, SessionService } from "../../src/auth";
@@ -88,19 +88,6 @@ export async function startLocalServer(
   }
 
   throw new Error(`Could not find an available local port.${formatListenError(lastError)}`);
-}
-
-export async function waitForHttp(url: string, attempts = 40, delayMs = 250) {
-  for (let attempt = 0; attempt < attempts; attempt += 1) {
-    try {
-      const response = await fetch(url);
-      if (response.ok) return;
-    } catch {}
-
-    await delay(delayMs);
-  }
-
-  throw new Error(`Timed out waiting for ${url}`);
 }
 
 export async function login(baseUrl: string, email: string, password = "password123") {

@@ -114,8 +114,8 @@ flowchart TD
 | `sheet-0042` | Adopt Hyper-Dank UI primitives for generic atoms and low-risk molecules. |
 | `sheet-0043` | Adopt Hyper-Dank transport helpers for form values, route params, HTMX detection, redirects, and fragment/page responses. |
 | `sheet-0044` | Adopt Hyper-Dank data lifecycle and migration-planning helpers where they fit SQLite without changing repositories. |
-| `sheet-0045` | Adopt Hyper-Dank automation helpers for verification, local server readiness, Pa11y, screenshots, and GitHub utilities. |
-| `sheet-0046` | Remove replaced local framework code, update imports, docs, and architecture diagrams. |
+| `sheet-0045` | Adopt Hyper-Dank automation helpers for verification, Pa11y, screenshots, and GitHub utilities. |
+| `sheet-0046` | Remove replaced local framework code, update imports, docs, and architecture diagrams, including the local server readiness helper. |
 | `sheet-0047` | Complete compatibility, screenshot, accessibility, and acceptance checks for Hyper-Dank adoption. |
 
 ## Branch Strategy

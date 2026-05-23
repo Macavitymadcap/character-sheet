@@ -7,8 +7,17 @@ import {
 } from "@macavitymadcap/hyper-dank-data";
 import { runWithProviderHarness } from "@macavitymadcap/hyper-dank-data/testing";
 import { FormValues, isHtmxRequest } from "@macavitymadcap/hyper-dank-transport";
-import { run } from "@macavitymadcap/hyper-dank-automation";
+import { run, waitForHttp } from "@macavitymadcap/hyper-dank-automation";
 import { renderMarkdown } from "@macavitymadcap/hyper-dank-automation/content";
+
+const adoptedUiWrapperPaths = [
+  "src/components/atoms/Badge/Badge.tsx",
+  "src/components/atoms/Button/Button.tsx",
+  "src/components/atoms/Panel/Panel.tsx",
+  "src/components/molecules/CompactList/CompactList.tsx",
+  "src/components/molecules/FormField/FormField.tsx",
+  "src/components/molecules/LabelledOutput/LabelledOutput.tsx",
+];
 
 describe("Hyper-Dank package compatibility", () => {
   test("imports shared UI primitives through the public package path", () => {
@@ -54,6 +63,17 @@ describe("Hyper-Dank package compatibility", () => {
 
   test("imports shared automation helpers through public package paths", () => {
     expect(typeof run).toBe("function");
+    expect(typeof waitForHttp).toBe("function");
     expect(renderMarkdown("**Campaign Ledger**")).toContain("<strong>Campaign Ledger</strong>");
+  });
+
+  test("keeps adopted UI wrappers as Campaign Ledger compatibility shims", async () => {
+    for (const path of adoptedUiWrapperPaths) {
+      const source = await Bun.file(path).text();
+
+      expect(source).toContain("@macavitymadcap/hyper-dank-ui");
+      expect(source).not.toContain("return ");
+      expect(source).not.toContain("<");
+    }
   });
 });

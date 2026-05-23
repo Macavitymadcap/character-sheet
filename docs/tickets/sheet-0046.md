@@ -35,3 +35,13 @@ docs to describe the new boundaries.
 - Remaining local code has a clear Campaign Ledger-specific reason to exist.
 - Docs describe Hyper-Dank as runtime dependencies, not only pattern references.
 - `bun run verify` passes.
+
+## Implementation Notes
+
+- `scripts/lib/local-app.ts` now re-exports Hyper-Dank's public `waitForHttp` helper instead of
+  carrying a local readiness loop, while keeping Campaign Ledger's in-memory app and HTTP server
+  harness local.
+- Adopted UI component files remain as thin re-export shims only for existing Campaign Ledger import
+  paths and CSS hooks.
+- `scripts/hyper-dank-compat.test.tsx` now guards the public automation readiness import and the
+  thin-shim boundary for adopted UI wrappers.

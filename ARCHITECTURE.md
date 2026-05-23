@@ -20,8 +20,8 @@ Railway deployment has a hosted rehearsal path from `sheet-0030` for the existin
 
 ## Core Shape
 
-The app follows the Hyper-Dank template lineage. `sheet-0040` is planned to replace matching
-app-local framework pieces with the current Hyper-Dank packages: `@macavitymadcap/hyper-dank-ui`,
+The app follows the Hyper-Dank template lineage. `sheet-0040` replaces matching app-local framework
+pieces with the current Hyper-Dank packages: `@macavitymadcap/hyper-dank-ui`,
 `@macavitymadcap/hyper-dank-data`, `@macavitymadcap/hyper-dank-transport`, and
 `@macavitymadcap/hyper-dank-automation`. Domain routes, schemas, repositories, sheet controls,
 campaign flows, and product copy stay app-owned.
@@ -40,6 +40,11 @@ Better Auth, or shared domain repositories.
 `sheet-0045` adopts Hyper-Dank automation mechanics for command execution and Pa11y target running.
 Campaign Ledger still owns its verification gate order, Pa11y route list, smoke workflow, screenshot
 targets, and the temporary screenshot directory used by routine `bun run verify`.
+
+`sheet-0046` keeps the remaining local boundary explicit: adopted generic UI components are thin
+Hyper-Dank re-export shims only when existing Campaign Ledger import paths or CSS hooks need to stay
+stable, and `scripts/lib/local-app.ts` re-exports shared automation readiness helpers while retaining
+the Campaign Ledger-specific in-memory app and HTTP server harness.
 
 The full MVP source tree is expected to grow towards this shape as tickets land:
 
