@@ -1304,6 +1304,37 @@ describe("createApp", () => {
     ).toBe(false);
   });
 
+  test("renders Game Master player preview with production visibility filtering", async () => {
+    const { app, sessionService } = createTestApp("Campaign Ledger");
+    const gmCookie = sessionService.createSession("user_game_master").cookie;
+    const playerCookie = sessionService.createSession("user_lynott_player").cookie;
+
+    const preview = await app.request("/campaigns/rovnost-shadows/preview/player", {
+      headers: { cookie: gmCookie },
+    });
+    const previewHtml = await preview.text();
+    const playerPreview = await app.request("/campaigns/rovnost-shadows/preview/player", {
+      headers: { cookie: playerCookie },
+    });
+
+    expect(preview.status).toBe(200);
+    expect(previewHtml).toContain("<title>Player preview - Rovnost Shadows - Campaign Ledger</title>");
+    expect(previewHtml).toContain("Previewing as Lynott Player");
+    expect(previewHtml).toContain("Visibility audit");
+    expect(previewHtml).toContain("Visible to Lynott Player");
+    expect(previewHtml).toContain("Magister Vallen");
+    expect(previewHtml).toContain("Selected players");
+    expect(previewHtml).toContain("Factions Guide");
+    expect(previewHtml).toContain("The Skywrights");
+    expect(previewHtml).toContain("Review lines, veils, table logistics");
+    expect(previewHtml).toContain("Player notes");
+    expect(previewHtml).toContain("Keep the false identities ready");
+    expect(previewHtml).not.toContain("Game Master reference.");
+    expect(previewHtml).not.toContain("Keep Vallen private until the table has enough leverage.");
+    expect(previewHtml).not.toContain("Disabled Skybridge Rumour");
+    expect(playerPreview.status).toBe(403);
+  });
+
   test("lets players and Game Masters update character faction choices", async () => {
     const { app, sessionService } = createTestApp("Campaign Ledger");
     const playerCookie = sessionService.createSession("user_lynott_player").cookie;

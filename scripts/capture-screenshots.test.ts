@@ -288,6 +288,20 @@ describe("sheet screenshot targets", () => {
         theme: "dark",
       },
       {
+        fileName: "gm-player-preview-light.png",
+        label: "Game Master player preview light",
+        path: "/campaigns/rovnost-shadows/preview/player",
+        role: "game_master",
+        theme: "light",
+      },
+      {
+        fileName: "gm-player-preview-dark.png",
+        label: "Game Master player preview dark",
+        path: "/campaigns/rovnost-shadows/preview/player",
+        role: "game_master",
+        theme: "dark",
+      },
+      {
         fileName: "gm-npc-list-light.png",
         label: "Game Master NPC list light",
         path: "/campaigns/rovnost-shadows/npcs",

@@ -18,7 +18,14 @@ import {
 import { isCampaignWikiPageType, normaliseGoogleDocsMarkdown } from "./campaigns/wiki";
 import { isRestType, planRestResourceUpdates } from "./characters/rests";
 import { AdminPage } from "./components/pages/Admin";
-import { CampaignPage, CampaignPrepPage, CampaignWikiDetailPage, NpcDetailPage, NpcListPage } from "./components/pages/Campaign";
+import {
+  CampaignPage,
+  CampaignPlayerPreviewPage,
+  CampaignPrepPage,
+  CampaignWikiDetailPage,
+  NpcDetailPage,
+  NpcListPage,
+} from "./components/pages/Campaign";
 import { CharactersPage } from "./components/pages/Characters";
 import { HomePage } from "./components/pages/Home";
 import { InviteAcceptPage } from "./components/pages/InviteAccept";
@@ -318,6 +325,100 @@ export const createApp = (dependencies: AppDependencies) => {
         npcCount={npcs.length}
         privateNpcCount={npcs.filter((npc) => npc.visibility === "private").length}
         user={session.user}
+      />,
+    );
+  });
+
+  app.get("/campaigns/:campaignSlug/preview/player", (context) => {
+    const session = readSession(context.req.header("cookie"));
+    if (!session) return context.redirect("/login", 303);
+
+    const campaign = dependencies.campaignRepository.getCampaignBySlug(
+      routeParam(context, "campaignSlug"),
+    );
+    if (!campaign) return context.text("Not found", 404);
+
+    const guard = requireCampaignAccess({
+      campaignId: campaign.id,
+      campaignRepository: dependencies.campaignRepository,
+      permission: "manage",
+      session,
+    });
+    const guarded = guardResponse(context, guard);
+    if (guarded) return guarded;
+
+    const members = membersWithDisplayNames(dependencies, campaign.id);
+    const characters = dependencies.characterRepository.listCharactersForCampaign(campaign.id);
+    const previewPlayer = members.find((member) =>
+      member.role === "player" && characters.some((character) => character.ownerUserId === member.userId)
+    ) ?? members.find((member) => member.role === "player");
+    const playerWikiPages = dependencies.campaignContentRepository.listWikiPagesForCampaign(campaign.id, "player");
+    const allWikiPages = dependencies.campaignContentRepository.listWikiPagesForCampaign(campaign.id, "game_master");
+    const playerSessions = dependencies.campaignContentRepository.listSessionsForCampaign(campaign.id, "player");
+    const allSessions = dependencies.campaignContentRepository.listSessionsForCampaign(campaign.id, "game_master");
+    const playerImageAssets = dependencies.campaignContentRepository.listImageAssetsForCampaign(campaign.id, "player");
+    const allImageAssets = dependencies.campaignContentRepository.listImageAssetsForCampaign(campaign.id, "game_master");
+    const playerNpcs = dependencies.campaignContentRepository.listNpcSummariesForCampaign(
+      campaign.id,
+      "player",
+      previewPlayer?.userId,
+    );
+    const allNpcs = dependencies.campaignContentRepository.listNpcDossiersForCampaign(campaign.id, "game_master");
+    const notesByCharacter = characters
+      .map((character) => ({
+        character,
+        notes: dependencies.notesRepository.listNotesForCharacter(character.id, "player"),
+      }))
+      .filter(({ notes }) => notes.length > 0);
+    const allNoteCount = characters.reduce(
+      (count, character) => count + dependencies.notesRepository.listNotesForCharacter(character.id, "game_master").length,
+      0,
+    );
+    const playerNoteCount = notesByCharacter.reduce((count, item) => count + item.notes.length, 0);
+
+    return context.html(
+      <CampaignPlayerPreviewPage
+        appName={dependencies.appName}
+        auditItems={[
+          {
+            hidden: allWikiPages.length - playerWikiPages.length,
+            href: `/campaigns/${campaign.slug}#campaign-wiki-heading`,
+            label: "Wiki pages",
+            visible: playerWikiPages.length,
+          },
+          {
+            hidden: allSessions.length - playerSessions.length,
+            href: `/campaigns/${campaign.slug}#campaign-sessions-heading`,
+            label: "Sessions",
+            visible: playerSessions.length,
+          },
+          {
+            hidden: allNpcs.length - playerNpcs.length,
+            href: `/campaigns/${campaign.slug}/npcs`,
+            label: "NPCs",
+            visible: playerNpcs.length,
+          },
+          {
+            hidden: allImageAssets.length - playerImageAssets.length,
+            href: `/campaigns/${campaign.slug}#campaign-assets-heading`,
+            label: "Images",
+            visible: playerImageAssets.length,
+          },
+          {
+            hidden: allNoteCount - playerNoteCount,
+            href: `/campaigns/${campaign.slug}/characters`,
+            label: "Character notes",
+            visible: playerNoteCount,
+          },
+        ]}
+        campaign={campaign}
+        imageAssets={playerImageAssets}
+        notesByCharacter={notesByCharacter}
+        npcs={playerNpcs}
+        previewDisplayName={previewPlayer?.displayName ?? null}
+        sessions={playerSessions}
+        user={session.user}
+        wikiPages={playerWikiPages}
       />,
     );
   });
