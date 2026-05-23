@@ -15,11 +15,15 @@ import type {
   AuthUser,
   AuthUserWithPassword,
   CampaignMemberRole,
+  CampaignContentImport,
   CampaignContentRepository,
   CampaignContentVisibility,
   CampaignFaction,
   CampaignImageAsset,
   CampaignImageAssetUsage,
+  CampaignImportProvider,
+  CampaignImportSourceFormat,
+  CampaignImportTargetType,
   CampaignMember,
   CampaignNpcDossier,
   CampaignNpcSummary,
@@ -284,6 +288,23 @@ interface CampaignSessionRecordRow {
   slug: string;
   summary: string;
   title: string;
+  updated_at: string;
+  visibility: CampaignContentVisibility;
+}
+
+interface CampaignContentImportRow {
+  campaign_id: string;
+  conversion_notes: string;
+  converted_markdown: string;
+  created_at: string;
+  id: string;
+  imported_by_user_id: string;
+  provider: CampaignImportProvider;
+  source_format: CampaignImportSourceFormat;
+  source_reference: string | null;
+  source_title: string;
+  target_record_id: string | null;
+  target_type: CampaignImportTargetType;
   updated_at: string;
   visibility: CampaignContentVisibility;
 }
@@ -1719,6 +1740,70 @@ class SqliteNotesRepository implements NotesRepository {
 class SqliteCampaignContentRepository implements CampaignContentRepository {
   constructor(private readonly database: Database) {}
 
+  createContentImport(input: {
+    campaignId: string;
+    conversionNotes: string;
+    convertedMarkdown: string;
+    importedByUserId: string;
+    provider: CampaignImportProvider;
+    sourceFormat: CampaignImportSourceFormat;
+    sourceReference: string | null;
+    sourceTitle: string;
+    targetRecordId: string | null;
+    targetType: CampaignImportTargetType;
+    visibility: CampaignContentVisibility;
+  }): CampaignContentImport {
+    const id = `campaign_import_${randomUUID()}`;
+    this.database
+      .query<never, [
+        string,
+        string,
+        CampaignImportProvider,
+        CampaignImportSourceFormat,
+        string,
+        string | null,
+        string,
+        CampaignImportTargetType,
+        string | null,
+        CampaignContentVisibility,
+        string,
+        string,
+      ]>(
+        `insert into campaign_content_imports (
+          id, campaign_id, provider, source_format, source_title, source_reference,
+          imported_by_user_id, target_type, target_record_id, visibility,
+          converted_markdown, conversion_notes
+        ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .run(
+        id,
+        input.campaignId,
+        input.provider,
+        input.sourceFormat,
+        input.sourceTitle,
+        input.sourceReference,
+        input.importedByUserId,
+        input.targetType,
+        input.targetRecordId,
+        input.visibility,
+        input.convertedMarkdown,
+        input.conversionNotes,
+      );
+
+    const row = this.database
+      .query<CampaignContentImportRow, [string, string]>(
+        `select id, campaign_id, provider, source_format, source_title, source_reference,
+          imported_by_user_id, target_type, target_record_id, visibility, converted_markdown,
+          conversion_notes, created_at, updated_at
+         from campaign_content_imports
+         where campaign_id = ? and id = ?`,
+      )
+      .get(input.campaignId, id);
+    if (!row) throw new Error(`Created campaign import ${id} could not be read.`);
+
+    return toCampaignContentImport(row);
+  }
+
   createNpcDossier(input: {
     campaignId: string;
     gmNotes: string;
@@ -2437,6 +2522,20 @@ class SqliteCampaignContentRepository implements CampaignContentRepository {
       .map(toCampaignFaction);
   }
 
+  listContentImportsForCampaign(campaignId: string): CampaignContentImport[] {
+    return this.database
+      .query<CampaignContentImportRow, [string]>(
+        `select id, campaign_id, provider, source_format, source_title, source_reference,
+          imported_by_user_id, target_type, target_record_id, visibility, converted_markdown,
+          conversion_notes, created_at, updated_at
+         from campaign_content_imports
+         where campaign_id = ?
+         order by created_at desc, id desc`,
+      )
+      .all(campaignId)
+      .map(toCampaignContentImport);
+  }
+
   getCharacterFactionChoice(characterId: string): CharacterFactionChoice | null {
     const row = this.database
       .query<CharacterFactionChoiceRow, [string]>(
@@ -3005,6 +3104,25 @@ function toCampaignSessionRecord(row: CampaignSessionRecordRow): CampaignSession
     slug: row.slug,
     summary: row.summary,
     title: row.title,
+    updatedAt: row.updated_at,
+    visibility: row.visibility,
+  };
+}
+
+function toCampaignContentImport(row: CampaignContentImportRow): CampaignContentImport {
+  return {
+    campaignId: row.campaign_id,
+    conversionNotes: row.conversion_notes,
+    convertedMarkdown: row.converted_markdown,
+    createdAt: row.created_at,
+    id: row.id,
+    importedByUserId: row.imported_by_user_id,
+    provider: row.provider,
+    sourceFormat: row.source_format,
+    sourceReference: row.source_reference,
+    sourceTitle: row.source_title,
+    targetRecordId: row.target_record_id,
+    targetType: row.target_type,
     updatedAt: row.updated_at,
     visibility: row.visibility,
   };

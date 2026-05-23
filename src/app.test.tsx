@@ -1544,6 +1544,62 @@ describe("createApp", () => {
     expect(gmAsset.headers.get("content-type")).toContain("image/png");
   });
 
+  test("lets Game Masters preview and save staged campaign imports", async () => {
+    const { app, sessionService } = createTestApp("Campaign Ledger");
+    const gmCookie = sessionService.createSession("user_game_master").cookie;
+    const playerCookie = sessionService.createSession("user_lynott_player").cookie;
+
+    const form = new URLSearchParams({
+      content: "<h1>Canal Clue</h1><p>See https://docs.google.com/document/d/secret/edit</p><p>The tide bell rings.</p>",
+      sourceFormat: "html",
+      sourceReference: "GM notebook export",
+      sourceTitle: "Canal Clue Export",
+      targetType: "wiki",
+      visibility: "player",
+    });
+    const preview = await app.request("/campaigns/rovnost-shadows/imports/preview", {
+      body: form,
+      headers: formHeaders(gmCookie),
+      method: "POST",
+    });
+    const previewHtml = await preview.text();
+    const save = await app.request("/campaigns/rovnost-shadows/imports/save", {
+      body: new URLSearchParams({
+        conversionNotes: "Private Google Drive or Docs links were removed from the converted content.",
+        convertedMarkdown: "# Canal Clue\n\nSee [private source link removed]\n\nThe tide bell rings.",
+        provider: "manual",
+        sourceFormat: "html",
+        sourceReference: "GM notebook export",
+        sourceTitle: "Canal Clue Export",
+        targetType: "wiki",
+        title: "Canal Clue",
+        visibility: "player",
+      }),
+      headers: formHeaders(gmCookie),
+      method: "POST",
+    });
+    const page = await app.request("/campaigns/rovnost-shadows/wiki/canal-clue", {
+      headers: { cookie: playerCookie },
+    });
+    const pageHtml = await page.text();
+    const imports = await app.request("/campaigns/rovnost-shadows/imports", {
+      headers: { cookie: gmCookie },
+    });
+    const importsHtml = await imports.text();
+
+    expect(preview.status).toBe(200);
+    expect(previewHtml).toContain("Private Google Drive or Docs links were removed");
+    expect(previewHtml).not.toContain("docs.google.com");
+    expect(save.status).toBe(303);
+    expect(save.headers.get("location")).toBe("/campaigns/rovnost-shadows");
+    expect(page.status).toBe(200);
+    expect(pageHtml).toContain("The tide bell rings.");
+    expect(pageHtml).not.toContain("docs.google.com");
+    expect(imports.status).toBe(200);
+    expect(importsHtml).toContain("Canal Clue Export");
+    expect(importsHtml).toContain("Saved to campaign content.");
+  });
+
   test("serves a readable fallback for missing seeded campaign asset files", async () => {
     const { app, sessionService } = createTestApp("Campaign Ledger");
     const playerCookie = sessionService.createSession("user_lynott_player").cookie;

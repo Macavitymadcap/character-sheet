@@ -154,6 +154,23 @@ CREATE TABLE IF NOT EXISTS campaign_npc_player_access (
   PRIMARY KEY (npc_id, user_id)
 );
 
+CREATE TABLE IF NOT EXISTS campaign_content_imports (
+  id TEXT PRIMARY KEY,
+  campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+  provider TEXT NOT NULL CHECK (provider IN ('manual', 'google_docs_manual')),
+  source_format TEXT NOT NULL CHECK (source_format IN ('markdown', 'html')),
+  source_title TEXT NOT NULL,
+  source_reference TEXT,
+  imported_by_user_id TEXT NOT NULL REFERENCES users(id),
+  target_type TEXT NOT NULL CHECK (target_type IN ('wiki', 'session', 'npc', 'draft')),
+  target_record_id TEXT,
+  visibility TEXT NOT NULL DEFAULT 'game_master' CHECK (visibility IN ('player', 'game_master')),
+  converted_markdown TEXT NOT NULL,
+  conversion_notes TEXT NOT NULL DEFAULT '',
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS campaign_factions (
   id TEXT PRIMARY KEY,
   campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
@@ -384,6 +401,22 @@ const migrationStatements = [
     user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (npc_id, user_id)
+  )`,
+  `CREATE TABLE IF NOT EXISTS campaign_content_imports (
+    id TEXT PRIMARY KEY,
+    campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+    provider TEXT NOT NULL CHECK (provider IN ('manual', 'google_docs_manual')),
+    source_format TEXT NOT NULL CHECK (source_format IN ('markdown', 'html')),
+    source_title TEXT NOT NULL,
+    source_reference TEXT,
+    imported_by_user_id TEXT NOT NULL REFERENCES users(id),
+    target_type TEXT NOT NULL CHECK (target_type IN ('wiki', 'session', 'npc', 'draft')),
+    target_record_id TEXT,
+    visibility TEXT NOT NULL DEFAULT 'game_master' CHECK (visibility IN ('player', 'game_master')),
+    converted_markdown TEXT NOT NULL,
+    conversion_notes TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   )`,
 ];
 

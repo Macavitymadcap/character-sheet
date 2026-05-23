@@ -443,6 +443,20 @@ export const campaignStyles = /* css */ `
   overflow-wrap: anywhere;
 }
 
+.campaign-import-warning-list {
+  background: color-mix(in srgb, var(--warning-colour) 12%, var(--stat-background-colour));
+  border: 1px solid color-mix(in srgb, var(--warning-colour) 45%, var(--border-colour));
+  border-radius: 0.4rem;
+  color: var(--heading-colour);
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.75rem;
+}
+
+.campaign-import-warning-list p {
+  margin: 0;
+}
+
 .campaign-tag-list {
   display: flex;
   flex-wrap: wrap;
