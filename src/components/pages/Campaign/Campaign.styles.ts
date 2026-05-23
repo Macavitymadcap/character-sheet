@@ -29,6 +29,12 @@ export const campaignStyles = /* css */ `
   margin: 0;
 }
 
+.campaign-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
 .campaign-summary-list div {
   background: var(--stat-background-colour);
   border: 1px solid var(--border-colour);
@@ -117,6 +123,134 @@ export const campaignStyles = /* css */ `
 .campaign-source-list {
   display: grid;
   gap: 0.75rem;
+}
+
+.campaign-prep-grid,
+.campaign-npc-grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+}
+
+.campaign-prep-link,
+.campaign-npc-card {
+  border: 1px solid var(--border-colour);
+  border-radius: 0.5rem;
+  color: var(--heading-colour);
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  text-decoration: none;
+}
+
+.campaign-prep-link strong {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.campaign-prep-link small,
+.campaign-npc-card p {
+  color: var(--muted-text-colour);
+  font-weight: 750;
+}
+
+.campaign-npc-card h2 {
+  font-size: 1rem;
+  margin: 0;
+}
+
+.campaign-npc-card a {
+  color: var(--heading-colour);
+}
+
+.campaign-npc-card p,
+.campaign-npc-summary {
+  margin: 0;
+}
+
+.campaign-help-text {
+  color: var(--muted-text-colour);
+  font-weight: 750;
+  margin: 0;
+}
+
+.campaign-help-text a {
+  color: var(--heading-colour);
+}
+
+.campaign-checkbox-list {
+  border: 1px solid var(--border-colour);
+  border-radius: 0.4rem;
+  display: grid;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0.65rem;
+}
+
+.campaign-checkbox-list legend {
+  color: var(--muted-text-colour);
+  font-size: 0.82rem;
+  font-weight: 850;
+  padding-inline: 0.25rem;
+}
+
+.campaign-checkbox-list label {
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  font-size: 0.92rem;
+  gap: 0.45rem;
+}
+
+.campaign-checkbox-list input {
+  inline-size: auto;
+  min-height: auto;
+}
+
+.campaign-npc-portrait-frame {
+  border: 1px solid var(--border-colour);
+  border-radius: 0.4rem;
+  margin: 0;
+  overflow: hidden;
+  width: min(100%, 24rem);
+}
+
+.campaign-npc-portrait {
+  aspect-ratio: 16 / 9;
+  display: block;
+  object-fit: cover;
+  width: 100%;
+}
+
+.campaign-npc-portrait-frame figcaption {
+  background: var(--stat-background-colour);
+  color: var(--muted-text-colour);
+  font-size: 0.8rem;
+  font-weight: 850;
+  padding: 0.5rem 0.75rem;
+}
+
+.campaign-npc-dossier {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+}
+
+.campaign-npc-dossier div {
+  border-block-start: 1px solid var(--border-colour);
+  display: grid;
+  gap: 0.25rem;
+  padding-block-start: 0.75rem;
+}
+
+.campaign-npc-dossier dt {
+  color: var(--muted-text-colour);
+  font-size: 0.8rem;
+  font-weight: 850;
+}
+
+.campaign-npc-dossier dd {
+  margin: 0;
 }
 
 .campaign-source-item {

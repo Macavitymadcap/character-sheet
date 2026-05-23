@@ -14,8 +14,12 @@ export const pa11yTargets = [
   { label: "rules", path: "/rules?type=spell&level=1", role: "public" },
   { label: "rule detail", path: "/rules/spell/bless", role: "public" },
   { label: "wiki", path: "/campaigns/rovnost-shadows/wiki/factions-guide", role: "player" },
+  { label: "player npcs", path: "/campaigns/rovnost-shadows/npcs", role: "player" },
   { label: "logout", path: "/logout", role: "player" },
   { label: "campaign", path: "/campaigns/rovnost-shadows", role: "game_master" },
+  { label: "gm prep", path: "/campaigns/rovnost-shadows/prep", role: "game_master" },
+  { label: "gm npcs", path: "/campaigns/rovnost-shadows/npcs", role: "game_master" },
+  { label: "gm npc detail", path: "/campaigns/rovnost-shadows/npcs/magister-vallen", role: "game_master" },
   { label: "gm roster", path: "/campaigns/rovnost-shadows/characters", role: "game_master" },
   { label: "admin", path: "/admin", role: "admin" },
 ] as const;

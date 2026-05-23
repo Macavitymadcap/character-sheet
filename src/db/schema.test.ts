@@ -29,6 +29,7 @@ describe("bootstrapDatabase", () => {
       "campaign_factions",
       "campaign_image_assets",
       "campaign_members",
+      "campaign_npc_player_access",
       "campaign_npcs",
       "campaign_rules_sources",
       "campaign_sessions",
@@ -282,7 +283,7 @@ describe("bootstrapDatabase", () => {
             "campaign_1",
             id.replaceAll("_", "-"),
             id,
-            "player",
+            "private",
             "Wrong campaign link.",
             portraitId,
             wikiId,
@@ -444,7 +445,7 @@ describe("bootstrapDatabase", () => {
           "campaign_1",
           "contact",
           "Contact",
-          "game_master",
+          "private",
           "Helpful contact.",
           "Private notes.",
           "Secret.",
@@ -461,13 +462,13 @@ describe("bootstrapDatabase", () => {
     expect(() =>
       database.run(
         "insert into campaign_npcs (id, campaign_id, slug, name, visibility, public_summary) values (?, ?, ?, ?, ?, ?)",
-        ["npc_duplicate", "campaign_1", "contact", "Duplicate", "game_master", "Duplicate."],
+        ["npc_duplicate", "campaign_1", "contact", "Duplicate", "private", "Duplicate."],
       ),
     ).toThrow();
     expect(() =>
       database.run(
         "insert into campaign_npcs (id, campaign_id, slug, name, visibility, public_summary) values (?, ?, ?, ?, ?, ?)",
-        ["npc_bad_visibility", "campaign_1", "bad", "Bad", "public", "Bad."],
+        ["npc_bad_visibility", "campaign_1", "bad", "Bad", "player", "Bad."],
       ),
     ).toThrow();
   });

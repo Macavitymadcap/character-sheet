@@ -1176,6 +1176,134 @@ describe("createApp", () => {
     ).toBe(false);
   });
 
+  test("lets Game Masters manage private NPC dossiers and reveal player-safe summaries", async () => {
+    const { app, sessionService } = createTestApp("Campaign Ledger");
+    const gmCookie = sessionService.createSession("user_game_master").cookie;
+    const playerCookie = sessionService.createSession("user_lynott_player").cookie;
+    const outsider = runtime?.repositories.authRepository.createUser({
+      capabilities: [],
+      campaignRoles: [],
+      displayName: "Campaign Outsider",
+      email: "npc-outsider@example.local",
+      id: "user_npc_outsider",
+      passwordHash: "unused",
+      role: "player",
+      status: "active",
+    });
+    expect(outsider).toBeDefined();
+    const outsiderCookie = sessionService.createSession("user_npc_outsider").cookie;
+
+    const prep = await app.request("/campaigns/rovnost-shadows/prep", {
+      headers: { cookie: gmCookie },
+    });
+    const prepHtml = await prep.text();
+    const playerPrep = await app.request("/campaigns/rovnost-shadows/prep", {
+      headers: { cookie: playerCookie },
+    });
+    const playerEmptyNpcList = await app.request("/campaigns/rovnost-shadows/npcs", {
+      headers: { cookie: playerCookie },
+    });
+    const outsiderNpcList = await app.request("/campaigns/rovnost-shadows/npcs", {
+      headers: { cookie: outsiderCookie },
+    });
+    const created = await app.request("/campaigns/rovnost-shadows/npcs", {
+      body: new URLSearchParams({
+        gmNotes: "Only the Game Master should see this.",
+        hooks: "Offers a risky canal favour.",
+        motivations: "Protects the dock unions.",
+        name: "Canal Broker",
+        portraitImageAssetId: "asset_magister_vallen",
+        publicSummary: "A broker with friends near the canal gates.",
+        publicWikiPageId: "wiki_rovnost_factions",
+        revealNotes: "Reveal after the warehouse scene.",
+        rulesEntityId: "",
+        sceneNotes: "Use during the chase.",
+        secrets: "Working for the Tidebound.",
+        visibility: "private",
+      }),
+      headers: formHeaders(gmCookie),
+      method: "POST",
+    });
+    const createdNpc = runtime?.repositories.campaignContentRepository
+      .listNpcDossiersForCampaign("campaign_rovnost_shadows", "game_master")
+      .find((npc) => npc.name === "Canal Broker");
+    expect(createdNpc).toBeDefined();
+
+    const detail = await app.request("/campaigns/rovnost-shadows/npcs/canal-broker", {
+      headers: { cookie: gmCookie },
+    });
+    const detailHtml = await detail.text();
+    const playerHiddenDetail = await app.request("/campaigns/rovnost-shadows/npcs/canal-broker", {
+      headers: { cookie: playerCookie },
+    });
+    const updated = await app.request(`/campaigns/rovnost-shadows/npcs/${createdNpc?.id}`, {
+      body: new URLSearchParams({
+        gmNotes: "Updated Game Master-only prep.",
+        hooks: "Trades safe passage for a secret.",
+        motivations: "Needs leverage.",
+        name: "Canal Broker",
+        portraitImageAssetId: "",
+        publicSummary: "A broker with leverage in the canal districts.",
+        publicWikiPageId: "wiki_rovnost_factions",
+        revealNotes: "Now safe to reveal.",
+        rulesEntityId: "",
+        sceneNotes: "Use at the lock gate.",
+        secrets: "Still connected to Tidebound.",
+        selectedPlayerIds: "user_lynott_player",
+        visibility: "selected",
+      }),
+      headers: formHeaders(gmCookie),
+      method: "POST",
+    });
+    const selectedVisibleToLynott = runtime?.repositories.campaignContentRepository
+      .listNpcSummariesForCampaign("campaign_rovnost_shadows", "player", "user_lynott_player")
+      .some((npc) => npc.id === createdNpc?.id);
+    const selectedHiddenFromMira = runtime?.repositories.campaignContentRepository
+      .listNpcSummariesForCampaign("campaign_rovnost_shadows", "player", "user_mira_player")
+      .some((npc) => npc.id === createdNpc?.id);
+    const revealed = await app.request(`/campaigns/rovnost-shadows/npcs/${createdNpc?.id}/reveal`, {
+      body: new URLSearchParams({ visibility: "public" }),
+      headers: formHeaders(gmCookie),
+      method: "POST",
+    });
+    const playerVisibleDetail = await app.request("/campaigns/rovnost-shadows/npcs/canal-broker", {
+      headers: { cookie: playerCookie },
+    });
+    const playerVisibleHtml = await playerVisibleDetail.text();
+    const hiddenAgain = await app.request(`/campaigns/rovnost-shadows/npcs/${createdNpc?.id}/reveal`, {
+      body: new URLSearchParams({ visibility: "private" }),
+      headers: formHeaders(gmCookie),
+      method: "POST",
+    });
+
+    expect(prep.status).toBe(200);
+    expect(prepHtml).toContain("Prep workspace");
+    expect(prepHtml).toContain('href="/campaigns/rovnost-shadows/npcs"');
+    expect(playerPrep.status).toBe(403);
+    expect(playerEmptyNpcList.status).toBe(200);
+    expect(outsiderNpcList.status).toBe(403);
+    expect(created.status).toBe(303);
+    expect(created.headers.get("location")).toBe("/campaigns/rovnost-shadows/npcs/canal-broker");
+    expect(detail.status).toBe(200);
+    expect(detailHtml).toContain("Only the Game Master should see this.");
+    expect(detailHtml).toContain("Make public");
+    expect(playerHiddenDetail.status).toBe(404);
+    expect(updated.status).toBe(303);
+    expect(selectedVisibleToLynott).toBe(true);
+    expect(selectedHiddenFromMira).toBe(false);
+    expect(revealed.status).toBe(303);
+    expect(playerVisibleDetail.status).toBe(200);
+    expect(playerVisibleHtml).toContain("A broker with leverage in the canal districts.");
+    expect(playerVisibleHtml).not.toContain("Updated Game Master-only prep.");
+    expect(playerVisibleHtml).not.toContain("Still connected to Tidebound.");
+    expect(hiddenAgain.status).toBe(303);
+    expect(
+      runtime?.repositories.campaignContentRepository
+        .listNpcSummariesForCampaign("campaign_rovnost_shadows", "player", "user_lynott_player")
+        .some((npc) => npc.id === createdNpc?.id),
+    ).toBe(false);
+  });
+
   test("lets players and Game Masters update character faction choices", async () => {
     const { app, sessionService } = createTestApp("Campaign Ledger");
     const playerCookie = sessionService.createSession("user_lynott_player").cookie;

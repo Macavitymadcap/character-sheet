@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { CampaignPage } from "./Campaign";
+import { CampaignPage, NpcDetailPage, NpcListPage } from "./Campaign";
 
 const render = (node: unknown): string => String(node);
 
@@ -91,5 +91,106 @@ describe("CampaignPage", () => {
     expect(html).toContain("Game Master only");
     expect(html).toContain("1200 x 800");
     expect(html).toContain("Fallback shown if file is missing locally");
+    expect(html).toContain('href="/campaigns/rovnost-shadows/prep"');
+    expect(html).toContain('href="/campaigns/rovnost-shadows/npcs"');
+  });
+
+  test("renders NPC workspace list and private detail states", () => {
+    const campaign = {
+      gmUserId: "user_game_master",
+      id: "campaign_rovnost_shadows",
+      name: "Rovnost Shadows",
+      slug: "rovnost-shadows",
+    };
+    const user = { displayName: "Game Master", role: "game_master" as const };
+    const npc = {
+      campaignId: "campaign_rovnost_shadows",
+      gmNotes: "Private motive.",
+      hooks: "Needs a discreet courier.",
+      id: "npc_1",
+      motivations: "Keep the docks independent.",
+      name: "Canal Broker",
+      portraitImageAssetId: "asset_canal_broker",
+      publicSummary: "A broker with friends near the canal gates.",
+      publicWikiPageId: "wiki_rovnost_factions",
+      revealNotes: "Reveal after the warehouse scene.",
+      rulesEntityId: null,
+      sceneNotes: "Use at the lock gate.",
+      secrets: "Works for Tidebound.",
+      selectedPlayerIds: ["user_lynott_player"],
+      slug: "canal-broker",
+      visibility: "selected" as const,
+    };
+    const list = render(
+      <NpcListPage
+        appName="Campaign Ledger"
+        campaign={campaign}
+        imageAssets={[{
+          altText: "Canal Broker portrait",
+          byteSize: 1234,
+          campaignId: "campaign_rovnost_shadows",
+          caption: "Private prep portrait.",
+          height: 768,
+          id: "asset_canal_broker",
+          mimeType: "image/png",
+          storageKey: "campaigns/rovnost-shadows/canal-broker.png",
+          title: "Canal Broker portrait",
+          visibility: "game_master",
+          width: 768,
+        }]}
+        npcs={[npc]}
+        playerMembers={[{
+          campaignId: "campaign_rovnost_shadows",
+          displayName: "Lynott Player",
+          role: "player",
+          userId: "user_lynott_player",
+        }]}
+        rules={[]}
+        user={user}
+        viewerRole="game_master"
+        wikiPages={[]}
+      />,
+    );
+    const detail = render(
+      <NpcDetailPage
+        appName="Campaign Ledger"
+        campaign={campaign}
+        imageAssets={[{
+          altText: "Canal Broker portrait",
+          byteSize: 1234,
+          campaignId: "campaign_rovnost_shadows",
+          caption: "Private prep portrait.",
+          height: 768,
+          id: "asset_canal_broker",
+          mimeType: "image/png",
+          storageKey: "campaigns/rovnost-shadows/canal-broker.png",
+          title: "Canal Broker portrait",
+          visibility: "game_master",
+          width: 768,
+        }]}
+        npc={npc}
+        playerMembers={[{
+          campaignId: "campaign_rovnost_shadows",
+          displayName: "Lynott Player",
+          role: "player",
+          userId: "user_lynott_player",
+        }]}
+        rules={[]}
+        user={user}
+        viewerRole="game_master"
+        wikiPages={[]}
+      />,
+    );
+
+    expect(list).toContain("<title>NPCs - Rovnost Shadows - Campaign Ledger</title>");
+    expect(list).toContain('action="/campaigns/rovnost-shadows/npcs"');
+    expect(list).toContain('href="/campaigns/rovnost-shadows/npcs/canal-broker"');
+    expect(list).toContain("Selected players");
+    expect(detail).toContain("Private motive.");
+    expect(detail).toContain("Portrait: Canal Broker portrait");
+    expect(detail).toContain("Works for Tidebound.");
+    expect(detail).toContain("Make public");
+    expect(detail).toContain("Lynott Player");
+    expect(detail).toContain('action="/campaigns/rovnost-shadows/npcs/npc_1"');
   });
 });

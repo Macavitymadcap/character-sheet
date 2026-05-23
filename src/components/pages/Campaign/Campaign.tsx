@@ -1,5 +1,16 @@
 import { renderCampaignMarkdown } from "../../../campaigns/wiki";
-import type { AuthUser, CampaignImageAsset, CampaignMember, CampaignSessionRecord, CampaignSummary, CampaignWikiPage, RulesSourceSummary } from "../../../db";
+import type {
+  AuthUser,
+  CampaignImageAsset,
+  CampaignMember,
+  CampaignNpcDossier,
+  CampaignNpcSummary,
+  CampaignSessionRecord,
+  CampaignSummary,
+  CampaignWikiPage,
+  RuleSummary,
+  RulesSourceSummary,
+} from "../../../db";
 import { Panel } from "../../atoms/Panel";
 import { SiteHeader } from "../../molecules/SiteHeader";
 import { Layout } from "../../templates/Layout";
@@ -43,6 +54,16 @@ export const CampaignPage = ({ appName, campaign, gameMasterDisplayName, imageAs
                 <dd>{members.length}</dd>
               </div>
             </dl>
+            {canManageCampaign ? (
+              <nav class="campaign-action-row" aria-label="Game Master campaign tools">
+                <a class="action-link action-link-secondary" href={`/campaigns/${campaign.slug}/prep`}>Prep workspace</a>
+                <a class="action-link action-link-secondary" href={`/campaigns/${campaign.slug}/npcs`}>NPCs</a>
+              </nav>
+            ) : (
+              <nav class="campaign-action-row" aria-label="Campaign tools">
+                <a class="action-link action-link-secondary" href={`/campaigns/${campaign.slug}/npcs`}>NPCs</a>
+              </nav>
+            )}
           </Panel>
           <Panel labelledBy="campaign-wiki-heading">
             <div class="campaign-heading">
@@ -227,6 +248,256 @@ export const CampaignPage = ({ appName, campaign, gameMasterDisplayName, imageAs
     </Layout>
   );
 };
+
+interface CampaignPrepPageProps {
+  appName: string;
+  campaign: CampaignSummary;
+  npcCount: number;
+  privateNpcCount: number;
+  user: Pick<AuthUser, "displayName" | "role">;
+}
+
+export const CampaignPrepPage = ({ appName, campaign, npcCount, privateNpcCount, user }: CampaignPrepPageProps) => (
+  <Layout title={`Prep - ${campaign.name} - ${appName}`}>
+    <div class="shell campaign-shell">
+      <SiteHeader appName={appName} currentSection="campaign" user={user} />
+      <main class="campaign-main" aria-labelledby="campaign-prep-heading">
+        <Panel labelledBy="campaign-prep-heading">
+          <div class="campaign-heading">
+            <p class="campaign-kicker">Game Master</p>
+            <h1 id="campaign-prep-heading" class="panel-heading">Prep workspace</h1>
+          </div>
+          <div class="campaign-prep-grid">
+            <a class="campaign-prep-link" href={`/campaigns/${campaign.slug}/npcs`}>
+              <span>NPCs</span>
+              <strong>{npcCount}</strong>
+              <small>{privateNpcCount} private</small>
+            </a>
+          </div>
+        </Panel>
+      </main>
+    </div>
+  </Layout>
+);
+
+interface NpcListPageProps {
+  appName: string;
+  campaign: CampaignSummary;
+  imageAssets: CampaignImageAsset[];
+  npcs: Array<CampaignNpcDossier | CampaignNpcSummary>;
+  playerMembers: Array<CampaignMember & { displayName: string }>;
+  rules: RuleSummary[];
+  user: Pick<AuthUser, "displayName" | "role">;
+  viewerRole: CampaignMember["role"];
+  wikiPages: CampaignWikiPage[];
+}
+
+export const NpcListPage = ({ appName, campaign, imageAssets, npcs, playerMembers, rules, user, viewerRole, wikiPages }: NpcListPageProps) => (
+  <Layout title={`NPCs - ${campaign.name} - ${appName}`}>
+    <div class="shell campaign-shell">
+      <SiteHeader appName={appName} currentSection="campaign" user={user} />
+      <main class="campaign-main" aria-labelledby="campaign-npcs-heading">
+        <Panel labelledBy="campaign-npcs-heading">
+          <div class="campaign-heading">
+            <p class="campaign-kicker">{viewerRole === "game_master" ? "Game Master" : "Campaign"}</p>
+            <h1 id="campaign-npcs-heading" class="panel-heading">NPCs</h1>
+          </div>
+          <div class="campaign-npc-grid">
+            {npcs.map((npc) => <NpcSummaryCard campaign={campaign} npc={npc} />)}
+          </div>
+          {npcs.length === 0 ? <p class="campaign-empty-state">No NPC dossiers yet.</p> : null}
+        </Panel>
+        {viewerRole === "game_master" ? <Panel labelledBy="campaign-npc-create-heading">
+          <div class="campaign-heading">
+            <p class="campaign-kicker">Private prep</p>
+            <h2 id="campaign-npc-create-heading" class="panel-heading">Add NPC</h2>
+          </div>
+          <p class="campaign-help-text"><a href={`/campaigns/${campaign.slug}#campaign-assets-heading`}>Upload or manage campaign images</a> before choosing a portrait.</p>
+          <NpcForm
+            action={`/campaigns/${campaign.slug}/npcs`}
+            imageAssets={imageAssets}
+            playerMembers={playerMembers}
+            rules={rules}
+            submitLabel="Add NPC"
+            wikiPages={wikiPages}
+          />
+        </Panel> : null}
+      </main>
+    </div>
+  </Layout>
+);
+
+interface NpcDetailPageProps {
+  appName: string;
+  campaign: CampaignSummary;
+  imageAssets: CampaignImageAsset[];
+  npc: CampaignNpcDossier | CampaignNpcSummary;
+  playerMembers: Array<CampaignMember & { displayName: string }>;
+  rules: RuleSummary[];
+  user: Pick<AuthUser, "displayName" | "role">;
+  viewerRole: CampaignMember["role"];
+  wikiPages: CampaignWikiPage[];
+}
+
+export const NpcDetailPage = ({ appName, campaign, imageAssets, npc, playerMembers, rules, user, viewerRole, wikiPages }: NpcDetailPageProps) => {
+  const canManage = viewerRole === "game_master" && isNpcDossier(npc);
+  const portrait = npc.portraitImageAssetId
+    ? imageAssets.find((asset) => asset.id === npc.portraitImageAssetId)
+    : null;
+  const profile = npc.publicWikiPageId
+    ? wikiPages.find((page) => page.id === npc.publicWikiPageId)
+    : null;
+
+  return (
+    <Layout title={`${npc.name} - ${campaign.name} - ${appName}`}>
+      <div class="shell campaign-shell">
+        <SiteHeader appName={appName} currentSection="campaign" user={user} />
+        <main class="campaign-main" aria-labelledby="campaign-npc-heading">
+          <Panel labelledBy="campaign-npc-heading">
+            <div class="campaign-heading">
+              <p class="campaign-kicker">{npcVisibilityLabel(npc.visibility)}</p>
+              <h1 id="campaign-npc-heading" class="panel-heading">{npc.name}</h1>
+            </div>
+            {portrait ? (
+              <figure class="campaign-npc-portrait-frame">
+                <img class="campaign-npc-portrait" alt={portrait.altText} src={`/campaigns/${campaign.slug}/assets/${portrait.id}`} />
+                <figcaption>Portrait: {portrait.title}</figcaption>
+              </figure>
+            ) : null}
+            <p class="campaign-npc-summary">{npc.publicSummary}</p>
+            <div class="campaign-tag-list" aria-label={`${npc.name} public references`}>
+              {profile ? <span>Profile: {profile.title}</span> : null}
+              <span>{npcVisibilityLabel(npc.visibility)}</span>
+            </div>
+          </Panel>
+          {canManage ? (
+            <Panel labelledBy="campaign-npc-private-heading">
+              <div class="campaign-heading">
+                <p class="campaign-kicker">Private prep</p>
+                <h2 id="campaign-npc-private-heading" class="panel-heading">Dossier</h2>
+              </div>
+              <dl class="campaign-npc-dossier">
+                <div><dt>Game Master notes</dt><dd>{npc.gmNotes || "None recorded."}</dd></div>
+                <div><dt>Secrets</dt><dd>{npc.secrets || "None recorded."}</dd></div>
+                <div><dt>Motivations</dt><dd>{npc.motivations || "None recorded."}</dd></div>
+                <div><dt>Hooks</dt><dd>{npc.hooks || "None recorded."}</dd></div>
+                <div><dt>Scene notes</dt><dd>{npc.sceneNotes || "None recorded."}</dd></div>
+                <div><dt>Reveal notes</dt><dd>{npc.revealNotes || "None recorded."}</dd></div>
+              </dl>
+              <form class="campaign-session-actions" action={`/campaigns/${campaign.slug}/npcs/${npc.id}/reveal`} method="post">
+                <input type="hidden" name="visibility" value={npc.visibility === "public" ? "private" : "public"} />
+                <button type="submit">{npc.visibility === "public" ? "Make private" : "Make public"}</button>
+              </form>
+            </Panel>
+          ) : null}
+          {canManage ? (
+            <Panel labelledBy="campaign-npc-edit-heading">
+              <div class="campaign-heading">
+                <p class="campaign-kicker">Edit</p>
+                <h2 id="campaign-npc-edit-heading" class="panel-heading">NPC dossier</h2>
+              </div>
+              <NpcForm
+                action={`/campaigns/${campaign.slug}/npcs/${npc.id}`}
+                imageAssets={imageAssets}
+                npc={npc}
+                playerMembers={playerMembers}
+                rules={rules}
+                submitLabel="Save NPC"
+                wikiPages={wikiPages}
+              />
+            </Panel>
+          ) : null}
+        </main>
+      </div>
+    </Layout>
+  );
+};
+
+function NpcSummaryCard({ campaign, npc }: { campaign: CampaignSummary; npc: CampaignNpcDossier | CampaignNpcSummary }) {
+  return (
+    <article class="campaign-npc-card">
+      <div>
+        <p class="campaign-kicker">{npcVisibilityLabel(npc.visibility)}</p>
+        <h2><a href={`/campaigns/${campaign.slug}/npcs/${npc.slug}`}>{npc.name}</a></h2>
+      </div>
+      <p>{npc.publicSummary || "No public summary yet."}</p>
+    </article>
+  );
+}
+
+function NpcForm({
+  action,
+  imageAssets,
+  npc,
+  playerMembers,
+  rules,
+  submitLabel,
+  wikiPages,
+}: {
+  action: string;
+  imageAssets: CampaignImageAsset[];
+  npc?: CampaignNpcDossier;
+  playerMembers: Array<CampaignMember & { displayName: string }>;
+  rules: RuleSummary[];
+  submitLabel: string;
+  wikiPages: CampaignWikiPage[];
+}) {
+  return (
+    <form class="campaign-session-form" action={action} method="post">
+      <label>Name<input name="name" required type="text" value={npc?.name ?? ""} /></label>
+      <label>Visibility<select name="visibility">
+        <option value="private" selected={!npc || npc.visibility === "private"}>Private</option>
+        <option value="public" selected={npc?.visibility === "public"}>Public</option>
+        <option value="selected" selected={npc?.visibility === "selected"}>Selected players</option>
+      </select></label>
+      <fieldset class="campaign-session-form-wide campaign-checkbox-list">
+        <legend>Selected players</legend>
+        {playerMembers.map((member) => (
+          <label>
+            <input
+              checked={npc?.selectedPlayerIds.includes(member.userId)}
+              name="selectedPlayerIds"
+              type="checkbox"
+              value={member.userId}
+            />
+            <span>{member.displayName}</span>
+          </label>
+        ))}
+      </fieldset>
+      <label class="campaign-session-form-wide">Public summary<textarea name="publicSummary" required rows={3}>{npc?.publicSummary ?? ""}</textarea></label>
+      <label>Portrait<select name="portraitImageAssetId">
+        <option value="">None</option>
+        {imageAssets.map((asset) => <option value={asset.id} selected={npc?.portraitImageAssetId === asset.id}>{asset.title}</option>)}
+      </select></label>
+      <label>Public profile<select name="publicWikiPageId">
+        <option value="">None</option>
+        {wikiPages.map((page) => <option value={page.id} selected={npc?.publicWikiPageId === page.id}>{page.title}</option>)}
+      </select></label>
+      <label>Rules/stat block<select name="rulesEntityId">
+        <option value="">None</option>
+        {rules.map((rule) => <option value={rule.id} selected={npc?.rulesEntityId === rule.id}>{rule.name}</option>)}
+      </select></label>
+      <label>Motivations<input name="motivations" type="text" value={npc?.motivations ?? ""} /></label>
+      <label>Hooks<input name="hooks" type="text" value={npc?.hooks ?? ""} /></label>
+      <label class="campaign-session-form-wide">Game Master notes<textarea name="gmNotes" rows={4}>{npc?.gmNotes ?? ""}</textarea></label>
+      <label class="campaign-session-form-wide">Secrets<textarea name="secrets" rows={4}>{npc?.secrets ?? ""}</textarea></label>
+      <label class="campaign-session-form-wide">Scene notes<textarea name="sceneNotes" rows={4}>{npc?.sceneNotes ?? ""}</textarea></label>
+      <label class="campaign-session-form-wide">Reveal notes<textarea name="revealNotes" rows={3}>{npc?.revealNotes ?? ""}</textarea></label>
+      <button type="submit">{submitLabel}</button>
+    </form>
+  );
+}
+
+function isNpcDossier(npc: CampaignNpcDossier | CampaignNpcSummary): npc is CampaignNpcDossier {
+  return "gmNotes" in npc;
+}
+
+function npcVisibilityLabel(visibility: CampaignNpcDossier["visibility"]) {
+  if (visibility === "public") return "Public";
+  if (visibility === "selected") return "Selected players";
+
+  return "Private";
+}
 
 interface CampaignWikiDetailPageProps {
   appName: string;

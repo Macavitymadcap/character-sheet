@@ -1,1 +1,1 @@
-export { CampaignPage, CampaignWikiDetailPage } from "./Campaign";
+export { CampaignPage, CampaignPrepPage, CampaignWikiDetailPage, NpcDetailPage, NpcListPage } from "./Campaign";
