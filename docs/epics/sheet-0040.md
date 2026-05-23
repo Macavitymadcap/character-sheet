@@ -7,12 +7,12 @@ goal is to reduce app-local framework code, align Campaign Ledger with the reusa
 contracts, and make later Game Master prep work build on shared UI, transport, data, and automation
 primitives instead of copying more local scaffolding.
 
-Hyper-Dank has moved beyond the earlier `pace-calculator` template reference. The current local
-framework repo is `hyper-dank` at `hyper-dank-v2.3.0`, with reusable packages named
+Hyper-Dank has moved beyond the earlier `pace-calculator` template reference. The current upstream
+framework release is `hyper-dank-v2.3.1`, with reusable packages named
 `@macavitymadcap/hyper-dank-ui`, `@macavitymadcap/hyper-dank-data`,
 `@macavitymadcap/hyper-dank-transport`, and `@macavitymadcap/hyper-dank-automation`. Those packages
 are covered by consumer-style compatibility tests in Hyper-Dank, but they are not published on npm
-as of 2026-05-22. Hyper-Dank `pace-0062` has now selected and proved local package tarballs as the
+as of 2026-05-23. Hyper-Dank `pace-0062` selected and proved local package tarballs as the
 supported near-term downstream route. Campaign Ledger should adopt that route first, while leaving
 npm or GitHub Packages as later distribution improvements.
 
@@ -46,25 +46,25 @@ npm or GitHub Packages as later distribution improvements.
 
 ## Current Hyper-Dank State
 
-Local inspection on 2026-05-22 found:
+Local inspection on 2026-05-23 found:
 
-- Hyper-Dank root package version: `2.3.0`.
-- Latest local release tag: `hyper-dank-v2.3.0`.
-- Hyper-Dank active branch: `pace-0064`, with `pace-0061`, `pace-0062`, and `pace-0063` landed into
-  the `pace-0060` epic branch.
+- Hyper-Dank root package version: `2.3.1`.
+- Latest release tag: `hyper-dank-v2.3.1`.
+- Hyper-Dank `pace-0060` consumer-docs and Storybook epic has merged into `main` as PR `#77`.
+- Hyper-Dank release PR `#87` cut `hyper-dank-v2.3.1` after that merge.
 - Reusable packages:
-  - `@macavitymadcap/hyper-dank-ui`
-  - `@macavitymadcap/hyper-dank-data`
-  - `@macavitymadcap/hyper-dank-transport`
-  - `@macavitymadcap/hyper-dank-automation`
+  - `@macavitymadcap/hyper-dank-ui@0.1.0`
+  - `@macavitymadcap/hyper-dank-data@0.1.0`
+  - `@macavitymadcap/hyper-dank-transport@0.1.0`
+  - `@macavitymadcap/hyper-dank-automation@0.1.0`
 - Package export maps expose source for Bun/workspace consumers and declaration files from `dist`.
 - `bun run test:compat` in Hyper-Dank packs local workspace packages and runs consumer-style app
   shape tests through public package names.
 - `bun run test:packages` in Hyper-Dank packs the four packages, creates a temporary app outside the
   Hyper-Dank workspace, installs the tarballs, typechecks public imports, resolves the UI CSS export,
   and runs a Bun smoke.
-- `npm view` returned `404 Not Found` for all four package names, so npm publication must not be a
-  Campaign Ledger assumption yet.
+- `npm view` returned `404 Not Found` for all four package names on 2026-05-23, so npm publication
+  must not be a Campaign Ledger assumption yet.
 - Hyper-Dank package READMEs now document the local-tarball installation route. Campaign Ledger
   adoption should use that route rather than inventing a separate package-consumption story.
 
@@ -81,7 +81,7 @@ Local inspection on 2026-05-22 found:
 
 ## Key Workflows
 
-- A developer can run Hyper-Dank `bun run pack:packages`, install the generated package tarballs in
+- A developer can run Hyper-Dank `bun run pack:packages`, vendor the generated package tarballs in
   Campaign Ledger, then run `bun install` and `bun run verify`.
 - A component migration ticket replaces a small set of generic local components with Hyper-Dank UI
   imports, keeps visible Campaign Ledger styling intact, and removes dead local files.
@@ -94,7 +94,7 @@ Local inspection on 2026-05-22 found:
 
 ```mermaid
 flowchart TD
-    A["Hyper-Dank v2.3 packages"] --> B["Verified consumption path"]
+    A["Hyper-Dank v2.3.1 packages"] --> B["Verified tarball consumption path"]
     B --> C["Campaign Ledger package.json"]
     C --> D["UI primitives"]
     C --> E["Transport helpers"]

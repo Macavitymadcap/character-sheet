@@ -26,6 +26,12 @@ app-local framework pieces with the current Hyper-Dank packages: `@macavitymadca
 `@macavitymadcap/hyper-dank-automation`. Domain routes, schemas, repositories, sheet controls,
 campaign flows, and product copy stay app-owned.
 
+`sheet-0041` consumes those packages through vendored local tarballs built from Hyper-Dank
+`hyper-dank-v2.3.1` with the sibling repo's `bun run pack:packages` command. That keeps Campaign
+Ledger on the same public package paths that a future registry release will use, while avoiding
+unpublished npm package assumptions. The `test:hyper-dank` script is the compatibility gate for
+those public imports.
+
 The full MVP source tree is expected to grow towards this shape as tickets land:
 
 ```text
@@ -356,6 +362,12 @@ The minimum verification before a source-code ticket is complete:
 
 ```bash
 bun run verify
+```
+
+Hyper-Dank package adoption tickets should also run the focused compatibility gate while iterating:
+
+```bash
+bun run test:hyper-dank
 ```
 
 The accessibility script currently checks public `/`, `/login`, `/local/characters`, `/local/campaigns`, `/rules`, and `/rules/spell/bless`, player `/characters`, `/sheet/lynott`, `/campaigns/rovnost-shadows/wiki/factions-guide`, and `/logout`, Game Master `/campaigns/rovnost-shadows` and `/campaigns/rovnost-shadows/characters`, and admin `/admin`. The MVP smoke script renders every sheet tab fragment directly and walks the group-use flows for character creation, manual edits, notes, faction choice, full SRD import, public browser-local play import/export, rules browsing, private campaign rules, sheet rule links, Mira content, sessions, wiki, protected seeded assets, image upload, combined admin campaign access, admin account handoff, and logout protection. The screenshot script captures public home, local play, sheet, roster, campaign, rules, wiki, faction, admin, compact edit, roll result, and edited-sheet states to `docs/pr-screenshots/` by default for deliberate PR evidence refreshes; `bun run verify` overrides `SCREENSHOT_DIR` to a temporary directory so routine acceptance runs do not churn committed screenshots. [Hosted Rehearsal Acceptance](./docs/operations/hosted-rehearsal-acceptance.md) records the final `sheet-0030` acceptance checklist; [Campaign Companion Acceptance](./docs/operations/campaign-companion-acceptance.md) records the completed `sheet-0050` acceptance checklist and follow-ups.
