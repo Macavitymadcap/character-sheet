@@ -46,6 +46,8 @@ and product workflows stay local.
 published Hyper-Dank patches, run `bun run update:hyper-dank`, review any compatibility failures, and
 then run `bun run verify`. The compatibility check also fails when a newly exported Hyper-Dank UI
 component overlaps a Campaign Ledger local component name that has not been reviewed yet.
+[Hyper-Dank Adoption Acceptance](./docs/operations/hyper-dank-adoption-acceptance.md) records the
+final package source, compatibility coverage, visual evidence, app-owned boundaries, and follow-ups.
 
 ## Local Setup
 

@@ -37,3 +37,14 @@ Hyper-Dank adoption epic.
 - Screenshots and Pa11y cover changed user-facing surfaces.
 - Final docs record adopted packages, remaining app-owned boundaries, and deferred follow-ups.
 - The epic integration branch is ready to target `main`.
+
+## Acceptance Notes
+
+- [Hyper-Dank Adoption Acceptance](../operations/hyper-dank-adoption-acceptance.md) records the
+  completed package source, compatibility checks, screenshot evidence, app-owned boundaries, and
+  follow-ups.
+- `bun run test:hyper-dank` remains the focused public-package compatibility gate.
+- `bun run verify` remains the final local acceptance command and captures routine screenshots to a
+  temporary directory.
+- No user-facing UI changed in this acceptance ticket; existing tracked screenshots under
+  `docs/pr-screenshots/` remain the deliberate UI evidence set from the migration tickets.
