@@ -1,0 +1,87 @@
+name: Ticket
+description: Track one independently reviewable Campaign Ledger slice.
+title: "sheet-0000: "
+labels:
+  - "type: ticket"
+body:
+  - type: input
+    id: identifier
+    attributes:
+      label: Identifier
+      placeholder: sheet-0062
+    validations:
+      required: true
+  - type: input
+    id: parent_epic
+    attributes:
+      label: Parent epic
+      description: Link the parent epic issue or enter its `sheet-*` identifier.
+      placeholder: "#123 or sheet-0061"
+    validations:
+      required: true
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What should this ticket change?
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      placeholder: |
+        -
+        -
+        -
+    validations:
+      required: true
+  - type: checkboxes
+    id: areas
+    attributes:
+      label: Areas
+      options:
+        - label: UI
+        - label: Data
+        - label: Transport
+        - label: Automation
+        - label: Docs
+        - label: Workflow
+  - type: input
+    id: base_branch
+    attributes:
+      label: Base branch
+      description: Ticket PRs normally target the active epic branch.
+      placeholder: sheet-0061
+    validations:
+      required: true
+  - type: input
+    id: work_branch
+    attributes:
+      label: Work branch
+      description: Planned branch name once work starts.
+      placeholder: codex/sheet-0062-github-workflow
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      placeholder: |
+        -
+        -
+        -
+    validations:
+      required: true
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verification
+      placeholder: |
+        - [ ] `bun run verify`
+        - [ ] Screenshots or Pa11y checks, if user-facing
+    validations:
+      required: true
+  - type: textarea
+    id: followups
+    attributes:
+      label: Follow-ups or exclusions
+      description: Record known work that should not expand this ticket.

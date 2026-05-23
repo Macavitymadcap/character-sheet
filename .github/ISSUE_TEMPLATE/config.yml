@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Campaign Ledger planning docs
+    url: https://github.com/Macavitymadcap/campaign-ledger/tree/main/docs
+    about: Check the accepted epics and tickets before opening new work.

@@ -59,3 +59,11 @@ rather than retrofitting it after the implementation stack has started.
 - Manual GitHub Project setup is documented clearly enough to recreate or audit.
 - Later `sheet-0061` tickets can follow the workflow without making new process decisions.
 - `bun run verify` passes.
+
+## Implementation Notes
+
+- Added source-backed GitHub issue forms for epics, tickets, bugs, and follow-ups.
+- Added a pull request template that records issue/project tracking, base branch, verification,
+  screenshot evidence, review notes, and follow-up scope.
+- Added [GitHub Workflow](../operations/github-workflow.md) for issue, project, branch, PR, and
+  acceptance evidence conventions.

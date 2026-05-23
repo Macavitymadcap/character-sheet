@@ -1,6 +1,6 @@
 # Contributing
 
-This repository uses a documentation-first, ticket-driven workflow. `main` is the stable branch. Accepted epic plans are reviewed as their own pull requests into `main`; once accepted, implementation tickets branch from the active epic integration branch and open pull requests back into that epic branch. The epic branch is squash-merged into `main` after its ticket stack is accepted.
+This repository uses a documentation-first, ticket-driven workflow. `main` is the stable branch. Accepted epic plans are reviewed as their own pull requests into `main`; once accepted, implementation tickets branch from the active epic integration branch and open pull requests back into that epic branch. The epic branch is squash-merged into `main` after its ticket stack is accepted. GitHub Issues, Projects, and PR checklist conventions are documented in [GitHub Workflow](./docs/operations/github-workflow.md).
 
 ## Branch Flow
 
@@ -50,6 +50,18 @@ The review loop is:
 Implementation follows the accepted ticket documents. Every accepted ticket is implemented on its own ticket branch and squash-merged into the active epic branch. The epic branch is merged into `main` only after the epic is complete and accepted.
 
 Epic documents live in `docs/epics/`. Ticket documents live in `docs/tickets/`.
+
+## GitHub Issue And Project Flow
+
+Create a GitHub Issue for each epic, implementation ticket, bug, and review follow-up using the
+templates in `.github/ISSUE_TEMPLATE/`. Link each ticket issue to its parent epic and to the durable
+Markdown ticket. Keep the GitHub Project `Status` field aligned with the work: `Backlog`, `Ready`,
+`In progress`, `In review`, or `Done`.
+
+Pull requests should use `.github/PULL_REQUEST_TEMPLATE.md` and include the linked issue, project,
+base branch, working branch, verification, screenshot evidence for user-facing UI changes, and
+follow-up scope. Move issues to `Done` only after the PR is merged and acceptance evidence is
+recorded.
 
 ## TDD Expectations
 

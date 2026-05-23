@@ -4,7 +4,7 @@ A local-first D&D 5e campaign ledger for character sheets, campaign records, and
 
 The first MVP focuses on a small table: player characters, one Game Master, and one admin. It runs locally with SQLite, uses server-rendered HTML fragments for sheet interactions, and stores D&D 2014 rules data in structured database tables rather than treating markdown as the runtime source of truth. The campaign companion work now adds public SRD rules, browser-local play tools, multiple players, multiple campaign characters, local character creation, wiki pages, image assets, factions, faction choices, session records, campaign-scoped private rules, and compact table-use UX.
 
-For the architecture and data model, see [ARCHITECTURE.md](./ARCHITECTURE.md). For the contribution and ticket workflow, see [CONTRIBUTING.md](./CONTRIBUTING.md).
+For the architecture and data model, see [ARCHITECTURE.md](./ARCHITECTURE.md). For the contribution and ticket workflow, see [CONTRIBUTING.md](./CONTRIBUTING.md), with GitHub issue and project conventions in [GitHub Workflow](./docs/operations/github-workflow.md).
 
 ## MVP Scope
 

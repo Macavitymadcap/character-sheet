@@ -393,7 +393,7 @@ remaining app-owned boundaries.
 
 ## Pipeline
 
-The repository uses a documentation-first ticket flow. Epic planning branches open against `main` for roadmap review, then remain as active epic integration branches once accepted. Implementation ticket branches start from the latest epic branch and open pull requests back into that epic branch. The epic branch opens a final pull request into `main` after its ticket stack is accepted.
+The repository uses a documentation-first ticket flow. Epic planning branches open against `main` for roadmap review, then remain as active epic integration branches once accepted. Implementation ticket branches start from the latest epic branch and open pull requests back into that epic branch. The epic branch opens a final pull request into `main` after its ticket stack is accepted. GitHub Issues, Projects, and pull request handoff are tracked through [GitHub Workflow](./docs/operations/github-workflow.md).
 
 ```mermaid
 flowchart LR
