@@ -32,6 +32,11 @@ Ledger on the same public package paths that a future registry release will use,
 unpublished npm package assumptions. The `test:hyper-dank` script is the compatibility gate for
 those public imports.
 
+`sheet-0044` keeps SQLite schema bootstrap, seed data, and repositories app-owned, but exposes the
+SQLite runtime through Hyper-Dank's `DatabaseProviderBase` lifecycle shape and a provider registry.
+That gives later runtime or adapter work a shared provider boundary without introducing Postgres,
+Better Auth, or shared domain repositories.
+
 The full MVP source tree is expected to grow towards this shape as tickets land:
 
 ```text

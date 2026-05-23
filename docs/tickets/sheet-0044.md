@@ -38,3 +38,15 @@ changing Campaign Ledger's SQLite schema ownership or repository model.
 - Schema, seed, and repository behaviour stay unchanged.
 - Hosted data operations still pass.
 - `bun run verify` passes.
+
+## Acceptance Notes
+
+- `SqliteDatabaseRuntime` now implements Hyper-Dank's `DatabaseProviderBase<SqliteRepositories,
+  "sqlite">` lifecycle contract while preserving the existing `database`, `repositories`, and
+  `seed()` API.
+- `createSqliteProviderRegistry()` exposes the app-owned SQLite provider through Hyper-Dank's
+  `createProviderRegistry` helper.
+- SQLite schema SQL, migration bootstrap statements, seed data, and repository implementations stay
+  in Campaign Ledger.
+- `src/db/sqlite.test.ts` now runs Hyper-Dank's shared lifecycle contract and provider-registry
+  coverage alongside the existing repository tests.

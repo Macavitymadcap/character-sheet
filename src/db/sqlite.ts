@@ -1,5 +1,9 @@
 import { Database } from "bun:sqlite";
 import { randomUUID } from "node:crypto";
+import {
+  createProviderRegistry,
+  type DatabaseProviderBase,
+} from "@macavitymadcap/hyper-dank-data";
 import { abilityModifier, armourClassTotal, savingThrowModifier, skillModifier } from "../characters/calculations";
 import { characterClassDefaults, formatHitDice } from "./class-defaults";
 import { standardCharacterResourceTemplates } from "./standard-resources";
@@ -371,14 +375,15 @@ export interface SqliteRepositories {
   rulesSeedRepository: RulesSeedRepository;
 }
 
-export interface SqliteDatabaseRuntime {
+export interface SqliteDatabaseRuntime extends DatabaseProviderBase<SqliteRepositories, "sqlite"> {
   close(): void;
   database: Database;
+  kind: "sqlite";
   repositories: SqliteRepositories;
   seed(): void;
 }
 
-interface CreateSqliteDatabaseOptions {
+export interface CreateSqliteDatabaseOptions {
   path?: string;
   seed?: boolean;
 }
@@ -420,14 +425,23 @@ export const createSqliteDatabase = ({
   const database = new Database(path);
   bootstrapDatabase(database);
   if (seed) seedDatabase(database);
+  const repositories = createSqliteRepositories(database);
 
   return {
     close: () => database.close(),
+    createRepositories: () => createSqliteRepositories(database),
     database,
-    repositories: createSqliteRepositories(database),
+    kind: "sqlite",
+    migrate: () => bootstrapDatabase(database),
+    repositories,
     seed: () => seedDatabase(database),
   };
 };
+
+export const createSqliteProviderRegistry = () =>
+  createProviderRegistry({
+    sqlite: createSqliteDatabase,
+  });
 
 export const createSqliteRepositories = (database: Database): SqliteRepositories => ({
   authRepository: new SqliteAuthRepository(database),
