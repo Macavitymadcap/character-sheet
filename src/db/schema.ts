@@ -126,6 +126,27 @@ CREATE TABLE IF NOT EXISTS campaign_wiki_page_assets (
   PRIMARY KEY (wiki_page_id, image_asset_id, attachment_type)
 );
 
+CREATE TABLE IF NOT EXISTS campaign_npcs (
+  id TEXT PRIMARY KEY,
+  campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+  slug TEXT NOT NULL,
+  name TEXT NOT NULL,
+  visibility TEXT NOT NULL DEFAULT 'game_master' CHECK (visibility IN ('player', 'game_master')),
+  public_summary TEXT NOT NULL DEFAULT '',
+  gm_notes TEXT NOT NULL DEFAULT '',
+  secrets TEXT NOT NULL DEFAULT '',
+  motivations TEXT NOT NULL DEFAULT '',
+  hooks TEXT NOT NULL DEFAULT '',
+  scene_notes TEXT NOT NULL DEFAULT '',
+  reveal_notes TEXT NOT NULL DEFAULT '',
+  portrait_image_asset_id TEXT REFERENCES campaign_image_assets(id) ON DELETE SET NULL,
+  public_wiki_page_id TEXT REFERENCES campaign_wiki_pages(id) ON DELETE SET NULL,
+  rules_entity_id TEXT REFERENCES rules_entities(id) ON DELETE SET NULL,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (campaign_id, slug)
+);
+
 CREATE TABLE IF NOT EXISTS campaign_factions (
   id TEXT PRIMARY KEY,
   campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
@@ -376,6 +397,62 @@ WHEN (
 )
 BEGIN
   SELECT RAISE(ABORT, 'character and faction must belong to the same campaign');
+END;
+
+CREATE TRIGGER IF NOT EXISTS campaign_npcs_links_campaign_insert
+BEFORE INSERT ON campaign_npcs
+FOR EACH ROW
+WHEN (
+  (
+    NEW.portrait_image_asset_id IS NOT NULL
+    AND (SELECT campaign_id FROM campaign_image_assets WHERE id = NEW.portrait_image_asset_id) != NEW.campaign_id
+  )
+  OR (
+    NEW.public_wiki_page_id IS NOT NULL
+    AND (SELECT campaign_id FROM campaign_wiki_pages WHERE id = NEW.public_wiki_page_id) != NEW.campaign_id
+  )
+  OR (
+    NEW.rules_entity_id IS NOT NULL
+    AND NOT EXISTS (
+      SELECT 1
+      FROM rules_entities entities
+      JOIN rules_sources sources ON sources.id = entities.source_id
+      LEFT JOIN campaign_rules_sources campaign_sources ON campaign_sources.source_id = sources.id
+      WHERE entities.id = NEW.rules_entity_id
+        AND (sources.visibility = 'public' OR campaign_sources.campaign_id = NEW.campaign_id)
+    )
+  )
+)
+BEGIN
+  SELECT RAISE(ABORT, 'npc links must belong to the same campaign or a public rules source');
+END;
+
+CREATE TRIGGER IF NOT EXISTS campaign_npcs_links_campaign_update
+BEFORE UPDATE OF portrait_image_asset_id, public_wiki_page_id, rules_entity_id, campaign_id ON campaign_npcs
+FOR EACH ROW
+WHEN (
+  (
+    NEW.portrait_image_asset_id IS NOT NULL
+    AND (SELECT campaign_id FROM campaign_image_assets WHERE id = NEW.portrait_image_asset_id) != NEW.campaign_id
+  )
+  OR (
+    NEW.public_wiki_page_id IS NOT NULL
+    AND (SELECT campaign_id FROM campaign_wiki_pages WHERE id = NEW.public_wiki_page_id) != NEW.campaign_id
+  )
+  OR (
+    NEW.rules_entity_id IS NOT NULL
+    AND NOT EXISTS (
+      SELECT 1
+      FROM rules_entities entities
+      JOIN rules_sources sources ON sources.id = entities.source_id
+      LEFT JOIN campaign_rules_sources campaign_sources ON campaign_sources.source_id = sources.id
+      WHERE entities.id = NEW.rules_entity_id
+        AND (sources.visibility = 'public' OR campaign_sources.campaign_id = NEW.campaign_id)
+    )
+  )
+)
+BEGIN
+  SELECT RAISE(ABORT, 'npc links must belong to the same campaign or a public rules source');
 END;
 `;
 

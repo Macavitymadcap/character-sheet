@@ -248,6 +248,14 @@ describe("campaign access guards", () => {
         session: combinedSession("user_admin_player", ["player"]),
       }).ok,
     ).toBeFalse();
+    expect(
+      requireCampaignAccess({
+        campaignId: "campaign_1",
+        campaignRepository: campaignRepository([]),
+        permission: "manage",
+        session: session("admin", "user_site_admin"),
+      }),
+    ).toEqual({ ok: false, reason: "forbidden" });
   });
 
   test("filters player-visible and Game-Master-only campaign content", () => {

@@ -65,3 +65,14 @@ erDiagram
 - NPC records can link to portrait assets, wiki pages, and rules/stat-block entities where present.
 - The architecture docs describe the data shape and visibility boundary.
 - `bun run verify` passes.
+
+## Implementation Notes
+
+- Added `campaign_npcs` with campaign-scoped slugs, reveal visibility, player-safe summary fields,
+  private Game Master prep fields, and optional portrait, wiki profile, and rules/stat-block links.
+- Added `CampaignContentRepository` NPC dossier and summary methods for create, update, reveal,
+  Game Master reads, and player-visible reads.
+- Seeded a small synthetic private NPC fixture for repository coverage without private campaign
+  prose.
+- Reused campaign membership/manage guards; admin capability alone still does not grant NPC prep
+  access.
