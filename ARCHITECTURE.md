@@ -37,6 +37,10 @@ SQLite runtime through Hyper-Dank's `DatabaseProviderBase` lifecycle shape and a
 That gives later runtime or adapter work a shared provider boundary without introducing Postgres,
 Better Auth, or shared domain repositories.
 
+`sheet-0045` adopts Hyper-Dank automation mechanics for command execution and Pa11y target running.
+Campaign Ledger still owns its verification gate order, Pa11y route list, smoke workflow, screenshot
+targets, and the temporary screenshot directory used by routine `bun run verify`.
+
 The full MVP source tree is expected to grow towards this shape as tickets land:
 
 ```text
