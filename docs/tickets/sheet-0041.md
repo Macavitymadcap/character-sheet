@@ -18,10 +18,10 @@ local-tarball route before any app code migrates to them.
 - Added the required Hyper-Dank package dependencies from those local tarballs without assuming npm
   registry publication.
 - Expected tarballs from the current Hyper-Dank package versions are:
-  - `../hyper-dank/.cache/packages/macavitymadcap-hyper-dank-ui-0.1.0.tgz`
-  - `../hyper-dank/.cache/packages/macavitymadcap-hyper-dank-data-0.1.0.tgz`
-  - `../hyper-dank/.cache/packages/macavitymadcap-hyper-dank-transport-0.1.0.tgz`
-  - `../hyper-dank/.cache/packages/macavitymadcap-hyper-dank-automation-0.1.0.tgz`
+  - `vendor/hyper-dank/macavitymadcap-hyper-dank-ui-0.1.0.tgz`
+  - `vendor/hyper-dank/macavitymadcap-hyper-dank-data-0.1.0.tgz`
+  - `vendor/hyper-dank/macavitymadcap-hyper-dank-transport-0.1.0.tgz`
+  - `vendor/hyper-dank/macavitymadcap-hyper-dank-automation-0.1.0.tgz`
 - Keep `hono` and `typescript` available for package peers. Add `@playwright/test` only if this
   ticket or later automation work uses Playwright-backed Hyper-Dank automation helpers.
 - Added `scripts/hyper-dank-compat.test.tsx` and `bun run test:hyper-dank` to import the packages
@@ -55,7 +55,8 @@ local-tarball route before any app code migrates to them.
 ## Acceptance Notes
 
 - Hyper-Dank packages were packed from the sibling `../hyper-dank` checkout with `bun run
-  pack:packages`.
+  pack:packages` and vendored under `vendor/hyper-dank/` so CI installs do not require that sibling
+  checkout.
 - Campaign Ledger now resolves `@macavitymadcap/hyper-dank-ui`,
   `@macavitymadcap/hyper-dank-data`, `@macavitymadcap/hyper-dank-transport`, and
   `@macavitymadcap/hyper-dank-automation` from local tarballs.
