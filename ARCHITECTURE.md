@@ -26,10 +26,11 @@ app-local framework pieces with the current Hyper-Dank packages: `@macavitymadca
 `@macavitymadcap/hyper-dank-automation`. Domain routes, schemas, repositories, sheet controls,
 campaign flows, and product copy stay app-owned.
 
-`sheet-0041` consumes those packages through local tarballs built by the sibling Hyper-Dank repo's
-`bun run pack:packages` command. That keeps Campaign Ledger on the same public package paths that a
-future registry release will use, while avoiding unpublished npm package assumptions. The
-`test:hyper-dank` script is the compatibility gate for those public imports.
+`sheet-0041` consumes those packages through vendored local tarballs built from Hyper-Dank
+`hyper-dank-v2.3.1` with the sibling repo's `bun run pack:packages` command. That keeps Campaign
+Ledger on the same public package paths that a future registry release will use, while avoiding
+unpublished npm package assumptions. The `test:hyper-dank` script is the compatibility gate for
+those public imports.
 
 The full MVP source tree is expected to grow towards this shape as tickets land:
 

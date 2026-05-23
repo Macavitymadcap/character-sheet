@@ -8,16 +8,17 @@ local-tarball route before any app code migrates to them.
 ## Dependencies
 
 - Builds on the accepted `sheet-0040` epic plan.
-- Tracks Hyper-Dank `pace-0062`, which selected and proved package tarballs as the near-term
-  downstream install route while the packages are not npm-published.
+- Tracks Hyper-Dank `hyper-dank-v2.3.1`, where the `pace-0060` consumer-docs epic has merged to
+  `main` and `pace-0062` proved package tarballs as the near-term downstream install route while the
+  packages are not npm-published.
 
 ## Implementation
 
-- Run Hyper-Dank `bun run pack:packages` and use the generated tarballs as Campaign Ledger's initial
-  package source.
+- Run Hyper-Dank `bun run pack:packages` and vendor the generated tarballs as Campaign Ledger's
+  initial package source.
 - Added the required Hyper-Dank package dependencies from those local tarballs without assuming npm
   registry publication.
-- Expected tarballs from the current Hyper-Dank package versions are:
+- Expected vendored tarballs from the current Hyper-Dank package versions are:
   - `vendor/hyper-dank/macavitymadcap-hyper-dank-ui-0.1.0.tgz`
   - `vendor/hyper-dank/macavitymadcap-hyper-dank-data-0.1.0.tgz`
   - `vendor/hyper-dank/macavitymadcap-hyper-dank-transport-0.1.0.tgz`
@@ -40,8 +41,8 @@ local-tarball route before any app code migrates to them.
 
 - Add a failing compatibility check for the public Hyper-Dank import paths before adding the
   tarball dependencies.
-- Run Hyper-Dank `bun run test:packages` or `bun run pack:packages` as appropriate before installing
-  the tarballs.
+- Run Hyper-Dank `bun run test:packages` or `bun run pack:packages` as appropriate before refreshing
+  the vendored tarballs.
 
 ## Acceptance Criteria
 
@@ -55,8 +56,8 @@ local-tarball route before any app code migrates to them.
 ## Acceptance Notes
 
 - Hyper-Dank packages were packed from the sibling `../hyper-dank` checkout with `bun run
-  pack:packages` and vendored under `vendor/hyper-dank/` so CI installs do not require that sibling
-  checkout.
+  pack:packages` after the `hyper-dank-v2.3.1` release and vendored under `vendor/hyper-dank/` so CI
+  installs do not require that sibling checkout.
 - Campaign Ledger now resolves `@macavitymadcap/hyper-dank-ui`,
   `@macavitymadcap/hyper-dank-data`, `@macavitymadcap/hyper-dank-transport`, and
   `@macavitymadcap/hyper-dank-automation` from local tarballs.
