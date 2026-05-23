@@ -30,15 +30,22 @@ The MVP remains intentionally local-first in its data model, while `sheet-0030` 
 - SQLite through Bun's SQLite APIs for local persistence.
 - Pa11y and screenshots for accessibility and visual review once the UI exists.
 
-The app follows the Hyper-Dank template lineage: runtime setup stays separate from `createApp()`, repositories hide database details from routes and components, components own semantic markup, and HTMX attributes make browser interaction visible in HTML. `sheet-0040` is now planned to adopt the current Hyper-Dank packages as runtime dependencies where their public contracts fit Campaign Ledger.
+The app follows the Hyper-Dank template lineage: runtime setup stays separate from `createApp()`, repositories hide database details from routes and components, components own semantic markup, and HTMX attributes make browser interaction visible in HTML. `sheet-0040` adopts the current Hyper-Dank packages as runtime dependencies where their public contracts fit Campaign Ledger.
 
-`sheet-0041` starts that adoption through Hyper-Dank's `hyper-dank-v2.3.1` local package tarballs
-because the packages are not registry-published yet. Campaign Ledger vendors the current tarballs under
-`vendor/hyper-dank/` so CI and fresh checkouts can install without a sibling Hyper-Dank checkout.
-To refresh them, run `bun --cwd ../hyper-dank run pack:packages`, copy the required tarballs into
-`vendor/hyper-dank/`, then run `bun install` here to update the dependency lockfile.
+`sheet-0041` started that adoption through Hyper-Dank's `hyper-dank-v2.3.1` local package tarballs
+while the packages were unpublished. The packages are now available from npm as
+`@macavitymadcap/hyper-dank-ui`, `@macavitymadcap/hyper-dank-data`,
+`@macavitymadcap/hyper-dank-transport`, and `@macavitymadcap/hyper-dank-automation`, so fresh
+installs resolve them from the registry through normal semver dependency ranges.
 `bun run test:hyper-dank` verifies Campaign Ledger imports the shared packages through public
-package paths only.
+package paths only. Local wrappers around adopted UI primitives are compatibility shims for existing
+Campaign Ledger import paths and CSS hooks; app-specific components, routes, repositories, seed data,
+and product workflows stay local.
+
+`bun install` keeps the exact Hyper-Dank versions pinned by `bun.lock`. To deliberately pick up newly
+published Hyper-Dank patches, run `bun run update:hyper-dank`, review any compatibility failures, and
+then run `bun run verify`. The compatibility check also fails when a newly exported Hyper-Dank UI
+component overlaps a Campaign Ledger local component name that has not been reviewed yet.
 
 ## Local Setup
 
