@@ -19,6 +19,7 @@ import type {
   CampaignContentVisibility,
   CampaignFaction,
   CampaignImageAsset,
+  CampaignImageAssetUsage,
   CampaignMember,
   CampaignNpcDossier,
   CampaignNpcSummary,
@@ -2006,6 +2007,55 @@ class SqliteCampaignContentRepository implements CampaignContentRepository {
       )
       .all(campaignId, wikiPageId, attachmentType, canSeeGameMasterContent(viewerRole))
       .map(toCampaignImageAsset);
+  }
+
+  listImageAssetUsages(campaignId: string, campaignSlug: string, assetId: string): CampaignImageAssetUsage[] {
+    const wikiUsages = this.database
+      .query<{ id: string; label: string; slug: string; usage_type: "wiki" }, [string, string, string, string]>(
+        `select id, title as label, slug, 'wiki' as usage_type
+         from campaign_wiki_pages
+         where campaign_id = ? and cover_image_asset_id = ?
+         union
+         select pages.id, pages.title as label, pages.slug, 'wiki' as usage_type
+         from campaign_wiki_page_assets assets
+         join campaign_wiki_pages pages on pages.id = assets.wiki_page_id
+         where pages.campaign_id = ? and assets.image_asset_id = ?`,
+      )
+      .all(campaignId, assetId, campaignId, assetId)
+      .map((row) => ({
+        href: `/campaigns/${campaignSlug}/wiki/${row.slug}`,
+        id: row.id,
+        label: row.label,
+        type: row.usage_type,
+      }));
+    const npcUsages = this.database
+      .query<{ id: string; label: string; slug: string; usage_type: "npc" }, [string, string]>(
+        `select id, name as label, slug, 'npc' as usage_type
+         from campaign_npcs
+         where campaign_id = ? and portrait_image_asset_id = ?`,
+      )
+      .all(campaignId, assetId)
+      .map((row) => ({
+        href: `/campaigns/${campaignSlug}/npcs/${row.slug}`,
+        id: row.id,
+        label: row.label,
+        type: row.usage_type,
+      }));
+    const factionUsages = this.database
+      .query<{ id: string; label: string; slug: string; usage_type: "faction" }, [string, string]>(
+        `select id, name as label, slug, 'faction' as usage_type
+         from campaign_factions
+         where campaign_id = ? and image_asset_id = ?`,
+      )
+      .all(campaignId, assetId)
+      .map((row) => ({
+        href: `/campaigns/${campaignSlug}#campaign-factions`,
+        id: row.id,
+        label: row.label,
+        type: row.usage_type,
+      }));
+
+    return [...wikiUsages, ...npcUsages, ...factionUsages];
   }
 
   listSessionsForCampaign(

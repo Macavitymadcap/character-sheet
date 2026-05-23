@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { CampaignPage, CampaignPlayerPreviewPage, NpcDetailPage, NpcListPage } from "./Campaign";
+import { CampaignImageDetailPage, CampaignImageLibraryPage, CampaignPage, CampaignPlayerPreviewPage, NpcDetailPage, NpcListPage } from "./Campaign";
 
 const render = (node: unknown): string => String(node);
 
@@ -93,6 +93,69 @@ describe("CampaignPage", () => {
     expect(html).toContain("Fallback shown if file is missing locally");
     expect(html).toContain('href="/campaigns/rovnost-shadows/prep"');
     expect(html).toContain('href="/campaigns/rovnost-shadows/npcs"');
+    expect(html).toContain('href="/campaigns/rovnost-shadows/images"');
+  });
+
+  test("renders image library and detail metadata for Game Masters", () => {
+    const campaign = {
+      gmUserId: "user_game_master",
+      id: "campaign_rovnost_shadows",
+      name: "Rovnost Shadows",
+      slug: "rovnost-shadows",
+    };
+    const asset = {
+      altText: "Campaign cover over the city",
+      byteSize: 144000,
+      campaignId: "campaign_rovnost_shadows",
+      caption: "Campaign cover art.",
+      fileStatus: "fallback" as const,
+      height: 800,
+      id: "asset_rovnost_cover",
+      mimeType: "image/png",
+      storageKey: "campaigns/rovnost-shadows/cover.png",
+      title: "Campaign cover",
+      usageCount: 2,
+      visibility: "player" as const,
+      width: 1200,
+    };
+    const library = render(
+      <CampaignImageLibraryPage
+        appName="Campaign Ledger"
+        campaign={campaign}
+        imageAssets={[asset]}
+        user={{ displayName: "Game Master", role: "game_master" }}
+        viewerRole="game_master"
+      />,
+    );
+    const detail = render(
+      <CampaignImageDetailPage
+        appName="Campaign Ledger"
+        asset={{
+          ...asset,
+          usages: [
+            {
+              href: "/campaigns/rovnost-shadows/wiki/rovnost-shadows-overview",
+              id: "wiki_rovnost_overview",
+              label: "Rovnost Shadows Overview",
+              type: "wiki",
+            },
+          ],
+        }}
+        campaign={campaign}
+        user={{ displayName: "Game Master", role: "game_master" }}
+        viewerRole="game_master"
+      />,
+    );
+
+    expect(library).toContain("<title>Images - Rovnost Shadows - Campaign Ledger</title>");
+    expect(library).toContain('action="/campaigns/rovnost-shadows/assets"');
+    expect(library).toContain("Campaign Ledger stores an app-managed copy");
+    expect(library).toContain("Fallback active");
+    expect(library).toContain("2 uses");
+    expect(detail).toContain("<title>Campaign cover - Images - Rovnost Shadows - Campaign Ledger</title>");
+    expect(detail).toContain("Storage key");
+    expect(detail).toContain("campaigns/rovnost-shadows/cover.png");
+    expect(detail).toContain("Rovnost Shadows Overview");
   });
 
   test("renders NPC workspace list and private detail states", () => {

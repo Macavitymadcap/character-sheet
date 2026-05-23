@@ -1418,6 +1418,57 @@ describe("createApp", () => {
     expect(await gmPage.text()).toContain("Magister Vallen is watching");
   });
 
+  test("serves campaign image library and detail pages by role", async () => {
+    const { app, sessionService } = createTestApp("Campaign Ledger");
+    const gmCookie = sessionService.createSession("user_game_master").cookie;
+    const playerCookie = sessionService.createSession("user_lynott_player").cookie;
+    runtime?.repositories.authRepository.createUser({
+      capabilities: [],
+      campaignRoles: [],
+      displayName: "Campaign Outsider",
+      email: "outsider-images@example.local",
+      id: "user_campaign_outsider_images",
+      passwordHash: "unused",
+      role: "player",
+      status: "active",
+    });
+    const outsiderCookie = sessionService.createSession("user_campaign_outsider_images").cookie;
+
+    const gmLibrary = await app.request("/campaigns/rovnost-shadows/images", {
+      headers: { cookie: gmCookie },
+    });
+    const gmHtml = await gmLibrary.text();
+    const playerLibrary = await app.request("/campaigns/rovnost-shadows/images", {
+      headers: { cookie: playerCookie },
+    });
+    const playerHtml = await playerLibrary.text();
+    const gmDetail = await app.request("/campaigns/rovnost-shadows/images/asset_magister_vallen", {
+      headers: { cookie: gmCookie },
+    });
+    const gmDetailHtml = await gmDetail.text();
+    const playerPrivateDetail = await app.request("/campaigns/rovnost-shadows/images/asset_magister_vallen", {
+      headers: { cookie: playerCookie },
+    });
+    const outsiderLibrary = await app.request("/campaigns/rovnost-shadows/images", {
+      headers: { cookie: outsiderCookie },
+    });
+
+    expect(gmLibrary.status).toBe(200);
+    expect(gmHtml).toContain("<title>Images - Rovnost Shadows - Campaign Ledger</title>");
+    expect(gmHtml).toContain("Magister Vallen portrait");
+    expect(gmHtml).toContain("Fallback active");
+    expect(gmHtml).toContain("1 uses");
+    expect(playerLibrary.status).toBe(200);
+    expect(playerHtml).toContain("Skywright sigil");
+    expect(playerHtml).not.toContain("Magister Vallen portrait");
+    expect(gmDetail.status).toBe(200);
+    expect(gmDetailHtml).toContain("Storage key");
+    expect(gmDetailHtml).toContain("Magister Vallen");
+    expect(gmDetailHtml).toContain('href="/campaigns/rovnost-shadows/npcs/magister-vallen"');
+    expect(playerPrivateDetail.status).toBe(404);
+    expect(outsiderLibrary.status).toBe(403);
+  });
+
   test("lets Game Masters create wiki pages and image assets with protected reads", async () => {
     const { app, sessionService } = createTestApp("Campaign Ledger");
     const gmCookie = sessionService.createSession("user_game_master").cookie;
@@ -1482,6 +1533,7 @@ describe("createApp", () => {
     expect(wikiRead.status).toBe(200);
     expect(await wikiRead.text()).toContain("<h2>Brass Market</h2>");
     expect(upload.status).toBe(303);
+    expect(upload.headers.get("location")).toBe(`/campaigns/rovnost-shadows/images/${asset?.id}`);
     expect(asset?.storageKey).not.toContain("seal.png");
     expect(playerAsset.status).toBe(404);
     expect(outsiderAsset.status).toBe(403);
@@ -1535,6 +1587,11 @@ describe("createApp", () => {
     unsupported.set("altText", "A map");
     unsupported.set("visibility", "player");
     unsupported.set("image", new File([new Uint8Array([1])], "map.gif", { type: "image/gif" }));
+    const webp = new FormData();
+    webp.set("title", "Canal sketch");
+    webp.set("altText", "A canal sketch");
+    webp.set("visibility", "player");
+    webp.set("image", new File([new Uint8Array([1, 2])], "canal.webp", { type: "image/webp" }));
 
     expect((await app.request("/campaigns/rovnost-shadows/assets", {
       body: missingAlt,
@@ -1546,6 +1603,11 @@ describe("createApp", () => {
       headers: { cookie: gmCookie },
       method: "POST",
     })).status).toBe(400);
+    expect((await app.request("/campaigns/rovnost-shadows/assets", {
+      body: webp,
+      headers: { cookie: gmCookie },
+      method: "POST",
+    })).status).toBe(303);
   });
 
   test("smokes the seeded MVP workflow through login, sheet play, notes, roles, and logout", async () => {

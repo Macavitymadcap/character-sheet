@@ -380,6 +380,13 @@ export interface CampaignImageAsset {
   width: number | null;
 }
 
+export interface CampaignImageAssetUsage {
+  href: string;
+  id: string;
+  label: string;
+  type: "wiki" | "npc" | "faction";
+}
+
 export interface CampaignSessionRecord {
   body: string;
   campaignId: string;
@@ -530,6 +537,7 @@ export interface CampaignContentRepository {
     attachmentType: "gallery" | "inline",
     viewerRole: UserRole,
   ): CampaignImageAsset[];
+  listImageAssetUsages(campaignId: string, campaignSlug: string, assetId: string): CampaignImageAssetUsage[];
   listSessionsForCampaign(
     campaignId: string,
     viewerRole: UserRole,

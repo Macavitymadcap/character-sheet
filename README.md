@@ -86,8 +86,11 @@ The Game Master campaign page links to the focused prep workspace at `/campaigns
 The NPC workspace at `/campaigns/rovnost-shadows/npcs` lets the Game Master create, edit, review,
 and control NPC dossiers with public, private, or selected-player visibility. Players can open the
 same NPC route from the campaign page and only see public dossiers or dossiers selected for them.
-The NPC form links back to the campaign image upload area so local photos can be added as campaign
-assets before being selected as portraits. The player preview route at
+The campaign image library at `/campaigns/rovnost-shadows/images` lets the Game Master upload PNG,
+JPEG, or WebP files from this computer, review thumbnail cards, open image detail metadata, and see
+wiki/NPC/faction usage links. Uploads keep only app-managed relative storage keys; the original local
+filename and path are not stored. The NPC form links back to that image library so local photos can be
+added as campaign assets before being selected as portraits. The player preview route at
 `/campaigns/rovnost-shadows/preview/player` lets the Game Master audit player-visible wiki pages,
 sessions, NPCs, character notes, and images before a session. The campaign page still lists campaign session records and includes local forms for creating, updating, and
 deleting table prep or recap entries with player-visible or Game-Master-only visibility.
@@ -120,7 +123,7 @@ Local seed users are available for development:
 | Game Master | `gm@example.local` | `password123` |
 | Admin | `admin@example.local` | `password123` |
 
-The seeded Rovnost campaign also includes initial roster, wiki, image asset, session, faction, and character faction-choice records. Image assets store app-managed relative storage keys such as `campaigns/rovnost-shadows/cover.png`; absolute local source paths are rejected by the schema. Hosted preparation writes deterministic placeholder files for seeded campaign assets under `CAMPAIGN_LEDGER_ASSET_ROOT`, falling back to `CHARACTER_SHEET_ASSET_ROOT` for existing environments, and missing seeded files render a readable protected fallback instead of a broken image.
+The seeded Rovnost campaign also includes initial roster, wiki, image asset, session, faction, and character faction-choice records. Image assets store app-managed relative storage keys such as `campaigns/rovnost-shadows/cover.png`; absolute local source paths are rejected by the schema. Hosted preparation writes deterministic placeholder files for seeded campaign assets under `CAMPAIGN_LEDGER_ASSET_ROOT`, falling back to `CHARACTER_SHEET_ASSET_ROOT` for existing environments, and missing seeded files render a readable protected fallback instead of a broken image. To replace seeded placeholders locally, copy the known file to the matching relative path under the asset root; for new table photos, use the Game Master image library upload form.
 
 ## Rename Notes
 
@@ -155,11 +158,11 @@ bun run verify
 
 Hosted account setup stays manual for this epic. Admin-created invite and password-reset links are copied from the admin UI and shared privately by the operator; no email delivery is implied or configured. See [Hosted Account Operator Runbook](./docs/operations/hosted-account-runbook.md).
 
-`bun run test:a11y` starts an in-memory app on an available local port and runs Pa11y against public `/`, `/login`, `/local/characters`, `/local/campaigns`, `/rules`, and `/rules/spell/bless`, player `/characters`, `/sheet/lynott`, `/campaigns/rovnost-shadows/wiki/factions-guide`, `/campaigns/rovnost-shadows/npcs`, and `/logout`, Game Master `/campaigns/rovnost-shadows`, `/campaigns/rovnost-shadows/prep`, `/campaigns/rovnost-shadows/preview/player`, `/campaigns/rovnost-shadows/npcs`, `/campaigns/rovnost-shadows/npcs/magister-vallen`, and `/campaigns/rovnost-shadows/characters`, and admin `/admin`.
+`bun run test:a11y` starts an in-memory app on an available local port and runs Pa11y against public `/`, `/login`, `/local/characters`, `/local/campaigns`, `/rules`, and `/rules/spell/bless`, player `/characters`, `/sheet/lynott`, `/campaigns/rovnost-shadows/wiki/factions-guide`, `/campaigns/rovnost-shadows/npcs`, `/campaigns/rovnost-shadows/images`, and `/logout`, Game Master `/campaigns/rovnost-shadows`, `/campaigns/rovnost-shadows/prep`, `/campaigns/rovnost-shadows/preview/player`, `/campaigns/rovnost-shadows/npcs`, `/campaigns/rovnost-shadows/npcs/magister-vallen`, `/campaigns/rovnost-shadows/images`, `/campaigns/rovnost-shadows/images/asset_magister_vallen`, and `/campaigns/rovnost-shadows/characters`, and admin `/admin`.
 
 `bun run smoke:mvp` starts an in-memory app and walks the seeded group-use workflow: player login, roster character creation, manual sheet editing, resource mutation, player notes, faction selection, every sheet tab fragment, full SRD import, public and signed-in rules browsing, browser-local play export/import, sheet rule links, logout protection, Game Master roster creation, campaign session creation, wiki reads and writes, campaign private rules, protected seeded asset reads, image upload, combined admin campaign access, and admin invite/password-reset handoff.
 
-`bun run screenshots:sheet` captures public home, local play, Lynott's sheet in light and dark mode, core/skills edit states, roll results, Mira spellcasting, the Background tab faction picker, player and admin roster/cards, the Game Master campaign page, prep/NPC workspaces, player preview, player NPC list, campaign assets and rules sources, rules list/detail pages, a wiki page with image references, and edited sheet states. Screenshots are written to `docs/pr-screenshots/` by default for deliberate PR evidence refreshes. Set `SCREENSHOT_DIR` to write them elsewhere.
+`bun run screenshots:sheet` captures public home, local play, Lynott's sheet in light and dark mode, core/skills edit states, roll results, Mira spellcasting, the Background tab faction picker, player and admin roster/cards, the Game Master campaign page, prep/NPC workspaces, image library/detail pages, player preview, player NPC list, campaign assets and rules sources, rules list/detail pages, a wiki page with image references, and edited sheet states. Screenshots are written to `docs/pr-screenshots/` by default for deliberate PR evidence refreshes. Set `SCREENSHOT_DIR` to write them elsewhere.
 
 `bun run import:rules` imports local markdown or JSON rule files from `docs/rules` by default into the configured SQLite database. Pass a path to import one file or directory:
 

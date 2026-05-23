@@ -1109,6 +1109,32 @@ describe("SQLite repositories", () => {
         .listImageAssetsForWikiPage(campaignId, "wiki_rovnost_factions", "gallery", "player")
         .map((asset) => asset.id),
     ).toEqual(["asset_rovnost_factions"]);
+    expect(
+      content.listImageAssetUsages(campaignId, "rovnost-shadows", "asset_skywright_sigil"),
+    ).toEqual([
+      {
+        href: "/campaigns/rovnost-shadows/wiki/factions-guide",
+        id: "wiki_rovnost_factions",
+        label: "Factions Guide",
+        type: "wiki",
+      },
+    ]);
+    expect(
+      content.listImageAssetUsages(campaignId, "rovnost-shadows", "asset_magister_vallen"),
+    ).toEqual([
+      {
+        href: "/campaigns/rovnost-shadows/wiki/gm-dossier",
+        id: "wiki_rovnost_gm_dossier",
+        label: "Rovnost GM Dossier",
+        type: "wiki",
+      },
+      {
+        href: "/campaigns/rovnost-shadows/npcs/magister-vallen",
+        id: "npc_magister_vallen",
+        label: "Magister Vallen",
+        type: "npc",
+      },
+    ]);
 
     expect(content.listSessionsForCampaign(campaignId, "player").map((session) => session.slug)).toEqual([
       "session-zero",

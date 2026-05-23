@@ -383,6 +383,56 @@ export const campaignStyles = /* css */ `
   color: var(--heading-colour);
 }
 
+.campaign-asset-list a {
+  color: var(--heading-colour);
+}
+
+.campaign-image-detail-figure {
+  border: 1px solid var(--border-colour);
+  border-radius: 0.4rem;
+  margin: 0;
+  overflow: hidden;
+}
+
+.campaign-image-detail-figure img {
+  background: var(--stat-background-colour);
+  display: block;
+  max-height: 28rem;
+  object-fit: contain;
+  width: 100%;
+}
+
+.campaign-image-detail-figure figcaption {
+  background: var(--stat-background-colour);
+  color: var(--muted-text-colour);
+  font-weight: 800;
+  padding: 0.65rem 0.75rem;
+}
+
+.campaign-image-metadata {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0;
+}
+
+.campaign-image-metadata div {
+  border-block-start: 1px solid var(--border-colour);
+  display: grid;
+  gap: 0.2rem;
+  padding-block-start: 0.65rem;
+}
+
+.campaign-image-metadata dt {
+  color: var(--muted-text-colour);
+  font-size: 0.8rem;
+  font-weight: 850;
+}
+
+.campaign-image-metadata dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
 .campaign-tag-list {
   display: flex;
   flex-wrap: wrap;
