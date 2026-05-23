@@ -394,18 +394,22 @@ export const campaignStyles = /* css */ `
 }
 
 .campaign-image-detail-figure {
+  background: var(--stat-background-colour);
   border: 1px solid var(--border-colour);
   border-radius: 0.4rem;
+  justify-self: center;
   margin: 0;
+  max-width: 100%;
   overflow: hidden;
+  width: fit-content;
 }
 
 .campaign-image-detail-figure img {
-  background: var(--stat-background-colour);
   display: block;
-  max-height: 28rem;
+  max-height: min(32rem, 72vh);
+  max-width: 100%;
   object-fit: contain;
-  width: 100%;
+  width: auto;
 }
 
 .campaign-image-detail-figure figcaption {
