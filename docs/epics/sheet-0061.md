@@ -26,6 +26,9 @@ opening the full image.
   session notes, NPC dossiers, or draft campaign notes.
 - Preserve source metadata so imported material can be traced back to the original document without
   exposing private Drive URLs to players.
+- Build new generic UI, transport, data lifecycle, and automation plumbing on the adopted Hyper-Dank
+  package contracts where they fit, while keeping campaign-specific domain components and policies
+  local to Campaign Ledger.
 
 ## Non-Goals
 
@@ -117,6 +120,10 @@ without opening SQLite or reading seed code.
 - Add source-import metadata for Google Docs imports: source provider, document id or stable
   reference, source title, import timestamp, imported-by user, conversion notes, and last imported
   revision where available.
+- Prefer the current `@macavitymadcap/hyper-dank-ui`, `@macavitymadcap/hyper-dank-transport`,
+  `@macavitymadcap/hyper-dank-data`, and `@macavitymadcap/hyper-dank-automation` contracts for
+  generic controls, request/response helpers, migration lifecycle boundaries, and verification
+  helpers before adding new app-local framework code.
 - Add route groups, expected as:
   - `/campaigns/:campaignSlug/prep`
   - `/campaigns/:campaignSlug/npcs`
@@ -188,6 +195,8 @@ rebase or recreate it from the accepted roadmap before implementation tickets be
   prose unless it is intentionally safe.
 - Component tests cover NPC lists/cards, reveal controls, image thumbnail cards, image detail views,
   visibility badges, import preview, and player-preview warnings.
+- Compatibility tests keep new shared-package usage behind the accepted public Hyper-Dank package
+  paths and preserve `bun run test:hyper-dank` as a guard against accidental app-local duplication.
 - Smoke coverage proves a Game Master can add a private NPC, attach a portrait, import a document,
   preview as player, reveal the NPC, and confirm the player can now see only the intended content.
 - Accessibility and screenshots cover the prep workspace, NPC workspace, image library, image detail,
@@ -205,6 +214,9 @@ rebase or recreate it from the accepted roadmap before implementation tickets be
   routes. Preview routes must reuse the production visibility checks.
 - NPCs may eventually need full stat blocks, but this epic should start with prep dossiers and link
   to rules/stat-block data where it already exists.
+- Hyper-Dank packages are now in use, so implementation tickets should not reintroduce generic
+  local primitives, request helpers, or script mechanics without first checking the accepted
+  package boundary and documenting why the domain-specific local path is still needed.
 
 ## Acceptance Criteria
 
@@ -220,3 +232,5 @@ rebase or recreate it from the accepted roadmap before implementation tickets be
 - Player preview accurately reflects player-visible campaign content.
 - Documentation explains local asset roots, seeded storage keys, upload behaviour, and Google Docs
   import boundaries.
+- New implementation keeps Campaign Ledger on the accepted Hyper-Dank package import paths wherever
+  shared contracts fit, with app-local code reserved for campaign domain behaviour.

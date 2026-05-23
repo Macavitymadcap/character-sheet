@@ -409,7 +409,7 @@ flowchart LR
     I -- "No" --> J["Epic PR into main"]
 ```
 
-Release automation can be added after the MVP scaffold exists. The group-use MVP is ready for local checkout, seed, verification, table rehearsal, public SRD browsing, browser-local play, campaign private rules, and imported SRD 5.1 rules. `sheet-0020` completed the full SRD rules roadmap slice. `sheet-0030` completed the Railway rehearsal path. `sheet-0050` completed the campaign companion, public play, and rules-content product slice. The next planned roadmap slice is `sheet-0040` for Hyper-Dank package adoption so later product work can reuse shared UI, transport, data, and automation primitives.
+Release automation can be added after the MVP scaffold exists. The group-use MVP is ready for local checkout, seed, verification, table rehearsal, public SRD browsing, browser-local play, campaign private rules, and imported SRD 5.1 rules. `sheet-0020` completed the full SRD rules roadmap slice. `sheet-0030` completed the Railway rehearsal path. `sheet-0050` completed the campaign companion, public play, and rules-content product slice. `sheet-0040` completed Hyper-Dank package adoption, so the next planned roadmap slice is `sheet-0061` for Game Master prep, private NPCs, and content import on top of the adopted shared UI, transport, data, and automation primitives.
 
 ## Design Decisions
 
@@ -419,6 +419,6 @@ Release automation can be added after the MVP scaffold exists. The group-use MVP
 - Local password auth is in scope now; external identity providers are not.
 - Admin invite and password reset flows are local workflows without email delivery in this epic.
 - Live 5e.tools fetching is out of scope; local imports are available through `bun run import:rules`, and `sheet-0020` expanded that path to the full SRD 5.1 local corpus.
-- Character deletion, campaign subpage splitting (`sheet-0037`), wiki-management polish, image-management polish, faction-management UI, production secrets, Postgres, and email delivery are deferred to later epics. Hyper-Dank package adoption is planned as `sheet-0040` before the next large Game Master prep/content-import epic.
+- Character deletion, deeper wiki-management polish, faction-management UI, production secrets, Postgres, and email delivery are deferred to later epics. Hyper-Dank package adoption has landed through `sheet-0040`; the next large Game Master prep/content-import epic should build on those shared package boundaries instead of adding new app-local framework code.
 - British English is required across copy, docs, code naming, and CSS variables.
 - The first implementation sequence is documentation and tickets, then source code through accepted tickets.
