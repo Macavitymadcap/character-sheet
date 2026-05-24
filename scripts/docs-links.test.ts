@@ -10,6 +10,8 @@ const docs = [
   "docs/operations/campaign-companion-acceptance.md",
   "docs/operations/hyper-dank-adoption-acceptance.md",
   "docs/operations/hosted-account-runbook.md",
+  "docs/operations/google-docs-manual-import.md",
+  "docs/project-tracking.md",
   "docs/deployment/railway.md",
   "docs/tickets/sheet-0019.md",
   "docs/tickets/sheet-0037.md",
@@ -144,6 +146,7 @@ describe("documentation references", () => {
     const contributing = await Bun.file("CONTRIBUTING.md").text();
     const architecture = await Bun.file("ARCHITECTURE.md").text();
     const workflowDocs = await Bun.file("docs/operations/github-workflow.md").text();
+    const projectTracking = await Bun.file("docs/project-tracking.md").text();
     const prTemplate = await Bun.file(".github/PULL_REQUEST_TEMPLATE.md").text();
     const epicTemplate = await Bun.file(".github/ISSUE_TEMPLATE/epic.yml").text();
     const ticketTemplate = await Bun.file(".github/ISSUE_TEMPLATE/ticket.yml").text();
@@ -151,16 +154,27 @@ describe("documentation references", () => {
     const followUpTemplate = await Bun.file(".github/ISSUE_TEMPLATE/follow_up.yml").text();
 
     expect(readme).toContain("[GitHub Workflow](./docs/operations/github-workflow.md)");
+    expect(readme).toContain("[Project Tracking](./docs/project-tracking.md)");
     expect(contributing).toContain("[GitHub Workflow](./docs/operations/github-workflow.md)");
+    expect(contributing).toContain("[Project Tracking](./docs/project-tracking.md)");
     expect(architecture).toContain("[GitHub Workflow](./docs/operations/github-workflow.md)");
+    expect(architecture).toContain("[Project Tracking](./docs/project-tracking.md)");
     expect(workflowDocs).toContain("GitHub Issues");
     expect(workflowDocs).toContain("GitHub Projects");
+    expect(workflowDocs).toContain("[Project Tracking](../project-tracking.md)");
+    expect(workflowDocs).toContain("issue-backed items");
     expect(workflowDocs).toContain("Status");
-    expect(workflowDocs).toContain("Backlog");
+    expect(workflowDocs).toContain("Planned");
     expect(workflowDocs).toContain("In progress");
+    expect(workflowDocs).toContain("Blocked");
     expect(workflowDocs).toContain("In review");
     expect(workflowDocs).toContain("Done");
     expect(workflowDocs).toContain("acceptance evidence");
+    expect(projectTracking).toContain("GitHub Issues and GitHub Projects");
+    expect(projectTracking).toContain("operational source of truth");
+    expect(projectTracking).toContain("native sub-issue");
+    expect(projectTracking).toContain("Project auto-add workflow");
+    expect(projectTracking).toContain("Do not bulk-create issues for all historical `sheet-*` docs");
     expect(prTemplate).toContain("Issue:");
     expect(prTemplate).toContain("Project:");
     expect(prTemplate).toContain("Base branch:");
@@ -170,5 +184,19 @@ describe("documentation references", () => {
     expect(ticketTemplate).toContain("type: ticket");
     expect(bugTemplate).toContain("type: bug");
     expect(followUpTemplate).toContain("type: follow-up");
+  });
+
+  test("Google Docs manual import docs describe the provider boundary", async () => {
+    const docs = await Bun.file("docs/operations/google-docs-manual-import.md").text();
+    const readme = await Bun.file("README.md").text();
+    const architecture = await Bun.file("ARCHITECTURE.md").text();
+
+    expect(readme).toContain("[Google Docs Manual Import](./docs/operations/google-docs-manual-import.md)");
+    expect(architecture).toContain("[Google Docs Manual Import](./docs/operations/google-docs-manual-import.md)");
+    expect(docs).toContain("does not connect to Google Drive");
+    expect(docs).toContain("google_docs_manual");
+    expect(docs).toContain("google-doc:<document-id>");
+    expect(docs).toContain("OAuth tokens");
+    expect(docs).toContain("two-way editing");
   });
 });

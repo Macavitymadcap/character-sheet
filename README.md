@@ -4,7 +4,10 @@ A local-first D&D 5e campaign ledger for character sheets, campaign records, and
 
 The first MVP focuses on a small table: player characters, one Game Master, and one admin. It runs locally with SQLite, uses server-rendered HTML fragments for sheet interactions, and stores D&D 2014 rules data in structured database tables rather than treating markdown as the runtime source of truth. The campaign companion work now adds public SRD rules, browser-local play tools, multiple players, multiple campaign characters, local character creation, wiki pages, image assets, factions, faction choices, session records, campaign-scoped private rules, and compact table-use UX.
 
-For the architecture and data model, see [ARCHITECTURE.md](./ARCHITECTURE.md). For the contribution and ticket workflow, see [CONTRIBUTING.md](./CONTRIBUTING.md), with GitHub issue and project conventions in [GitHub Workflow](./docs/operations/github-workflow.md).
+For the architecture and data model, see [ARCHITECTURE.md](./ARCHITECTURE.md). For the contribution
+and ticket workflow, see [CONTRIBUTING.md](./CONTRIBUTING.md), with GitHub issue and project
+conventions in [GitHub Workflow](./docs/operations/github-workflow.md) and the active source-of-truth
+model in [Project Tracking](./docs/project-tracking.md).
 
 ## MVP Scope
 
@@ -93,7 +96,9 @@ filename and path are not stored. The NPC form links back to that image library 
 added as campaign assets before being selected as portraits. The staged import page at
 `/campaigns/rovnost-shadows/imports` lets the Game Master paste exported Markdown or a small HTML
 excerpt, preview safe campaign Markdown, remove private Drive/Docs links, and save the result as a
-wiki page, session record, NPC dossier, or retained draft with source metadata. The player preview route at
+wiki page, session record, NPC dossier, or retained draft with source metadata. The Google Docs
+manual export path at `/campaigns/rovnost-shadows/imports/google-docs` uses that same preview and
+save flow without live Drive credentials; see [Google Docs Manual Import](./docs/operations/google-docs-manual-import.md). The player preview route at
 `/campaigns/rovnost-shadows/preview/player` lets the Game Master audit player-visible wiki pages,
 sessions, NPCs, character notes, and images before a session. The campaign page still lists campaign session records and includes local forms for creating, updating, and
 deleting table prep or recap entries with player-visible or Game-Master-only visibility.
@@ -161,11 +166,11 @@ bun run verify
 
 Hosted account setup stays manual for this epic. Admin-created invite and password-reset links are copied from the admin UI and shared privately by the operator; no email delivery is implied or configured. See [Hosted Account Operator Runbook](./docs/operations/hosted-account-runbook.md).
 
-`bun run test:a11y` starts an in-memory app on an available local port and runs Pa11y against public `/`, `/login`, `/local/characters`, `/local/campaigns`, `/rules`, and `/rules/spell/bless`, player `/characters`, `/sheet/lynott`, `/campaigns/rovnost-shadows/wiki/factions-guide`, `/campaigns/rovnost-shadows/npcs`, `/campaigns/rovnost-shadows/images`, and `/logout`, Game Master `/campaigns/rovnost-shadows`, `/campaigns/rovnost-shadows/prep`, `/campaigns/rovnost-shadows/preview/player`, `/campaigns/rovnost-shadows/npcs`, `/campaigns/rovnost-shadows/npcs/magister-vallen`, `/campaigns/rovnost-shadows/images`, `/campaigns/rovnost-shadows/images/asset_magister_vallen`, `/campaigns/rovnost-shadows/imports`, and `/campaigns/rovnost-shadows/characters`, and admin `/admin`.
+`bun run test:a11y` starts an in-memory app on an available local port and runs Pa11y against public `/`, `/login`, `/local/characters`, `/local/campaigns`, `/rules`, and `/rules/spell/bless`, player `/characters`, `/sheet/lynott`, `/campaigns/rovnost-shadows/wiki/factions-guide`, `/campaigns/rovnost-shadows/npcs`, `/campaigns/rovnost-shadows/images`, and `/logout`, Game Master `/campaigns/rovnost-shadows`, `/campaigns/rovnost-shadows/prep`, `/campaigns/rovnost-shadows/preview/player`, `/campaigns/rovnost-shadows/npcs`, `/campaigns/rovnost-shadows/npcs/magister-vallen`, `/campaigns/rovnost-shadows/images`, `/campaigns/rovnost-shadows/images/asset_magister_vallen`, `/campaigns/rovnost-shadows/imports`, `/campaigns/rovnost-shadows/imports/google-docs`, and `/campaigns/rovnost-shadows/characters`, and admin `/admin`.
 
-`bun run smoke:mvp` starts an in-memory app and walks the seeded group-use workflow: player login, roster character creation, manual sheet editing, resource mutation, player notes, faction selection, every sheet tab fragment, full SRD import, public and signed-in rules browsing, browser-local play export/import, sheet rule links, logout protection, Game Master roster creation, campaign session creation, wiki reads and writes, staged content import, campaign private rules, protected seeded asset reads, image upload, combined admin campaign access, and admin invite/password-reset handoff.
+`bun run smoke:mvp` starts an in-memory app and walks the seeded group-use workflow: player login, roster character creation, manual sheet editing, resource mutation, player notes, faction selection, every sheet tab fragment, full SRD import, public and signed-in rules browsing, browser-local play export/import, sheet rule links, logout protection, Game Master roster creation, campaign session creation, wiki reads and writes, staged content import, Google Docs manual import, campaign private rules, protected seeded asset reads, image upload, combined admin campaign access, and admin invite/password-reset handoff.
 
-`bun run screenshots:sheet` captures public home, local play, Lynott's sheet in light and dark mode, core/skills edit states, roll results, Mira spellcasting, the Background tab faction picker, player and admin roster/cards, the Game Master campaign page, prep/NPC workspaces, image library/detail pages, import form, player preview, player NPC list, campaign assets and rules sources, rules list/detail pages, a wiki page with image references, and edited sheet states. Screenshots are written to `docs/pr-screenshots/` by default for deliberate PR evidence refreshes. Set `SCREENSHOT_DIR` to write them elsewhere.
+`bun run screenshots:sheet` captures public home, local play, Lynott's sheet in light and dark mode, core/skills edit states, roll results, Mira spellcasting, the Background tab faction picker, player and admin roster/cards, the Game Master campaign page, prep/NPC workspaces, image library/detail pages, import form, Google Docs manual import form, player preview, player NPC list, campaign assets and rules sources, rules list/detail pages, a wiki page with image references, and edited sheet states. Screenshots are written to `docs/pr-screenshots/` by default for deliberate PR evidence refreshes. Set `SCREENSHOT_DIR` to write them elsewhere.
 
 `bun run import:rules` imports local markdown or JSON rule files from `docs/rules` by default into the configured SQLite database. Pass a path to import one file or directory:
 

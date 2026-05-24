@@ -386,6 +386,20 @@ describe("sheet screenshot targets", () => {
         theme: "dark",
       },
       {
+        fileName: "gm-google-docs-import-light.png",
+        label: "Game Master Google Docs import light",
+        path: "/campaigns/rovnost-shadows/imports/google-docs",
+        role: "game_master",
+        theme: "light",
+      },
+      {
+        fileName: "gm-google-docs-import-dark.png",
+        label: "Game Master Google Docs import dark",
+        path: "/campaigns/rovnost-shadows/imports/google-docs",
+        role: "game_master",
+        theme: "dark",
+      },
+      {
         action: "scroll-campaign-assets",
         fileName: "gm-campaign-assets-light.png",
         label: "Game Master campaign assets light",

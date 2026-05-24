@@ -7,6 +7,7 @@ export {
   CampaignPlayerPreviewPage,
   CampaignPrepPage,
   CampaignWikiDetailPage,
+  GoogleDocsManualImportPage,
   NpcDetailPage,
   NpcListPage,
 } from "./Campaign";

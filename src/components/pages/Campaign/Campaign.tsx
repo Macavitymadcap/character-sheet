@@ -716,6 +716,7 @@ export const CampaignImportPage = ({ appName, campaign, imports, user }: Campaig
             <h1 id="campaign-import-heading" class="panel-heading">Stage campaign writing</h1>
           </div>
           <p class="campaign-help-text">Paste exported Markdown or a small HTML excerpt, preview the safe campaign Markdown, then save it as a wiki page, session record, NPC dossier, or retained draft.</p>
+          <p class="campaign-help-text"><a href={`/campaigns/${campaign.slug}/imports/google-docs`}>Import a manual Google Docs export</a>.</p>
           <CampaignImportForm campaign={campaign} />
         </Panel>
         <Panel labelledBy="campaign-imports-recent-heading">
@@ -744,6 +745,39 @@ export const CampaignImportPage = ({ appName, campaign, imports, user }: Campaig
   </Layout>
 );
 
+export const GoogleDocsManualImportPage = ({ appName, campaign, user }: CampaignImportBaseProps) => (
+  <Layout title={`Google Docs import - ${campaign.name} - ${appName}`}>
+    <div class="shell campaign-shell">
+      <SiteHeader appName={appName} currentSection="campaign" user={user} />
+      <main class="campaign-main" aria-labelledby="campaign-google-docs-import-heading">
+        <Panel labelledBy="campaign-google-docs-import-heading">
+          <a class="action-link" href={`/campaigns/${campaign.slug}/imports`}>Back to imports</a>
+          <div class="campaign-heading">
+            <p class="campaign-kicker">Google Docs manual export</p>
+            <h1 id="campaign-google-docs-import-heading" class="panel-heading">Import Google writing</h1>
+          </div>
+          <p class="campaign-help-text">Enter the document title and stable reference, paste the exported Markdown or HTML, then continue to the standard campaign import preview. This does not connect to Google Drive or sync changes.</p>
+          <form class="campaign-session-form" action={`/campaigns/${campaign.slug}/imports/preview`} method="post">
+            <input name="provider" type="hidden" value="google_docs_manual" />
+            <label>Google Docs title<input name="sourceTitle" required type="text" /></label>
+            <label>Document reference<input name="sourceReference" required type="text" /></label>
+            <label>Export format<select name="sourceFormat"><option value="markdown">Markdown</option><option value="html">HTML</option></select></label>
+            <label>Target<select name="targetType">
+              <option value="wiki">Wiki page</option>
+              <option value="session">Session record</option>
+              <option value="npc">NPC dossier</option>
+              <option value="draft">Retained draft</option>
+            </select></label>
+            <label>Visibility<select name="visibility"><option value="game_master">Game Master</option><option value="player">Player</option></select></label>
+            <label class="campaign-session-form-wide">Exported content<textarea name="content" required rows={12}></textarea></label>
+            <button type="submit">Preview Google import</button>
+          </form>
+        </Panel>
+      </main>
+    </div>
+  </Layout>
+);
+
 interface CampaignImportPreviewPageProps extends CampaignImportBaseProps {
   preview: CampaignImportPreviewModel;
 }
@@ -762,6 +796,7 @@ export const CampaignImportPreviewPage = ({ appName, campaign, preview, user }: 
           <div class="campaign-asset-status">
             <span>{importTargetLabel(preview.targetType)}</span>
             <span>{preview.visibility === "player" ? "Player visible" : "Game Master only"}</span>
+            <span>{importProviderLabel(preview.provider)}</span>
             <span>{preview.sourceFormat.toUpperCase()} source</span>
           </div>
           {preview.warnings.length > 0 ? (
@@ -835,6 +870,10 @@ function importTargetLabel(targetType: CampaignImportTargetType) {
   if (targetType === "wiki") return "Wiki page";
 
   return "Retained draft";
+}
+
+function importProviderLabel(provider: CampaignContentImport["provider"]) {
+  return provider === "google_docs_manual" ? "Google Docs manual" : "Manual import";
 }
 
 interface NpcDetailPageProps {

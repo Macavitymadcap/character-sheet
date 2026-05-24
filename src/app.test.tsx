@@ -1644,6 +1644,91 @@ describe("createApp", () => {
     )).toBe(true);
   });
 
+  test("lets Game Masters preview manual Google Docs exports through staged imports", async () => {
+    const { app, sessionService } = createTestApp("Campaign Ledger");
+    const gmCookie = sessionService.createSession("user_game_master").cookie;
+    const playerCookie = sessionService.createSession("user_lynott_player").cookie;
+
+    const page = await app.request("/campaigns/rovnost-shadows/imports/google-docs", {
+      headers: { cookie: gmCookie },
+    });
+    const preview = await app.request("/campaigns/rovnost-shadows/imports/preview", {
+      body: new URLSearchParams({
+        content: "<h1>Clockwork Canal</h1><p>See https://docs.google.com/document/d/private-id/edit</p><p>Imported from export.</p>",
+        provider: "google_docs_manual",
+        sourceFormat: "html",
+        sourceReference: "https://docs.google.com/document/d/manual-doc-123/edit",
+        sourceTitle: "Clockwork Canal Export",
+        targetType: "wiki",
+        visibility: "player",
+      }),
+      headers: formHeaders(gmCookie),
+      method: "POST",
+    });
+    const previewHtml = await preview.text();
+    const save = await app.request("/campaigns/rovnost-shadows/imports/save", {
+      body: new URLSearchParams({
+        conversionNotes: "Private Google Drive or Docs links were removed from the converted content.",
+        convertedMarkdown: "# Clockwork Canal\n\nSee [private source link removed]\n\nImported from export.",
+        provider: "google_docs_manual",
+        sourceFormat: "html",
+        sourceReference: "https://docs.google.com/document/d/manual-doc-123/edit",
+        sourceTitle: "Clockwork Canal Export",
+        targetType: "wiki",
+        title: "Clockwork Canal",
+        visibility: "player",
+      }),
+      headers: formHeaders(gmCookie),
+      method: "POST",
+    });
+    const playerPage = await app.request("/campaigns/rovnost-shadows/wiki/clockwork-canal", {
+      headers: { cookie: playerCookie },
+    });
+    const playerHtml = await playerPage.text();
+    const imports = runtime?.repositories.campaignContentRepository.listContentImportsForCampaign(
+      "campaign_rovnost_shadows",
+    ) ?? [];
+    const recorded = imports.find((item) => item.sourceTitle === "Clockwork Canal Export");
+
+    expect(page.status).toBe(200);
+    expect(await page.text()).toContain("Google Docs manual export");
+    expect(preview.status).toBe(200);
+    expect(previewHtml).toContain("Google Docs manual");
+    expect(previewHtml).toContain("Private Google Drive or Docs links were removed");
+    expect(previewHtml).not.toContain("docs.google.com");
+    expect(save.status).toBe(303);
+    expect(playerPage.status).toBe(200);
+    expect(playerHtml).toContain("Imported from export.");
+    expect(playerHtml).not.toContain("docs.google.com");
+    expect(recorded).toMatchObject({
+      provider: "google_docs_manual",
+      sourceReference: "google-doc:manual-doc-123",
+      targetType: "wiki",
+      visibility: "player",
+    });
+  });
+
+  test("rejects incomplete manual Google Docs imports before preview", async () => {
+    const { app, sessionService } = createTestApp("Campaign Ledger");
+    const gmCookie = sessionService.createSession("user_game_master").cookie;
+
+    const response = await app.request("/campaigns/rovnost-shadows/imports/preview", {
+      body: new URLSearchParams({
+        content: "# Missing Reference",
+        provider: "google_docs_manual",
+        sourceFormat: "markdown",
+        sourceTitle: "Missing Reference",
+        targetType: "wiki",
+        visibility: "game_master",
+      }),
+      headers: formHeaders(gmCookie),
+      method: "POST",
+    });
+
+    expect(response.status).toBe(400);
+    expect(await response.text()).toContain("Invalid Google Docs import");
+  });
+
   test("serves a readable fallback for missing seeded campaign asset files", async () => {
     const { app, sessionService } = createTestApp("Campaign Ledger");
     const playerCookie = sessionService.createSession("user_lynott_player").cookie;

@@ -7,7 +7,11 @@ import {
 } from "@macavitymadcap/hyper-dank-transport";
 import { Hono, type Context } from "hono";
 import { assetStorageRoot } from "./assets";
-import { convertCampaignImportContent } from "./campaigns/imports";
+import {
+  convertCampaignImportContent,
+  normaliseGoogleDocsReference,
+  prepareGoogleDocsManualImport,
+} from "./campaigns/imports";
 import {
   AuthService,
   requireCampaignAccess,
@@ -28,6 +32,7 @@ import {
   CampaignPlayerPreviewPage,
   CampaignPrepPage,
   CampaignWikiDetailPage,
+  GoogleDocsManualImportPage,
   NpcDetailPage,
   NpcListPage,
 } from "./components/pages/Campaign";
@@ -721,6 +726,33 @@ export const createApp = (dependencies: AppDependencies) => {
         appName={dependencies.appName}
         campaign={campaign}
         imports={dependencies.campaignContentRepository.listContentImportsForCampaign(campaign.id)}
+        user={session.user}
+      />,
+    );
+  });
+
+  app.get("/campaigns/:campaignSlug/imports/google-docs", (context) => {
+    const session = readSession(context.req.header("cookie"));
+    if (!session) return context.redirect("/login", 303);
+
+    const campaign = dependencies.campaignRepository.getCampaignBySlug(
+      routeParam(context, "campaignSlug"),
+    );
+    if (!campaign) return context.text("Not found", 404);
+
+    const guard = requireCampaignAccess({
+      campaignId: campaign.id,
+      campaignRepository: dependencies.campaignRepository,
+      permission: "manage",
+      session,
+    });
+    const guarded = guardResponse(context, guard);
+    if (guarded) return guarded;
+
+    return context.html(
+      <GoogleDocsManualImportPage
+        appName={dependencies.appName}
+        campaign={campaign}
         user={session.user}
       />,
     );
@@ -2989,19 +3021,45 @@ function parseCampaignImportPreviewForm(
   };
 } | { ok: false; message: string } {
   const content = form.string("content")?.trim();
+  const provider = parseCampaignImportProvider(form.optionalString("provider") ?? "manual");
   const sourceTitle = form.string("sourceTitle")?.trim();
   const sourceFormat = parseCampaignImportSourceFormat(form.string("sourceFormat"));
   const targetType = parseCampaignImportTargetType(form.string("targetType"));
   const visibility = parseNoteVisibility(form.string("visibility"));
-  if (!content || !sourceFormat || !targetType || !visibility) {
+  if (!content || !provider || !sourceFormat || !targetType || !visibility) {
     return { ok: false, message: "Invalid import preview" };
+  }
+  if (provider === "google_docs_manual") {
+    try {
+      const prepared = prepareGoogleDocsManualImport({
+        documentReference: form.optionalString("sourceReference") ?? "",
+        documentTitle: sourceTitle ?? "",
+        exportedContent: content,
+        sourceFormat,
+      });
+
+      return {
+        ok: true,
+        value: {
+          content: prepared.content,
+          provider: prepared.provider,
+          sourceFormat: prepared.sourceFormat,
+          sourceReference: prepared.sourceReference,
+          sourceTitle: prepared.sourceTitle,
+          targetType,
+          visibility,
+        },
+      };
+    } catch {
+      return { ok: false, message: "Invalid Google Docs import" };
+    }
   }
 
   return {
     ok: true,
     value: {
       content,
-      provider: "manual",
+      provider,
       sourceFormat,
       sourceReference: form.optionalString("sourceReference")?.trim() || null,
       sourceTitle: sourceTitle || "",
@@ -3037,6 +3095,13 @@ function parseCampaignImportSaveForm(
   if (!title || !convertedMarkdown || !provider || !sourceFormat || !sourceTitle || !targetType || !visibility) {
     return { ok: false, message: "Invalid import save" };
   }
+  const sourceReference = form.optionalString("sourceReference")?.trim() || null;
+  const normalisedSourceReference = provider === "google_docs_manual" && sourceReference
+    ? normaliseGoogleDocsReference(sourceReference)
+    : sourceReference;
+  if (provider === "google_docs_manual" && !normalisedSourceReference) {
+    return { ok: false, message: "Invalid Google Docs import" };
+  }
   const cleaned = convertCampaignImportContent({
     content: convertedMarkdown,
     sourceFormat: "markdown",
@@ -3054,7 +3119,7 @@ function parseCampaignImportSaveForm(
       convertedMarkdown: cleaned.convertedMarkdown,
       provider,
       sourceFormat,
-      sourceReference: form.optionalString("sourceReference")?.trim() || null,
+      sourceReference: normalisedSourceReference,
       sourceTitle,
       targetType,
       title,
