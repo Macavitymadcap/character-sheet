@@ -1,8 +1,9 @@
 # GitHub Workflow
 
 Campaign Ledger uses the Hyper-Dank-style GitHub workflow for epics, tickets, pull requests,
-project tracking, and acceptance handoff. Markdown planning docs remain the durable source of truth,
-while GitHub Issues and GitHub Projects show the current delivery state.
+project tracking, and acceptance handoff. GitHub Issues plus issue-backed GitHub Project items are
+the operational source of truth for active work. Markdown planning docs remain durable records for
+accepted briefs, architecture, and historical implementation detail.
 
 ## Issue Types
 
@@ -14,7 +15,8 @@ Use the source-backed issue forms in `.github/ISSUE_TEMPLATE/`:
 - `Follow-up` for non-blocking work found during review, audit, or acceptance.
 
 Every issue should include its `sheet-*` identifier when one exists. Ticket issues should link the
-parent epic issue and the durable Markdown ticket in `docs/tickets/`.
+parent epic issue through GitHub's native parent/sub-issue relationship when possible, and can also
+link a durable Markdown ticket in `docs/tickets/` when that record exists.
 
 ## Branches And Pull Requests
 
@@ -36,24 +38,34 @@ GitHub can connect the PR to the issue.
 
 ## GitHub Projects
 
-The project board should use these fields. If GitHub Project automation cannot be fully configured
-from the repository, maintainers should set or audit the fields manually.
+The project board should use issue-backed items, not standalone tracking rows. If GitHub Project
+automation cannot be fully configured from the repository, maintainers should set or audit the
+fields manually. See [Project Tracking](../project-tracking.md) for the full field model, labels,
+views, and rollout rules.
 
 | Field | Expected values |
 | --- | --- |
-| `Status` | `Backlog`, `Ready`, `In progress`, `In review`, `Done` |
-| `Type` | `Epic`, `Ticket`, `Bug`, `Follow-up` |
-| `Priority` | `P3`, `P2`, `P1`, `P0` |
-| `Epic` | Parent `sheet-*` identifier or linked epic issue |
-| `Target branch` | `main`, `sheet-0061`, or another accepted base |
+| `Status` | `Triage`, `Planned`, `Ready`, `In progress`, `Blocked`, `In review`, `Merged`, `Done`, `Closed` |
+| `Parent issue` | GitHub's built-in parent issue relationship |
+| `Sub-issues progress` | GitHub's built-in progress field for epic issues |
+| `Parent epic` | Parent `sheet-*` identifier mirror for filters and old views |
+| `Base branch` | `main`, `sheet-0061`, or another accepted PR base |
+| `Branch` | Work branch once implementation starts |
+| `PR` | Pull request URL once opened |
+| `Type` | `Epic`, `Ticket`, `Bug`, `Audit`, `Follow-up` |
+| `Area` | `UI`, `Data`, `Transport`, `Automation`, `Docs`, `Workflow` |
+| `Priority` | `P0`, `P1`, `P2`, `P3` |
+| `Verification` | `Not started`, `Narrow checks`, `Verify passed`, `CI passed`, `Blocked` |
 
 Suggested status flow:
 
-1. `Backlog`: issue exists but is not ready to start.
+1. `Triage` or `Planned`: issue exists but is not ready to start.
 2. `Ready`: ticket has accepted scope and a clear base branch.
 3. `In progress`: implementation branch exists.
-4. `In review`: PR is open and linked.
-5. `Done`: PR is merged and acceptance evidence is recorded.
+4. `Blocked`: work is waiting on a decision, credential, dependency, or external action.
+5. `In review`: PR is open and linked.
+6. `Merged`: PR has merged but final acceptance or release notes are still being recorded.
+7. `Done`: acceptance evidence is recorded and no blocking handoff remains.
 
 ## Acceptance Evidence
 

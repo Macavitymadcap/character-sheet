@@ -32,7 +32,7 @@ remaining work has a named owner outside this epic.
 
 ## Interfaces
 
-- `docs/operations/game-master-prep-acceptance.md`.
+- [Game Master Prep Acceptance](../operations/game-master-prep-acceptance.md).
 - README, architecture, contributing, and ticket docs.
 - Smoke, Pa11y, screenshot, and docs-link tests.
 - PR body screenshot evidence and GitHub issue/project links for the epic.

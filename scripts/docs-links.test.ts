@@ -9,6 +9,7 @@ const docs = [
   "docs/operations/hosted-rehearsal-acceptance.md",
   "docs/operations/campaign-companion-acceptance.md",
   "docs/operations/hyper-dank-adoption-acceptance.md",
+  "docs/operations/game-master-prep-acceptance.md",
   "docs/operations/hosted-account-runbook.md",
   "docs/operations/google-docs-manual-import.md",
   "docs/project-tracking.md",
@@ -198,5 +199,23 @@ describe("documentation references", () => {
     expect(docs).toContain("google-doc:<document-id>");
     expect(docs).toContain("OAuth tokens");
     expect(docs).toContain("two-way editing");
+  });
+
+  test("Game Master prep acceptance records delivered scope and GitHub handoff", async () => {
+    const acceptance = await Bun.file("docs/operations/game-master-prep-acceptance.md").text();
+    const readme = await Bun.file("README.md").text();
+    const architecture = await Bun.file("ARCHITECTURE.md").text();
+    const ticket = await Bun.file("docs/tickets/sheet-0069.md").text();
+
+    expect(readme).toContain("[Game Master Prep Acceptance](./docs/operations/game-master-prep-acceptance.md)");
+    expect(architecture).toContain("[Game Master Prep Acceptance](./docs/operations/game-master-prep-acceptance.md)");
+    expect(ticket).toContain("[Game Master Prep Acceptance](../operations/game-master-prep-acceptance.md)");
+    expect(acceptance).toContain("private, public, and selected-player visibility");
+    expect(acceptance).toContain("Google Docs writing can be imported through the manual-export path");
+    expect(acceptance).toContain("bun run verify");
+    expect(acceptance).toContain("bun run test:hyper-dank");
+    expect(acceptance).toContain("Campaign Ledger GitHub Project");
+    expect(acceptance).toContain("#78");
+    expect(acceptance).toContain("Production Google Drive OAuth");
   });
 });

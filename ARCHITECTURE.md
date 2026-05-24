@@ -425,6 +425,9 @@ The accessibility script currently checks public `/`, `/login`, `/local/characte
 [Hyper-Dank Adoption Acceptance](./docs/operations/hyper-dank-adoption-acceptance.md) records the
 completed `sheet-0040` package-adoption checklist, compatibility coverage, visual evidence, and
 remaining app-owned boundaries.
+[Game Master Prep Acceptance](./docs/operations/game-master-prep-acceptance.md) records the
+completed `sheet-0061` Game Master prep, private NPC, image, player-preview, staged-import, Google
+Docs manual import, and GitHub Project handoff evidence.
 
 ## Pipeline
 
@@ -444,7 +447,7 @@ flowchart LR
     I -- "No" --> J["Epic PR into main"]
 ```
 
-Release automation can be added after the MVP scaffold exists. The group-use MVP is ready for local checkout, seed, verification, table rehearsal, public SRD browsing, browser-local play, campaign private rules, and imported SRD 5.1 rules. `sheet-0020` completed the full SRD rules roadmap slice. `sheet-0030` completed the Railway rehearsal path. `sheet-0050` completed the campaign companion, public play, and rules-content product slice. `sheet-0040` completed Hyper-Dank package adoption, so the next planned roadmap slice is `sheet-0061` for Game Master prep, private NPCs, and content import on top of the adopted shared UI, transport, data, and automation primitives.
+Release automation can be added after the MVP scaffold exists. The group-use MVP is ready for local checkout, seed, verification, table rehearsal, public SRD browsing, browser-local play, campaign private rules, imported SRD 5.1 rules, Game Master prep, private NPC dossiers, local campaign images, player preview, staged content import, and manual Google Docs import. `sheet-0020` completed the full SRD rules roadmap slice. `sheet-0030` completed the Railway rehearsal path. `sheet-0050` completed the campaign companion, public play, and rules-content product slice. `sheet-0040` completed Hyper-Dank package adoption. `sheet-0061` completes Game Master prep, private NPCs, content import, and GitHub Project workflow on top of the adopted shared UI, transport, data, and automation primitives.
 
 ## Design Decisions
 
