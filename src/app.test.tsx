@@ -348,12 +348,17 @@ describe("createApp", () => {
 
     const ready = await app.request("/rules?type=condition&q=grappled");
     const readyHtml = await ready.text();
+    const readyDetail = await app.request("/rules/spell/bless");
+    const readyDetailHtml = await readyDetail.text();
 
     expect(ready.status).toBe(200);
     expect(readyHtml).toContain("Full corpus imported");
     expect(readyHtml).toContain("searchable public SRD entries are available");
     expect(readyHtml).toContain('<a href="/rules?type=spell">Spells</a>');
     expect(readyHtml).toContain("Grappled");
+    expect(readyDetail.status).toBe(200);
+    expect(readyDetailHtml).toContain("<dt>Classes</dt>");
+    expect(readyDetailHtml).toContain("<dd>Cleric, Paladin</dd>");
   });
 
   test("serves campaign-scoped private rules only to campaign members", async () => {

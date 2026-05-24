@@ -227,7 +227,13 @@ function renderMechanicData(data: Record<string, unknown>) {
       {description ? <p>{description}</p> : null}
       <dl>
         {entries
-          .filter(([key, value]) => key !== "description" && value !== "" && value !== null && value !== undefined)
+          .filter(([key, value]) =>
+            key !== "description" &&
+            value !== "" &&
+            value !== null &&
+            value !== undefined &&
+            (!Array.isArray(value) || value.length > 0)
+          )
           .map(([key, value]) => (
             <div>
               <dt>{formatMechanicLabel(key)}</dt>
