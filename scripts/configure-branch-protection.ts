@@ -12,7 +12,7 @@ const bootstrap = args.includes("--bootstrap");
 const positionalArgs = args.filter((arg) => arg !== "--bootstrap");
 const repoArg = positionalArgs[0]?.includes("/") ? positionalArgs.shift() : undefined;
 const repo = repoArg ? parseGitHubRepo(repoArg) : getGitHubRepo();
-const branches = positionalArgs.length > 0 ? positionalArgs : ["main", "sheet-0001"];
+const branches = positionalArgs.length > 0 ? positionalArgs : ["main"];
 const configFile = bootstrap
   ? ".github/branch-protection-bootstrap.json"
   : ".github/branch-protection.json";

@@ -20,14 +20,17 @@ link a durable Markdown ticket in `docs/tickets/` when that record exists.
 
 ## Branches And Pull Requests
 
-Use the existing documentation-first branch flow:
+Use the existing documentation-first branch flow with feature branches under `feat/`. GitHub Actions
+run CI for pull requests targeting `main` or any `feat/**` branch, and for pushes to those branches.
+The branch-protection script configures `main` by default; pass an explicit `feat/sheet-*` branch
+when creating or refreshing protection for an active epic integration branch.
 
 | Work type | Branch | Pull request base |
 | --- | --- | --- |
-| Epic planning | `codex/plan-sheet-0061-*` or `sheet-0061` | `main` |
-| Accepted epic integration | `sheet-0061` | Final epic PR targets `main` |
-| Ticket implementation | `codex/sheet-0062-*` | Active epic branch, for example `sheet-0061` |
-| Urgent fix outside an epic | `codex/fix-*` | `main` |
+| Epic planning | `feat/plan-sheet-0061-*` or `feat/sheet-0061` | `main` |
+| Accepted epic integration | `feat/sheet-0061` | Final epic PR targets `main` |
+| Ticket implementation | `feat/sheet-0062-*` | Active epic branch, for example `feat/sheet-0061` |
+| Urgent fix outside an epic | `feat/fix-*` | `main` |
 
 Ticket PRs should keep their scope to the accepted ticket. When a ticket reveals extra work, open a
 follow-up issue instead of expanding the PR quietly.
@@ -49,7 +52,7 @@ views, and rollout rules.
 | `Parent issue` | GitHub's built-in parent issue relationship |
 | `Sub-issues progress` | GitHub's built-in progress field for epic issues |
 | `Parent epic` | Parent `sheet-*` identifier mirror for filters and old views |
-| `Base branch` | `main`, `sheet-0061`, or another accepted PR base |
+| `Base branch` | `main`, `feat/sheet-0061`, or another accepted PR base |
 | `Branch` | Work branch once implementation starts |
 | `PR` | Pull request URL once opened |
 | `Type` | `Epic`, `Ticket`, `Bug`, `Audit`, `Follow-up` |
