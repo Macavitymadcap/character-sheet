@@ -449,12 +449,28 @@ export const sheetScreenshotTargets = [
     theme: "light",
   },
   {
+    action: "scroll-rules-results",
+    fileName: "rules-spells-dark.png",
+    label: "Public rules spell list dark",
+    path: "/rules?type=spell&level=1",
+    role: "public",
+    theme: "dark",
+  },
+  {
     action: "scroll-rule-detail",
     fileName: "rules-bless.png",
     label: "Public Rules Bless detail",
     path: "/rules/spell/bless",
     role: "public",
     theme: "light",
+  },
+  {
+    action: "scroll-rule-detail",
+    fileName: "rules-bless-dark.png",
+    label: "Public Rules Bless detail dark",
+    path: "/rules/spell/bless",
+    role: "public",
+    theme: "dark",
   },
   {
     fileName: "lynott-edited-sheet.png",

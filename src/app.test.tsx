@@ -284,6 +284,8 @@ describe("createApp", () => {
     });
 
     expect(publicList.status).toBe(200);
+    expect(publicListHtml).toContain("SRD corpus partially imported");
+    expect(publicListHtml).toContain("bun run import:rules:srd");
     expect(publicListHtml).toContain("Bless");
     expect(publicListHtml).toContain("SRD");
     expect(publicListHtml).toContain("Visitor");
@@ -323,6 +325,34 @@ describe("createApp", () => {
     expect(typeRedirect.status).toBe(303);
     expect(typeRedirect.headers.get("location")).toBe("/rules?type=spell");
     expect(missing.status).toBe(404);
+  });
+
+  test("explains partial and full SRD import states on public rules pages", async () => {
+    const { app } = createTestApp("Campaign Ledger");
+
+    const partial = await app.request("/rules?type=spell&q=bless");
+    const partialHtml = await partial.text();
+    const partialDetail = await app.request("/rules/spell/bless");
+
+    expect(partial.status).toBe(200);
+    expect(partialHtml).toContain("SRD corpus partially imported");
+    expect(partialHtml).toContain("0 searchable SRD entries");
+    expect(partialHtml).toContain("No imported SRD rules match this view yet.");
+    expect(partialHtml).toContain("bun run import:rules:srd");
+    expect(partialHtml).not.toContain("<h3><a href=\"/rules/spell/bless\">Bless</a></h3>");
+    expect(partialDetail.status).toBe(404);
+
+    const importer = new RulesImportService(runtime!.repositories.rulesSeedRepository);
+    await importer.importFromLocalSource("docs/rules/srd-5.1");
+
+    const ready = await app.request("/rules?type=condition&q=grappled");
+    const readyHtml = await ready.text();
+
+    expect(ready.status).toBe(200);
+    expect(readyHtml).toContain("Full corpus imported");
+    expect(readyHtml).toContain("searchable public SRD entries are available");
+    expect(readyHtml).toContain('<a href="/rules?type=spell">Spells</a>');
+    expect(readyHtml).toContain("Grappled");
   });
 
   test("serves campaign-scoped private rules only to campaign members", async () => {

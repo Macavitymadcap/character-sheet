@@ -34,6 +34,9 @@ describe("hosted data operations", () => {
     const database = new Database(databasePath, { readonly: true });
     expect(database.query("select count(*) as count from users").get()).toEqual({ count: 6 });
     expect(database.query("select count(*) as count from characters").get()).toEqual({ count: 2 });
+    expect(database.query("select count(*) as count from rule_mechanics").get()).toEqual({ count: 1773 });
+    expect(database.query("select count(*) as count from rules_entities where source_id = ?").get("rules_source_srd_5_1"))
+      .toEqual({ count: 1773 });
     expect(database.query("select storage_key as storageKey from campaign_image_assets where id = ?").get("asset_skywright_sigil"))
       .toEqual({ storageKey: "campaigns/rovnost-shadows/skywright-sigil.png" });
     expect((await stat(join(assetRoot, "campaigns/rovnost-shadows/skywright-sigil.png"))).size).toBeGreaterThan(0);

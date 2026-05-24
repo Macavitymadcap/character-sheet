@@ -81,6 +81,7 @@ import type {
   NpcVisibility,
   RuleSummary,
   RuleEntityType,
+  RuleEntityTypeCount,
   RuleSearchFilters,
   RulesRepository,
   UserRole,
@@ -184,13 +185,17 @@ export const createApp = (dependencies: AppDependencies) => {
     const filters = parseRuleFilters(context);
     const accessFilters = ruleAccessFilters(dependencies, session);
     const rulesFilters = { ...filters, ...accessFilters };
+    const srdCounts = dependencies.rulesRepository.listRuleEntityTypes({ contentCategory: "srd" });
+    const srdRules = dependencies.rulesRepository.listRules({ contentCategory: "srd" });
+    const importState = createSrdImportState(srdCounts, srdRules);
 
     return context.html(
       <RulesPage
         appName={dependencies.appName}
         counts={dependencies.rulesRepository.listRuleEntityTypes(accessFilters)}
         filters={filters}
-        rules={dependencies.rulesRepository.listRules(rulesFilters)}
+        importState={importState}
+        rules={dependencies.rulesRepository.listRules(rulesFilters).filter(isBrowseableRule)}
         user={session?.user}
       />,
     );
@@ -205,12 +210,16 @@ export const createApp = (dependencies: AppDependencies) => {
     const accessFilters = ruleAccessFilters(dependencies, session);
     const rule = dependencies.rulesRepository.getRuleDetail(entityType, routeParam(context, "slug"), accessFilters);
     if (!rule) return context.text("Not found", 404);
+    if (rule.contentCategory === "srd" && !isBrowseableRule(rule)) return context.text("Not found", 404);
+    const srdCounts = dependencies.rulesRepository.listRuleEntityTypes({ contentCategory: "srd" });
+    const srdRules = dependencies.rulesRepository.listRules({ contentCategory: "srd" });
 
     return context.html(
       <RulesDetailPage
         appName={dependencies.appName}
         counts={dependencies.rulesRepository.listRuleEntityTypes(accessFilters)}
         filters={parseRuleFilters(context)}
+        importState={createSrdImportState(srdCounts, srdRules)}
         rule={rule}
         user={session?.user}
       />,
@@ -2640,6 +2649,24 @@ function statBlockRulesForCampaign(dependencies: AppDependencies, campaignId: st
     campaignIds: [campaignId],
     entityType: "stat_block",
   });
+}
+
+function createSrdImportState(counts: RuleEntityTypeCount[], rules: RuleSummary[]) {
+  const totalRules = counts.reduce((total, count) => total + count.count, 0);
+  const searchableRules = rules.filter(isBrowseableRule).length;
+
+  return {
+    categories: counts.length,
+    command: "bun run import:rules:srd",
+    searchableRules,
+    sourcePath: "docs/rules/srd-5.1",
+    status: totalRules === 0 ? "empty" : searchableRules >= 100 ? "ready" : "partial",
+    totalRules,
+  } as const;
+}
+
+function isBrowseableRule(rule: RuleSummary) {
+  return rule.contentCategory !== "srd" || rule.description.trim() !== "" || rule.tags.length > 0;
 }
 
 function campaignFactionsForSheet(dependencies: AppDependencies, characterId: string) {
