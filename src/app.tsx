@@ -185,6 +185,7 @@ export const createApp = (dependencies: AppDependencies) => {
     const filters = parseRuleFilters(context);
     const accessFilters = ruleAccessFilters(dependencies, session);
     const rulesFilters = { ...filters, ...accessFilters };
+    const accessibleRules = dependencies.rulesRepository.listRules(accessFilters).filter(isBrowseableRule);
     const srdCounts = dependencies.rulesRepository.listRuleEntityTypes({ contentCategory: "srd" });
     const srdRules = dependencies.rulesRepository.listRules({ contentCategory: "srd" });
     const importState = createSrdImportState(srdCounts, srdRules);
@@ -192,7 +193,7 @@ export const createApp = (dependencies: AppDependencies) => {
     return context.html(
       <RulesPage
         appName={dependencies.appName}
-        counts={dependencies.rulesRepository.listRuleEntityTypes(accessFilters)}
+        counts={createRuleEntityTypeCounts(accessibleRules)}
         filters={filters}
         importState={importState}
         rules={dependencies.rulesRepository.listRules(rulesFilters).filter(isBrowseableRule)}
@@ -213,11 +214,12 @@ export const createApp = (dependencies: AppDependencies) => {
     if (rule.contentCategory === "srd" && !isBrowseableRule(rule)) return context.text("Not found", 404);
     const srdCounts = dependencies.rulesRepository.listRuleEntityTypes({ contentCategory: "srd" });
     const srdRules = dependencies.rulesRepository.listRules({ contentCategory: "srd" });
+    const accessibleRules = dependencies.rulesRepository.listRules(accessFilters).filter(isBrowseableRule);
 
     return context.html(
       <RulesDetailPage
         appName={dependencies.appName}
-        counts={dependencies.rulesRepository.listRuleEntityTypes(accessFilters)}
+        counts={createRuleEntityTypeCounts(accessibleRules)}
         filters={parseRuleFilters(context)}
         importState={createSrdImportState(srdCounts, srdRules)}
         rule={rule}
@@ -2663,6 +2665,17 @@ function createSrdImportState(counts: RuleEntityTypeCount[], rules: RuleSummary[
     status: totalRules === 0 ? "empty" : searchableRules >= 100 ? "ready" : "partial",
     totalRules,
   } as const;
+}
+
+function createRuleEntityTypeCounts(rules: RuleSummary[]): RuleEntityTypeCount[] {
+  const counts = new Map<RuleEntityType, number>();
+  for (const rule of rules) {
+    counts.set(rule.entityType, (counts.get(rule.entityType) ?? 0) + 1);
+  }
+
+  return Array.from(counts.entries())
+    .map(([entityType, count]) => ({ count, entityType }))
+    .sort((left, right) => left.entityType.localeCompare(right.entityType));
 }
 
 function isBrowseableRule(rule: RuleSummary) {

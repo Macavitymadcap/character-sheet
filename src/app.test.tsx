@@ -339,6 +339,7 @@ describe("createApp", () => {
     expect(partialHtml).toContain("0 searchable SRD entries");
     expect(partialHtml).toContain("No imported SRD rules match this view yet.");
     expect(partialHtml).toContain("bun run import:rules:srd");
+    expect(partialHtml).not.toContain("Spell (8)");
     expect(partialHtml).not.toContain("<h3><a href=\"/rules/spell/bless\">Bless</a></h3>");
     expect(partialDetail.status).toBe(404);
 
