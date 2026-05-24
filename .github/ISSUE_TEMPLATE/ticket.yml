@@ -52,7 +52,7 @@ body:
     attributes:
       label: Base branch
       description: Ticket PRs normally target the active epic branch.
-      placeholder: sheet-0061
+      placeholder: feat/sheet-0061
     validations:
       required: true
   - type: input
@@ -60,7 +60,7 @@ body:
     attributes:
       label: Work branch
       description: Planned branch name once work starts.
-      placeholder: codex/sheet-0062-github-workflow
+      placeholder: feat/sheet-0062-github-workflow
   - type: textarea
     id: acceptance
     attributes:
