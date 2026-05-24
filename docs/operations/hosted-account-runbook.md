@@ -17,7 +17,7 @@ The local seed password is for development only. Do not treat it as a hosted reh
 
 ## First Hosted Preparation
 
-1. Prepare the hosted database with `bun run hosted:data -- prepare` as described in [Railway Hosted Rehearsal](../deployment/railway.md).
+1. Prepare the hosted database with `bun run hosted:data -- prepare` as described in [Railway Hosted Rehearsal](../deployment/railway.md). This seeds rehearsal data and imports the full local SRD 5.1 corpus into the public rules browser.
 2. Sign in as the seeded admin using the temporary seed password.
 3. Open `/admin`.
 4. Create password reset tokens for `admin@example.local`, `gm@example.local`, `lynott@example.local`, and `mira@example.local`.

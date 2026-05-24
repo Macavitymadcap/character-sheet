@@ -116,10 +116,116 @@ function parseRuleJson(content: string): RuleEntitySeedInput[] {
     entities?: RuleEntitySeedInput[];
   };
 
-  if (Array.isArray(parsed)) return parsed;
-  if ("entities" in parsed && Array.isArray(parsed.entities)) return parsed.entities;
+  if (Array.isArray(parsed)) return enrichSpellClasses(parsed);
+  if ("entities" in parsed && Array.isArray(parsed.entities)) return enrichSpellClasses(parsed.entities);
 
-  return [parsed as RuleEntitySeedInput];
+  return enrichSpellClasses([parsed as RuleEntitySeedInput]);
+}
+
+const classSpellListLabels: Record<string, string> = {
+  "bard-spells": "Bard",
+  "cleric-spells": "Cleric",
+  "druid-spells": "Druid",
+  "paladin-spells": "Paladin",
+  "ranger-spells": "Ranger",
+  "sorcerer-spells": "Sorcerer",
+  "warlock-spells": "Warlock",
+  "wizard-spells": "Wizard",
+};
+
+const srdSpellClassCorrections: Record<string, string[]> = {
+  bless: ["Cleric"],
+};
+
+function enrichSpellClasses(entities: RuleEntitySeedInput[]): RuleEntitySeedInput[] {
+  const classMap = createSpellClassMap(entities);
+  if (classMap.size === 0) return entities;
+
+  return entities.map((entity) => {
+    if (entity.entityType !== "spell") return entity;
+    const inferredClasses = classMap.get(slugify(entity.name));
+    if (!inferredClasses?.size) return entity;
+
+    return {
+      ...entity,
+      mechanics: entity.mechanics.map((mechanic) => {
+        if (mechanic.mechanicType !== "spell") return mechanic;
+
+        const existingClasses = Array.isArray(mechanic.data.classes)
+          ? mechanic.data.classes.filter((value): value is string => typeof value === "string" && value.trim() !== "")
+          : [];
+        const classes = sortClasses([...new Set([...existingClasses, ...inferredClasses])]);
+        const existingTags = Array.isArray(mechanic.data.tags)
+          ? mechanic.data.tags.filter((value): value is string => typeof value === "string" && value.trim() !== "")
+          : [];
+        const classListTags = new Set(Object.keys(classSpellListLabels));
+        const tags = [
+          ...existingTags.filter((tag) => !classListTags.has(tag)),
+          ...classes.map((className) => `${slugify(className)}-spells`),
+        ];
+
+        return {
+          ...mechanic,
+          data: {
+            ...mechanic.data,
+            classes,
+            tags: [...new Set(tags)],
+          },
+        };
+      }),
+    };
+  });
+}
+
+function createSpellClassMap(entities: RuleEntitySeedInput[]) {
+  const spellNames = entities
+    .filter((entity) => entity.entityType === "spell")
+    .map((entity) => ({ name: entity.name, slug: slugify(entity.name) }));
+  const classMap = new Map<string, Set<string>>();
+
+  for (const entity of entities) {
+    const className = classSpellListLabels[entity.slug];
+    if (!className) continue;
+
+    const spellListText = entity.mechanics
+      .map((mechanic) => String(mechanic.data.description ?? mechanic.data.searchableText ?? ""))
+      .join("\n");
+    for (const spell of spellNames) {
+      if (containsRuleName(spellListText, spell.name)) {
+        const classes = classMap.get(spell.slug) ?? new Set<string>();
+        classes.add(className);
+        classMap.set(spell.slug, classes);
+      }
+    }
+  }
+
+  for (const [spellSlug, classNames] of Object.entries(srdSpellClassCorrections)) {
+    const spellExists = spellNames.some((spell) => spell.slug === spellSlug);
+    if (!spellExists) continue;
+    const classes = classMap.get(spellSlug) ?? new Set<string>();
+    for (const className of classNames) classes.add(className);
+    classMap.set(spellSlug, classes);
+  }
+
+  return classMap;
+}
+
+function containsRuleName(text: string, name: string) {
+  const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+  return new RegExp(`(^|[^\\p{L}\\p{N}])${escaped}($|[^\\p{L}\\p{N}])`, "iu").test(text);
+}
+
+function sortClasses(classes: Iterable<string>) {
+  const order = Object.values(classSpellListLabels);
+
+  return [...classes].sort((left, right) => {
+    const leftIndex = order.indexOf(left);
+    const rightIndex = order.indexOf(right);
+
+    return (leftIndex === -1 ? order.length : leftIndex) - (rightIndex === -1 ? order.length : rightIndex) ||
+      left.localeCompare(right);
+  });
 }
 
 function parseMechanics(

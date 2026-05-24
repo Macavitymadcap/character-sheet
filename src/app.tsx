@@ -81,6 +81,7 @@ import type {
   NpcVisibility,
   RuleSummary,
   RuleEntityType,
+  RuleEntityTypeCount,
   RuleSearchFilters,
   RulesRepository,
   UserRole,
@@ -184,13 +185,18 @@ export const createApp = (dependencies: AppDependencies) => {
     const filters = parseRuleFilters(context);
     const accessFilters = ruleAccessFilters(dependencies, session);
     const rulesFilters = { ...filters, ...accessFilters };
+    const accessibleRules = dependencies.rulesRepository.listRules(accessFilters).filter(isBrowseableRule);
+    const srdCounts = dependencies.rulesRepository.listRuleEntityTypes({ contentCategory: "srd" });
+    const srdRules = dependencies.rulesRepository.listRules({ contentCategory: "srd" });
+    const importState = createSrdImportState(srdCounts, srdRules);
 
     return context.html(
       <RulesPage
         appName={dependencies.appName}
-        counts={dependencies.rulesRepository.listRuleEntityTypes(accessFilters)}
+        counts={createRuleEntityTypeCounts(accessibleRules)}
         filters={filters}
-        rules={dependencies.rulesRepository.listRules(rulesFilters)}
+        importState={importState}
+        rules={dependencies.rulesRepository.listRules(rulesFilters).filter(isBrowseableRule)}
         user={session?.user}
       />,
     );
@@ -205,12 +211,17 @@ export const createApp = (dependencies: AppDependencies) => {
     const accessFilters = ruleAccessFilters(dependencies, session);
     const rule = dependencies.rulesRepository.getRuleDetail(entityType, routeParam(context, "slug"), accessFilters);
     if (!rule) return context.text("Not found", 404);
+    if (rule.contentCategory === "srd" && !isBrowseableRule(rule)) return context.text("Not found", 404);
+    const srdCounts = dependencies.rulesRepository.listRuleEntityTypes({ contentCategory: "srd" });
+    const srdRules = dependencies.rulesRepository.listRules({ contentCategory: "srd" });
+    const accessibleRules = dependencies.rulesRepository.listRules(accessFilters).filter(isBrowseableRule);
 
     return context.html(
       <RulesDetailPage
         appName={dependencies.appName}
-        counts={dependencies.rulesRepository.listRuleEntityTypes(accessFilters)}
+        counts={createRuleEntityTypeCounts(accessibleRules)}
         filters={parseRuleFilters(context)}
+        importState={createSrdImportState(srdCounts, srdRules)}
         rule={rule}
         user={session?.user}
       />,
@@ -2640,6 +2651,35 @@ function statBlockRulesForCampaign(dependencies: AppDependencies, campaignId: st
     campaignIds: [campaignId],
     entityType: "stat_block",
   });
+}
+
+function createSrdImportState(counts: RuleEntityTypeCount[], rules: RuleSummary[]) {
+  const totalRules = counts.reduce((total, count) => total + count.count, 0);
+  const searchableRules = rules.filter(isBrowseableRule).length;
+
+  return {
+    categories: counts.length,
+    command: "bun run import:rules:srd",
+    searchableRules,
+    sourcePath: "docs/rules/srd-5.1",
+    status: totalRules === 0 ? "empty" : searchableRules >= 100 ? "ready" : "partial",
+    totalRules,
+  } as const;
+}
+
+function createRuleEntityTypeCounts(rules: RuleSummary[]): RuleEntityTypeCount[] {
+  const counts = new Map<RuleEntityType, number>();
+  for (const rule of rules) {
+    counts.set(rule.entityType, (counts.get(rule.entityType) ?? 0) + 1);
+  }
+
+  return Array.from(counts.entries())
+    .map(([entityType, count]) => ({ count, entityType }))
+    .sort((left, right) => left.entityType.localeCompare(right.entityType));
+}
+
+function isBrowseableRule(rule: RuleSummary) {
+  return rule.contentCategory !== "srd" || rule.description.trim() !== "" || rule.tags.length > 0;
 }
 
 function campaignFactionsForSheet(dependencies: AppDependencies, characterId: string) {

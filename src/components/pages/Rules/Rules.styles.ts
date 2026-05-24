@@ -30,6 +30,61 @@ export const rulesStyles = /* css */ `
   grid-template-columns: minmax(10rem, 1.35fr) repeat(3, minmax(7rem, 1fr)) auto auto;
 }
 
+.rules-import-summary {
+  align-items: start;
+  background: var(--stat-background-colour);
+  border: 1px solid var(--border-colour);
+  border-radius: 0.45rem;
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding: 0.75rem;
+}
+
+.rules-import-summary-ready {
+  border-color: var(--success-border-colour, var(--border-colour));
+}
+
+.rules-import-summary p {
+  color: var(--muted-text-colour);
+  font-weight: 700;
+  line-height: 1.35;
+  margin: 0;
+}
+
+.rules-import-summary code {
+  color: var(--heading-colour);
+  font-weight: 850;
+}
+
+.rules-import-label {
+  color: var(--heading-colour) !important;
+  font-size: 0.9rem;
+  font-weight: 900 !important;
+}
+
+.rules-import-command {
+  max-width: 18rem;
+}
+
+.rules-entry-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  justify-content: end;
+}
+
+.rules-entry-links a {
+  background: var(--action-background-colour);
+  border: 1px solid var(--action-border-colour);
+  border-radius: 0.4rem;
+  color: var(--action-text-colour);
+  font-size: 0.82rem;
+  font-weight: 850;
+  padding: 0.28rem 0.55rem;
+  text-decoration: none;
+}
+
 .rules-filter-form label {
   color: var(--muted-text-colour);
   font-size: 0.82rem;
@@ -79,11 +134,25 @@ export const rulesStyles = /* css */ `
 }
 
 .rules-results-heading p,
-.rules-empty-state,
 .rules-provenance {
   color: var(--muted-text-colour);
   font-weight: 750;
   margin: 0;
+}
+
+.rules-empty-state {
+  color: var(--muted-text-colour);
+  display: grid;
+  font-weight: 750;
+  gap: 0.35rem;
+}
+
+.rules-empty-state p {
+  margin: 0;
+}
+
+.rules-empty-state code {
+  color: var(--heading-colour);
 }
 
 .rules-result-card {
@@ -165,6 +234,14 @@ export const rulesStyles = /* css */ `
   .rules-filter-form {
     gap: 0.45rem;
     grid-template-columns: 1fr 1fr;
+  }
+
+  .rules-import-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .rules-entry-links {
+    justify-content: start;
   }
 
   .rules-filter-form label:first-child,

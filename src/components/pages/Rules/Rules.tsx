@@ -4,10 +4,20 @@ import { Panel } from "../../atoms/Panel";
 import { SiteHeader } from "../../molecules/SiteHeader";
 import { Layout } from "../../templates/Layout";
 
+interface RulesImportState {
+  categories: number;
+  command: string;
+  searchableRules: number;
+  sourcePath: string;
+  status: "empty" | "partial" | "ready";
+  totalRules: number;
+}
+
 interface RulesPageProps {
   appName: string;
   counts: RuleEntityTypeCount[];
   filters: RuleSearchFilters;
+  importState: RulesImportState;
   rules: RuleSummary[];
   user?: Pick<AuthUser, "displayName" | "role">;
 }
@@ -16,11 +26,12 @@ interface RulesDetailPageProps {
   appName: string;
   counts: RuleEntityTypeCount[];
   filters: RuleSearchFilters;
+  importState: RulesImportState;
   rule: RuleDetail;
   user?: Pick<AuthUser, "displayName" | "role">;
 }
 
-export const RulesPage = ({ appName, counts, filters, rules, user }: RulesPageProps) => (
+export const RulesPage = ({ appName, counts, filters, importState, rules, user }: RulesPageProps) => (
   <Layout title={`Rules - ${appName}`}>
     <div class="shell rules-shell">
       <SiteHeader appName={appName} currentSection="rules" user={user} />
@@ -30,6 +41,7 @@ export const RulesPage = ({ appName, counts, filters, rules, user }: RulesPagePr
             <p class="rules-kicker">SRD 5.1</p>
             <h1 id="rules-heading" class="panel-heading">Rules</h1>
           </div>
+          <RulesImportSummary importState={importState} />
           <RulesFilterForm counts={counts} filters={filters} />
         </Panel>
         <Panel labelledBy="rules-results-heading">
@@ -58,7 +70,7 @@ export const RulesPage = ({ appName, counts, filters, rules, user }: RulesPagePr
               ))}
             </div>
           ) : (
-            <p class="rules-empty-state">No rules match those filters.</p>
+            <RulesEmptyState filters={filters} importState={importState} />
           )}
         </Panel>
       </main>
@@ -66,7 +78,7 @@ export const RulesPage = ({ appName, counts, filters, rules, user }: RulesPagePr
   </Layout>
 );
 
-export const RulesDetailPage = ({ appName, counts, filters, rule, user }: RulesDetailPageProps) => (
+export const RulesDetailPage = ({ appName, counts, filters, importState, rule, user }: RulesDetailPageProps) => (
   <Layout title={`${rule.name} - Rules - ${appName}`}>
     <div class="shell rules-shell">
       <SiteHeader appName={appName} currentSection="rules" user={user} />
@@ -76,6 +88,7 @@ export const RulesDetailPage = ({ appName, counts, filters, rule, user }: RulesD
             <p class="rules-kicker">SRD 5.1</p>
             <h1 id="rules-filter-heading" class="panel-heading">Rules</h1>
           </div>
+          <RulesImportSummary importState={importState} />
           <RulesFilterForm counts={counts} filters={{ ...filters, entityType: filters.entityType ?? rule.entityType }} />
         </Panel>
         <Panel labelledBy="rule-detail-heading">
@@ -108,6 +121,58 @@ export const RulesDetailPage = ({ appName, counts, filters, rule, user }: RulesD
     </div>
   </Layout>
 );
+
+const RulesImportSummary = ({ importState }: { importState: RulesImportState }) => {
+  const isReady = importState.status === "ready";
+  const label = isReady
+    ? "Full corpus imported"
+    : importState.status === "empty"
+      ? "SRD corpus not imported"
+      : "SRD corpus partially imported";
+
+  return (
+    <section class={`rules-import-summary rules-import-summary-${importState.status}`} aria-label="SRD import status">
+      <div>
+        <p class="rules-import-label">{label}</p>
+        <p>
+          {isReady
+            ? `${importState.searchableRules} searchable public SRD entries are available across ${importState.categories} rule categories.`
+            : `Campaign Ledger can read the local SRD corpus at ${importState.sourcePath}, but this database currently has ${importState.searchableRules} searchable SRD entries from ${importState.totalRules} seeded records.`}
+        </p>
+      </div>
+      {isReady ? (
+        <nav class="rules-entry-links" aria-label="SRD quick links">
+          <a href="/rules?type=spell">Spells</a>
+          <a href="/rules?type=equipment">Equipment</a>
+          <a href="/rules?type=condition">Conditions</a>
+          <a href="/rules?type=class">Classes</a>
+        </nav>
+      ) : (
+        <p class="rules-import-command">
+          Run <code>{importState.command}</code> to import and verify the full public SRD 5.1 rules corpus.
+        </p>
+      )}
+    </section>
+  );
+};
+
+const RulesEmptyState = ({ filters, importState }: { filters: RuleSearchFilters; importState: RulesImportState }) => {
+  if (importState.status !== "ready") {
+    return (
+      <div class="rules-empty-state">
+        <p>No imported SRD rules match this view yet.</p>
+        <p>Run <code>{importState.command}</code>, then return to <code>/rules</code> to browse the full public corpus.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div class="rules-empty-state">
+      <p>No rules match those filters.</p>
+      {filters.query ? <p>Try a broader search term or reset the filters.</p> : null}
+    </div>
+  );
+};
 
 const RulesFilterForm = ({ counts, filters }: { counts: RuleEntityTypeCount[]; filters: RuleSearchFilters }) => (
   <form class="rules-filter-form" action="/rules" method="get">
@@ -162,7 +227,13 @@ function renderMechanicData(data: Record<string, unknown>) {
       {description ? <p>{description}</p> : null}
       <dl>
         {entries
-          .filter(([key, value]) => key !== "description" && value !== "" && value !== null && value !== undefined)
+          .filter(([key, value]) =>
+            key !== "description" &&
+            value !== "" &&
+            value !== null &&
+            value !== undefined &&
+            (!Array.isArray(value) || value.length > 0)
+          )
           .map(([key, value]) => (
             <div>
               <dt>{formatMechanicLabel(key)}</dt>

@@ -150,6 +150,7 @@ bun run hosted:data -- prepare
 bun run hosted:data -- backup
 bun run hosted:data -- restore
 bun run import:rules
+bun run import:rules:srd
 bun run seed
 bun run screenshots:sheet
 bun run smoke:mvp
@@ -162,7 +163,7 @@ bun run verify
 
 `bun run verify` runs typecheck, component and route tests, documentation reference checks, accessibility checks, the group-use MVP smoke workflow, and screenshot capture in sequence. It writes verification screenshots to a temporary directory by default so acceptance runs do not churn committed PR evidence images. It is the local acceptance gate for the first hosted rehearsal.
 
-`bun run hosted:data -- migrate` applies the SQLite schema without seed data, which is what normal hosted startup relies on. `prepare`, `backup`, and `restore` are reserved for hosted rehearsal operations and are documented in [Railway Hosted Rehearsal](./docs/deployment/railway.md).
+`bun run hosted:data -- migrate` applies the SQLite schema without seed data, which is what normal hosted startup relies on. `prepare`, `backup`, and `restore` are reserved for hosted rehearsal operations and are documented in [Railway Hosted Rehearsal](./docs/deployment/railway.md). `prepare` also imports the full local SRD 5.1 corpus so hosted rehearsal users can browse public rules immediately.
 
 Hosted account setup stays manual for this epic. Admin-created invite and password-reset links are copied from the admin UI and shared privately by the operator; no email delivery is implied or configured. See [Hosted Account Operator Runbook](./docs/operations/hosted-account-runbook.md).
 
@@ -172,9 +173,12 @@ Hosted account setup stays manual for this epic. Admin-created invite and passwo
 
 `bun run screenshots:sheet` captures public home, local play, Lynott's sheet in light and dark mode, core/skills edit states, roll results, Mira spellcasting, the Background tab faction picker, player and admin roster/cards, the Game Master campaign page, prep/NPC workspaces, image library/detail pages, import form, Google Docs manual import form, player preview, player NPC list, campaign assets and rules sources, rules list/detail pages, a wiki page with image references, and edited sheet states. Screenshots are written to `docs/pr-screenshots/` by default for deliberate PR evidence refreshes. Set `SCREENSHOT_DIR` to write them elsewhere.
 
+`bun run import:rules:srd` imports the full local SRD 5.1 corpus from `docs/rules/srd-5.1` into the configured SQLite database. Use it after a fresh local `bun run seed` if `/rules` reports that the searchable SRD corpus is missing or partial.
+
 `bun run import:rules` imports local markdown or JSON rule files from `docs/rules` by default into the configured SQLite database. Pass a path to import one file or directory:
 
 ```bash
+bun run import:rules:srd
 bun run import:rules -- docs/rules/spells/level-1/cure-wounds.md
 ```
 

@@ -339,6 +339,14 @@ describe("rules importer", () => {
           "spell:fireball",
         ]),
       );
+      expect(result.entities.find((entity) => entity.slug === "bless")?.mechanics[0]?.data.classes)
+        .toEqual(["Cleric", "Paladin"]);
+      expect(result.entities.find((entity) => entity.slug === "bless")?.mechanics[0]?.data.tags)
+        .toEqual(expect.arrayContaining(["cleric-spells", "paladin-spells"]));
+      expect(result.entities.find((entity) => entity.slug === "bless")?.mechanics[0]?.data.tags)
+        .not.toContain("wizard-spells");
+      expect(result.entities.find((entity) => entity.slug === "cure-wounds")?.mechanics[0]?.data.classes)
+        .toEqual(["Bard", "Cleric", "Druid", "Paladin", "Ranger"]);
     } finally {
       runtime?.close();
     }

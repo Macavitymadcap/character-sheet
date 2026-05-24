@@ -6,6 +6,7 @@
     "db:bootstrap": "bun scripts/db-bootstrap.ts",
     "dev": "bun run --hot src/index.ts",
     "import:rules": "bun scripts/import-rules.ts",
+    "import:rules:srd": "bun scripts/import-rules.ts docs/rules/srd-5.1",
     "hosted:data": "bun scripts/hosted-data.ts",
     "protect:branches": "bun scripts/configure-branch-protection.ts",
     "protect:branches:bootstrap": "bun scripts/configure-branch-protection.ts --bootstrap",

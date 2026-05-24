@@ -4,6 +4,7 @@ import { dirname, join, resolve } from "node:path";
 import { Database } from "bun:sqlite";
 import { assetStorageRoot, writeSeedAssetPlaceholders } from "../src/assets";
 import { createSqliteDatabase } from "../src/db";
+import { RulesImportService } from "../src/rules";
 
 export interface HostedDataOptions {
   assetRoot?: string;
@@ -40,7 +41,12 @@ export async function prepareHostedData(options: HostedDataOptions = {}) {
 
   await ensureParentDirectory(databasePath);
   const runtime = createSqliteDatabase({ path: databasePath, seed: true });
-  runtime.close();
+  try {
+    await new RulesImportService(runtime.repositories.rulesSeedRepository)
+      .importFromLocalSource("docs/rules/srd-5.1");
+  } finally {
+    runtime.close();
+  }
   if (!options.skipSeedAssets) {
     await writeSeedAssetPlaceholders(options.assetRoot ?? assetStorageRoot());
   }
