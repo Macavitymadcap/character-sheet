@@ -24,6 +24,32 @@ begins.
 - Compatibility tests import Hyper-Dank through public package paths and flag newly exported UI
   component names that overlap local Campaign Ledger components before they are reviewed.
 
+## `sheet-0071` Package Update Audit
+
+`sheet-0071` moves all four Hyper-Dank packages from the `0.1.0` line to the current npm-published
+`0.2.0` line:
+
+- `@macavitymadcap/hyper-dank-automation`
+- `@macavitymadcap/hyper-dank-data`
+- `@macavitymadcap/hyper-dank-transport`
+- `@macavitymadcap/hyper-dank-ui`
+
+Running the original `bun run update:hyper-dank` command against `^0.1.0` correctly reinstalled
+`0.1.0`: for pre-1.0 packages, the caret range does not include the next minor line. The package
+ranges were therefore bumped to `^0.2.0`, then the lockfile was refreshed and
+`bun run test:hyper-dank` was rerun.
+
+The `0.2.0` UI package already exports `Breadcrumbs`, so Campaign Ledger does not need an upstream
+Hyper-Dank breadcrumb issue. This ticket deliberately keeps route markup unchanged because visible
+breadcrumb adoption belongs to `sheet-0075`. The compatibility test now covers the public
+`Breadcrumbs` contract so that planned ticket can replace local breadcrumb markup deliberately.
+
+Newly available or reviewed UI primitives include `HxForm`, `ButtonGroup`, `Toolbar`, `PageHeader`,
+`CheckboxField`, `TextareaField`, `SelectField`, `RadioGroup`, `ValidationSummary`, `SideNav`,
+`StatusSummary`, `ScrollableTable`, and related display helpers. `HxForm` is relevant to the sheet
+edit-control work in `sheet-0073`, but the current ticket defers those visible form swaps so package
+adoption stays behaviour-preserving.
+
 ## Automated Acceptance
 
 Run the full local gate:

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import * as HyperDankUi from "@macavitymadcap/hyper-dank-ui";
-import { Button, type HtmxProps } from "@macavitymadcap/hyper-dank-ui";
+import { Breadcrumbs, Button, HxForm, type HtmxProps } from "@macavitymadcap/hyper-dank-ui";
 import {
   createProviderRegistry,
   planMigrations,
@@ -39,6 +39,7 @@ const appLocalComponentNames = [
 const reviewedUiOverlaps = [
   ...adoptedUiWrapperPaths.map((path) => path.split("/").at(-2)),
   "Accordion",
+  "Breadcrumbs",
   "Icon",
   "PopoverMenu",
   "Switch",
@@ -55,6 +56,35 @@ describe("Hyper-Dank package compatibility", () => {
 
     expect(html).toContain('hx-get="/rules"');
     expect(html).toContain('hx-target="#rules-results"');
+  });
+
+  test("covers Hyper-Dank navigation and form primitives available for planned app adoption", () => {
+    const breadcrumbs = String(
+      <Breadcrumbs
+        items={[
+          { href: "/characters", label: "Characters" },
+          { current: true, href: "/sheets/lynott", label: "Lynott" },
+        ]}
+      />,
+    );
+    const form = String(
+      <HxForm
+        action="/sheets/lynott/background"
+        className="sheet-edit-form"
+        method="post"
+        hx-post="/sheets/lynott/background"
+        hx-target="#background-panel"
+      >
+        <button type="submit">Save</button>
+      </HxForm>,
+    );
+
+    expect(breadcrumbs).toContain('class="breadcrumbs"');
+    expect(breadcrumbs).toContain('aria-current="page"');
+    expect(breadcrumbs).toContain('href="/characters"');
+    expect(form).toContain('action="/sheets/lynott/background"');
+    expect(form).toContain('hx-post="/sheets/lynott/background"');
+    expect(form).toContain('hx-target="#background-panel"');
   });
 
   test("imports shared data primitives through public package paths", async () => {
