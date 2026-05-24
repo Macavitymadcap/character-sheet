@@ -55,7 +55,7 @@ import {
   SenseEditCard,
   SenseReadCard,
 } from "./components/organisms/CoreTab/CoreTab";
-import { SheetHeader } from "./components/organisms/SheetHeader";
+import { SheetHeader, SheetHeaderEdit } from "./components/organisms/SheetHeader";
 import {
   ProficiencyEditItem,
   ProficiencyReadItem,
@@ -1509,6 +1509,51 @@ export const createApp = (dependencies: AppDependencies) => {
         user={session.user}
       />,
     );
+  });
+
+  app.get("/sheet/:characterRef/summary", (context) => {
+    const session = readSession(context.req.header("cookie"));
+    if (!session) return context.redirect("/login", 303);
+
+    const sheet = getSheetByRef(context.req.param("characterRef"));
+    if (!sheet) return context.text("Not found", 404);
+
+    const guard = requireSheetAccess({
+      campaignRepository: dependencies.campaignRepository,
+      characterId: sheet.id,
+      characterRepository: dependencies.characterRepository,
+      permission: "write",
+      session,
+    });
+    const guarded = guardResponse(context, guard);
+    if (guarded) return guarded;
+
+    return context.html(
+      <SheetHeader
+        resources={dependencies.characterRepository.listResources(sheet.id)}
+        sheet={sheet}
+      />,
+    );
+  });
+
+  app.get("/sheet/:characterRef/summary/edit", (context) => {
+    const session = readSession(context.req.header("cookie"));
+    if (!session) return context.redirect("/login", 303);
+
+    const sheet = getSheetByRef(context.req.param("characterRef"));
+    if (!sheet) return context.text("Not found", 404);
+
+    const guard = requireSheetAccess({
+      campaignRepository: dependencies.campaignRepository,
+      characterId: sheet.id,
+      characterRepository: dependencies.characterRepository,
+      permission: "write",
+      session,
+    });
+    const guarded = guardResponse(context, guard);
+    if (guarded) return guarded;
+
+    return context.html(<SheetHeaderEdit sheet={sheet} />);
   });
 
   app.get("/sheet/:characterRef/:tabId", (context) => {

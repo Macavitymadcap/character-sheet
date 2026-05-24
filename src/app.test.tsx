@@ -511,6 +511,12 @@ describe("createApp", () => {
     const cookie = sessionService.createSession("user_lynott_player").cookie;
     const headers = formHeaders(cookie);
 
+    const summaryEdit = await app.request("/sheet/lynott/summary/edit", {
+      headers: { Cookie: cookie },
+    });
+    const summaryCancel = await app.request("/sheet/lynott/summary", {
+      headers: { Cookie: cookie },
+    });
     const summary = await app.request("/sheet/lynott/summary", {
       body: new URLSearchParams({
         background: "Field Agent",
@@ -549,6 +555,16 @@ describe("createApp", () => {
       method: "PATCH",
     });
 
+    const summaryEditHtml = await summaryEdit.text();
+    const summaryCancelHtml = await summaryCancel.text();
+
+    expect(summaryEdit.status).toBe(200);
+    expect(summaryEditHtml).toContain('hx-patch="/sheet/lynott/summary"');
+    expect(summaryEditHtml).toContain('hx-get="/sheet/lynott/summary"');
+    expect(summaryEditHtml).not.toContain("sheet-edit-disclosure");
+    expect(summaryCancel.status).toBe(200);
+    expect(summaryCancelHtml).toContain('hx-get="/sheet/lynott/summary/edit"');
+    expect(summaryCancelHtml).not.toContain("sheet-edit-disclosure");
     expect(summary.status).toBe(200);
     expect(await summary.text()).toContain("Lynott Undercover");
     expect(ability.status).toBe(200);
