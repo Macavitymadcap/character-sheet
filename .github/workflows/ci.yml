@@ -5,10 +5,12 @@ on:
     branches:
       - main
       - sheet-0001
+      - sheet-0070
   push:
     branches:
       - main
       - sheet-0001
+      - sheet-0070
 
 jobs:
   test:
