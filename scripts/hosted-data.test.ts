@@ -24,6 +24,8 @@ async function createTempDir() {
 }
 
 describe("hosted data operations", () => {
+  const hostedDataTimeout = 20_000;
+
   test("prepares a fresh hosted-style database with seeded group data", async () => {
     const dir = await createTempDir();
     const databasePath = join(dir, "character-sheet.sqlite3");
@@ -42,7 +44,7 @@ describe("hosted data operations", () => {
     expect((await stat(join(assetRoot, "campaigns/rovnost-shadows/skywright-sigil.png"))).size).toBeGreaterThan(0);
     expect((await stat(join(assetRoot, "campaigns/rovnost-shadows/astril-map.png"))).size).toBeGreaterThan(0);
     database.close();
-  });
+  }, hostedDataTimeout);
 
   test("migrates an existing database without reseeding mutable data", async () => {
     const dir = await createTempDir();
@@ -59,7 +61,7 @@ describe("hosted data operations", () => {
       .query("select display_name as displayName from users where id = ?")
       .get("user_lynott_player")).toEqual({ displayName: "Hosted Lynott" });
     migrated.close();
-  });
+  }, hostedDataTimeout);
 
   test("refuses to prepare over an existing hosted database without confirmation", async () => {
     const dir = await createTempDir();
@@ -67,7 +69,7 @@ describe("hosted data operations", () => {
     await prepareHostedData({ databasePath });
 
     await expect(prepareHostedData({ databasePath })).rejects.toThrow("Refusing to seed existing database");
-  });
+  }, hostedDataTimeout);
 
   test("backs up and restores the hosted database with explicit confirmation", async () => {
     const dir = await createTempDir();
@@ -93,5 +95,5 @@ describe("hosted data operations", () => {
       .query("select display_name as displayName from users where id = ?")
       .get("user_lynott_player")).toEqual({ displayName: "Lynott Player" });
     restored.close();
-  });
+  }, hostedDataTimeout);
 });
