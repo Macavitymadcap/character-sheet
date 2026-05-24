@@ -194,10 +194,10 @@ const EquipmentTab = ({ data }: { data: TabContentData }) => {
 
   return (
     <div class="tab-compact-stack">
-      {renderCompactSection(
+      {renderEditableCompactSection(
         "equipment-list-heading",
         "Equipment",
-        data.equipment.map((item) => equipmentToItem(item, data.sheet.slug)),
+        data.equipment.map((item) => <EquipmentReadItem characterSlug={data.sheet.slug} item={item} />),
       )}
       {equipmentRules.length > 0
         ? renderAccordionSection(
@@ -214,19 +214,19 @@ const EquipmentTab = ({ data }: { data: TabContentData }) => {
 const BackgroundTab = ({ data }: { data: TabContentData }) => {
   const profileItems = data.backgroundEntries
     .filter((entry) => ["personality", "ideal", "bond", "flaw"].includes(entry.category))
-    .map((entry) => backgroundEntryToItem(entry, data.sheet.slug));
+    .map((entry) => <BackgroundEntryReadItem characterSlug={data.sheet.slug} entry={entry} />);
   const backstoryItems = data.backgroundEntries
     .filter((entry) => entry.category === "backstory")
-    .map((entry) => backgroundEntryToItem(entry, data.sheet.slug));
+    .map((entry) => <BackgroundEntryReadItem characterSlug={data.sheet.slug} entry={entry} />);
   const identityItems = data.backgroundEntries
     .filter((entry) => entry.category === "false_identity")
-    .map((entry) => backgroundEntryToItem(entry, data.sheet.slug));
+    .map((entry) => <BackgroundEntryReadItem characterSlug={data.sheet.slug} entry={entry} />);
   const npcItems = data.backgroundEntries
     .filter((entry) => entry.category === "npc")
-    .map((entry) => backgroundEntryToItem(entry, data.sheet.slug));
+    .map((entry) => <BackgroundEntryReadItem characterSlug={data.sheet.slug} entry={entry} />);
   const rankItems = data.backgroundEntries
     .filter((entry) => entry.category === "rank")
-    .map((entry) => backgroundEntryToItem(entry, data.sheet.slug));
+    .map((entry) => <BackgroundEntryReadItem characterSlug={data.sheet.slug} entry={entry} />);
   const selectedFaction = data.campaignFactions.find(
     (faction) => faction.id === data.factionChoice?.factionId,
   );
@@ -299,11 +299,11 @@ const BackgroundTab = ({ data }: { data: TabContentData }) => {
           value: faction.playerPrompt,
         })),
       )}
-      {renderCompactSection("background-profile-heading", "Profile", profileItems)}
-      {renderCompactSection("background-story-heading", "Backstory", backstoryItems)}
-      {renderCompactSection("background-identities-heading", "False identities", identityItems)}
-      {renderCompactSection("background-npcs-heading", "NPCs", npcItems)}
-      {renderCompactSection("background-rank-heading", "Rank structure", rankItems)}
+      {renderEditableCompactSection("background-profile-heading", "Profile", profileItems)}
+      {renderEditableCompactSection("background-story-heading", "Backstory", backstoryItems)}
+      {renderEditableCompactSection("background-identities-heading", "False identities", identityItems)}
+      {renderEditableCompactSection("background-npcs-heading", "NPCs", npcItems)}
+      {renderEditableCompactSection("background-rank-heading", "Rank structure", rankItems)}
     </div>
   );
 };
@@ -393,6 +393,15 @@ function renderCompactSection(id: string, heading: string, items: CompactListIte
   );
 }
 
+function renderEditableCompactSection(id: string, heading: string, items: unknown[]) {
+  return (
+    <section class="tab-compact-section" aria-labelledby={id}>
+      <h3 id={id}>{heading}</h3>
+      {items.length > 0 ? <dl class="compact-list">{items}</dl> : <p class="tab-empty-state">None recorded.</p>}
+    </section>
+  );
+}
+
 function renderAccordionSection(id: string, heading: string, name: string, items: AccordionItem[]) {
   return (
     <section class="tab-compact-section" aria-labelledby={id}>
@@ -444,7 +453,7 @@ function weaponToActionItem(item: CharacterEquipment, characterSlug: string): Co
     };
   }
 
-  return equipmentToItem(item);
+  return equipmentToDisplay(item);
 }
 
 function spellToAccordionItem(
@@ -587,54 +596,42 @@ function renderRestControls(characterSlug: string, tabId: SheetTabId) {
   );
 }
 
-function equipmentToItem(item: CharacterEquipment, characterSlug?: string): CompactListItem {
-  if (item.category === "money") {
-    return {
-      controls: characterSlug ? renderEquipmentControls(item, characterSlug) : undefined,
-      label: "Money",
-      meta: item.notes,
-      value: `${item.quantity} gp`,
-    };
-  }
-
-  return {
-    controls: characterSlug ? renderEquipmentControls(item, characterSlug) : undefined,
-    label: formatWords(item.category),
-    meta: `${item.equipped ? "Equipped" : "Carried"} · Qty ${item.quantity} · ${item.notes}`,
-    value: item.name,
-  };
-}
-
-function renderEquipmentControls(item: CharacterEquipment, characterSlug: string) {
-  const target = `/sheet/${characterSlug}/equipment/${item.id}`;
-  const canReduce = item.quantity > 0;
-  const showEquippedToggle = item.category !== "money" && item.category !== "gear";
+export const EquipmentReadItem = ({
+  characterSlug,
+  item,
+}: {
+  characterSlug: string;
+  item: CharacterEquipment;
+}) => {
+  const display = equipmentToDisplay(item);
 
   return (
-    <span class="tab-resource-controls" role="group" aria-label={`${item.name} controls`}>
-      <form hx-patch={target} hx-target="#sheet-tab-panel" hx-swap="outerHTML">
-        <input type="hidden" name="deltaQuantity" value="-1" />
-        <button type="submit" aria-label={`Remove one ${item.name}`} disabled={!canReduce}>
-          −
-        </button>
-      </form>
-      <form hx-patch={target} hx-target="#sheet-tab-panel" hx-swap="outerHTML">
-        <input type="hidden" name="deltaQuantity" value="1" />
-        <button type="submit" aria-label={`Add one ${item.name}`}>
-          +
-        </button>
-      </form>
-      {showEquippedToggle ? (
-        <form hx-patch={target} hx-target="#sheet-tab-panel" hx-swap="outerHTML">
-          <input type="hidden" name="equipped" value={item.equipped ? "0" : "1"} />
-          <button type="submit" aria-label={item.equipped ? `Carry ${item.name}` : `Equip ${item.name}`}>
-            {item.equipped ? "C" : "E"}
-          </button>
-        </form>
-      ) : null}
-      <details class="row-edit-disclosure">
-        <summary>Edit</summary>
-        <form class="sheet-edit-form row-edit-form" hx-patch={target} hx-target="#sheet-tab-panel" hx-swap="outerHTML">
+    <div id={equipmentItemId(item)} class="compact-list-row">
+      <dt>{display.label}</dt>
+      <dd>
+        <strong>{display.value}</strong>
+        {display.meta ? <span>{display.meta}</span> : null}
+        <span class="compact-list-controls">{renderEquipmentControls(item, characterSlug)}</span>
+      </dd>
+    </div>
+  );
+};
+
+export const EquipmentEditItem = ({
+  characterSlug,
+  item,
+}: {
+  characterSlug: string;
+  item: CharacterEquipment;
+}) => {
+  const target = `/sheet/${characterSlug}/equipment/${item.id}`;
+  const rowId = equipmentItemId(item);
+
+  return (
+    <div id={rowId} class="compact-list-row inline-edit-item tab-inline-edit-item">
+      <dt>Edit {item.name}</dt>
+      <dd>
+        <form class="sheet-edit-form row-edit-form row-edit-form-inline tab-row-edit-form" hx-patch={target} hx-target={`#${rowId}`} hx-swap="outerHTML">
           <label>Name <input name="name" type="text" value={item.name} /></label>
           <label>Category <input name="category" type="text" value={item.category} /></label>
           <label>Quantity <input min="0" name="quantity" type="number" value={item.quantity} /></label>
@@ -645,35 +642,127 @@ function renderEquipmentControls(item: CharacterEquipment, characterSlug: string
               <option value="0" selected={!item.equipped}>No</option>
             </select>
           </label>
-          <label>Notes <input name="notes" type="text" value={item.notes} /></label>
-          <button type="submit">Save</button>
+          <label class="tab-row-edit-field-wide">Notes <input name="notes" type="text" value={item.notes} /></label>
+          <div class="row-edit-actions">
+            <button type="submit">Save</button>
+            <button type="button" hx-get={target} hx-target={`#${rowId}`} hx-swap="outerHTML">Cancel</button>
+          </div>
         </form>
-      </details>
+      </dd>
+    </div>
+  );
+};
+
+function equipmentToDisplay(item: CharacterEquipment) {
+  if (item.category === "money") {
+    return {
+      label: "Money",
+      meta: item.notes,
+      value: `${item.quantity} gp`,
+    };
+  }
+
+  return {
+    label: formatWords(item.category),
+    meta: `${item.equipped ? "Equipped" : "Carried"} · Qty ${item.quantity} · ${item.notes}`,
+    value: item.name,
+  };
+}
+
+function renderEquipmentControls(item: CharacterEquipment, characterSlug: string) {
+  const target = `/sheet/${characterSlug}/equipment/${item.id}`;
+  const rowId = equipmentItemId(item);
+  const canReduce = item.quantity > 0;
+  const showEquippedToggle = item.category !== "money" && item.category !== "gear";
+
+  return (
+    <span class="tab-resource-controls" role="group" aria-label={`${item.name} controls`}>
+      <form hx-patch={target} hx-target={`#${rowId}`} hx-swap="outerHTML">
+        <input type="hidden" name="deltaQuantity" value="-1" />
+        <button type="submit" aria-label={`Remove one ${item.name}`} disabled={!canReduce}>
+          −
+        </button>
+      </form>
+      <form hx-patch={target} hx-target={`#${rowId}`} hx-swap="outerHTML">
+        <input type="hidden" name="deltaQuantity" value="1" />
+        <button type="submit" aria-label={`Add one ${item.name}`}>
+          +
+        </button>
+      </form>
+      {showEquippedToggle ? (
+        <form hx-patch={target} hx-target={`#${rowId}`} hx-swap="outerHTML">
+          <input type="hidden" name="equipped" value={item.equipped ? "0" : "1"} />
+          <button type="submit" aria-label={item.equipped ? `Carry ${item.name}` : `Equip ${item.name}`}>
+            {item.equipped ? "C" : "E"}
+          </button>
+        </form>
+      ) : null}
+      <button class="row-edit-button" type="button" hx-get={`${target}/edit`} hx-target={`#${rowId}`} hx-swap="outerHTML" aria-label={`Edit ${item.name}`}>
+        Edit
+      </button>
     </span>
   );
 }
 
-function backgroundEntryToItem(entry: CharacterBackgroundEntry, characterSlug?: string): CompactListItem {
-  return {
-    controls: characterSlug ? (
-      <details class="row-edit-disclosure">
-        <summary>Edit</summary>
-        <form
-          class="sheet-edit-form row-edit-form"
-          hx-patch={`/sheet/${characterSlug}/background/${entry.id}`}
-          hx-target="#sheet-tab-panel"
-          hx-swap="outerHTML"
-        >
+export const BackgroundEntryReadItem = ({
+  characterSlug,
+  entry,
+}: {
+  characterSlug: string;
+  entry: CharacterBackgroundEntry;
+}) => {
+  const target = `/sheet/${characterSlug}/background/${entry.id}`;
+  const rowId = backgroundEntryItemId(entry);
+
+  return (
+    <div id={rowId} class="compact-list-row">
+      <dt>{formatWords(entry.category.replaceAll("_", " "))}</dt>
+      <dd>
+        <strong>{entry.title}</strong>
+        {entry.body ? <span>{entry.body}</span> : null}
+        <span class="compact-list-controls">
+          <button class="row-edit-button" type="button" hx-get={`${target}/edit`} hx-target={`#${rowId}`} hx-swap="outerHTML" aria-label={`Edit ${entry.title}`}>
+            Edit
+          </button>
+        </span>
+      </dd>
+    </div>
+  );
+};
+
+export const BackgroundEntryEditItem = ({
+  characterSlug,
+  entry,
+}: {
+  characterSlug: string;
+  entry: CharacterBackgroundEntry;
+}) => {
+  const target = `/sheet/${characterSlug}/background/${entry.id}`;
+  const rowId = backgroundEntryItemId(entry);
+
+  return (
+    <div id={rowId} class="compact-list-row inline-edit-item tab-inline-edit-item">
+      <dt>Edit {entry.title}</dt>
+      <dd>
+        <form class="sheet-edit-form row-edit-form row-edit-form-inline tab-row-edit-form" hx-patch={target} hx-target={`#${rowId}`} hx-swap="outerHTML">
           <label>Title <input name="title" type="text" value={entry.title} /></label>
-          <label>Body <textarea name="body" rows={3}>{entry.body}</textarea></label>
-          <button type="submit">Save</button>
+          <label class="tab-row-edit-field-wide">Body <textarea name="body" rows={3}>{entry.body}</textarea></label>
+          <div class="row-edit-actions">
+            <button type="submit">Save</button>
+            <button type="button" hx-get={target} hx-target={`#${rowId}`} hx-swap="outerHTML">Cancel</button>
+          </div>
         </form>
-      </details>
-    ) : undefined,
-    label: formatWords(entry.category.replaceAll("_", " ")),
-    meta: entry.body,
-    value: entry.title,
-  };
+      </dd>
+    </div>
+  );
+};
+
+function equipmentItemId(item: CharacterEquipment) {
+  return `equipment-item-${slugify(item.id)}`;
+}
+
+function backgroundEntryItemId(entry: CharacterBackgroundEntry) {
+  return `background-entry-${slugify(entry.id)}`;
 }
 
 function formatClasses(sheet: CharacterSheetReadModel) {
