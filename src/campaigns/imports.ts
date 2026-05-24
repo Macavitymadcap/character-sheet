@@ -1,4 +1,6 @@
 export type CampaignImportTargetType = "draft" | "npc" | "session" | "wiki";
+export type CampaignImportSourceFormat = "html" | "markdown";
+export type CampaignImportProvider = "manual" | "google_docs_manual";
 
 export interface CampaignImportPreview {
   convertedMarkdown: string;
@@ -7,10 +9,11 @@ export interface CampaignImportPreview {
 }
 
 const privateUrlPattern = /https?:\/\/(?:docs|drive)\.google\.com\/[^\s)\]<>"]+/gi;
+const googleDocumentIdPattern = /\/document\/d\/([a-zA-Z0-9_-]+)/;
 
 export function convertCampaignImportContent(input: {
   content: string;
-  sourceFormat: "html" | "markdown";
+  sourceFormat: CampaignImportSourceFormat;
   sourceTitle?: string;
 }): CampaignImportPreview {
   const warnings: string[] = [];
@@ -25,6 +28,43 @@ export function convertCampaignImportContent(input: {
     detectedTitle,
     warnings: Array.from(new Set(warnings)),
   };
+}
+
+export function prepareGoogleDocsManualImport(input: {
+  documentReference: string;
+  documentTitle: string;
+  exportedContent: string;
+  sourceFormat: CampaignImportSourceFormat;
+}): {
+  content: string;
+  provider: CampaignImportProvider;
+  sourceFormat: CampaignImportSourceFormat;
+  sourceReference: string;
+  sourceTitle: string;
+} {
+  const sourceTitle = input.documentTitle.trim();
+  const exportedContent = input.exportedContent.trim();
+  const sourceReference = normaliseGoogleDocsReference(input.documentReference);
+  if (!sourceTitle || !sourceReference || !exportedContent) {
+    throw new Error("Google Docs manual imports require a title, document reference, and exported content.");
+  }
+
+  return {
+    content: exportedContent,
+    provider: "google_docs_manual",
+    sourceFormat: input.sourceFormat,
+    sourceReference,
+    sourceTitle,
+  };
+}
+
+export function normaliseGoogleDocsReference(reference: string) {
+  const trimmed = reference.trim();
+  if (!trimmed) return "";
+  const documentId = trimmed.match(googleDocumentIdPattern)?.[1];
+  if (documentId) return `google-doc:${documentId}`;
+
+  return trimmed.startsWith("google-doc:") ? trimmed : trimmed.replace(/\s+/g, " ");
 }
 
 function removePrivateUrls(content: string, warnings: string[]) {

@@ -29,6 +29,7 @@ describe("MVP smoke workflow config", () => {
       "campaign sessions",
       "campaign wiki",
       "campaign content import",
+      "Google Docs manual import",
       "combined admin campaign access",
       "campaign private rules sources",
       "rule mechanics and sheet disclosures",
