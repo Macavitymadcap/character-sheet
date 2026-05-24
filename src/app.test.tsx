@@ -1672,7 +1672,7 @@ describe("createApp", () => {
         convertedMarkdown: "# Clockwork Canal\n\nSee [private source link removed]\n\nImported from export.",
         provider: "google_docs_manual",
         sourceFormat: "html",
-        sourceReference: "google-doc:manual-doc-123",
+        sourceReference: "https://docs.google.com/document/d/manual-doc-123/edit",
         sourceTitle: "Clockwork Canal Export",
         targetType: "wiki",
         title: "Clockwork Canal",

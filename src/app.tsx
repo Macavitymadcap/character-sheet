@@ -9,6 +9,7 @@ import { Hono, type Context } from "hono";
 import { assetStorageRoot } from "./assets";
 import {
   convertCampaignImportContent,
+  normaliseGoogleDocsReference,
   prepareGoogleDocsManualImport,
 } from "./campaigns/imports";
 import {
@@ -3094,6 +3095,13 @@ function parseCampaignImportSaveForm(
   if (!title || !convertedMarkdown || !provider || !sourceFormat || !sourceTitle || !targetType || !visibility) {
     return { ok: false, message: "Invalid import save" };
   }
+  const sourceReference = form.optionalString("sourceReference")?.trim() || null;
+  const normalisedSourceReference = provider === "google_docs_manual" && sourceReference
+    ? normaliseGoogleDocsReference(sourceReference)
+    : sourceReference;
+  if (provider === "google_docs_manual" && !normalisedSourceReference) {
+    return { ok: false, message: "Invalid Google Docs import" };
+  }
   const cleaned = convertCampaignImportContent({
     content: convertedMarkdown,
     sourceFormat: "markdown",
@@ -3111,7 +3119,7 @@ function parseCampaignImportSaveForm(
       convertedMarkdown: cleaned.convertedMarkdown,
       provider,
       sourceFormat,
-      sourceReference: form.optionalString("sourceReference")?.trim() || null,
+      sourceReference: normalisedSourceReference,
       sourceTitle,
       targetType,
       title,
