@@ -796,7 +796,7 @@ export const CampaignImportPreviewPage = ({ appName, campaign, preview, user }: 
 function CampaignImportForm({ campaign }: { campaign: CampaignSummary }) {
   return (
     <form class="campaign-session-form" action={`/campaigns/${campaign.slug}/imports/preview`} method="post">
-      <label>Source title<input name="sourceTitle" required type="text" /></label>
+      <label>Source/export title<input name="sourceTitle" type="text" /></label>
       <label>Source reference<input name="sourceReference" type="text" /></label>
       <label>Source format<select name="sourceFormat"><option value="markdown">Markdown</option><option value="html">HTML</option></select></label>
       <label>Target<select name="targetType">

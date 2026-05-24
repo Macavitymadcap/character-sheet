@@ -747,6 +747,7 @@ export const createApp = (dependencies: AppDependencies) => {
     const parsed = parseCampaignImportPreviewForm(await FormValues.from(context));
     if (!parsed.ok) return context.text(parsed.message, 400);
     const preview = convertCampaignImportContent(parsed.value);
+    const sourceTitle = parsed.value.sourceTitle || preview.detectedTitle;
 
     return context.html(
       <CampaignImportPreviewPage
@@ -755,6 +756,7 @@ export const createApp = (dependencies: AppDependencies) => {
         preview={{
           ...parsed.value,
           ...preview,
+          sourceTitle,
         }}
         user={session.user}
       />,
@@ -2991,7 +2993,7 @@ function parseCampaignImportPreviewForm(
   const sourceFormat = parseCampaignImportSourceFormat(form.string("sourceFormat"));
   const targetType = parseCampaignImportTargetType(form.string("targetType"));
   const visibility = parseNoteVisibility(form.string("visibility"));
-  if (!content || !sourceTitle || !sourceFormat || !targetType || !visibility) {
+  if (!content || !sourceFormat || !targetType || !visibility) {
     return { ok: false, message: "Invalid import preview" };
   }
 
@@ -3002,7 +3004,7 @@ function parseCampaignImportPreviewForm(
       provider: "manual",
       sourceFormat,
       sourceReference: form.optionalString("sourceReference")?.trim() || null,
-      sourceTitle,
+      sourceTitle: sourceTitle || "",
       targetType,
       visibility,
     },
