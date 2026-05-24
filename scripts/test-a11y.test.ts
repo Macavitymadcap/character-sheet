@@ -23,6 +23,7 @@ describe("Pa11y targets", () => {
       { label: "gm npc detail", path: "/campaigns/rovnost-shadows/npcs/magister-vallen", role: "game_master" },
       { label: "gm images", path: "/campaigns/rovnost-shadows/images", role: "game_master" },
       { label: "gm image detail", path: "/campaigns/rovnost-shadows/images/asset_magister_vallen", role: "game_master" },
+      { label: "gm imports", path: "/campaigns/rovnost-shadows/imports", role: "game_master" },
       { label: "gm roster", path: "/campaigns/rovnost-shadows/characters", role: "game_master" },
       { label: "admin", path: "/admin", role: "admin" },
     ]);
@@ -34,6 +35,7 @@ describe("Pa11y targets", () => {
       "campaign",
       "gm image detail",
       "gm images",
+      "gm imports",
       "gm npc detail",
       "gm npcs",
       "gm player preview",

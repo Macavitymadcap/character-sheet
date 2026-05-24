@@ -11,6 +11,9 @@ export type AbilityName =
   | "wisdom";
 export type NoteVisibility = "game_master" | "player";
 export type CampaignContentVisibility = "game_master" | "player";
+export type CampaignImportProvider = "manual" | "google_docs_manual";
+export type CampaignImportSourceFormat = "html" | "markdown";
+export type CampaignImportTargetType = "draft" | "npc" | "session" | "wiki";
 export type NpcVisibility = "private" | "public" | "selected";
 export type WikiPageType = "campaign" | "faction" | "location" | "lore" | "npc" | "session";
 
@@ -401,6 +404,23 @@ export interface CampaignSessionRecord {
   visibility: CampaignContentVisibility;
 }
 
+export interface CampaignContentImport {
+  campaignId: string;
+  conversionNotes: string;
+  convertedMarkdown: string;
+  createdAt?: string;
+  id: string;
+  importedByUserId: string;
+  provider: CampaignImportProvider;
+  sourceFormat: CampaignImportSourceFormat;
+  sourceReference: string | null;
+  sourceTitle: string;
+  targetRecordId: string | null;
+  targetType: CampaignImportTargetType;
+  updatedAt?: string;
+  visibility: CampaignContentVisibility;
+}
+
 export interface CampaignNpcDossier {
   campaignId: string;
   createdAt?: string;
@@ -458,6 +478,19 @@ export interface CharacterFactionChoice {
 }
 
 export interface CampaignContentRepository {
+  createContentImport(input: {
+    campaignId: string;
+    conversionNotes: string;
+    convertedMarkdown: string;
+    importedByUserId: string;
+    provider: CampaignImportProvider;
+    sourceFormat: CampaignImportSourceFormat;
+    sourceReference: string | null;
+    sourceTitle: string;
+    targetRecordId: string | null;
+    targetType: CampaignImportTargetType;
+    visibility: CampaignContentVisibility;
+  }): CampaignContentImport;
   createNpcDossier(input: {
     campaignId: string;
     gmNotes: string;
@@ -527,6 +560,7 @@ export interface CampaignContentRepository {
     viewerUserId?: string,
   ): CampaignNpcSummary | null;
   listFactionsForCampaign(campaignId: string): CampaignFaction[];
+  listContentImportsForCampaign(campaignId: string): CampaignContentImport[];
   listImageAssetsForCampaign(
     campaignId: string,
     viewerRole: UserRole,

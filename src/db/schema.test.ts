@@ -26,6 +26,7 @@ describe("bootstrapDatabase", () => {
     bootstrapDatabase(database);
 
     expect(tableNames()).toEqual([
+      "campaign_content_imports",
       "campaign_factions",
       "campaign_image_assets",
       "campaign_members",

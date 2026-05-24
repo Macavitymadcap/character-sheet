@@ -1,8 +1,11 @@
 import { renderCampaignMarkdown } from "../../../campaigns/wiki";
 import type {
   AuthUser,
+  CampaignContentImport,
   CampaignImageAsset,
   CampaignImageAssetUsage,
+  CampaignImportSourceFormat,
+  CampaignImportTargetType,
   CampaignMember,
   CampaignNpcDossier,
   CampaignNpcSummary,
@@ -40,6 +43,19 @@ export interface CampaignImageLibraryItem extends CampaignImageAsset {
 export interface CampaignImageDetail extends CampaignImageAsset {
   fileStatus: "available" | "fallback";
   usages: CampaignImageAssetUsage[];
+}
+
+export interface CampaignImportPreviewModel {
+  content: string;
+  convertedMarkdown: string;
+  detectedTitle: string;
+  provider: "manual" | "google_docs_manual";
+  sourceFormat: CampaignImportSourceFormat;
+  sourceReference: string | null;
+  sourceTitle: string;
+  targetType: CampaignImportTargetType;
+  visibility: "game_master" | "player";
+  warnings: string[];
 }
 
 export const CampaignPage = ({ appName, campaign, gameMasterDisplayName, imageAssets, members, ruleSources, sessions, user, viewerRole, wikiPages }: CampaignPageProps) => {
@@ -293,6 +309,11 @@ export const CampaignPrepPage = ({ appName, campaign, npcCount, privateNpcCount,
               <span>Images</span>
               <strong>Library</strong>
               <small>Uploads and usage</small>
+            </a>
+            <a class="campaign-prep-link" href={`/campaigns/${campaign.slug}/imports`}>
+              <span>Imports</span>
+              <strong>Drafts</strong>
+              <small>Paste, preview, save</small>
             </a>
             <a class="campaign-prep-link" href={`/campaigns/${campaign.slug}/preview/player`}>
               <span>Player preview</span>
@@ -671,6 +692,149 @@ function ImageUploadForm({ campaign }: { campaign: CampaignSummary }) {
       <button type="submit">Upload image</button>
     </form>
   );
+}
+
+interface CampaignImportBaseProps {
+  appName: string;
+  campaign: CampaignSummary;
+  user: Pick<AuthUser, "displayName" | "role">;
+}
+
+interface CampaignImportPageProps extends CampaignImportBaseProps {
+  imports: CampaignContentImport[];
+}
+
+export const CampaignImportPage = ({ appName, campaign, imports, user }: CampaignImportPageProps) => (
+  <Layout title={`Imports - ${campaign.name} - ${appName}`}>
+    <div class="shell campaign-shell">
+      <SiteHeader appName={appName} currentSection="campaign" user={user} />
+      <main class="campaign-main" aria-labelledby="campaign-import-heading">
+        <Panel labelledBy="campaign-import-heading">
+          <a class="action-link" href={`/campaigns/${campaign.slug}/prep`}>Back to prep</a>
+          <div class="campaign-heading">
+            <p class="campaign-kicker">Game Master import</p>
+            <h1 id="campaign-import-heading" class="panel-heading">Stage campaign writing</h1>
+          </div>
+          <p class="campaign-help-text">Paste exported Markdown or a small HTML excerpt, preview the safe campaign Markdown, then save it as a wiki page, session record, NPC dossier, or retained draft.</p>
+          <CampaignImportForm campaign={campaign} />
+        </Panel>
+        <Panel labelledBy="campaign-imports-recent-heading">
+          <div class="campaign-heading">
+            <p class="campaign-kicker">Import history</p>
+            <h2 id="campaign-imports-recent-heading" class="panel-heading">Recent imports</h2>
+          </div>
+          {imports.length > 0 ? (
+            <div class="campaign-source-list">
+              {imports.map((item) => (
+                <article class="campaign-source-item">
+                  <p class="campaign-kicker">{importTargetLabel(item.targetType)}</p>
+                  <h3>{item.sourceTitle}</h3>
+                  <p class="campaign-card-copy">{item.targetRecordId ? "Saved to campaign content." : "Retained as draft."}</p>
+                  <span class="campaign-asset-status">
+                    <span>{item.provider === "google_docs_manual" ? "Google Docs manual" : "Manual import"}</span>
+                    <span>{item.visibility === "player" ? "Player visible" : "Game Master only"}</span>
+                  </span>
+                </article>
+              ))}
+            </div>
+          ) : <p class="campaign-empty-state">No staged imports yet.</p>}
+        </Panel>
+      </main>
+    </div>
+  </Layout>
+);
+
+interface CampaignImportPreviewPageProps extends CampaignImportBaseProps {
+  preview: CampaignImportPreviewModel;
+}
+
+export const CampaignImportPreviewPage = ({ appName, campaign, preview, user }: CampaignImportPreviewPageProps) => (
+  <Layout title={`Import preview - ${campaign.name} - ${appName}`}>
+    <div class="shell campaign-shell">
+      <SiteHeader appName={appName} currentSection="campaign" user={user} />
+      <main class="campaign-main" aria-labelledby="campaign-import-preview-heading">
+        <Panel labelledBy="campaign-import-preview-heading">
+          <a class="action-link" href={`/campaigns/${campaign.slug}/imports`}>Back to import</a>
+          <div class="campaign-heading">
+            <p class="campaign-kicker">Preview</p>
+            <h1 id="campaign-import-preview-heading" class="panel-heading">{preview.detectedTitle}</h1>
+          </div>
+          <div class="campaign-asset-status">
+            <span>{importTargetLabel(preview.targetType)}</span>
+            <span>{preview.visibility === "player" ? "Player visible" : "Game Master only"}</span>
+            <span>{preview.sourceFormat.toUpperCase()} source</span>
+          </div>
+          {preview.warnings.length > 0 ? (
+            <div class="campaign-import-warning-list" role="status">
+              {preview.warnings.map((warning) => <p>{warning}</p>)}
+            </div>
+          ) : null}
+          <div class="campaign-markdown">
+            {renderCampaignMarkdown(preview.convertedMarkdown)}
+          </div>
+          <form class="campaign-session-form" action={`/campaigns/${campaign.slug}/imports/save`} method="post">
+            {importHiddenFields(preview)}
+            <label>Final title<input name="title" required type="text" value={preview.detectedTitle} /></label>
+            <label>Target<select name="targetType">
+              {importTargetOption("wiki", preview.targetType)}
+              {importTargetOption("session", preview.targetType)}
+              {importTargetOption("npc", preview.targetType)}
+              {importTargetOption("draft", preview.targetType)}
+            </select></label>
+            <label>Visibility<select name="visibility">
+              <option value="game_master" selected={preview.visibility === "game_master"}>Game Master</option>
+              <option value="player" selected={preview.visibility === "player"}>Player</option>
+            </select></label>
+            <button type="submit">Save import</button>
+          </form>
+        </Panel>
+      </main>
+    </div>
+  </Layout>
+);
+
+function CampaignImportForm({ campaign }: { campaign: CampaignSummary }) {
+  return (
+    <form class="campaign-session-form" action={`/campaigns/${campaign.slug}/imports/preview`} method="post">
+      <label>Source/export title<input name="sourceTitle" type="text" /></label>
+      <label>Source reference<input name="sourceReference" type="text" /></label>
+      <label>Source format<select name="sourceFormat"><option value="markdown">Markdown</option><option value="html">HTML</option></select></label>
+      <label>Target<select name="targetType">
+        <option value="wiki">Wiki page</option>
+        <option value="session">Session record</option>
+        <option value="npc">NPC dossier</option>
+        <option value="draft">Retained draft</option>
+      </select></label>
+      <label>Visibility<select name="visibility"><option value="game_master">Game Master</option><option value="player">Player</option></select></label>
+      <label class="campaign-session-form-wide">Content<textarea name="content" required rows={12}></textarea></label>
+      <button type="submit">Preview import</button>
+    </form>
+  );
+}
+
+function importHiddenFields(preview: CampaignImportPreviewModel) {
+  return (
+    <>
+      <input name="provider" type="hidden" value={preview.provider} />
+      <input name="sourceFormat" type="hidden" value={preview.sourceFormat} />
+      <input name="sourceTitle" type="hidden" value={preview.sourceTitle} />
+      <input name="sourceReference" type="hidden" value={preview.sourceReference ?? ""} />
+      <input name="convertedMarkdown" type="hidden" value={preview.convertedMarkdown} />
+      <input name="conversionNotes" type="hidden" value={preview.warnings.join("\n")} />
+    </>
+  );
+}
+
+function importTargetOption(targetType: CampaignImportTargetType, current: CampaignImportTargetType) {
+  return <option value={targetType} selected={targetType === current}>{importTargetLabel(targetType)}</option>;
+}
+
+function importTargetLabel(targetType: CampaignImportTargetType) {
+  if (targetType === "npc") return "NPC dossier";
+  if (targetType === "session") return "Session record";
+  if (targetType === "wiki") return "Wiki page";
+
+  return "Retained draft";
 }
 
 interface NpcDetailPageProps {

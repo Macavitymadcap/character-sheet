@@ -1,6 +1,8 @@
 export {
   CampaignImageDetailPage,
   CampaignImageLibraryPage,
+  CampaignImportPage,
+  CampaignImportPreviewPage,
   CampaignPage,
   CampaignPlayerPreviewPage,
   CampaignPrepPage,

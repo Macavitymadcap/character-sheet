@@ -1544,6 +1544,106 @@ describe("createApp", () => {
     expect(gmAsset.headers.get("content-type")).toContain("image/png");
   });
 
+  test("lets Game Masters preview and save staged campaign imports", async () => {
+    const { app, sessionService } = createTestApp("Campaign Ledger");
+    const gmCookie = sessionService.createSession("user_game_master").cookie;
+    const playerCookie = sessionService.createSession("user_lynott_player").cookie;
+
+    const form = new URLSearchParams({
+      content: "<h1>Canal Clue</h1><p>See https://docs.google.com/document/d/secret/edit</p><p>The tide bell rings.</p>",
+      sourceFormat: "html",
+      sourceReference: "GM notebook export",
+      targetType: "wiki",
+      visibility: "player",
+    });
+    const preview = await app.request("/campaigns/rovnost-shadows/imports/preview", {
+      body: form,
+      headers: formHeaders(gmCookie),
+      method: "POST",
+    });
+    const previewHtml = await preview.text();
+    const save = await app.request("/campaigns/rovnost-shadows/imports/save", {
+      body: new URLSearchParams({
+        conversionNotes: "Private Google Drive or Docs links were removed from the converted content.",
+        convertedMarkdown: "# Canal Clue\n\nSee [private source link removed]\n\nThe tide bell rings.",
+        provider: "manual",
+        sourceFormat: "html",
+        sourceReference: "GM notebook export",
+        sourceTitle: "Canal Clue",
+        targetType: "wiki",
+        title: "Canal Clue",
+        visibility: "player",
+      }),
+      headers: formHeaders(gmCookie),
+      method: "POST",
+    });
+    const page = await app.request("/campaigns/rovnost-shadows/wiki/canal-clue", {
+      headers: { cookie: playerCookie },
+    });
+    const pageHtml = await page.text();
+    const imports = await app.request("/campaigns/rovnost-shadows/imports", {
+      headers: { cookie: gmCookie },
+    });
+    const importsHtml = await imports.text();
+
+    expect(preview.status).toBe(200);
+    expect(previewHtml).toContain("Private Google Drive or Docs links were removed");
+    expect(previewHtml).not.toContain("docs.google.com");
+    expect(save.status).toBe(303);
+    expect(save.headers.get("location")).toBe("/campaigns/rovnost-shadows");
+    expect(page.status).toBe(200);
+    expect(pageHtml).toContain("The tide bell rings.");
+    expect(pageHtml).not.toContain("docs.google.com");
+    expect(imports.status).toBe(200);
+    expect(importsHtml).toContain("Canal Clue");
+    expect(importsHtml).toContain("Saved to campaign content.");
+  });
+
+  test("saves staged campaign imports to every supported target type", async () => {
+    const { app, sessionService } = createTestApp("Campaign Ledger");
+    const gmCookie = sessionService.createSession("user_game_master").cookie;
+    const targets = [
+      { location: "/campaigns/rovnost-shadows", targetType: "wiki", title: "Review Wiki Import" },
+      { location: "/campaigns/rovnost-shadows", targetType: "session", title: "Review Session Import" },
+      { location: "/campaigns/rovnost-shadows/npcs", targetType: "npc", title: "Review NPC Import" },
+      { location: "/campaigns/rovnost-shadows/imports", targetType: "draft", title: "Review Draft Import" },
+    ] as const;
+
+    for (const target of targets) {
+      const response = await app.request("/campaigns/rovnost-shadows/imports/save", {
+        body: new URLSearchParams({
+          conversionNotes: "",
+          convertedMarkdown: `# ${target.title}\n\nA staged import for ${target.targetType}.`,
+          provider: "manual",
+          sourceFormat: "markdown",
+          sourceReference: "Route target coverage",
+          sourceTitle: `${target.title} Source`,
+          targetType: target.targetType,
+          title: target.title,
+          visibility: target.targetType === "npc" ? "player" : "game_master",
+        }),
+        headers: formHeaders(gmCookie),
+        method: "POST",
+      });
+
+      expect(response.status).toBe(303);
+      expect(response.headers.get("location")).toBe(target.location);
+    }
+
+    const content = runtime?.repositories.campaignContentRepository;
+    expect(content?.getWikiPageBySlug("campaign_rovnost_shadows", "review-wiki-import", "game_master")?.title)
+      .toBe("Review Wiki Import");
+    expect(content?.listSessionsForCampaign("campaign_rovnost_shadows", "game_master").some((session) =>
+      session.title === "Review Session Import"
+    )).toBe(true);
+    expect(content?.listNpcSummariesForCampaign("campaign_rovnost_shadows", "player").some((npc) =>
+      npc.name === "Review NPC Import"
+    )).toBe(true);
+    expect(content?.listContentImportsForCampaign("campaign_rovnost_shadows").some((item) =>
+      item.targetType === "draft" && item.targetRecordId === null && item.sourceTitle === "Review Draft Import Source"
+    )).toBe(true);
+  });
+
   test("serves a readable fallback for missing seeded campaign asset files", async () => {
     const { app, sessionService } = createTestApp("Campaign Ledger");
     const playerCookie = sessionService.createSession("user_lynott_player").cookie;

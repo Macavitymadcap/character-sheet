@@ -374,6 +374,20 @@ export const sheetScreenshotTargets = [
     theme: "dark",
   },
   {
+    fileName: "gm-imports-light.png",
+    label: "Game Master imports light",
+    path: "/campaigns/rovnost-shadows/imports",
+    role: "game_master",
+    theme: "light",
+  },
+  {
+    fileName: "gm-imports-dark.png",
+    label: "Game Master imports dark",
+    path: "/campaigns/rovnost-shadows/imports",
+    role: "game_master",
+    theme: "dark",
+  },
+  {
     action: "scroll-campaign-assets",
     fileName: "gm-campaign-assets-light.png",
     label: "Game Master campaign assets light",

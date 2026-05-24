@@ -1137,6 +1137,32 @@ describe("SQLite repositories", () => {
       },
     ]);
 
+    const contentImport = content.createContentImport({
+      campaignId,
+      conversionNotes: "Private links removed.",
+      convertedMarkdown: "# Imported clue\n\nThe bell rings.",
+      importedByUserId: "user_game_master",
+      provider: "manual",
+      sourceFormat: "markdown",
+      sourceReference: "notebook-export.md",
+      sourceTitle: "Notebook export",
+      targetRecordId: null,
+      targetType: "draft",
+      visibility: "game_master",
+    });
+    expect(contentImport).toMatchObject({
+      campaignId,
+      conversionNotes: "Private links removed.",
+      provider: "manual",
+      sourceFormat: "markdown",
+      sourceReference: "notebook-export.md",
+      sourceTitle: "Notebook export",
+      targetRecordId: null,
+      targetType: "draft",
+      visibility: "game_master",
+    });
+    expect(content.listContentImportsForCampaign(campaignId).map((item) => item.id)).toContain(contentImport.id);
+
     expect(content.listSessionsForCampaign(campaignId, "player").map((session) => session.slug)).toEqual([
       "session-zero",
     ]);

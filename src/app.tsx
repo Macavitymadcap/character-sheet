@@ -7,6 +7,7 @@ import {
 } from "@macavitymadcap/hyper-dank-transport";
 import { Hono, type Context } from "hono";
 import { assetStorageRoot } from "./assets";
+import { convertCampaignImportContent } from "./campaigns/imports";
 import {
   AuthService,
   requireCampaignAccess,
@@ -21,6 +22,8 @@ import { AdminPage } from "./components/pages/Admin";
 import {
   CampaignImageDetailPage,
   CampaignImageLibraryPage,
+  CampaignImportPage,
+  CampaignImportPreviewPage,
   CampaignPage,
   CampaignPlayerPreviewPage,
   CampaignPrepPage,
@@ -63,6 +66,9 @@ import type {
   AuthUser,
   CampaignContentRepository,
   CampaignContentVisibility,
+  CampaignImportProvider,
+  CampaignImportSourceFormat,
+  CampaignImportTargetType,
   CampaignRepository,
   CharacterRepository,
   CreateCharacterInput,
@@ -690,6 +696,114 @@ export const createApp = (dependencies: AppDependencies) => {
         viewerRole={viewerRole}
       />,
     );
+  });
+
+  app.get("/campaigns/:campaignSlug/imports", (context) => {
+    const session = readSession(context.req.header("cookie"));
+    if (!session) return context.redirect("/login", 303);
+
+    const campaign = dependencies.campaignRepository.getCampaignBySlug(
+      routeParam(context, "campaignSlug"),
+    );
+    if (!campaign) return context.text("Not found", 404);
+
+    const guard = requireCampaignAccess({
+      campaignId: campaign.id,
+      campaignRepository: dependencies.campaignRepository,
+      permission: "manage",
+      session,
+    });
+    const guarded = guardResponse(context, guard);
+    if (guarded) return guarded;
+
+    return context.html(
+      <CampaignImportPage
+        appName={dependencies.appName}
+        campaign={campaign}
+        imports={dependencies.campaignContentRepository.listContentImportsForCampaign(campaign.id)}
+        user={session.user}
+      />,
+    );
+  });
+
+  app.post("/campaigns/:campaignSlug/imports/preview", async (context) => {
+    const session = readSession(context.req.header("cookie"));
+    if (!session) return context.redirect("/login", 303);
+
+    const campaign = dependencies.campaignRepository.getCampaignBySlug(
+      routeParam(context, "campaignSlug"),
+    );
+    if (!campaign) return context.text("Not found", 404);
+
+    const guard = requireCampaignAccess({
+      campaignId: campaign.id,
+      campaignRepository: dependencies.campaignRepository,
+      permission: "manage",
+      session,
+    });
+    const guarded = guardResponse(context, guard);
+    if (guarded) return guarded;
+
+    const parsed = parseCampaignImportPreviewForm(await FormValues.from(context));
+    if (!parsed.ok) return context.text(parsed.message, 400);
+    const preview = convertCampaignImportContent(parsed.value);
+    const sourceTitle = parsed.value.sourceTitle || preview.detectedTitle;
+
+    return context.html(
+      <CampaignImportPreviewPage
+        appName={dependencies.appName}
+        campaign={campaign}
+        preview={{
+          ...parsed.value,
+          ...preview,
+          sourceTitle,
+        }}
+        user={session.user}
+      />,
+    );
+  });
+
+  app.post("/campaigns/:campaignSlug/imports/save", async (context) => {
+    const session = readSession(context.req.header("cookie"));
+    if (!session) return context.redirect("/login", 303);
+
+    const campaign = dependencies.campaignRepository.getCampaignBySlug(
+      routeParam(context, "campaignSlug"),
+    );
+    if (!campaign) return context.text("Not found", 404);
+
+    const guard = requireCampaignAccess({
+      campaignId: campaign.id,
+      campaignRepository: dependencies.campaignRepository,
+      permission: "manage",
+      session,
+    });
+    const guarded = guardResponse(context, guard);
+    if (guarded) return guarded;
+
+    const parsed = parseCampaignImportSaveForm(await FormValues.from(context));
+    if (!parsed.ok) return context.text(parsed.message, 400);
+    const targetRecordId = saveCampaignImportTarget(
+      dependencies.campaignContentRepository,
+      campaign.id,
+      session.user.id,
+      parsed.value,
+    );
+    dependencies.campaignContentRepository.createContentImport({
+      campaignId: campaign.id,
+      conversionNotes: parsed.value.conversionNotes,
+      convertedMarkdown: parsed.value.convertedMarkdown,
+      importedByUserId: session.user.id,
+      provider: parsed.value.provider,
+      sourceFormat: parsed.value.sourceFormat,
+      sourceReference: parsed.value.sourceReference,
+      sourceTitle: parsed.value.sourceTitle,
+      targetRecordId,
+      targetType: parsed.value.targetType,
+      visibility: parsed.value.visibility,
+    });
+
+    return redirectAfterAction(context, campaignImportRedirect(campaign.slug, parsed.value.targetType, targetRecordId));
   });
 
   app.get("/campaigns/:campaignSlug/wiki/:wikiSlug", (context) => {
@@ -2858,6 +2972,181 @@ function parseCampaignWikiForm(
       visibility,
     },
   };
+}
+
+function parseCampaignImportPreviewForm(
+  form: FormValues,
+): {
+  ok: true;
+  value: {
+    content: string;
+    provider: CampaignImportProvider;
+    sourceFormat: CampaignImportSourceFormat;
+    sourceReference: string | null;
+    sourceTitle: string;
+    targetType: CampaignImportTargetType;
+    visibility: CampaignContentVisibility;
+  };
+} | { ok: false; message: string } {
+  const content = form.string("content")?.trim();
+  const sourceTitle = form.string("sourceTitle")?.trim();
+  const sourceFormat = parseCampaignImportSourceFormat(form.string("sourceFormat"));
+  const targetType = parseCampaignImportTargetType(form.string("targetType"));
+  const visibility = parseNoteVisibility(form.string("visibility"));
+  if (!content || !sourceFormat || !targetType || !visibility) {
+    return { ok: false, message: "Invalid import preview" };
+  }
+
+  return {
+    ok: true,
+    value: {
+      content,
+      provider: "manual",
+      sourceFormat,
+      sourceReference: form.optionalString("sourceReference")?.trim() || null,
+      sourceTitle: sourceTitle || "",
+      targetType,
+      visibility,
+    },
+  };
+}
+
+function parseCampaignImportSaveForm(
+  form: FormValues,
+): {
+  ok: true;
+  value: {
+    conversionNotes: string;
+    convertedMarkdown: string;
+    provider: CampaignImportProvider;
+    sourceFormat: CampaignImportSourceFormat;
+    sourceReference: string | null;
+    sourceTitle: string;
+    targetType: CampaignImportTargetType;
+    title: string;
+    visibility: CampaignContentVisibility;
+  };
+} | { ok: false; message: string } {
+  const title = form.string("title")?.trim();
+  const convertedMarkdown = form.string("convertedMarkdown")?.trim();
+  const provider = parseCampaignImportProvider(form.string("provider"));
+  const sourceFormat = parseCampaignImportSourceFormat(form.string("sourceFormat"));
+  const sourceTitle = form.string("sourceTitle")?.trim();
+  const targetType = parseCampaignImportTargetType(form.string("targetType"));
+  const visibility = parseNoteVisibility(form.string("visibility"));
+  if (!title || !convertedMarkdown || !provider || !sourceFormat || !sourceTitle || !targetType || !visibility) {
+    return { ok: false, message: "Invalid import save" };
+  }
+  const cleaned = convertCampaignImportContent({
+    content: convertedMarkdown,
+    sourceFormat: "markdown",
+    sourceTitle,
+  });
+  const conversionNotes = [
+    form.optionalString("conversionNotes")?.trim(),
+    ...cleaned.warnings,
+  ].filter(Boolean).join("\n");
+
+  return {
+    ok: true,
+    value: {
+      conversionNotes,
+      convertedMarkdown: cleaned.convertedMarkdown,
+      provider,
+      sourceFormat,
+      sourceReference: form.optionalString("sourceReference")?.trim() || null,
+      sourceTitle,
+      targetType,
+      title,
+      visibility,
+    },
+  };
+}
+
+function saveCampaignImportTarget(
+  repository: CampaignContentRepository,
+  campaignId: string,
+  userId: string,
+  input: {
+    convertedMarkdown: string;
+    sourceReference: string | null;
+    sourceTitle: string;
+    targetType: CampaignImportTargetType;
+    title: string;
+    visibility: CampaignContentVisibility;
+  },
+) {
+  if (input.targetType === "draft") return null;
+  if (input.targetType === "wiki") {
+    return repository.createWikiPage({
+      bodyMarkdown: input.convertedMarkdown,
+      campaignId,
+      coverImageAssetId: null,
+      pageType: "lore",
+      sourcePath: input.sourceReference,
+      sourceTitle: input.sourceTitle,
+      tags: ["imported"],
+      title: input.title,
+      visibility: input.visibility,
+    }).id;
+  }
+  if (input.targetType === "session") {
+    return repository.createSession({
+      body: input.convertedMarkdown,
+      campaignId,
+      createdByUserId: userId,
+      sessionDate: null,
+      summary: campaignImportSummary(input.convertedMarkdown),
+      title: input.title,
+      visibility: input.visibility,
+    }).id;
+  }
+  const npc = repository.createNpcDossier({
+    campaignId,
+    gmNotes: input.visibility === "game_master" ? input.convertedMarkdown : "",
+    hooks: "",
+    motivations: "",
+    name: input.title,
+    portraitImageAssetId: null,
+    publicSummary: campaignImportSummary(input.convertedMarkdown),
+    publicWikiPageId: null,
+    revealNotes: "",
+    rulesEntityId: null,
+    sceneNotes: "",
+    secrets: "",
+    selectedPlayerIds: [],
+    visibility: input.visibility === "player" ? "public" : "private",
+  });
+
+  return npc.id;
+}
+
+function campaignImportRedirect(campaignSlug: string, targetType: CampaignImportTargetType, targetRecordId: string | null) {
+  if (targetType === "draft" || !targetRecordId) return `/campaigns/${campaignSlug}/imports`;
+  if (targetType === "npc") return `/campaigns/${campaignSlug}/npcs`;
+
+  return `/campaigns/${campaignSlug}`;
+}
+
+function campaignImportSummary(markdown: string) {
+  return markdown
+    .replace(/^#+\s+/gm, "")
+    .replace(/[*_`>#-]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 220) || "Imported campaign writing.";
+}
+
+function parseCampaignImportProvider(value: unknown): CampaignImportProvider | null {
+  return value === "manual" || value === "google_docs_manual" ? value : null;
+}
+
+function parseCampaignImportSourceFormat(value: unknown): CampaignImportSourceFormat | null {
+  return value === "html" || value === "markdown" ? value : null;
+}
+
+function parseCampaignImportTargetType(value: unknown): CampaignImportTargetType | null {
+  return value === "draft" || value === "npc" || value === "session" || value === "wiki" ? value : null;
 }
 
 async function parseCampaignAssetForm(
