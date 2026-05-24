@@ -23,6 +23,8 @@ visibility controlled by the same guards.
   optional rules/stat-block link.
 - Add reveal controls that make the public NPC summary visible to players without exposing private
   fields.
+- Store NPC visibility as public, private, or selected, with selected player access recorded
+  separately.
 - Add list and detail components that separate private Game Master information from player-visible
   profile information.
 - Keep the existing campaign page linked to the new prep/NPC workspace instead of growing the
@@ -51,7 +53,8 @@ flowchart TD
 
 ## Tests First
 
-- Add route tests proving players and non-members cannot open NPC prep routes.
+- Add route tests proving players cannot open NPC prep routes, can discover public/selected NPCs
+  from the NPC list, and non-members cannot open campaign NPC routes.
 - Add route tests for create, edit, validation errors, and reveal/hide flows before implementing
   handlers.
 - Add component tests for NPC list empty state, private detail state, portrait selection, reveal
@@ -65,8 +68,22 @@ flowchart TD
 
 - A Game Master can create and edit a private NPC dossier from the browser.
 - A Game Master can reveal an NPC summary to players without revealing private notes.
+- A Game Master can limit an NPC summary to selected campaign players.
 - NPC routes enforce campaign membership and Game Master permissions.
 - The campaign page links to the prep/NPC workflow without adding more dense management sections.
 - NPC list and detail screens are scannable on mobile and desktop.
 - Screenshots and accessibility checks cover the new GM-facing NPC workflow.
 - `bun run verify` passes.
+
+## Implementation Notes
+
+- Added full-page Game Master prep, NPC list, and NPC detail routes using the `sheet-0063`
+  repository boundary.
+- Added create, edit, reveal, hide, and selected-player POST flows for NPC dossiers.
+- Kept player NPC list/detail reads limited to public or selected-for-that-player summaries while
+  Game Masters see private dossier fields and edit controls.
+- Linked the campaign overview to the prep and NPC workspaces instead of adding more management
+  forms to the overview page.
+- Added a portrait helper link back to campaign image upload so local photos can be added before
+  selection.
+- Added Pa11y and screenshot targets for prep, NPC list, and NPC detail surfaces.

@@ -24,6 +24,8 @@ export const hostedRehearsalSmokeCoverage = [
   "public local play storage import/export",
   "campaign sessions",
   "campaign wiki",
+  "campaign content import",
+  "Google Docs manual import",
   "combined admin campaign access",
   "campaign private rules sources",
   "rule mechanics and sheet disclosures",
@@ -255,8 +257,8 @@ export async function runMvpSmoke() {
     });
     assertResponse("seeded campaign asset read", seededAsset.response, 200);
     const assetContentType = seededAsset.response.headers.get("content-type") ?? "";
-    if (!assetContentType.includes("image/png")) {
-      throw new Error(`Seeded campaign asset used ${assetContentType}; expected image/png.`);
+    if (!assetContentType.includes("image/png") && !assetContentType.includes("image/svg+xml")) {
+      throw new Error(`Seeded campaign asset used ${assetContentType}; expected image/png or image/svg+xml.`);
     }
 
     const imageForm = new FormData();
@@ -288,6 +290,77 @@ export async function runMvpSmoke() {
     });
     assertResponse("gm wiki creation", wiki.response, 303);
     await assertContains("created wiki read", `${baseUrl}/campaigns/rovnost-shadows/wiki/smoke-wiki`, returningPlayerCookie, "Smoke Wiki");
+
+    const importPreview = await requestText(`${baseUrl}/campaigns/rovnost-shadows/imports/preview`, {
+      body: new URLSearchParams({
+        content: "<h1>Smoke Import</h1><p>See https://docs.google.com/document/d/private/edit</p><p>Imported smoke clue.</p>",
+        sourceFormat: "html",
+        sourceReference: "smoke-export",
+        sourceTitle: "Smoke import source",
+        targetType: "wiki",
+        visibility: "player",
+      }),
+      cookie: gmCookie,
+      method: "POST",
+    });
+    assertResponse("gm import preview", importPreview.response, 200);
+    assertBody("gm import preview", importPreview.body, "Private Google Drive or Docs links were removed");
+    const importSave = await requestText(`${baseUrl}/campaigns/rovnost-shadows/imports/save`, {
+      body: new URLSearchParams({
+        conversionNotes: "Private Google Drive or Docs links were removed from the converted content.",
+        convertedMarkdown: "# Smoke Import\n\nSee [private source link removed]\n\nImported smoke clue.",
+        provider: "manual",
+        sourceFormat: "html",
+        sourceReference: "smoke-export",
+        sourceTitle: "Smoke import source",
+        targetType: "wiki",
+        title: "Smoke Import",
+        visibility: "player",
+      }),
+      cookie: gmCookie,
+      method: "POST",
+    });
+    assertResponse("gm import save", importSave.response, 303);
+    await assertContains("created import read", `${baseUrl}/campaigns/rovnost-shadows/wiki/smoke-import`, returningPlayerCookie, "Imported smoke clue.");
+
+    const googleImportPage = await requestText(`${baseUrl}/campaigns/rovnost-shadows/imports/google-docs`, {
+      cookie: gmCookie,
+    });
+    assertResponse("gm google docs import page", googleImportPage.response, 200);
+    assertBody("gm google docs import page", googleImportPage.body, "Google Docs manual export");
+    const googleImportPreview = await requestText(`${baseUrl}/campaigns/rovnost-shadows/imports/preview`, {
+      body: new URLSearchParams({
+        content: "<h1>Smoke Google Export</h1><p>See https://docs.google.com/document/d/smoke-doc/edit</p><p>Manual export clue.</p>",
+        provider: "google_docs_manual",
+        sourceFormat: "html",
+        sourceReference: "https://docs.google.com/document/d/smoke-doc/edit",
+        sourceTitle: "Smoke Google Export",
+        targetType: "wiki",
+        visibility: "player",
+      }),
+      cookie: gmCookie,
+      method: "POST",
+    });
+    assertResponse("gm google docs import preview", googleImportPreview.response, 200);
+    assertBody("gm google docs import preview", googleImportPreview.body, "Google Docs manual");
+    assertBody("gm google docs import preview", googleImportPreview.body, "Private Google Drive or Docs links were removed");
+    const googleImportSave = await requestText(`${baseUrl}/campaigns/rovnost-shadows/imports/save`, {
+      body: new URLSearchParams({
+        conversionNotes: "Private Google Drive or Docs links were removed from the converted content.",
+        convertedMarkdown: "# Smoke Google Export\n\nSee [private source link removed]\n\nManual export clue.",
+        provider: "google_docs_manual",
+        sourceFormat: "html",
+        sourceReference: "google-doc:smoke-doc",
+        sourceTitle: "Smoke Google Export",
+        targetType: "wiki",
+        title: "Smoke Google Export",
+        visibility: "player",
+      }),
+      cookie: gmCookie,
+      method: "POST",
+    });
+    assertResponse("gm google docs import save", googleImportSave.response, 303);
+    await assertContains("created google import read", `${baseUrl}/campaigns/rovnost-shadows/wiki/smoke-google-export`, returningPlayerCookie, "Manual export clue.");
 
     const adminCookie = await login(baseUrl, "admin@example.local");
     await assertContains("admin", `${baseUrl}/admin`, adminCookie, "Admin");

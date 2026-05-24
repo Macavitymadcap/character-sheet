@@ -26,9 +26,12 @@ describe("bootstrapDatabase", () => {
     bootstrapDatabase(database);
 
     expect(tableNames()).toEqual([
+      "campaign_content_imports",
       "campaign_factions",
       "campaign_image_assets",
       "campaign_members",
+      "campaign_npc_player_access",
+      "campaign_npcs",
       "campaign_rules_sources",
       "campaign_sessions",
       "campaign_wiki_page_assets",
@@ -164,6 +167,46 @@ describe("bootstrapDatabase", () => {
       );
     }
     database.run(
+      "insert into campaign_image_assets (id, campaign_id, storage_key, mime_type, byte_size, width, height, alt_text, visibility) values (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [
+        "asset_campaign_two",
+        "campaign_2",
+        "campaigns/campaign-two/portrait.png",
+        "image/png",
+        123,
+        300,
+        400,
+        "Wrong campaign portrait",
+        "player",
+      ],
+    );
+    database.run(
+      "insert into campaign_wiki_pages (id, campaign_id, slug, title, page_type, tags_json, visibility, body_markdown, source_title) values (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [
+        "wiki_campaign_two",
+        "campaign_2",
+        "profile",
+        "Profile",
+        "npc",
+        "[]",
+        "player",
+        "Wrong campaign profile.",
+        "Profile",
+      ],
+    );
+    database.run(
+      "insert into rules_sources (id, slug, name, abbreviation, content_category, visibility, public_export_eligible) values (?, ?, ?, ?, ?, ?, ?)",
+      ["rules_source_campaign_two", "campaign-two", "Campaign Two", "C2", "local", "campaign", 0],
+    );
+    database.run(
+      "insert into campaign_rules_sources (campaign_id, source_id) values (?, ?)",
+      ["campaign_2", "rules_source_campaign_two"],
+    );
+    database.run(
+      "insert into rules_entities (id, source_id, slug, entity_type, name) values (?, ?, ?, ?, ?)",
+      ["rule_campaign_two", "rules_source_campaign_two", "contact", "stat_block", "Contact"],
+    );
+    database.run(
       "insert into characters (id, slug, owner_user_id, campaign_id, name, species, background, level, proficiency_bonus, armour_class, initiative, speed_ft, hit_point_max, hit_point_current) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
       [
         "character_1",
@@ -224,6 +267,32 @@ describe("bootstrapDatabase", () => {
         ],
       ),
     ).toThrow();
+    const wrongCampaignNpcLinks: Array<[string, string | null, string | null, string | null]> = [
+      ["npc_wrong_portrait", "asset_campaign_two", null, null],
+      ["npc_wrong_wiki", null, "wiki_campaign_two", null],
+      ["npc_wrong_rules", null, null, "rule_campaign_two"],
+    ];
+    for (const [id, portraitId, wikiId, rulesId] of wrongCampaignNpcLinks) {
+      expect(() =>
+        database.run(
+          `insert into campaign_npcs (
+            id, campaign_id, slug, name, visibility, public_summary,
+            portrait_image_asset_id, public_wiki_page_id, rules_entity_id
+          ) values (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            id,
+            "campaign_1",
+            id.replaceAll("_", "-"),
+            id,
+            "private",
+            "Wrong campaign link.",
+            portraitId,
+            wikiId,
+            rulesId,
+          ],
+        ),
+      ).toThrow();
+    }
 
     expect(() =>
       database.run(
@@ -323,6 +392,84 @@ describe("bootstrapDatabase", () => {
       database.run(
         "insert into character_faction_choices (character_id, faction_id, connection_note) values (?, ?, ?)",
         ["character_1", "faction_1", "Second primary choice."],
+      ),
+    ).toThrow();
+    database.run(
+      "insert into campaign_image_assets (id, campaign_id, storage_key, mime_type, byte_size, width, height, alt_text, visibility) values (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [
+        "asset_portrait",
+        "campaign_1",
+        "campaigns/campaign/portrait.png",
+        "image/png",
+        123,
+        300,
+        400,
+        "Portrait",
+        "game_master",
+      ],
+    );
+    database.run(
+      "insert into campaign_wiki_pages (id, campaign_id, slug, title, page_type, tags_json, visibility, body_markdown, source_title) values (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [
+        "wiki_profile",
+        "campaign_1",
+        "profile",
+        "Profile",
+        "npc",
+        "[]",
+        "player",
+        "Public profile.",
+        "Profile",
+      ],
+    );
+    database.run(
+      "insert into rules_sources (id, slug, name, abbreviation, content_category, visibility, public_export_eligible) values (?, ?, ?, ?, ?, ?, ?)",
+      ["rules_source_private", "private", "Private", "PRV", "local", "campaign", 0],
+    );
+    database.run(
+      "insert into campaign_rules_sources (campaign_id, source_id) values (?, ?)",
+      ["campaign_1", "rules_source_private"],
+    );
+    database.run(
+      "insert into rules_entities (id, source_id, slug, entity_type, name) values (?, ?, ?, ?, ?)",
+      ["rule_stat_block", "rules_source_private", "stat-block", "stat_block", "Stat Block"],
+    );
+    expect(() =>
+      database.run(
+        `insert into campaign_npcs (
+          id, campaign_id, slug, name, visibility, public_summary, gm_notes, secrets,
+          motivations, hooks, scene_notes, reveal_notes, portrait_image_asset_id,
+          public_wiki_page_id, rules_entity_id
+        ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          "npc_1",
+          "campaign_1",
+          "contact",
+          "Contact",
+          "private",
+          "Helpful contact.",
+          "Private notes.",
+          "Secret.",
+          "Motivation.",
+          "Hook.",
+          "Scene.",
+          "Reveal later.",
+          "asset_portrait",
+          "wiki_profile",
+          "rule_stat_block",
+        ],
+      ),
+    ).not.toThrow();
+    expect(() =>
+      database.run(
+        "insert into campaign_npcs (id, campaign_id, slug, name, visibility, public_summary) values (?, ?, ?, ?, ?, ?)",
+        ["npc_duplicate", "campaign_1", "contact", "Duplicate", "private", "Duplicate."],
+      ),
+    ).toThrow();
+    expect(() =>
+      database.run(
+        "insert into campaign_npcs (id, campaign_id, slug, name, visibility, public_summary) values (?, ?, ?, ?, ?, ?)",
+        ["npc_bad_visibility", "campaign_1", "bad", "Bad", "player", "Bad."],
       ),
     ).toThrow();
   });

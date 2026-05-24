@@ -4,7 +4,10 @@ A local-first D&D 5e campaign ledger for character sheets, campaign records, and
 
 The first MVP focuses on a small table: player characters, one Game Master, and one admin. It runs locally with SQLite, uses server-rendered HTML fragments for sheet interactions, and stores D&D 2014 rules data in structured database tables rather than treating markdown as the runtime source of truth. The campaign companion work now adds public SRD rules, browser-local play tools, multiple players, multiple campaign characters, local character creation, wiki pages, image assets, factions, faction choices, session records, campaign-scoped private rules, and compact table-use UX.
 
-For the architecture and data model, see [ARCHITECTURE.md](./ARCHITECTURE.md). For the contribution and ticket workflow, see [CONTRIBUTING.md](./CONTRIBUTING.md).
+For the architecture and data model, see [ARCHITECTURE.md](./ARCHITECTURE.md). For the contribution
+and ticket workflow, see [CONTRIBUTING.md](./CONTRIBUTING.md), with GitHub issue and project
+conventions in [GitHub Workflow](./docs/operations/github-workflow.md) and the active source-of-truth
+model in [Project Tracking](./docs/project-tracking.md).
 
 ## MVP Scope
 
@@ -82,7 +85,23 @@ The sheet header includes HTMX-backed hit point controls for current and tempora
 
 The notes tab creates, updates, and deletes visible player or Game Master notes through HTMX panel refreshes. Player users can manage player-visible notes for their own characters; Game Masters can manage both player and Game Master notes for campaign characters.
 
-The Game Master campaign page lists campaign session records and includes local forms for creating, updating, and deleting table prep or recap entries with player-visible or Game-Master-only visibility.
+The Game Master campaign page links to the focused prep workspace at `/campaigns/rovnost-shadows/prep`.
+The NPC workspace at `/campaigns/rovnost-shadows/npcs` lets the Game Master create, edit, review,
+and control NPC dossiers with public, private, or selected-player visibility. Players can open the
+same NPC route from the campaign page and only see public dossiers or dossiers selected for them.
+The campaign image library at `/campaigns/rovnost-shadows/images` lets the Game Master upload PNG,
+JPEG, or WebP files from this computer, review thumbnail cards, open image detail metadata, and see
+wiki/NPC/faction usage links. Uploads keep only app-managed relative storage keys; the original local
+filename and path are not stored. The NPC form links back to that image library so local photos can be
+added as campaign assets before being selected as portraits. The staged import page at
+`/campaigns/rovnost-shadows/imports` lets the Game Master paste exported Markdown or a small HTML
+excerpt, preview safe campaign Markdown, remove private Drive/Docs links, and save the result as a
+wiki page, session record, NPC dossier, or retained draft with source metadata. The Google Docs
+manual export path at `/campaigns/rovnost-shadows/imports/google-docs` uses that same preview and
+save flow without live Drive credentials; see [Google Docs Manual Import](./docs/operations/google-docs-manual-import.md). The player preview route at
+`/campaigns/rovnost-shadows/preview/player` lets the Game Master audit player-visible wiki pages,
+sessions, NPCs, character notes, and images before a session. The campaign page still lists campaign session records and includes local forms for creating, updating, and
+deleting table prep or recap entries with player-visible or Game-Master-only visibility.
 
 The local group-use workflow is ready for table rehearsal: seed the database, sign in as Lynott or Mira to create player-owned characters, use the Game Master account to manage the campaign roster, sessions, wiki pages, image assets, private campaign rules sources, and faction context, and use the admin account to prepare invite and password-reset links. The hosted Railway work in `sheet-0030` rehearses that same MVP remotely without changing the local-first data model.
 
@@ -101,7 +120,7 @@ SQLite database files and sidecar files should remain ignored by Git.
 
 For Railway rehearsal setup, including hosted values for these variables, see [Railway Hosted Rehearsal](./docs/deployment/railway.md).
 For manual hosted user preparation, invite handoff, and password-reset handoff, see [Hosted Account Operator Runbook](./docs/operations/hosted-account-runbook.md).
-For the final local and hosted browser acceptance checklist, see [Hosted Rehearsal Acceptance](./docs/operations/hosted-rehearsal-acceptance.md). For the completed campaign companion epic acceptance record, see [Campaign Companion Acceptance](./docs/operations/campaign-companion-acceptance.md).
+For the final local and hosted browser acceptance checklist, see [Hosted Rehearsal Acceptance](./docs/operations/hosted-rehearsal-acceptance.md). For completed epic acceptance records, see [Campaign Companion Acceptance](./docs/operations/campaign-companion-acceptance.md), [Hyper-Dank Adoption Acceptance](./docs/operations/hyper-dank-adoption-acceptance.md), and [Game Master Prep Acceptance](./docs/operations/game-master-prep-acceptance.md).
 
 Local seed users are available for development:
 
@@ -112,7 +131,7 @@ Local seed users are available for development:
 | Game Master | `gm@example.local` | `password123` |
 | Admin | `admin@example.local` | `password123` |
 
-The seeded Rovnost campaign also includes initial roster, wiki, image asset, session, faction, and character faction-choice records. Image assets store app-managed relative storage keys such as `campaigns/rovnost-shadows/cover.png`; absolute local source paths are rejected by the schema. Hosted preparation writes deterministic placeholder files for seeded campaign assets under `CAMPAIGN_LEDGER_ASSET_ROOT`, falling back to `CHARACTER_SHEET_ASSET_ROOT` for existing environments, and missing seeded files render a readable protected fallback instead of a broken image.
+The seeded Rovnost campaign also includes initial roster, wiki, image asset, session, faction, and character faction-choice records. Image assets store app-managed relative storage keys such as `campaigns/rovnost-shadows/cover.png`; absolute local source paths are rejected by the schema. Hosted preparation copies the bundled Rovnost seed images under `CAMPAIGN_LEDGER_ASSET_ROOT`, falling back to `CHARACTER_SHEET_ASSET_ROOT` for existing environments, and missing seeded files render a readable protected fallback instead of a broken image. To replace seeded art locally, copy the known file to the matching relative path under the asset root; for new table photos, use the Game Master image library upload form.
 
 ## Rename Notes
 
@@ -147,11 +166,11 @@ bun run verify
 
 Hosted account setup stays manual for this epic. Admin-created invite and password-reset links are copied from the admin UI and shared privately by the operator; no email delivery is implied or configured. See [Hosted Account Operator Runbook](./docs/operations/hosted-account-runbook.md).
 
-`bun run test:a11y` starts an in-memory app on an available local port and runs Pa11y against public `/`, `/login`, `/local/characters`, `/local/campaigns`, `/rules`, and `/rules/spell/bless`, player `/characters`, `/sheet/lynott`, `/campaigns/rovnost-shadows/wiki/factions-guide`, and `/logout`, Game Master `/campaigns/rovnost-shadows` and `/campaigns/rovnost-shadows/characters`, and admin `/admin`.
+`bun run test:a11y` starts an in-memory app on an available local port and runs Pa11y against public `/`, `/login`, `/local/characters`, `/local/campaigns`, `/rules`, and `/rules/spell/bless`, player `/characters`, `/sheet/lynott`, `/campaigns/rovnost-shadows/wiki/factions-guide`, `/campaigns/rovnost-shadows/npcs`, `/campaigns/rovnost-shadows/images`, and `/logout`, Game Master `/campaigns/rovnost-shadows`, `/campaigns/rovnost-shadows/prep`, `/campaigns/rovnost-shadows/preview/player`, `/campaigns/rovnost-shadows/npcs`, `/campaigns/rovnost-shadows/npcs/magister-vallen`, `/campaigns/rovnost-shadows/images`, `/campaigns/rovnost-shadows/images/asset_magister_vallen`, `/campaigns/rovnost-shadows/imports`, `/campaigns/rovnost-shadows/imports/google-docs`, and `/campaigns/rovnost-shadows/characters`, and admin `/admin`.
 
-`bun run smoke:mvp` starts an in-memory app and walks the seeded group-use workflow: player login, roster character creation, manual sheet editing, resource mutation, player notes, faction selection, every sheet tab fragment, full SRD import, public and signed-in rules browsing, browser-local play export/import, sheet rule links, logout protection, Game Master roster creation, campaign session creation, wiki reads and writes, campaign private rules, protected seeded asset reads, image upload, combined admin campaign access, and admin invite/password-reset handoff.
+`bun run smoke:mvp` starts an in-memory app and walks the seeded group-use workflow: player login, roster character creation, manual sheet editing, resource mutation, player notes, faction selection, every sheet tab fragment, full SRD import, public and signed-in rules browsing, browser-local play export/import, sheet rule links, logout protection, Game Master roster creation, campaign session creation, wiki reads and writes, staged content import, Google Docs manual import, campaign private rules, protected seeded asset reads, image upload, combined admin campaign access, and admin invite/password-reset handoff.
 
-`bun run screenshots:sheet` captures public home, local play, Lynott's sheet in light and dark mode, core/skills edit states, roll results, Mira spellcasting, the Background tab faction picker, player and admin roster/cards, the Game Master campaign page, campaign assets and rules sources, rules list/detail pages, a wiki page with image references, and edited sheet states. Screenshots are written to `docs/pr-screenshots/` by default for deliberate PR evidence refreshes. Set `SCREENSHOT_DIR` to write them elsewhere.
+`bun run screenshots:sheet` captures public home, local play, Lynott's sheet in light and dark mode, core/skills edit states, roll results, Mira spellcasting, the Background tab faction picker, player and admin roster/cards, the Game Master campaign page, prep/NPC workspaces, image library/detail pages, import form, Google Docs manual import form, player preview, player NPC list, campaign assets and rules sources, rules list/detail pages, a wiki page with image references, and edited sheet states. Screenshots are written to `docs/pr-screenshots/` by default for deliberate PR evidence refreshes. Set `SCREENSHOT_DIR` to write them elsewhere.
 
 `bun run import:rules` imports local markdown or JSON rule files from `docs/rules` by default into the configured SQLite database. Pass a path to import one file or directory:
 
@@ -174,7 +193,7 @@ Public users can browse SRD rules at `/rules`, filter by type, spell level, equi
 
 ## Deployment Readiness
 
-The current app is ready for fresh local checkout, seed, verification, Railway deployment rehearsal, and table-use rehearsal with SQLite, Railway volume-backed asset storage, manual hosted account handoff, imported SRD 5.1 rules, public browser-local play, campaign-scoped private rules, richer Mira sheet data, and compact table-use surfaces. `sheet-0020` completed the SRD rules roadmap slice. `sheet-0030` completed the Railway rehearsal path; the first runtime configuration lives in [`railway.json`](./railway.json), with service setup documented in [Railway Hosted Rehearsal](./docs/deployment/railway.md) and final acceptance in [Hosted Rehearsal Acceptance](./docs/operations/hosted-rehearsal-acceptance.md). `sheet-0050` completed the campaign companion, public play, and rules-content product slice. `sheet-0040` completed Hyper-Dank package adoption, so the next planned epic is `sheet-0061` for Game Master prep, private NPCs, content import, and Hyper-Dank-style GitHub issue/project workflow.
+The current app is ready for fresh local checkout, seed, verification, Railway deployment rehearsal, and table-use rehearsal with SQLite, Railway volume-backed asset storage, manual hosted account handoff, imported SRD 5.1 rules, public browser-local play, campaign-scoped private rules, richer Mira sheet data, compact table-use surfaces, Game Master prep, private NPC dossiers, local campaign images, player preview, staged content import, and manual Google Docs import. `sheet-0020` completed the SRD rules roadmap slice. `sheet-0030` completed the Railway rehearsal path; the first runtime configuration lives in [`railway.json`](./railway.json), with service setup documented in [Railway Hosted Rehearsal](./docs/deployment/railway.md) and final acceptance in [Hosted Rehearsal Acceptance](./docs/operations/hosted-rehearsal-acceptance.md). `sheet-0050` completed the campaign companion, public play, and rules-content product slice. `sheet-0040` completed Hyper-Dank package adoption. `sheet-0061` completes Game Master prep, private NPCs, content import, and Hyper-Dank-style GitHub issue/project workflow; see [Game Master Prep Acceptance](./docs/operations/game-master-prep-acceptance.md).
 
 ## TDD Approach
 

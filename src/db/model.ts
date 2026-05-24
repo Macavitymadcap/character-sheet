@@ -11,6 +11,10 @@ export type AbilityName =
   | "wisdom";
 export type NoteVisibility = "game_master" | "player";
 export type CampaignContentVisibility = "game_master" | "player";
+export type CampaignImportProvider = "manual" | "google_docs_manual";
+export type CampaignImportSourceFormat = "html" | "markdown";
+export type CampaignImportTargetType = "draft" | "npc" | "session" | "wiki";
+export type NpcVisibility = "private" | "public" | "selected";
 export type WikiPageType = "campaign" | "faction" | "location" | "lore" | "npc" | "session";
 
 export interface AuthUser {
@@ -379,6 +383,13 @@ export interface CampaignImageAsset {
   width: number | null;
 }
 
+export interface CampaignImageAssetUsage {
+  href: string;
+  id: string;
+  label: string;
+  type: "wiki" | "npc" | "faction";
+}
+
 export interface CampaignSessionRecord {
   body: string;
   campaignId: string;
@@ -391,6 +402,55 @@ export interface CampaignSessionRecord {
   title: string;
   updatedAt?: string;
   visibility: CampaignContentVisibility;
+}
+
+export interface CampaignContentImport {
+  campaignId: string;
+  conversionNotes: string;
+  convertedMarkdown: string;
+  createdAt?: string;
+  id: string;
+  importedByUserId: string;
+  provider: CampaignImportProvider;
+  sourceFormat: CampaignImportSourceFormat;
+  sourceReference: string | null;
+  sourceTitle: string;
+  targetRecordId: string | null;
+  targetType: CampaignImportTargetType;
+  updatedAt?: string;
+  visibility: CampaignContentVisibility;
+}
+
+export interface CampaignNpcDossier {
+  campaignId: string;
+  createdAt?: string;
+  gmNotes: string;
+  hooks: string;
+  id: string;
+  motivations: string;
+  name: string;
+  portraitImageAssetId: string | null;
+  publicSummary: string;
+  publicWikiPageId: string | null;
+  revealNotes: string;
+  rulesEntityId: string | null;
+  sceneNotes: string;
+  secrets: string;
+  selectedPlayerIds: string[];
+  slug: string;
+  updatedAt?: string;
+  visibility: NpcVisibility;
+}
+
+export interface CampaignNpcSummary {
+  campaignId: string;
+  id: string;
+  name: string;
+  portraitImageAssetId: string | null;
+  publicSummary: string;
+  publicWikiPageId: string | null;
+  slug: string;
+  visibility: NpcVisibility;
 }
 
 export interface CampaignFaction {
@@ -418,6 +478,35 @@ export interface CharacterFactionChoice {
 }
 
 export interface CampaignContentRepository {
+  createContentImport(input: {
+    campaignId: string;
+    conversionNotes: string;
+    convertedMarkdown: string;
+    importedByUserId: string;
+    provider: CampaignImportProvider;
+    sourceFormat: CampaignImportSourceFormat;
+    sourceReference: string | null;
+    sourceTitle: string;
+    targetRecordId: string | null;
+    targetType: CampaignImportTargetType;
+    visibility: CampaignContentVisibility;
+  }): CampaignContentImport;
+  createNpcDossier(input: {
+    campaignId: string;
+    gmNotes: string;
+    hooks: string;
+    motivations: string;
+    name: string;
+    portraitImageAssetId: string | null;
+    publicSummary: string;
+    publicWikiPageId: string | null;
+    revealNotes: string;
+    rulesEntityId: string | null;
+    sceneNotes: string;
+    secrets: string;
+    selectedPlayerIds: string[];
+    visibility: NpcVisibility;
+  }): CampaignNpcDossier;
   createImageAsset(input: {
     altText: string;
     byteSize: number;
@@ -463,7 +552,15 @@ export interface CampaignContentRepository {
     viewerRole: UserRole,
   ): CampaignImageAsset | null;
   getSessionBySlug(campaignId: string, slug: string, viewerRole: UserRole): CampaignSessionRecord | null;
+  getNpcDossierBySlug(campaignId: string, slug: string, viewerRole: UserRole): CampaignNpcDossier | null;
+  getNpcSummaryBySlug(
+    campaignId: string,
+    slug: string,
+    viewerRole: UserRole,
+    viewerUserId?: string,
+  ): CampaignNpcSummary | null;
   listFactionsForCampaign(campaignId: string): CampaignFaction[];
+  listContentImportsForCampaign(campaignId: string): CampaignContentImport[];
   listImageAssetsForCampaign(
     campaignId: string,
     viewerRole: UserRole,
@@ -474,10 +571,41 @@ export interface CampaignContentRepository {
     attachmentType: "gallery" | "inline",
     viewerRole: UserRole,
   ): CampaignImageAsset[];
+  listImageAssetUsages(campaignId: string, campaignSlug: string, assetId: string): CampaignImageAssetUsage[];
   listSessionsForCampaign(
     campaignId: string,
     viewerRole: UserRole,
   ): CampaignSessionRecord[];
+  listNpcDossiersForCampaign(campaignId: string, viewerRole: UserRole): CampaignNpcDossier[];
+  listNpcSummariesForCampaign(
+    campaignId: string,
+    viewerRole: UserRole,
+    viewerUserId?: string,
+  ): CampaignNpcSummary[];
+  revealNpcDossier(
+    campaignId: string,
+    npcId: string,
+    visibility: NpcVisibility,
+  ): CampaignNpcDossier | null;
+  updateNpcDossier(
+    campaignId: string,
+    npcId: string,
+    patch: {
+      gmNotes: string;
+      hooks: string;
+      motivations: string;
+      name: string;
+      portraitImageAssetId: string | null;
+      publicSummary: string;
+      publicWikiPageId: string | null;
+      revealNotes: string;
+      rulesEntityId: string | null;
+      sceneNotes: string;
+      secrets: string;
+      selectedPlayerIds: string[];
+      visibility: NpcVisibility;
+    },
+  ): CampaignNpcDossier | null;
   listWikiPagesForCampaign(campaignId: string, viewerRole: UserRole): CampaignWikiPage[];
   updateSession(
     campaignId: string,

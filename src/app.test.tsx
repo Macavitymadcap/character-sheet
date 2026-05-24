@@ -1176,6 +1176,165 @@ describe("createApp", () => {
     ).toBe(false);
   });
 
+  test("lets Game Masters manage private NPC dossiers and reveal player-safe summaries", async () => {
+    const { app, sessionService } = createTestApp("Campaign Ledger");
+    const gmCookie = sessionService.createSession("user_game_master").cookie;
+    const playerCookie = sessionService.createSession("user_lynott_player").cookie;
+    const outsider = runtime?.repositories.authRepository.createUser({
+      capabilities: [],
+      campaignRoles: [],
+      displayName: "Campaign Outsider",
+      email: "npc-outsider@example.local",
+      id: "user_npc_outsider",
+      passwordHash: "unused",
+      role: "player",
+      status: "active",
+    });
+    expect(outsider).toBeDefined();
+    const outsiderCookie = sessionService.createSession("user_npc_outsider").cookie;
+
+    const prep = await app.request("/campaigns/rovnost-shadows/prep", {
+      headers: { cookie: gmCookie },
+    });
+    const prepHtml = await prep.text();
+    const playerPrep = await app.request("/campaigns/rovnost-shadows/prep", {
+      headers: { cookie: playerCookie },
+    });
+    const playerEmptyNpcList = await app.request("/campaigns/rovnost-shadows/npcs", {
+      headers: { cookie: playerCookie },
+    });
+    const outsiderNpcList = await app.request("/campaigns/rovnost-shadows/npcs", {
+      headers: { cookie: outsiderCookie },
+    });
+    const created = await app.request("/campaigns/rovnost-shadows/npcs", {
+      body: new URLSearchParams({
+        gmNotes: "Only the Game Master should see this.",
+        hooks: "Offers a risky canal favour.",
+        motivations: "Protects the dock unions.",
+        name: "Canal Broker",
+        portraitImageAssetId: "asset_magister_vallen",
+        publicSummary: "A broker with friends near the canal gates.",
+        publicWikiPageId: "wiki_rovnost_factions",
+        revealNotes: "Reveal after the warehouse scene.",
+        rulesEntityId: "",
+        sceneNotes: "Use during the chase.",
+        secrets: "Working for the Tidebound.",
+        visibility: "private",
+      }),
+      headers: formHeaders(gmCookie),
+      method: "POST",
+    });
+    const createdNpc = runtime?.repositories.campaignContentRepository
+      .listNpcDossiersForCampaign("campaign_rovnost_shadows", "game_master")
+      .find((npc) => npc.name === "Canal Broker");
+    expect(createdNpc).toBeDefined();
+
+    const detail = await app.request("/campaigns/rovnost-shadows/npcs/canal-broker", {
+      headers: { cookie: gmCookie },
+    });
+    const detailHtml = await detail.text();
+    const playerHiddenDetail = await app.request("/campaigns/rovnost-shadows/npcs/canal-broker", {
+      headers: { cookie: playerCookie },
+    });
+    const updated = await app.request(`/campaigns/rovnost-shadows/npcs/${createdNpc?.id}`, {
+      body: new URLSearchParams({
+        gmNotes: "Updated Game Master-only prep.",
+        hooks: "Trades safe passage for a secret.",
+        motivations: "Needs leverage.",
+        name: "Canal Broker",
+        portraitImageAssetId: "",
+        publicSummary: "A broker with leverage in the canal districts.",
+        publicWikiPageId: "wiki_rovnost_factions",
+        revealNotes: "Now safe to reveal.",
+        rulesEntityId: "",
+        sceneNotes: "Use at the lock gate.",
+        secrets: "Still connected to Tidebound.",
+        selectedPlayerIds: "user_lynott_player",
+        visibility: "selected",
+      }),
+      headers: formHeaders(gmCookie),
+      method: "POST",
+    });
+    const selectedVisibleToLynott = runtime?.repositories.campaignContentRepository
+      .listNpcSummariesForCampaign("campaign_rovnost_shadows", "player", "user_lynott_player")
+      .some((npc) => npc.id === createdNpc?.id);
+    const selectedHiddenFromMira = runtime?.repositories.campaignContentRepository
+      .listNpcSummariesForCampaign("campaign_rovnost_shadows", "player", "user_mira_player")
+      .some((npc) => npc.id === createdNpc?.id);
+    const revealed = await app.request(`/campaigns/rovnost-shadows/npcs/${createdNpc?.id}/reveal`, {
+      body: new URLSearchParams({ visibility: "public" }),
+      headers: formHeaders(gmCookie),
+      method: "POST",
+    });
+    const playerVisibleDetail = await app.request("/campaigns/rovnost-shadows/npcs/canal-broker", {
+      headers: { cookie: playerCookie },
+    });
+    const playerVisibleHtml = await playerVisibleDetail.text();
+    const hiddenAgain = await app.request(`/campaigns/rovnost-shadows/npcs/${createdNpc?.id}/reveal`, {
+      body: new URLSearchParams({ visibility: "private" }),
+      headers: formHeaders(gmCookie),
+      method: "POST",
+    });
+
+    expect(prep.status).toBe(200);
+    expect(prepHtml).toContain("Prep workspace");
+    expect(prepHtml).toContain('href="/campaigns/rovnost-shadows/npcs"');
+    expect(playerPrep.status).toBe(403);
+    expect(playerEmptyNpcList.status).toBe(200);
+    expect(outsiderNpcList.status).toBe(403);
+    expect(created.status).toBe(303);
+    expect(created.headers.get("location")).toBe("/campaigns/rovnost-shadows/npcs/canal-broker");
+    expect(detail.status).toBe(200);
+    expect(detailHtml).toContain("Only the Game Master should see this.");
+    expect(detailHtml).toContain("Make public");
+    expect(playerHiddenDetail.status).toBe(404);
+    expect(updated.status).toBe(303);
+    expect(selectedVisibleToLynott).toBe(true);
+    expect(selectedHiddenFromMira).toBe(false);
+    expect(revealed.status).toBe(303);
+    expect(playerVisibleDetail.status).toBe(200);
+    expect(playerVisibleHtml).toContain("A broker with leverage in the canal districts.");
+    expect(playerVisibleHtml).not.toContain("Updated Game Master-only prep.");
+    expect(playerVisibleHtml).not.toContain("Still connected to Tidebound.");
+    expect(hiddenAgain.status).toBe(303);
+    expect(
+      runtime?.repositories.campaignContentRepository
+        .listNpcSummariesForCampaign("campaign_rovnost_shadows", "player", "user_lynott_player")
+        .some((npc) => npc.id === createdNpc?.id),
+    ).toBe(false);
+  });
+
+  test("renders Game Master player preview with production visibility filtering", async () => {
+    const { app, sessionService } = createTestApp("Campaign Ledger");
+    const gmCookie = sessionService.createSession("user_game_master").cookie;
+    const playerCookie = sessionService.createSession("user_lynott_player").cookie;
+
+    const preview = await app.request("/campaigns/rovnost-shadows/preview/player", {
+      headers: { cookie: gmCookie },
+    });
+    const previewHtml = await preview.text();
+    const playerPreview = await app.request("/campaigns/rovnost-shadows/preview/player", {
+      headers: { cookie: playerCookie },
+    });
+
+    expect(preview.status).toBe(200);
+    expect(previewHtml).toContain("<title>Player preview - Rovnost Shadows - Campaign Ledger</title>");
+    expect(previewHtml).toContain("Previewing as Lynott Player");
+    expect(previewHtml).toContain("Visibility audit");
+    expect(previewHtml).toContain("Visible to Lynott Player");
+    expect(previewHtml).toContain("Magister Vallen");
+    expect(previewHtml).toContain("Selected players");
+    expect(previewHtml).toContain("Factions Guide");
+    expect(previewHtml).toContain("The Skywrights");
+    expect(previewHtml).toContain("Review lines, veils, table logistics");
+    expect(previewHtml).toContain("Player notes");
+    expect(previewHtml).toContain("Keep the false identities ready");
+    expect(previewHtml).not.toContain("Game Master reference.");
+    expect(previewHtml).not.toContain("Keep Vallen private until the table has enough leverage.");
+    expect(previewHtml).not.toContain("Disabled Skybridge Rumour");
+    expect(playerPreview.status).toBe(403);
+  });
+
   test("lets players and Game Masters update character faction choices", async () => {
     const { app, sessionService } = createTestApp("Campaign Ledger");
     const playerCookie = sessionService.createSession("user_lynott_player").cookie;
@@ -1259,6 +1418,60 @@ describe("createApp", () => {
     expect(await gmPage.text()).toContain("Magister Vallen is watching");
   });
 
+  test("serves campaign image library and detail pages by role", async () => {
+    const { app, sessionService } = createTestApp("Campaign Ledger");
+    const gmCookie = sessionService.createSession("user_game_master").cookie;
+    const playerCookie = sessionService.createSession("user_lynott_player").cookie;
+    runtime?.repositories.authRepository.createUser({
+      capabilities: [],
+      campaignRoles: [],
+      displayName: "Campaign Outsider",
+      email: "outsider-images@example.local",
+      id: "user_campaign_outsider_images",
+      passwordHash: "unused",
+      role: "player",
+      status: "active",
+    });
+    const outsiderCookie = sessionService.createSession("user_campaign_outsider_images").cookie;
+
+    const gmLibrary = await app.request("/campaigns/rovnost-shadows/images", {
+      headers: { cookie: gmCookie },
+    });
+    const gmHtml = await gmLibrary.text();
+    const playerLibrary = await app.request("/campaigns/rovnost-shadows/images", {
+      headers: { cookie: playerCookie },
+    });
+    const playerHtml = await playerLibrary.text();
+    const gmDetail = await app.request("/campaigns/rovnost-shadows/images/asset_magister_vallen", {
+      headers: { cookie: gmCookie },
+    });
+    const gmDetailHtml = await gmDetail.text();
+    const playerDetail = await app.request("/campaigns/rovnost-shadows/images/asset_magister_vallen", {
+      headers: { cookie: playerCookie },
+    });
+    const playerDetailHtml = await playerDetail.text();
+    const outsiderLibrary = await app.request("/campaigns/rovnost-shadows/images", {
+      headers: { cookie: outsiderCookie },
+    });
+
+    expect(gmLibrary.status).toBe(200);
+    expect(gmHtml).toContain("<title>Images - Rovnost Shadows - Campaign Ledger</title>");
+    expect(gmHtml).toContain("Magister Vallen portrait");
+    expect(gmHtml).toContain("Fallback active");
+    expect(gmHtml).toContain("1 uses");
+    expect(playerLibrary.status).toBe(200);
+    expect(playerHtml).toContain("Skywright sigil");
+    expect(playerHtml).toContain("Magister Vallen portrait");
+    expect(gmDetail.status).toBe(200);
+    expect(gmDetailHtml).toContain("Storage key");
+    expect(gmDetailHtml).toContain("Magister Vallen");
+    expect(gmDetailHtml).toContain('href="/campaigns/rovnost-shadows/npcs/magister-vallen"');
+    expect(playerDetail.status).toBe(200);
+    expect(playerDetailHtml).toContain("Magister Vallen portrait.");
+    expect(playerDetailHtml).not.toContain("Storage key");
+    expect(outsiderLibrary.status).toBe(403);
+  });
+
   test("lets Game Masters create wiki pages and image assets with protected reads", async () => {
     const { app, sessionService } = createTestApp("Campaign Ledger");
     const gmCookie = sessionService.createSession("user_game_master").cookie;
@@ -1323,11 +1536,197 @@ describe("createApp", () => {
     expect(wikiRead.status).toBe(200);
     expect(await wikiRead.text()).toContain("<h2>Brass Market</h2>");
     expect(upload.status).toBe(303);
+    expect(upload.headers.get("location")).toBe(`/campaigns/rovnost-shadows/images/${asset?.id}`);
     expect(asset?.storageKey).not.toContain("seal.png");
     expect(playerAsset.status).toBe(404);
     expect(outsiderAsset.status).toBe(403);
     expect(gmAsset.status).toBe(200);
     expect(gmAsset.headers.get("content-type")).toContain("image/png");
+  });
+
+  test("lets Game Masters preview and save staged campaign imports", async () => {
+    const { app, sessionService } = createTestApp("Campaign Ledger");
+    const gmCookie = sessionService.createSession("user_game_master").cookie;
+    const playerCookie = sessionService.createSession("user_lynott_player").cookie;
+
+    const form = new URLSearchParams({
+      content: "<h1>Canal Clue</h1><p>See https://docs.google.com/document/d/secret/edit</p><p>The tide bell rings.</p>",
+      sourceFormat: "html",
+      sourceReference: "GM notebook export",
+      targetType: "wiki",
+      visibility: "player",
+    });
+    const preview = await app.request("/campaigns/rovnost-shadows/imports/preview", {
+      body: form,
+      headers: formHeaders(gmCookie),
+      method: "POST",
+    });
+    const previewHtml = await preview.text();
+    const save = await app.request("/campaigns/rovnost-shadows/imports/save", {
+      body: new URLSearchParams({
+        conversionNotes: "Private Google Drive or Docs links were removed from the converted content.",
+        convertedMarkdown: "# Canal Clue\n\nSee [private source link removed]\n\nThe tide bell rings.",
+        provider: "manual",
+        sourceFormat: "html",
+        sourceReference: "GM notebook export",
+        sourceTitle: "Canal Clue",
+        targetType: "wiki",
+        title: "Canal Clue",
+        visibility: "player",
+      }),
+      headers: formHeaders(gmCookie),
+      method: "POST",
+    });
+    const page = await app.request("/campaigns/rovnost-shadows/wiki/canal-clue", {
+      headers: { cookie: playerCookie },
+    });
+    const pageHtml = await page.text();
+    const imports = await app.request("/campaigns/rovnost-shadows/imports", {
+      headers: { cookie: gmCookie },
+    });
+    const importsHtml = await imports.text();
+
+    expect(preview.status).toBe(200);
+    expect(previewHtml).toContain("Private Google Drive or Docs links were removed");
+    expect(previewHtml).not.toContain("docs.google.com");
+    expect(save.status).toBe(303);
+    expect(save.headers.get("location")).toBe("/campaigns/rovnost-shadows");
+    expect(page.status).toBe(200);
+    expect(pageHtml).toContain("The tide bell rings.");
+    expect(pageHtml).not.toContain("docs.google.com");
+    expect(imports.status).toBe(200);
+    expect(importsHtml).toContain("Canal Clue");
+    expect(importsHtml).toContain("Saved to campaign content.");
+  });
+
+  test("saves staged campaign imports to every supported target type", async () => {
+    const { app, sessionService } = createTestApp("Campaign Ledger");
+    const gmCookie = sessionService.createSession("user_game_master").cookie;
+    const targets = [
+      { location: "/campaigns/rovnost-shadows", targetType: "wiki", title: "Review Wiki Import" },
+      { location: "/campaigns/rovnost-shadows", targetType: "session", title: "Review Session Import" },
+      { location: "/campaigns/rovnost-shadows/npcs", targetType: "npc", title: "Review NPC Import" },
+      { location: "/campaigns/rovnost-shadows/imports", targetType: "draft", title: "Review Draft Import" },
+    ] as const;
+
+    for (const target of targets) {
+      const response = await app.request("/campaigns/rovnost-shadows/imports/save", {
+        body: new URLSearchParams({
+          conversionNotes: "",
+          convertedMarkdown: `# ${target.title}\n\nA staged import for ${target.targetType}.`,
+          provider: "manual",
+          sourceFormat: "markdown",
+          sourceReference: "Route target coverage",
+          sourceTitle: `${target.title} Source`,
+          targetType: target.targetType,
+          title: target.title,
+          visibility: target.targetType === "npc" ? "player" : "game_master",
+        }),
+        headers: formHeaders(gmCookie),
+        method: "POST",
+      });
+
+      expect(response.status).toBe(303);
+      expect(response.headers.get("location")).toBe(target.location);
+    }
+
+    const content = runtime?.repositories.campaignContentRepository;
+    expect(content?.getWikiPageBySlug("campaign_rovnost_shadows", "review-wiki-import", "game_master")?.title)
+      .toBe("Review Wiki Import");
+    expect(content?.listSessionsForCampaign("campaign_rovnost_shadows", "game_master").some((session) =>
+      session.title === "Review Session Import"
+    )).toBe(true);
+    expect(content?.listNpcSummariesForCampaign("campaign_rovnost_shadows", "player").some((npc) =>
+      npc.name === "Review NPC Import"
+    )).toBe(true);
+    expect(content?.listContentImportsForCampaign("campaign_rovnost_shadows").some((item) =>
+      item.targetType === "draft" && item.targetRecordId === null && item.sourceTitle === "Review Draft Import Source"
+    )).toBe(true);
+  });
+
+  test("lets Game Masters preview manual Google Docs exports through staged imports", async () => {
+    const { app, sessionService } = createTestApp("Campaign Ledger");
+    const gmCookie = sessionService.createSession("user_game_master").cookie;
+    const playerCookie = sessionService.createSession("user_lynott_player").cookie;
+
+    const page = await app.request("/campaigns/rovnost-shadows/imports/google-docs", {
+      headers: { cookie: gmCookie },
+    });
+    const preview = await app.request("/campaigns/rovnost-shadows/imports/preview", {
+      body: new URLSearchParams({
+        content: "<h1>Clockwork Canal</h1><p>See https://docs.google.com/document/d/private-id/edit</p><p>Imported from export.</p>",
+        provider: "google_docs_manual",
+        sourceFormat: "html",
+        sourceReference: "https://docs.google.com/document/d/manual-doc-123/edit",
+        sourceTitle: "Clockwork Canal Export",
+        targetType: "wiki",
+        visibility: "player",
+      }),
+      headers: formHeaders(gmCookie),
+      method: "POST",
+    });
+    const previewHtml = await preview.text();
+    const save = await app.request("/campaigns/rovnost-shadows/imports/save", {
+      body: new URLSearchParams({
+        conversionNotes: "Private Google Drive or Docs links were removed from the converted content.",
+        convertedMarkdown: "# Clockwork Canal\n\nSee [private source link removed]\n\nImported from export.",
+        provider: "google_docs_manual",
+        sourceFormat: "html",
+        sourceReference: "https://docs.google.com/document/d/manual-doc-123/edit",
+        sourceTitle: "Clockwork Canal Export",
+        targetType: "wiki",
+        title: "Clockwork Canal",
+        visibility: "player",
+      }),
+      headers: formHeaders(gmCookie),
+      method: "POST",
+    });
+    const playerPage = await app.request("/campaigns/rovnost-shadows/wiki/clockwork-canal", {
+      headers: { cookie: playerCookie },
+    });
+    const playerHtml = await playerPage.text();
+    const imports = runtime?.repositories.campaignContentRepository.listContentImportsForCampaign(
+      "campaign_rovnost_shadows",
+    ) ?? [];
+    const recorded = imports.find((item) => item.sourceTitle === "Clockwork Canal Export");
+
+    expect(page.status).toBe(200);
+    expect(await page.text()).toContain("Google Docs manual export");
+    expect(preview.status).toBe(200);
+    expect(previewHtml).toContain("Google Docs manual");
+    expect(previewHtml).toContain("Private Google Drive or Docs links were removed");
+    expect(previewHtml).not.toContain("docs.google.com");
+    expect(save.status).toBe(303);
+    expect(playerPage.status).toBe(200);
+    expect(playerHtml).toContain("Imported from export.");
+    expect(playerHtml).not.toContain("docs.google.com");
+    expect(recorded).toMatchObject({
+      provider: "google_docs_manual",
+      sourceReference: "google-doc:manual-doc-123",
+      targetType: "wiki",
+      visibility: "player",
+    });
+  });
+
+  test("rejects incomplete manual Google Docs imports before preview", async () => {
+    const { app, sessionService } = createTestApp("Campaign Ledger");
+    const gmCookie = sessionService.createSession("user_game_master").cookie;
+
+    const response = await app.request("/campaigns/rovnost-shadows/imports/preview", {
+      body: new URLSearchParams({
+        content: "# Missing Reference",
+        provider: "google_docs_manual",
+        sourceFormat: "markdown",
+        sourceTitle: "Missing Reference",
+        targetType: "wiki",
+        visibility: "game_master",
+      }),
+      headers: formHeaders(gmCookie),
+      method: "POST",
+    });
+
+    expect(response.status).toBe(400);
+    expect(await response.text()).toContain("Invalid Google Docs import");
   });
 
   test("serves a readable fallback for missing seeded campaign asset files", async () => {
@@ -1376,6 +1775,11 @@ describe("createApp", () => {
     unsupported.set("altText", "A map");
     unsupported.set("visibility", "player");
     unsupported.set("image", new File([new Uint8Array([1])], "map.gif", { type: "image/gif" }));
+    const webp = new FormData();
+    webp.set("title", "Canal sketch");
+    webp.set("altText", "A canal sketch");
+    webp.set("visibility", "player");
+    webp.set("image", new File([new Uint8Array([1, 2])], "canal.webp", { type: "image/webp" }));
 
     expect((await app.request("/campaigns/rovnost-shadows/assets", {
       body: missingAlt,
@@ -1387,6 +1791,11 @@ describe("createApp", () => {
       headers: { cookie: gmCookie },
       method: "POST",
     })).status).toBe(400);
+    expect((await app.request("/campaigns/rovnost-shadows/assets", {
+      body: webp,
+      headers: { cookie: gmCookie },
+      method: "POST",
+    })).status).toBe(303);
   });
 
   test("smokes the seeded MVP workflow through login, sheet play, notes, roles, and logout", async () => {

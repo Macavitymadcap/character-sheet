@@ -126,6 +126,51 @@ CREATE TABLE IF NOT EXISTS campaign_wiki_page_assets (
   PRIMARY KEY (wiki_page_id, image_asset_id, attachment_type)
 );
 
+CREATE TABLE IF NOT EXISTS campaign_npcs (
+  id TEXT PRIMARY KEY,
+  campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+  slug TEXT NOT NULL,
+  name TEXT NOT NULL,
+  visibility TEXT NOT NULL DEFAULT 'private' CHECK (visibility IN ('public', 'private', 'selected')),
+  public_summary TEXT NOT NULL DEFAULT '',
+  gm_notes TEXT NOT NULL DEFAULT '',
+  secrets TEXT NOT NULL DEFAULT '',
+  motivations TEXT NOT NULL DEFAULT '',
+  hooks TEXT NOT NULL DEFAULT '',
+  scene_notes TEXT NOT NULL DEFAULT '',
+  reveal_notes TEXT NOT NULL DEFAULT '',
+  portrait_image_asset_id TEXT REFERENCES campaign_image_assets(id) ON DELETE SET NULL,
+  public_wiki_page_id TEXT REFERENCES campaign_wiki_pages(id) ON DELETE SET NULL,
+  rules_entity_id TEXT REFERENCES rules_entities(id) ON DELETE SET NULL,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (campaign_id, slug)
+);
+
+CREATE TABLE IF NOT EXISTS campaign_npc_player_access (
+  npc_id TEXT NOT NULL REFERENCES campaign_npcs(id) ON DELETE CASCADE,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (npc_id, user_id)
+);
+
+CREATE TABLE IF NOT EXISTS campaign_content_imports (
+  id TEXT PRIMARY KEY,
+  campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+  provider TEXT NOT NULL CHECK (provider IN ('manual', 'google_docs_manual')),
+  source_format TEXT NOT NULL CHECK (source_format IN ('markdown', 'html')),
+  source_title TEXT NOT NULL,
+  source_reference TEXT,
+  imported_by_user_id TEXT NOT NULL REFERENCES users(id),
+  target_type TEXT NOT NULL CHECK (target_type IN ('wiki', 'session', 'npc', 'draft')),
+  target_record_id TEXT,
+  visibility TEXT NOT NULL DEFAULT 'game_master' CHECK (visibility IN ('player', 'game_master')),
+  converted_markdown TEXT NOT NULL,
+  conversion_notes TEXT NOT NULL DEFAULT '',
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS campaign_factions (
   id TEXT PRIMARY KEY,
   campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
@@ -351,6 +396,28 @@ const migrationStatements = [
   "ALTER TABLE rules_sources ADD COLUMN visibility TEXT NOT NULL DEFAULT 'public'",
   "ALTER TABLE rules_sources ADD COLUMN public_export_eligible INTEGER NOT NULL DEFAULT 0",
   "UPDATE rules_sources SET public_export_eligible = 1 WHERE content_category = 'srd'",
+  `CREATE TABLE IF NOT EXISTS campaign_npc_player_access (
+    npc_id TEXT NOT NULL REFERENCES campaign_npcs(id) ON DELETE CASCADE,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (npc_id, user_id)
+  )`,
+  `CREATE TABLE IF NOT EXISTS campaign_content_imports (
+    id TEXT PRIMARY KEY,
+    campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+    provider TEXT NOT NULL CHECK (provider IN ('manual', 'google_docs_manual')),
+    source_format TEXT NOT NULL CHECK (source_format IN ('markdown', 'html')),
+    source_title TEXT NOT NULL,
+    source_reference TEXT,
+    imported_by_user_id TEXT NOT NULL REFERENCES users(id),
+    target_type TEXT NOT NULL CHECK (target_type IN ('wiki', 'session', 'npc', 'draft')),
+    target_record_id TEXT,
+    visibility TEXT NOT NULL DEFAULT 'game_master' CHECK (visibility IN ('player', 'game_master')),
+    converted_markdown TEXT NOT NULL,
+    conversion_notes TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  )`,
 ];
 
 const triggers = /* sql */ `
@@ -377,6 +444,62 @@ WHEN (
 BEGIN
   SELECT RAISE(ABORT, 'character and faction must belong to the same campaign');
 END;
+
+CREATE TRIGGER IF NOT EXISTS campaign_npcs_links_campaign_insert
+BEFORE INSERT ON campaign_npcs
+FOR EACH ROW
+WHEN (
+  (
+    NEW.portrait_image_asset_id IS NOT NULL
+    AND (SELECT campaign_id FROM campaign_image_assets WHERE id = NEW.portrait_image_asset_id) != NEW.campaign_id
+  )
+  OR (
+    NEW.public_wiki_page_id IS NOT NULL
+    AND (SELECT campaign_id FROM campaign_wiki_pages WHERE id = NEW.public_wiki_page_id) != NEW.campaign_id
+  )
+  OR (
+    NEW.rules_entity_id IS NOT NULL
+    AND NOT EXISTS (
+      SELECT 1
+      FROM rules_entities entities
+      JOIN rules_sources sources ON sources.id = entities.source_id
+      LEFT JOIN campaign_rules_sources campaign_sources ON campaign_sources.source_id = sources.id
+      WHERE entities.id = NEW.rules_entity_id
+        AND (sources.visibility = 'public' OR campaign_sources.campaign_id = NEW.campaign_id)
+    )
+  )
+)
+BEGIN
+  SELECT RAISE(ABORT, 'npc links must belong to the same campaign or a public rules source');
+END;
+
+CREATE TRIGGER IF NOT EXISTS campaign_npcs_links_campaign_update
+BEFORE UPDATE OF portrait_image_asset_id, public_wiki_page_id, rules_entity_id, campaign_id ON campaign_npcs
+FOR EACH ROW
+WHEN (
+  (
+    NEW.portrait_image_asset_id IS NOT NULL
+    AND (SELECT campaign_id FROM campaign_image_assets WHERE id = NEW.portrait_image_asset_id) != NEW.campaign_id
+  )
+  OR (
+    NEW.public_wiki_page_id IS NOT NULL
+    AND (SELECT campaign_id FROM campaign_wiki_pages WHERE id = NEW.public_wiki_page_id) != NEW.campaign_id
+  )
+  OR (
+    NEW.rules_entity_id IS NOT NULL
+    AND NOT EXISTS (
+      SELECT 1
+      FROM rules_entities entities
+      JOIN rules_sources sources ON sources.id = entities.source_id
+      LEFT JOIN campaign_rules_sources campaign_sources ON campaign_sources.source_id = sources.id
+      WHERE entities.id = NEW.rules_entity_id
+        AND (sources.visibility = 'public' OR campaign_sources.campaign_id = NEW.campaign_id)
+    )
+  )
+)
+BEGIN
+  SELECT RAISE(ABORT, 'npc links must belong to the same campaign or a public rules source');
+END;
 `;
 
 export const bootstrapDatabase = (database: Database) => {
@@ -389,6 +512,7 @@ export const bootstrapDatabase = (database: Database) => {
       if (!isDuplicateColumnError(error)) throw error;
     }
   }
+  migrateCampaignNpcVisibility(database);
   relaxCharacterFactionChoiceFactionId(database);
   database.exec(triggers);
 };
@@ -419,5 +543,67 @@ function relaxCharacterFactionChoiceFactionId(database: Database) {
 
     DROP TABLE character_faction_choices;
     ALTER TABLE character_faction_choices_relaxed RENAME TO character_faction_choices;
+  `);
+}
+
+function migrateCampaignNpcVisibility(database: Database) {
+  const createSql = database
+    .query<{ sql: string | null }, [string]>("select sql from sqlite_master where type = 'table' and name = ?")
+    .get("campaign_npcs")?.sql ?? "";
+  if (createSql.includes("visibility IN ('public', 'private', 'selected')")) {
+    database.run("update campaign_npcs set visibility = 'public' where visibility = 'player'");
+    database.run("update campaign_npcs set visibility = 'private' where visibility = 'game_master'");
+    return;
+  }
+
+  database.exec(/* sql */ `
+    CREATE TABLE IF NOT EXISTS campaign_npcs_new (
+      id TEXT PRIMARY KEY,
+      campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+      slug TEXT NOT NULL,
+      name TEXT NOT NULL,
+      visibility TEXT NOT NULL DEFAULT 'private' CHECK (visibility IN ('public', 'private', 'selected')),
+      public_summary TEXT NOT NULL DEFAULT '',
+      gm_notes TEXT NOT NULL DEFAULT '',
+      secrets TEXT NOT NULL DEFAULT '',
+      motivations TEXT NOT NULL DEFAULT '',
+      hooks TEXT NOT NULL DEFAULT '',
+      scene_notes TEXT NOT NULL DEFAULT '',
+      reveal_notes TEXT NOT NULL DEFAULT '',
+      portrait_image_asset_id TEXT REFERENCES campaign_image_assets(id) ON DELETE SET NULL,
+      public_wiki_page_id TEXT REFERENCES campaign_wiki_pages(id) ON DELETE SET NULL,
+      rules_entity_id TEXT REFERENCES rules_entities(id) ON DELETE SET NULL,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE (campaign_id, slug)
+    );
+
+    INSERT OR IGNORE INTO campaign_npcs_new (
+      id, campaign_id, slug, name, visibility, public_summary, gm_notes, secrets,
+      motivations, hooks, scene_notes, reveal_notes, portrait_image_asset_id,
+      public_wiki_page_id, rules_entity_id, created_at, updated_at
+    )
+    SELECT
+      id,
+      campaign_id,
+      slug,
+      name,
+      CASE visibility WHEN 'player' THEN 'public' WHEN 'game_master' THEN 'private' ELSE visibility END,
+      public_summary,
+      gm_notes,
+      secrets,
+      motivations,
+      hooks,
+      scene_notes,
+      reveal_notes,
+      portrait_image_asset_id,
+      public_wiki_page_id,
+      rules_entity_id,
+      created_at,
+      updated_at
+    FROM campaign_npcs;
+
+    DROP TABLE campaign_npcs;
+    ALTER TABLE campaign_npcs_new RENAME TO campaign_npcs;
   `);
 }

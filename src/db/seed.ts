@@ -33,6 +33,22 @@ type CampaignImageAssetSeed = [
   string,
   string,
 ];
+type CampaignNpcSeed = [
+  string,
+  string,
+  string,
+  string,
+  string,
+  string,
+  string,
+  string,
+  string,
+  string,
+  string,
+  string | null,
+  string | null,
+  string | null,
+];
 type CampaignSessionSeed = [
   string,
   string,
@@ -723,9 +739,9 @@ const campaignImageAssets: CampaignImageAssetSeed[] = [
     "Campaign cover",
     "campaigns/rovnost-shadows/cover.png",
     "image/png",
-    144000,
-    1200,
-    800,
+    2478417,
+    1024,
+    1536,
     "Shadows of Rovnost campaign cover",
     "Campaign cover art for the local table.",
     "player",
@@ -735,21 +751,21 @@ const campaignImageAssets: CampaignImageAssetSeed[] = [
     "Magister Vallen portrait",
     "campaigns/rovnost-shadows/magister-vallen.png",
     "image/png",
-    86000,
-    768,
-    768,
+    2990170,
+    1024,
+    1536,
     "Magister Vallen portrait",
-    "Game Master reference portrait.",
-    "game_master",
+    "Magister Vallen portrait.",
+    "player",
   ],
   [
     "asset_rovnost_factions",
     "Faction sigils",
     "campaigns/rovnost-shadows/faction-sigils.png",
     "image/png",
-    94000,
-    1200,
-    900,
+    2976483,
+    1536,
+    1024,
     "A sheet of Rovnost faction sigils",
     "Player-facing sigil reference.",
     "player",
@@ -757,11 +773,11 @@ const campaignImageAssets: CampaignImageAssetSeed[] = [
   [
     "asset_astril_map",
     "Astril map",
-    "campaigns/rovnost-shadows/astril-map.webp",
-    "image/webp",
-    168000,
-    1600,
-    1000,
+    "campaigns/rovnost-shadows/astril-map.png",
+    "image/png",
+    2980575,
+    1484,
+    1060,
     "Map of Astril and the trade routes around Rovnost",
     "Regional map for travel planning.",
     "player",
@@ -771,9 +787,9 @@ const campaignImageAssets: CampaignImageAssetSeed[] = [
     "Skywright sigil",
     "campaigns/rovnost-shadows/skywright-sigil.png",
     "image/png",
-    42000,
-    512,
-    512,
+    3318958,
+    1024,
+    1536,
     "Skywright guild sigil",
     "Faction sigil for the Skywrights.",
     "player",
@@ -860,6 +876,29 @@ const campaignWikiPageAssets: CampaignWikiPageAssetSeed[] = [
   ["wiki_rovnost_factions", "asset_rovnost_factions", "gallery", 10],
   ["wiki_astril_map", "asset_astril_map", "gallery", 10],
 ];
+
+const campaignNpcs: CampaignNpcSeed[] = [
+  [
+    "npc_magister_vallen",
+    "magister-vallen",
+    "Magister Vallen",
+    "selected",
+    "A senior magistrate linked to the pressure around Rovnost's factory districts.",
+    "Keep Vallen private until the table has enough faction context.",
+    "Vallen is using licences as leverage.",
+    "Preserve council authority without starting open unrest.",
+    "Offers help that always creates a debt.",
+    "Use when the players investigate official exemptions.",
+    "Reveal as a public magistrate contact after the first council scene.",
+    "asset_magister_vallen",
+    "wiki_rovnost_gm_dossier",
+    null,
+  ],
+];
+
+const campaignNpcPlayerAccess = [
+  ["npc_magister_vallen", "user_lynott_player"],
+] as const;
 
 const campaignSessions: CampaignSessionSeed[] = [
   [
@@ -1604,6 +1643,40 @@ export const seedDatabase = (database: Database) => {
        on conflict(wiki_page_id, image_asset_id, attachment_type) do update set
          sort_order = excluded.sort_order`,
       attachment,
+    );
+  }
+
+  for (const npc of campaignNpcs) {
+    database.run(
+      `insert into campaign_npcs (
+         id, campaign_id, slug, name, visibility, public_summary, gm_notes, secrets,
+         motivations, hooks, scene_notes, reveal_notes, portrait_image_asset_id,
+         public_wiki_page_id, rules_entity_id
+       )
+       values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       on conflict(id) do update set
+         slug = excluded.slug,
+         name = excluded.name,
+         visibility = excluded.visibility,
+         public_summary = excluded.public_summary,
+         gm_notes = excluded.gm_notes,
+         secrets = excluded.secrets,
+         motivations = excluded.motivations,
+         hooks = excluded.hooks,
+         scene_notes = excluded.scene_notes,
+         reveal_notes = excluded.reveal_notes,
+         portrait_image_asset_id = excluded.portrait_image_asset_id,
+         public_wiki_page_id = excluded.public_wiki_page_id,
+         rules_entity_id = excluded.rules_entity_id,
+         updated_at = CURRENT_TIMESTAMP`,
+      [npc[0], "campaign_rovnost_shadows", ...npc.slice(1)],
+    );
+  }
+
+  for (const [npcId, userId] of campaignNpcPlayerAccess) {
+    database.run(
+      "insert or ignore into campaign_npc_player_access (npc_id, user_id) values (?, ?)",
+      [npcId, userId],
     );
   }
 

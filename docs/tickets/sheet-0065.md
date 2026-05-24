@@ -15,17 +15,17 @@ This ticket reduces the risk of accidentally revealing private prep material.
 
 ## Implementation
 
-- Add `/campaigns/:campaignSlug/preview/player` for campaign Game Masters.
-- Reuse production player visibility guards and read models rather than building a separate
+- [x] Add `/campaigns/:campaignSlug/preview/player` for campaign Game Masters.
+- [x] Reuse production player visibility guards and read models rather than building a separate
   approximate preview path.
-- Render a preview of player-visible campaign material: wiki pages, sessions, revealed NPCs,
+- [x] Render a preview of player-visible campaign material: wiki pages, sessions, revealed NPCs,
   player-visible images, and any linked public rules or assets.
-- Add a Game Master-only visibility audit panel that lists hidden versus visible counts for wiki
+- [x] Add a Game Master-only visibility audit panel that lists hidden versus visible counts for wiki
   pages, sessions, NPCs, notes, and images.
-- Add direct links from hidden/visible audit rows back to the relevant management page where the Game
+- [x] Add direct links from hidden/visible audit rows back to the relevant management page where the Game
   Master can change visibility.
-- Make it visually clear that preview mode is a Game Master tool and not a real player session.
-- Update architecture and README docs for the preview route.
+- [x] Make it visually clear that preview mode is a Game Master tool and not a real player session.
+- [x] Update architecture and README docs for the preview route.
 
 ## Interfaces
 
@@ -43,6 +43,14 @@ This ticket reduces the risk of accidentally revealing private prep material.
   preview HTML.
 - Add component tests for audit counts, empty states, visibility labels, and management links.
 - Add Pa11y and screenshot targets for preview and audit views.
+
+## Implementation Notes
+
+- The preview route selects a real player member who owns a campaign character where possible, then
+  calls the existing player-facing campaign and note read models.
+- Selected NPCs are included only when the preview subject is allowed to see them.
+- Private Game Master notes, hidden NPCs, and Game-Master-only images are asserted absent from route
+  output.
 
 ## Acceptance Criteria
 

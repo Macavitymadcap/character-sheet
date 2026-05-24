@@ -29,6 +29,12 @@ export const campaignStyles = /* css */ `
   margin: 0;
 }
 
+.campaign-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
 .campaign-summary-list div {
   background: var(--stat-background-colour);
   border: 1px solid var(--border-colour);
@@ -119,6 +125,141 @@ export const campaignStyles = /* css */ `
   gap: 0.75rem;
 }
 
+.campaign-prep-grid,
+.campaign-npc-grid,
+.campaign-audit-grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+}
+
+.campaign-prep-link,
+.campaign-npc-card,
+.campaign-audit-card {
+  border: 1px solid var(--border-colour);
+  border-radius: 0.5rem;
+  color: var(--heading-colour);
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  text-decoration: none;
+}
+
+.campaign-prep-link strong {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.campaign-audit-card strong {
+  font-size: 1.15rem;
+}
+
+.campaign-prep-link small,
+.campaign-audit-card small,
+.campaign-npc-card p {
+  color: var(--muted-text-colour);
+  font-weight: 750;
+}
+
+.campaign-npc-card h2 {
+  font-size: 1rem;
+  margin: 0;
+}
+
+.campaign-npc-card a {
+  color: var(--heading-colour);
+}
+
+.campaign-npc-card p,
+.campaign-npc-summary {
+  margin: 0;
+}
+
+.campaign-help-text {
+  color: var(--muted-text-colour);
+  font-weight: 750;
+  margin: 0;
+}
+
+.campaign-help-text a {
+  color: var(--heading-colour);
+}
+
+.campaign-checkbox-list {
+  border: 1px solid var(--border-colour);
+  border-radius: 0.4rem;
+  display: grid;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0.65rem;
+}
+
+.campaign-checkbox-list legend {
+  color: var(--muted-text-colour);
+  font-size: 0.82rem;
+  font-weight: 850;
+  padding-inline: 0.25rem;
+}
+
+.campaign-checkbox-list label {
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  font-size: 0.92rem;
+  gap: 0.45rem;
+}
+
+.campaign-checkbox-list input {
+  inline-size: auto;
+  min-height: auto;
+}
+
+.campaign-npc-portrait-frame {
+  border: 1px solid var(--border-colour);
+  border-radius: 0.4rem;
+  margin: 0;
+  overflow: hidden;
+  width: min(100%, 24rem);
+}
+
+.campaign-npc-portrait {
+  aspect-ratio: 16 / 9;
+  display: block;
+  object-fit: cover;
+  width: 100%;
+}
+
+.campaign-npc-portrait-frame figcaption {
+  background: var(--stat-background-colour);
+  color: var(--muted-text-colour);
+  font-size: 0.8rem;
+  font-weight: 850;
+  padding: 0.5rem 0.75rem;
+}
+
+.campaign-npc-dossier {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+}
+
+.campaign-npc-dossier div {
+  border-block-start: 1px solid var(--border-colour);
+  display: grid;
+  gap: 0.25rem;
+  padding-block-start: 0.75rem;
+}
+
+.campaign-npc-dossier dt {
+  color: var(--muted-text-colour);
+  font-size: 0.8rem;
+  font-weight: 850;
+}
+
+.campaign-npc-dossier dd {
+  margin: 0;
+}
+
 .campaign-source-item {
   border: 1px solid var(--border-colour);
   border-radius: 0.5rem;
@@ -129,6 +270,31 @@ export const campaignStyles = /* css */ `
 
 .campaign-source-item h3 {
   font-size: 1rem;
+  margin: 0;
+}
+
+.campaign-card-copy,
+.campaign-note-preview-list p {
+  color: var(--muted-text-colour);
+  font-weight: 750;
+  margin: 0;
+}
+
+.campaign-note-preview-list {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.campaign-note-preview-list section {
+  border-block-start: 1px solid var(--border-colour);
+  display: grid;
+  gap: 0.25rem;
+  padding-block-start: 0.55rem;
+}
+
+.campaign-note-preview-list h4 {
+  color: var(--heading-colour);
+  font-size: 0.95rem;
   margin: 0;
 }
 
@@ -182,6 +348,7 @@ export const campaignStyles = /* css */ `
 
 .campaign-wiki-card-body,
 .campaign-asset-list figcaption {
+  background: var(--surface-colour);
   display: grid;
   gap: 0.4rem;
   padding: 0.75rem;
@@ -192,6 +359,11 @@ export const campaignStyles = /* css */ `
   overflow-wrap: anywhere;
 }
 
+.campaign-asset-list figcaption > span:not(.campaign-asset-status) {
+  color: var(--heading-colour);
+  font-weight: 700;
+}
+
 .campaign-asset-status {
   display: flex;
   flex-wrap: wrap;
@@ -199,10 +371,10 @@ export const campaignStyles = /* css */ `
 }
 
 .campaign-asset-status span {
-  background: var(--stat-background-colour);
-  border: 1px solid var(--border-colour);
+  background: color-mix(in srgb, var(--action-background-colour) 10%, var(--stat-background-colour));
+  border: 1px solid color-mix(in srgb, var(--action-border-colour) 32%, var(--border-colour));
   border-radius: 999px;
-  color: var(--muted-text-colour);
+  color: var(--heading-colour);
   font-size: 0.72rem;
   font-weight: 850;
   padding: 0.1rem 0.45rem;
@@ -215,6 +387,74 @@ export const campaignStyles = /* css */ `
 
 .campaign-wiki-card a {
   color: var(--heading-colour);
+}
+
+.campaign-asset-list a {
+  color: var(--heading-colour);
+}
+
+.campaign-image-detail-figure {
+  background: var(--stat-background-colour);
+  border: 1px solid var(--border-colour);
+  border-radius: 0.4rem;
+  justify-self: center;
+  margin: 0;
+  max-width: 100%;
+  overflow: hidden;
+  width: fit-content;
+}
+
+.campaign-image-detail-figure img {
+  display: block;
+  max-height: min(32rem, 72vh);
+  max-width: 100%;
+  object-fit: contain;
+  width: auto;
+}
+
+.campaign-image-detail-figure figcaption {
+  background: var(--stat-background-colour);
+  color: var(--heading-colour);
+  font-weight: 800;
+  padding: 0.65rem 0.75rem;
+}
+
+.campaign-image-metadata {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0;
+}
+
+.campaign-image-metadata div {
+  border-block-start: 1px solid var(--border-colour);
+  display: grid;
+  gap: 0.2rem;
+  padding-block-start: 0.65rem;
+}
+
+.campaign-image-metadata dt {
+  color: var(--muted-text-colour);
+  font-size: 0.8rem;
+  font-weight: 850;
+}
+
+.campaign-image-metadata dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.campaign-import-warning-list {
+  background: color-mix(in srgb, var(--warning-colour) 12%, var(--stat-background-colour));
+  border: 1px solid color-mix(in srgb, var(--warning-colour) 45%, var(--border-colour));
+  border-radius: 0.4rem;
+  color: var(--heading-colour);
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.75rem;
+}
+
+.campaign-import-warning-list p {
+  margin: 0;
 }
 
 .campaign-tag-list {

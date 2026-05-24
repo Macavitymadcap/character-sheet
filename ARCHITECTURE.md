@@ -149,8 +149,21 @@ The MVP page set:
 - `/rules` public SRD rules browse route, with signed-in campaign scope added where permitted.
 - `/rules/:entityType/:slug` public SRD detail route, with private campaign rules protected by membership.
 - `/campaigns/:campaignSlug` campaign shell with player-visible wiki pages and Game Master-only management forms.
+- `/campaigns/:campaignSlug/prep` Game Master prep workspace with links into focused preparation tools.
+- `/campaigns/:campaignSlug/preview/player` Game Master-only player preview and visibility audit using the same player-visible read models as live campaign routes.
+- `/campaigns/:campaignSlug/npcs` NPC list route, showing full dossier management to Game Masters and public/selected summaries to players.
+- `/campaigns/:campaignSlug/npcs/:npcSlug` NPC detail route, showing full private dossiers to Game Masters and public/selected summaries to players.
+- `/campaigns/:campaignSlug/images` campaign image library route with thumbnail cards, local upload form for Game Masters, file/fallback status, and usage counts.
+- `/campaigns/:campaignSlug/images/:assetId` campaign image detail route with full image preview, metadata, and Game Master usage links.
+- `/campaigns/:campaignSlug/imports` Game Master staged import route for pasted or exported campaign writing, recent import history, and retained drafts.
+- `/campaigns/:campaignSlug/imports/google-docs` Game Master manual Google Docs export entry route that captures document metadata and hands off to staged import preview without live Drive API access.
+- `POST /campaigns/:campaignSlug/imports/preview` Game Master import preview route that converts Markdown or a small HTML subset into safe campaign Markdown and reports private-link or unsupported-content warnings.
+- `POST /campaigns/:campaignSlug/imports/save` Game Master import save route for wiki pages, session records, NPC dossiers, or retained drafts.
 - `/campaigns/:campaignSlug/wiki/:wikiSlug` campaign wiki detail page filtered by player or Game Master visibility.
 - `/campaigns/:campaignSlug/assets/:assetId` protected image asset route backed by app-managed local storage.
+- `POST /campaigns/:campaignSlug/npcs` Game Master NPC creation route.
+- `POST /campaigns/:campaignSlug/npcs/:npcId` Game Master NPC update route.
+- `POST /campaigns/:campaignSlug/npcs/:npcId/reveal` Game Master NPC reveal/hide route.
 - `POST /campaigns/:campaignSlug/wiki` Game Master wiki page creation route.
 - `POST /campaigns/:campaignSlug/assets` Game Master image upload route for PNG, JPEG, and WebP files.
 - `POST /campaigns/:campaignSlug/sessions` Game Master session creation route.
@@ -226,7 +239,21 @@ flowchart TD
 
 The database stores structured data for rules and sheet state. Markdown files in `docs/rules` are useful source material, but runtime reads should use SQLite read models. `bootstrapDatabase()` creates the MVP schema idempotently, `seedDatabase()` inserts local seed data, and repository interfaces keep route-facing contracts independent of SQLite.
 
-Campaign wiki pages store normalised Markdown and source metadata in SQLite. Rendered pages use a small safe Markdown renderer for the current Google Docs export shape: title lines, bold section headings, italic quotes, bullet lists, horizontal rules, and scene breaks. Image uploads are copied into app-managed storage under `data/assets` by default, or `CAMPAIGN_LEDGER_ASSET_ROOT` when set for tests, local overrides, or Railway volume storage at `/data/assets`. The old `CHARACTER_SHEET_ASSET_ROOT` variable remains a compatibility fallback. The database stores generated storage keys rather than raw local source paths, hosted preparation writes deterministic placeholders for seeded campaign asset keys, and asset routes enforce campaign membership and content visibility before reading files.
+Campaign wiki pages store normalised Markdown and source metadata in SQLite. Rendered pages use a small safe Markdown renderer for the current Google Docs export shape: title lines, bold section headings, italic quotes, bullet lists, horizontal rules, and scene breaks. Staged content imports store provider-neutral source metadata in `campaign_content_imports`, convert pasted Markdown or a small HTML subset through an app-owned boundary, remove private Google Drive/Docs links from converted content, and save the preview as a wiki page, session record, NPC dossier, or retained draft. The Google Docs manual export path records provider `google_docs_manual`, normalises Google Docs URLs to stable `google-doc:<document-id>` references, and deliberately avoids OAuth, document listing, polling, automatic re-import, and two-way sync; operator steps are documented in [Google Docs Manual Import](./docs/operations/google-docs-manual-import.md). Image uploads are copied into app-managed storage under `data/assets` by default, or `CAMPAIGN_LEDGER_ASSET_ROOT` when set for tests, local overrides, or Railway volume storage at `/data/assets`. The old `CHARACTER_SHEET_ASSET_ROOT` variable remains a compatibility fallback. The database stores generated storage keys rather than raw local source paths, hosted preparation copies bundled Rovnost seed images for the seeded campaign asset keys, and asset routes enforce campaign membership and content visibility before reading files. The image library and detail routes expose the same protected reads as browser pages: Game Masters can inspect private images, storage metadata, fallback status, and wiki/NPC/faction references; players can only open player-visible assets for campaigns they belong to.
+
+Game Master NPC prep uses `campaign_npcs` as the foundation for public, private, and selected-player
+dossiers. `campaign_npc_player_access` stores the player allow-list for selected NPCs. Full dossiers
+include Game Master-only notes, secrets, motivations, hooks, scene notes, reveal notes, selected
+players, and optional links to portrait images, wiki profiles, or rules/stat-block entities. Player
+read models expose only public or selected-for-that-player summaries, names, slugs, visibility, and
+safe portrait/profile references; private dossier fields do not leave the repository boundary for
+player views.
+
+The player preview page is a Game-Master-only audit surface. It chooses a real player member with a
+campaign character where possible, then reads wiki pages, sessions, image assets, selected/public
+NPC summaries, and character notes through the same player-facing repository calls used by live
+routes. Its audit counts compare those player-visible reads with Game Master totals and link back to
+the management surfaces where visibility can be changed.
 
 ```mermaid
 erDiagram
@@ -239,8 +266,12 @@ erDiagram
     campaigns ||--o{ campaign_sessions : records
     campaigns ||--o{ campaign_wiki_pages : documents
     campaigns ||--o{ campaign_image_assets : stores
+    campaigns ||--o{ campaign_content_imports : records
     campaign_wiki_pages ||--o{ campaign_wiki_page_assets : attaches
     campaign_image_assets ||--o{ campaign_wiki_page_assets : appears_in
+    campaigns ||--o{ campaign_npcs : prepares
+    campaign_image_assets ||--o{ campaign_npcs : portraits
+    campaign_wiki_pages ||--o{ campaign_npcs : profiles
     campaigns ||--o{ campaign_factions : defines
     characters ||--o{ character_classes : has
     characters ||--o{ character_abilities : has
@@ -259,6 +290,7 @@ erDiagram
     rules_sources ||--o{ rules_entities : provides
     rules_entities ||--o{ rule_mechanics : describes
     rules_entities ||--o{ character_rule_links : selected_by
+    rules_entities ||--o{ campaign_npcs : stat_blocks
 ```
 
 ### Core Tables
@@ -274,6 +306,9 @@ erDiagram
 | `campaign_sessions` | Player-visible and Game-Master-only session records with title, slug, date, summary/body, author, and timestamps. |
 | `campaign_wiki_pages` | Campaign wiki Markdown pages with page type, tags, source metadata, and visibility. |
 | `campaign_image_assets` | App-managed image metadata with relative storage keys, dimensions, alt text, captions, and visibility. |
+| `campaign_content_imports` | Source metadata and converted Markdown for staged campaign-writing imports, including retained drafts and target links. |
+| `campaign_npcs` | Game Master NPC dossiers with public/private/selected visibility, player-safe summary fields, private notes/secrets, scene prep, and optional portrait, wiki, or stat-block links. |
+| `campaign_npc_player_access` | Player allow-list for selected NPC dossiers. |
 | `campaign_factions` | Rovnost faction records with motto, overview, player prompts, reputation, possible connections, rumours, optional asset links, and wiki links. |
 | `characters` | Character identity, owner, campaign, campaign-unique slug, species, background, level, and summary stats. |
 | `character_classes` | Class and subclass levels, hit dice, and spellcasting ability. |
@@ -293,7 +328,7 @@ erDiagram
 | `rule_mechanics` | Structured mechanics such as uses, dice notation, DCs, ranges, durations, conditions, and scaling. |
 | `character_rule_links` | Character selections and granted rules, such as prepared spells and known infusions. |
 
-Some schema tables intentionally land before their full management UI. `sheet-0012` adds group-use read models for rosters, wiki pages, image assets, session records, factions, and faction choices; `sheet-0014` adds player and Game Master roster pages plus manual character creation; `sheet-0016` adds note creation/update/delete flows and Game Master campaign session CRUD; `sheet-0018` adds the Background tab faction picker and selected faction summary. Character deletion, wiki management UI, image upload UI, faction-management UI, and richer rules text rendering are follow-up work.
+Some schema tables intentionally land before their full management UI. `sheet-0012` adds group-use read models for rosters, wiki pages, image assets, session records, factions, and faction choices; `sheet-0014` adds player and Game Master roster pages plus manual character creation; `sheet-0016` adds note creation/update/delete flows and Game Master campaign session CRUD; `sheet-0018` adds the Background tab faction picker and selected faction summary. `sheet-0063` adds NPC dossier storage and repository read models before the browser workspace in `sheet-0064`. Character deletion, wiki management UI, image upload UI, faction-management UI, and richer rules text rendering are follow-up work.
 
 ### Rules Data
 
@@ -370,9 +405,9 @@ Development should be tests first where practical:
 - Service tests cover password hashing, session handling, rule normalisation, source precedence, resource mutation, and permission decisions.
 - Route tests call `app.request()` and assert status codes, redirects, session cookies, role enforcement, validation failures, full pages, and HTMX fragments.
 - Component tests render JSX to strings and assert semantic HTML, labels, headings, ARIA, HTMX attributes, and empty states.
-- Accessibility tests run Pa11y against public, player, Game Master, wiki, roster, sheet, rules, logout, and admin pages once a runnable app exists.
-- Screenshot tests capture public home, local play, sheet, roster, campaign, rules, wiki, faction, admin, compact edit, roll result, and edited-sheet states for user-facing UI changes.
-- MVP smoke tests exercise seeded login, player and Game Master character creation, sheet navigation, manual edits, resource mutation, note saving, faction selection, SRD fixture imports, rules browsing, sheet rule links, session records, wiki reads and writes, image assets, role pages, admin account preparation, and logout.
+- Accessibility tests run Pa11y against public, player, Game Master, wiki, image, roster, sheet, rules, logout, and admin pages once a runnable app exists.
+- Screenshot tests capture public home, local play, sheet, roster, campaign, image library/detail, rules, wiki, faction, admin, compact edit, roll result, and edited-sheet states for user-facing UI changes.
+- MVP smoke tests exercise seeded login, player and Game Master character creation, sheet navigation, manual edits, resource mutation, note saving, faction selection, SRD fixture imports, rules browsing, sheet rule links, session records, wiki reads and writes, staged content import, Google Docs manual import, image assets, role pages, admin account preparation, and logout.
 
 The minimum verification before a source-code ticket is complete:
 
@@ -386,14 +421,17 @@ Hyper-Dank package adoption tickets should also run the focused compatibility ga
 bun run test:hyper-dank
 ```
 
-The accessibility script currently checks public `/`, `/login`, `/local/characters`, `/local/campaigns`, `/rules`, and `/rules/spell/bless`, player `/characters`, `/sheet/lynott`, `/campaigns/rovnost-shadows/wiki/factions-guide`, and `/logout`, Game Master `/campaigns/rovnost-shadows` and `/campaigns/rovnost-shadows/characters`, and admin `/admin`. The MVP smoke script renders every sheet tab fragment directly and walks the group-use flows for character creation, manual edits, notes, faction choice, full SRD import, public browser-local play import/export, rules browsing, private campaign rules, sheet rule links, Mira content, sessions, wiki, protected seeded assets, image upload, combined admin campaign access, admin account handoff, and logout protection. The screenshot script captures public home, local play, sheet, roster, campaign, rules, wiki, faction, admin, compact edit, roll result, and edited-sheet states to `docs/pr-screenshots/` by default for deliberate PR evidence refreshes; `bun run verify` overrides `SCREENSHOT_DIR` to a temporary directory so routine acceptance runs do not churn committed screenshots. [Hosted Rehearsal Acceptance](./docs/operations/hosted-rehearsal-acceptance.md) records the final `sheet-0030` acceptance checklist; [Campaign Companion Acceptance](./docs/operations/campaign-companion-acceptance.md) records the completed `sheet-0050` acceptance checklist and follow-ups.
+The accessibility script currently checks public `/`, `/login`, `/local/characters`, `/local/campaigns`, `/rules`, and `/rules/spell/bless`, player `/characters`, `/sheet/lynott`, `/campaigns/rovnost-shadows/wiki/factions-guide`, `/campaigns/rovnost-shadows/npcs`, `/campaigns/rovnost-shadows/images`, and `/logout`, Game Master `/campaigns/rovnost-shadows`, `/campaigns/rovnost-shadows/prep`, `/campaigns/rovnost-shadows/preview/player`, `/campaigns/rovnost-shadows/npcs`, `/campaigns/rovnost-shadows/npcs/magister-vallen`, `/campaigns/rovnost-shadows/images`, `/campaigns/rovnost-shadows/images/asset_magister_vallen`, `/campaigns/rovnost-shadows/imports`, `/campaigns/rovnost-shadows/imports/google-docs`, and `/campaigns/rovnost-shadows/characters`, and admin `/admin`. The MVP smoke script renders every sheet tab fragment directly and walks the group-use flows for character creation, manual edits, notes, faction choice, full SRD import, public browser-local play import/export, rules browsing, private campaign rules, sheet rule links, Mira content, sessions, wiki, staged content import, Google Docs manual import, protected seeded assets, image upload, combined admin campaign access, admin account handoff, and logout protection. The screenshot script captures public home, local play, sheet, roster, campaign, Game Master prep/NPC, image library/detail, import form, Google Docs manual import form, player preview, player NPC list, rules, wiki, faction, admin, compact edit, roll result, and edited-sheet states to `docs/pr-screenshots/` by default for deliberate PR evidence refreshes; `bun run verify` overrides `SCREENSHOT_DIR` to a temporary directory so routine acceptance runs do not churn committed screenshots. [Hosted Rehearsal Acceptance](./docs/operations/hosted-rehearsal-acceptance.md) records the final `sheet-0030` acceptance checklist; [Campaign Companion Acceptance](./docs/operations/campaign-companion-acceptance.md) records the completed `sheet-0050` acceptance checklist and follow-ups.
 [Hyper-Dank Adoption Acceptance](./docs/operations/hyper-dank-adoption-acceptance.md) records the
 completed `sheet-0040` package-adoption checklist, compatibility coverage, visual evidence, and
 remaining app-owned boundaries.
+[Game Master Prep Acceptance](./docs/operations/game-master-prep-acceptance.md) records the
+completed `sheet-0061` Game Master prep, private NPC, image, player-preview, staged-import, Google
+Docs manual import, and GitHub Project handoff evidence.
 
 ## Pipeline
 
-The repository uses a documentation-first ticket flow. Epic planning branches open against `main` for roadmap review, then remain as active epic integration branches once accepted. Implementation ticket branches start from the latest epic branch and open pull requests back into that epic branch. The epic branch opens a final pull request into `main` after its ticket stack is accepted.
+The repository uses a GitHub-tracked, documentation-first ticket flow. Epic planning branches open against `main` for roadmap review, then remain as active epic integration branches once accepted. Implementation ticket branches start from the latest epic branch and open pull requests back into that epic branch. The epic branch opens a final pull request into `main` after its ticket stack is accepted. GitHub Issues, issue-backed GitHub Project items, and pull request handoff are tracked through [GitHub Workflow](./docs/operations/github-workflow.md) and [Project Tracking](./docs/project-tracking.md).
 
 ```mermaid
 flowchart LR
@@ -409,7 +447,7 @@ flowchart LR
     I -- "No" --> J["Epic PR into main"]
 ```
 
-Release automation can be added after the MVP scaffold exists. The group-use MVP is ready for local checkout, seed, verification, table rehearsal, public SRD browsing, browser-local play, campaign private rules, and imported SRD 5.1 rules. `sheet-0020` completed the full SRD rules roadmap slice. `sheet-0030` completed the Railway rehearsal path. `sheet-0050` completed the campaign companion, public play, and rules-content product slice. `sheet-0040` completed Hyper-Dank package adoption, so the next planned roadmap slice is `sheet-0061` for Game Master prep, private NPCs, and content import on top of the adopted shared UI, transport, data, and automation primitives.
+Release automation can be added after the MVP scaffold exists. The group-use MVP is ready for local checkout, seed, verification, table rehearsal, public SRD browsing, browser-local play, campaign private rules, imported SRD 5.1 rules, Game Master prep, private NPC dossiers, local campaign images, player preview, staged content import, and manual Google Docs import. `sheet-0020` completed the full SRD rules roadmap slice. `sheet-0030` completed the Railway rehearsal path. `sheet-0050` completed the campaign companion, public play, and rules-content product slice. `sheet-0040` completed Hyper-Dank package adoption. `sheet-0061` completes Game Master prep, private NPCs, content import, and GitHub Project workflow on top of the adopted shared UI, transport, data, and automation primitives.
 
 ## Design Decisions
 
