@@ -67,7 +67,11 @@ Create a backup before any hosted seed, import, or manual recovery operation:
 bun run hosted:data -- backup
 ```
 
-By default backups are written under `HOSTED_BACKUP_DIR` or `data/backups` with a timestamped filename. On Railway, set `HOSTED_BACKUP_DIR=/data/backups` so backups stay on the attached volume.
+By default backups are written under `HOSTED_BACKUP_DIR` or `data/backups` with a timestamped filename. On Railway, set `HOSTED_BACKUP_DIR=/data/backups` so backups stay on the attached volume. Each backup creates three operator evidence artifacts:
+
+- `character-sheet-<timestamp>.sqlite3`, created with SQLite `VACUUM INTO`.
+- `character-sheet-<timestamp>-assets/`, a recursive snapshot of `CAMPAIGN_LEDGER_ASSET_ROOT`.
+- `character-sheet-<timestamp>.manifest.json`, recording the database path, asset root, snapshot path, file count, byte count, persistence mode, and timestamp.
 
 Restore from a named backup with an explicit replacement confirmation:
 
@@ -78,6 +82,7 @@ bun run hosted:data -- restore
 ```
 
 The restore command copies the backup to a temporary file and then renames it over `DB_PATH`. It refuses to run without `HOSTED_DATA_CONFIRM=replace`.
+When a matching `-assets` snapshot exists beside the SQLite backup, restore also replaces `CAMPAIGN_LEDGER_ASSET_ROOT` from that snapshot. This keeps uploaded campaign images aligned with the restored database records. Set `CAMPAIGN_LEDGER_ASSET_ROOT` before restoring if the hosted asset root differs from the environment default.
 
 ## Reseeding Or Resetting
 
@@ -117,6 +122,7 @@ For a local hosted-data rehearsal:
 DB_PATH=/tmp/character-sheet-hosted.sqlite3 bun run hosted:data -- status
 DB_PATH=/tmp/character-sheet-hosted.sqlite3 bun run hosted:data -- prepare
 DB_PATH=/tmp/character-sheet-hosted.sqlite3 HOSTED_BACKUP_DIR=/tmp/character-sheet-backups bun run hosted:data -- backup
+HOSTED_RESTORE_SOURCE=/tmp/character-sheet-backups/character-sheet-<timestamp>.sqlite3 HOSTED_DATA_CONFIRM=replace DB_PATH=/tmp/character-sheet-hosted.sqlite3 bun run hosted:data -- restore
 DB_PATH=/tmp/character-sheet-hosted.sqlite3 bun run hosted:data -- migrate
 ```
 
