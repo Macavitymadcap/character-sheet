@@ -1,5 +1,5 @@
 #!/usr/bin/env bun
-import { copyFile, mkdir, rename, stat } from "node:fs/promises";
+import { copyFile, cp, mkdir, readdir, rename, rm, stat, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { Database } from "bun:sqlite";
 import { assetStorageRoot, writeSeedAssetPlaceholders } from "../src/assets";
@@ -12,9 +12,25 @@ export interface HostedDataOptions {
   confirm?: string;
   databasePath?: string;
   persistenceMode?: string;
+  skipAssetBackup?: boolean;
+  skipAssetRestore?: boolean;
   skipSeedAssets?: boolean;
+  skipRulesImport?: boolean;
   restoreSource?: string;
   timestamp?: Date;
+}
+
+interface HostedBackupManifest {
+  assetRoot: string;
+  assetSnapshotPath: string | null;
+  assetTotals: {
+    bytes: number;
+    files: number;
+  };
+  backupPath: string;
+  createdAt: string;
+  databasePath: string;
+  mode: typeof hostedPersistenceMode;
 }
 
 export const hostedPersistenceMode = "sqlite-volume";
@@ -50,8 +66,10 @@ export async function prepareHostedData(options: HostedDataOptions = {}) {
   await ensureParentDirectory(databasePath);
   const runtime = createSqliteDatabase({ path: databasePath, seed: true });
   try {
-    await new RulesImportService(runtime.repositories.rulesSeedRepository)
-      .importFromLocalSource("docs/rules/srd-5.1");
+    if (!options.skipRulesImport) {
+      await new RulesImportService(runtime.repositories.rulesSeedRepository)
+        .importFromLocalSource("docs/rules/srd-5.1");
+    }
   } finally {
     runtime.close();
   }
@@ -67,6 +85,7 @@ export async function backupHostedData(options: HostedDataOptions = {}) {
   const databasePath = options.databasePath ?? defaultDatabasePath();
   assertHostedDatabasePath(databasePath);
   const backupDir = options.backupDir ?? defaultBackupDir();
+  const assetRoot = options.assetRoot ?? assetStorageRoot();
   const existingSize = await fileSize(databasePath);
 
   if (existingSize === 0) {
@@ -84,6 +103,27 @@ export async function backupHostedData(options: HostedDataOptions = {}) {
   } finally {
     database.close();
   }
+  const assetSnapshotPath = hostedBackupAssetSnapshotPath(backupPath);
+  const shouldCreateAssetSnapshot = !options.skipAssetBackup;
+  if (shouldCreateAssetSnapshot && await pathExists(assetRoot)) {
+    await rm(assetSnapshotPath, { force: true, recursive: true });
+    await cp(assetRoot, assetSnapshotPath, { force: true, recursive: true });
+  } else if (shouldCreateAssetSnapshot) {
+    await rm(assetSnapshotPath, { force: true, recursive: true });
+    await mkdir(assetSnapshotPath, { recursive: true });
+  }
+  const manifest: HostedBackupManifest = {
+    assetRoot,
+    assetSnapshotPath: shouldCreateAssetSnapshot ? assetSnapshotPath : null,
+    assetTotals: shouldCreateAssetSnapshot
+      ? await collectFileTotals(assetSnapshotPath)
+      : { bytes: 0, files: 0 },
+    backupPath,
+    createdAt: (options.timestamp ?? new Date()).toISOString(),
+    databasePath,
+    mode: hostedPersistenceMode,
+  };
+  await writeFile(hostedBackupManifestPath(backupPath), `${JSON.stringify(manifest, null, 2)}\n`);
 
   return backupPath;
 }
@@ -105,8 +145,22 @@ export async function restoreHostedData(options: HostedDataOptions = {}) {
 
   await ensureParentDirectory(databasePath);
   const temporaryPath = `${databasePath}.restore-tmp`;
+  const assetSnapshotPath = hostedBackupAssetSnapshotPath(restoreSource);
+  const restoreAssets = !options.skipAssetRestore && await pathExists(assetSnapshotPath);
+  const assetRoot = options.assetRoot ?? assetStorageRoot();
+  const temporaryAssetRoot = `${assetRoot}.restore-tmp`;
+  if (restoreAssets) {
+    await rm(temporaryAssetRoot, { force: true, recursive: true });
+    await cp(assetSnapshotPath, temporaryAssetRoot, { force: true, recursive: true });
+  }
+
   await copyFile(restoreSource, temporaryPath);
   await rename(temporaryPath, databasePath);
+  if (restoreAssets) {
+    await rm(assetRoot, { force: true, recursive: true });
+    await ensureParentDirectory(assetRoot);
+    await rename(temporaryAssetRoot, assetRoot);
+  }
 
   return databasePath;
 }
@@ -120,6 +174,14 @@ export function describeHostedPersistence(options: HostedDataOptions = {}) {
     databasePath: options.databasePath ?? defaultDatabasePath(),
     mode: hostedPersistenceMode,
   };
+}
+
+export function hostedBackupAssetSnapshotPath(backupPath: string) {
+  return backupPath.replace(/\.sqlite3$/, "-assets");
+}
+
+export function hostedBackupManifestPath(backupPath: string) {
+  return backupPath.replace(/\.sqlite3$/, ".manifest.json");
 }
 
 function assertHostedPersistenceMode(options: HostedDataOptions) {
@@ -151,6 +213,35 @@ async function fileSize(path: string) {
   }
 }
 
+async function pathExists(path: string) {
+  try {
+    await stat(path);
+    return true;
+  } catch (error) {
+    if (error instanceof Error && "code" in error && error.code === "ENOENT") return false;
+    throw error;
+  }
+}
+
+async function collectFileTotals(root: string) {
+  let files = 0;
+  let bytes = 0;
+  const entries = await readdir(root, { withFileTypes: true });
+  for (const entry of entries) {
+    const path = join(root, entry.name);
+    if (entry.isDirectory()) {
+      const childTotals = await collectFileTotals(path);
+      files += childTotals.files;
+      bytes += childTotals.bytes;
+    } else if (entry.isFile()) {
+      files += 1;
+      bytes += (await stat(path)).size;
+    }
+  }
+
+  return { bytes, files };
+}
+
 function formatTimestamp(date: Date) {
   return date.toISOString().replace(/\.\d{3}Z$/, "Z").replace(/[:]/g, "");
 }
@@ -167,7 +258,10 @@ if (import.meta.main) {
   } else if (command === "prepare") {
     console.log(`Prepared hosted SQLite database at ${await prepareHostedData()}`);
   } else if (command === "backup") {
-    console.log(`Created hosted SQLite backup at ${await backupHostedData()}`);
+    const backupPath = await backupHostedData();
+    console.log(`Created hosted SQLite backup at ${backupPath}`);
+    console.log(`Hosted asset snapshot path: ${hostedBackupAssetSnapshotPath(backupPath)}`);
+    console.log(`Created hosted backup manifest at ${hostedBackupManifestPath(backupPath)}`);
   } else if (command === "restore") {
     console.log(`Restored hosted SQLite database at ${await restoreHostedData()}`);
   } else if (command === "status") {

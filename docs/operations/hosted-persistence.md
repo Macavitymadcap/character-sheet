@@ -36,14 +36,15 @@ multi-environment deployment guarantees that SQLite-on-volume cannot provide.
 - `bun run hosted:data -- migrate` runs schema bootstrap without reseeding rows.
 - `bun run hosted:data -- prepare` refuses to seed over a non-empty database unless
   `HOSTED_DATA_CONFIRM=seed-existing` is set after a backup.
-- `bun run hosted:data -- backup` creates a timestamped SQLite backup with `VACUUM INTO`.
+- `bun run hosted:data -- backup` creates a timestamped SQLite backup with `VACUUM INTO`, copies
+  the app-managed asset root into a matching `-assets` snapshot, and writes a JSON manifest.
 - `bun run hosted:data -- restore` requires `HOSTED_DATA_CONFIRM=replace` and a non-empty
-  `HOSTED_RESTORE_SOURCE`.
+  `HOSTED_RESTORE_SOURCE`; when a matching asset snapshot exists, it restores the asset root too.
 - Hosted data operations require a file-backed SQLite database, not `DB_PATH=:memory:`.
 
-Database backups are necessary but not sufficient: app-managed campaign images live under the asset
-root and must be backed up with the SQLite file. `sheet-0080` owns the fuller backup/restore
-automation for database plus assets.
+The manifest is the operator evidence record for a backup rehearsal. It records the database path,
+asset root, asset snapshot path, file count, byte count, persistence mode, and timestamp so restore
+commands are not reconstructed from memory.
 
 ## Future Migration Trigger
 

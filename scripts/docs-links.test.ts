@@ -71,6 +71,8 @@ describe("documentation references", () => {
     expect(railwayDocs).toContain("Healthcheck path | `/healthz`");
     expect(railwayDocs).toContain("bun run hosted:data -- prepare");
     expect(railwayDocs).toContain("bun run hosted:data -- backup");
+    expect(railwayDocs).toContain("character-sheet-<timestamp>-assets/");
+    expect(railwayDocs).toContain("character-sheet-<timestamp>.manifest.json");
     expect(railwayDocs).toContain("HOSTED_DATA_CONFIRM=replace");
     expect(railwayDocs).toContain("`DB_PATH`");
     expect(railwayDocs).toContain("`SESSION_SECRET`");
