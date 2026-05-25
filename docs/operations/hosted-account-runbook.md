@@ -1,6 +1,12 @@
 # Hosted Account Operator Runbook
 
-This runbook covers the manual account tasks needed for the first Railway hosted rehearsal. The app does not send email. The operator creates tokens in the admin UI, copies the resulting token link, and shares it with the intended person through the group's chosen private channel.
+This runbook covers the operator-mediated account tasks accepted for hosted production readiness. The app does not send email. The operator creates tokens in the admin UI, copies the resulting token link, and shares it with the intended person through the group's chosen private channel.
+
+## Production Account Boundary
+
+Hosted account setup uses `ACCOUNT_DELIVERY_MODE=operator`. This is the only supported mode until a planned email provider ticket adds provider configuration, templates, secret handling, and delivery verification. Setting `ACCOUNT_DELIVERY_MODE=email` or any other value stops startup before the app binds.
+
+Set `PUBLIC_BASE_URL` to the public Railway service URL or custom domain, for example `https://campaign-ledger.example.com`. Admin-created invite and password-reset handoff links then use that canonical hosted origin instead of the incoming request origin.
 
 ## Seeded Rehearsal Accounts
 
@@ -33,8 +39,8 @@ After the admin password is changed, the operator should create an invite for a 
 2. Open `/admin`.
 3. In "Create invite", enter the user's email and choose `Player`, `Game Master`, or `Admin`.
 4. Submit the form.
-5. Copy the returned invite token into a URL shaped like `/invites/<token>` on the hosted site.
-6. Send that link privately to the user.
+5. Copy the returned invite URL from the admin handoff panel. It should be shaped like `https://your-hosted-origin.example/invites/<token>` when `PUBLIC_BASE_URL` is set.
+6. Send that link privately to the user through the agreed table channel.
 7. Ask the user to enter their display name and password on the invite page.
 
 Invite acceptance creates the account locally and redirects the user to `/login`. It does not send email and does not automatically add campaign membership beyond what the current invite role supports.
@@ -44,8 +50,8 @@ Invite acceptance creates the account locally and redirects the user to `/login`
 1. Sign in as an active admin.
 2. Open `/admin`.
 3. Find the user row and choose "Create reset token".
-4. Copy the returned token into a URL shaped like `/password-reset/<token>` on the hosted site.
-5. Send that link privately to the user.
+4. Copy the returned reset URL from the admin handoff panel. It should be shaped like `https://your-hosted-origin.example/password-reset/<token>` when `PUBLIC_BASE_URL` is set.
+5. Send that link privately to the user through the agreed table channel.
 6. Ask the user to set a new password.
 
 Password reset tokens are single-use. A disabled user cannot use a reset token to regain access; reactivate the user first if access should be restored.
@@ -59,4 +65,4 @@ Password reset tokens are single-use. A disabled user cannot use a reset token t
 
 ## Deferred Email Delivery
 
-Email delivery is intentionally out of scope for this hosted rehearsal. Token delivery remains manual until a later email or external identity slice is planned.
+Email delivery is intentionally out of scope for this production-readiness epic. Token delivery remains operator-mediated until a later email or external identity slice is planned and implemented.

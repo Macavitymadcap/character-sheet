@@ -93,8 +93,10 @@ import type {
   UserRole,
   WikiPageType,
 } from "./db";
+import type { AccountDeliveryConfig } from "./runtime";
 
 export interface AppDependencies {
+  accountDelivery?: AccountDeliveryConfig;
   appName: string;
   authRepository: AuthRepository;
   authService: AuthService;
@@ -109,6 +111,7 @@ export interface AppDependencies {
 export const createApp = (dependencies: AppDependencies) => {
   const app = new Hono();
   const responder = new HttpResponder();
+  const accountDelivery = dependencies.accountDelivery ?? { mode: "operator" as const };
 
   app.get("/healthz", (context) => context.json({ ok: true }));
 
@@ -122,7 +125,8 @@ export const createApp = (dependencies: AppDependencies) => {
     return "/characters";
   };
 
-  const absoluteUrl = (context: Context, path: string) => new URL(path, context.req.url).toString();
+  const absoluteUrl = (context: Context, path: string) =>
+    new URL(path, accountDelivery.publicBaseUrl ?? context.req.url).toString();
 
   const wantsJson = (context: Context) =>
     context.req.header("accept")?.includes("application/json") ?? false;
@@ -285,7 +289,8 @@ export const createApp = (dependencies: AppDependencies) => {
     return context.html(
       <AdminPage
         appName={dependencies.appName}
-        handoff={parseAdminHandoff(context)}
+        accountDelivery={accountDelivery}
+        handoff={parseAdminHandoff(context, accountDelivery)}
         invites={dependencies.authRepository.listInvites()}
         resetTokens={dependencies.authRepository.listPasswordResetTokens()}
         users={dependencies.authRepository.listUserSummaries()}
@@ -2704,7 +2709,7 @@ function isUserRole(role: string): role is UserRole {
   return role === "admin" || role === "game_master" || role === "player";
 }
 
-function parseAdminHandoff(context: Context) {
+function parseAdminHandoff(context: Context, accountDelivery: AccountDeliveryConfig) {
   const type = context.req.query("handoff");
   const url = parseFormString(context.req.query("url"));
   const expires = parseFormString(context.req.query("expires"));
@@ -2717,7 +2722,9 @@ function parseAdminHandoff(context: Context) {
   } catch {
     return undefined;
   }
-  if (handoffUrl.origin !== requestUrl.origin) return undefined;
+  const allowedOrigins = new Set([requestUrl.origin]);
+  if (accountDelivery.publicBaseUrl) allowedOrigins.add(new URL(accountDelivery.publicBaseUrl).origin);
+  if (!allowedOrigins.has(handoffUrl.origin)) return undefined;
 
   const expiresAt = new Date(expires);
   if (Number.isNaN(expiresAt.getTime())) return undefined;

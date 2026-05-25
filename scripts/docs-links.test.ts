@@ -75,6 +75,8 @@ describe("documentation references", () => {
     expect(railwayDocs).toContain("`DB_PATH`");
     expect(railwayDocs).toContain("`SESSION_SECRET`");
     expect(railwayDocs).toContain("`CAMPAIGN_LEDGER_ASSET_ROOT`");
+    expect(railwayDocs).toContain("`ACCOUNT_DELIVERY_MODE`");
+    expect(railwayDocs).toContain("`PUBLIC_BASE_URL`");
     expect(readme).toContain("# Campaign Ledger");
     expect(readme).toContain("`CAMPAIGN_LEDGER_ASSET_ROOT`");
     expect(readme).toContain("[Railway Hosted Rehearsal](./docs/deployment/railway.md)");
@@ -86,6 +88,8 @@ describe("documentation references", () => {
 
     expect(readme).toContain("[Hosted Account Operator Runbook](./docs/operations/hosted-account-runbook.md)");
     expect(runbook).toContain("The app does not send email.");
+    expect(runbook).toContain("ACCOUNT_DELIVERY_MODE=operator");
+    expect(runbook).toContain("PUBLIC_BASE_URL");
     expect(runbook).toContain("/invites/<token>");
     expect(runbook).toContain("/password-reset/<token>");
     expect(runbook).toContain("The app prevents disabling the last active admin.");

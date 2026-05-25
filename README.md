@@ -117,6 +117,8 @@ Current environment variables:
 | `CHARACTER_SHEET_ASSET_ROOT` | unset | Backwards-compatible alias for existing Railway/local asset configuration. |
 | `HOSTED_PERSISTENCE_MODE` | `sqlite-volume` | Accepted hosted storage boundary. Other values are rejected until a planned migration changes the data layer. |
 | `HOSTED_BACKUP_DIR` | `data/backups` | Backup directory used by hosted data operations. Use `/data/backups` on Railway. |
+| `ACCOUNT_DELIVERY_MODE` | `operator` | Accepted invite and password-reset delivery boundary. Other values are rejected until a planned email ticket adds a provider. |
+| `PUBLIC_BASE_URL` | unset | Canonical hosted origin used when generating admin invite and password-reset links, for example `https://campaign-ledger.example.com`. |
 
 SQLite database files and sidecar files should remain ignored by Git.
 
@@ -169,7 +171,7 @@ bun run verify
 
 `bun run hosted:data -- migrate` applies the SQLite schema without seed data, which is what normal hosted startup relies on. `prepare`, `backup`, and `restore` are reserved for hosted rehearsal operations and are documented in [Railway Hosted Rehearsal](./docs/deployment/railway.md). `prepare` also imports the full local SRD 5.1 corpus so hosted rehearsal users can browse public rules immediately.
 
-Hosted account setup stays manual for this epic. Admin-created invite and password-reset links are copied from the admin UI and shared privately by the operator; no email delivery is implied or configured. See [Hosted Account Operator Runbook](./docs/operations/hosted-account-runbook.md).
+Hosted account setup uses operator delivery mode for this epic. Admin-created invite and password-reset links are copied from the admin UI and shared privately by the operator; `ACCOUNT_DELIVERY_MODE` rejects unsupported email modes until a provider ticket is planned. Set `PUBLIC_BASE_URL` in hosted environments so generated handoff links use the canonical production origin. See [Hosted Account Operator Runbook](./docs/operations/hosted-account-runbook.md).
 
 `bun run test:a11y` starts an in-memory app on an available local port and runs Pa11y against public `/`, `/login`, `/local/characters`, `/local/campaigns`, `/rules`, and `/rules/spell/bless`, player `/characters`, `/sheet/lynott`, `/campaigns/rovnost-shadows/wiki/factions-guide`, `/campaigns/rovnost-shadows/npcs`, `/campaigns/rovnost-shadows/images`, and `/logout`, Game Master `/campaigns/rovnost-shadows`, `/campaigns/rovnost-shadows/prep`, `/campaigns/rovnost-shadows/preview/player`, `/campaigns/rovnost-shadows/npcs`, `/campaigns/rovnost-shadows/npcs/magister-vallen`, `/campaigns/rovnost-shadows/images`, `/campaigns/rovnost-shadows/images/asset_magister_vallen`, `/campaigns/rovnost-shadows/imports`, `/campaigns/rovnost-shadows/imports/google-docs`, and `/campaigns/rovnost-shadows/characters`, and admin `/admin`.
 

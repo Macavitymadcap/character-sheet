@@ -9,6 +9,10 @@ describe("AdminPage", () => {
     const html = render(
       <AdminPage
         appName="Campaign Ledger"
+        accountDelivery={{
+          mode: "operator",
+          publicBaseUrl: "https://campaign-ledger.example.com",
+        }}
         handoff={{
           email: "new.player@example.local",
           expiresAt: new Date("2026-05-23T12:00:00.000Z"),
@@ -39,7 +43,9 @@ describe("AdminPage", () => {
       '<a class="popover-menu-item" href="/admin" role="menuitem" aria-current="page">Admin</a>',
     );
     expect(html).toContain("Admin");
+    expect(html).toContain("Operator delivery mode is active.");
     expect(html).toContain("Campaign Ledger does not send email.");
+    expect(html).toContain("Links use https://campaign-ledger.example.com.");
     expect(html).toContain("Invite ready");
     expect(html).toContain("http://localhost/invites/token");
     expect(html).toContain('aria-controls="admin-handoff-url"');
