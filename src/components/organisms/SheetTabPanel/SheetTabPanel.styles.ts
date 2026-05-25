@@ -115,6 +115,76 @@ export const sheetTabPanelStyles = /* css */ `
   border-color: var(--focus-border-colour);
 }
 
+.tab-inline-edit-item {
+  box-sizing: border-box;
+}
+
+.tab-row-edit-form {
+  align-items: end;
+  width: 100%;
+}
+
+.tab-row-edit-form label {
+  color: var(--muted-text-colour);
+  display: grid;
+  font-size: 0.78rem;
+  font-weight: 900;
+  gap: 0.25rem;
+  text-transform: uppercase;
+}
+
+.tab-row-edit-form input,
+.tab-row-edit-form select,
+.tab-row-edit-form textarea {
+  background: var(--surface-colour);
+  border: 1px solid var(--border-colour);
+  border-radius: 0.35rem;
+  color: var(--heading-colour);
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 750;
+  min-height: 2.15rem;
+  min-width: 0;
+  padding: 0.35rem 0.45rem;
+  width: 100%;
+}
+
+.tab-row-edit-form textarea {
+  min-height: 4.5rem;
+  resize: vertical;
+}
+
+.tab-row-edit-form input:focus,
+.tab-row-edit-form select:focus,
+.tab-row-edit-form textarea:focus {
+  border-color: var(--focus-border-colour);
+  outline: 2px solid color-mix(in srgb, var(--focus-border-colour) 28%, transparent);
+  outline-offset: 1px;
+}
+
+.tab-row-edit-field-wide {
+  grid-column: 1 / -1;
+}
+
+.tab-row-edit-form .row-edit-actions {
+  align-self: stretch;
+}
+
+.tab-row-edit-form .row-edit-actions button {
+  background: var(--action-background-colour);
+  border: 1px solid var(--action-border-colour);
+  border-radius: 0.35rem;
+  color: var(--action-text-colour);
+  cursor: pointer;
+  font-weight: 900;
+  min-height: 2.15rem;
+  padding: 0.35rem 0.55rem;
+}
+
+.tab-row-edit-form .row-edit-actions button:hover {
+  border-color: var(--focus-border-colour);
+}
+
 .note-editor-list {
   display: grid;
   gap: 0.6rem;

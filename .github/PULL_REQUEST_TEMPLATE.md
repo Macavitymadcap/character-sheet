@@ -23,7 +23,7 @@
 
 ## Review Notes
 
-- [ ] The PR targets the accepted base branch: `main` for epic planning, the epic branch for tickets, or `main` for final epic acceptance.
+- [ ] The PR targets the accepted base branch: `main` for epic planning, the `feat/sheet-*` epic branch for tickets, or `main` for final epic acceptance.
 - [ ] The PR links the matching GitHub Issue with `Closes`, `Fixes`, or `Refs`.
 - [ ] The GitHub Project status reflects the current review state.
 - [ ] The PR title follows Conventional Commits, for example `docs(sheet): add workflow templates`.

@@ -26,7 +26,7 @@ Campaign Ledger keeps the `sheet-*` identifier sequence for GitHub-managed work.
 | Surface | Convention |
 | --- | --- |
 | GitHub issue title | `sheet-0061: concise outcome` when the issue has an assigned identifier |
-| Branch | `codex/sheet-0062-short-task-name`, `sheet-0061`, or another accepted branch named in the issue |
+| Branch | `feat/sheet-0062-short-task-name`, `feat/sheet-0061`, or another accepted branch named in the issue |
 | PR title | Conventional Commit title, not the identifier alone |
 | PR body | Link the issue with `Closes #123`, `Fixes #123`, or `Refs #123` |
 | Project item | Use the issue as the project item; do not create a separate tracking row |
@@ -79,7 +79,7 @@ Use native GitHub relationships where possible:
 | Parent issue | Built-in issue relationship | Populated by native sub-issues |
 | Sub-issues progress | Built-in progress | Populated by native sub-issues |
 | Parent epic | Text | Optional human-readable `sheet-*` mirror for filters and old views |
-| Base branch | Text | `main`, the active epic branch, or another accepted PR base |
+| Base branch | Text | `main`, the active `feat/sheet-*` epic branch, or another accepted PR base |
 | Branch | Text | Work branch once implementation starts |
 | PR | Text or linked PR | PR URL once opened |
 | Type | Single select | Epic, Ticket, Bug, Audit, Follow-up |
@@ -107,6 +107,7 @@ The documentation-first branch flow still applies, but GitHub supplies active tr
 
 Use normal follow-up commits on open PRs unless the maintainer explicitly asks for history
 rewriting. Extra commits are acceptable when the ticket or epic acceptance criteria remain answered.
+CI runs for pull requests targeting `main` or any `feat/**` branch, and for pushes to those branches.
 
 ## Rollout
 

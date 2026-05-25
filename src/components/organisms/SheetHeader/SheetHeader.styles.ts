@@ -35,6 +35,64 @@ export const sheetHeaderStyles = /* css */ `
   margin: 0;
 }
 
+.sheet-summary-edit-button,
+.sheet-summary-edit-actions button {
+  background: var(--action-background-colour);
+  border: 1px solid var(--action-border-colour);
+  border-radius: 0.35rem;
+  color: var(--action-text-colour);
+  cursor: pointer;
+  font-weight: 850;
+  min-height: 2rem;
+  padding: 0.3rem 0.6rem;
+}
+
+.sheet-summary-edit-button:hover,
+.sheet-summary-edit-actions button:hover {
+  border-color: var(--focus-border-colour);
+}
+
+.sheet-summary-edit-form {
+  align-items: end;
+  display: grid;
+  gap: 0.55rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.sheet-summary-edit-form label {
+  color: var(--muted-text-colour);
+  display: grid;
+  font-size: 0.78rem;
+  font-weight: 900;
+  gap: 0.25rem;
+  text-transform: uppercase;
+}
+
+.sheet-summary-edit-form input {
+  background: var(--stat-background-colour);
+  border: 1px solid var(--border-colour);
+  border-radius: 0.35rem;
+  color: var(--heading-colour);
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 750;
+  min-height: 2.15rem;
+  min-width: 0;
+  padding: 0.35rem 0.45rem;
+  width: 100%;
+}
+
+.sheet-summary-edit-form input:focus {
+  border-color: var(--focus-border-colour);
+  outline: 2px solid color-mix(in srgb, var(--focus-border-colour) 28%, transparent);
+  outline-offset: 1px;
+}
+
+.sheet-summary-edit-actions {
+  display: flex;
+  gap: 0.35rem;
+}
+
 .sheet-header-grid {
   display: grid;
   gap: 0.5rem;
@@ -290,6 +348,10 @@ export const sheetHeaderStyles = /* css */ `
     grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 
+  .sheet-summary-edit-form {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
   .sheet-metric-wide {
     grid-column: span 1;
   }
@@ -297,6 +359,15 @@ export const sheetHeaderStyles = /* css */ `
 
 @media (max-width: 360px) {
   .sheet-header-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sheet-summary-edit-form {
+    grid-template-columns: 1fr;
+  }
+
+  .sheet-summary-edit-actions {
+    display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -308,7 +379,7 @@ export const sheetHeaderStyles = /* css */ `
 @media (min-width: 980px) {
   .sheet-title-block {
     display: grid;
-    grid-template-columns: minmax(0, auto) minmax(0, 1fr);
+    grid-template-columns: minmax(0, auto) minmax(0, 1fr) auto;
   }
 
   .sheet-subtitle {

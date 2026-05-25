@@ -1,1 +1,1 @@
-export { SheetHeader } from "./SheetHeader";
+export { SheetHeader, SheetHeaderEdit } from "./SheetHeader";

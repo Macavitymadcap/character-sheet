@@ -141,7 +141,7 @@ export async function runMvpSmoke() {
       method: "PATCH",
     });
     assertResponse("manual sheet edit", sheetSummary.response, 200);
-    assertBody("manual sheet edit", sheetSummary.body, "Faction-touched artisan");
+    assertBody("manual sheet edit", sheetSummary.body, "Level 4 Artillerist Artificer");
 
     const note = await requestText(`${baseUrl}/sheet/lynott/notes/note_lynott_player`, {
       body: new URLSearchParams({ body: "MVP smoke note saved.", title: "Player notes" }),

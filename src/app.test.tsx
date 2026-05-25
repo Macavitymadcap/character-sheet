@@ -511,6 +511,12 @@ describe("createApp", () => {
     const cookie = sessionService.createSession("user_lynott_player").cookie;
     const headers = formHeaders(cookie);
 
+    const summaryEdit = await app.request("/sheet/lynott/summary/edit", {
+      headers: { Cookie: cookie },
+    });
+    const summaryCancel = await app.request("/sheet/lynott/summary", {
+      headers: { Cookie: cookie },
+    });
     const summary = await app.request("/sheet/lynott/summary", {
       body: new URLSearchParams({
         background: "Field Agent",
@@ -549,6 +555,16 @@ describe("createApp", () => {
       method: "PATCH",
     });
 
+    const summaryEditHtml = await summaryEdit.text();
+    const summaryCancelHtml = await summaryCancel.text();
+
+    expect(summaryEdit.status).toBe(200);
+    expect(summaryEditHtml).toContain('hx-patch="/sheet/lynott/summary"');
+    expect(summaryEditHtml).toContain('hx-get="/sheet/lynott/summary"');
+    expect(summaryEditHtml).not.toContain("sheet-edit-disclosure");
+    expect(summaryCancel.status).toBe(200);
+    expect(summaryCancelHtml).toContain('hx-get="/sheet/lynott/summary/edit"');
+    expect(summaryCancelHtml).not.toContain("sheet-edit-disclosure");
     expect(summary.status).toBe(200);
     expect(await summary.text()).toContain("Lynott Undercover");
     expect(ability.status).toBe(200);
@@ -643,6 +659,52 @@ describe("createApp", () => {
     expect(await armourEdit.text()).toContain('hx-patch="/sheet/lynott/armour/ac_lynott_breastplate"');
     expect(defenceEdit.status).toBe(200);
     expect(await defenceEdit.text()).toContain('hx-patch="/sheet/lynott/defences/defence_lynott_resistances"');
+  });
+
+  test("serves focused equipment and background edit fragments", async () => {
+    const { app, sessionService } = createTestApp("Campaign Ledger");
+    const cookie = sessionService.createSession("user_lynott_player").cookie;
+    const headers = { Cookie: cookie };
+
+    const equipmentEdit = await app.request("/sheet/lynott/equipment/equipment_lynott_pistol/edit", { headers });
+    const equipmentCancel = await app.request("/sheet/lynott/equipment/equipment_lynott_pistol", { headers });
+    const backgroundEdit = await app.request("/sheet/lynott/background/background_lynott_identity_jonas/edit", { headers });
+    const backgroundCancel = await app.request("/sheet/lynott/background/background_lynott_identity_jonas", { headers });
+    const backgroundSave = await app.request("/sheet/lynott/background/background_lynott_identity_jonas", {
+      body: new URLSearchParams({
+        body: "Independent locksmith with fresh Rovnost papers.",
+        title: "Jonas Locksmith",
+      }),
+      headers: {
+        Cookie: cookie,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      method: "PATCH",
+    });
+
+    const equipmentEditHtml = await equipmentEdit.text();
+    const equipmentCancelHtml = await equipmentCancel.text();
+    const backgroundEditHtml = await backgroundEdit.text();
+    const backgroundCancelHtml = await backgroundCancel.text();
+    const backgroundSaveHtml = await backgroundSave.text();
+
+    expect(equipmentEdit.status).toBe(200);
+    expect(equipmentEditHtml).toContain('id="equipment-item-equipment-lynott-pistol"');
+    expect(equipmentEditHtml).toContain('hx-patch="/sheet/lynott/equipment/equipment_lynott_pistol"');
+    expect(equipmentEditHtml).toContain('hx-get="/sheet/lynott/equipment/equipment_lynott_pistol"');
+    expect(equipmentEditHtml).not.toContain("row-edit-disclosure");
+    expect(equipmentCancel.status).toBe(200);
+    expect(equipmentCancelHtml).toContain('hx-get="/sheet/lynott/equipment/equipment_lynott_pistol/edit"');
+    expect(backgroundEdit.status).toBe(200);
+    expect(backgroundEditHtml).toContain('id="background-entry-background-lynott-identity-jonas"');
+    expect(backgroundEditHtml).toContain('hx-patch="/sheet/lynott/background/background_lynott_identity_jonas"');
+    expect(backgroundEditHtml).toContain('hx-get="/sheet/lynott/background/background_lynott_identity_jonas"');
+    expect(backgroundEditHtml).not.toContain("row-edit-disclosure");
+    expect(backgroundCancel.status).toBe(200);
+    expect(backgroundCancelHtml).toContain("Jonas Blarendon");
+    expect(backgroundSave.status).toBe(200);
+    expect(backgroundSaveHtml).toContain("Jonas Locksmith");
+    expect(backgroundSaveHtml).toContain("Independent locksmith");
   });
 
   test("adds custom conditions and returns dice roll fragments", async () => {
