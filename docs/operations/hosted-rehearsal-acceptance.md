@@ -30,7 +30,7 @@ That command covers:
 
 After deploying to Railway, run these browser checks with the hosted URL:
 
-1. Confirm `/healthz` returns `{ "ok": true }`.
+1. Confirm `/readyz` returns `{ "checks": { "assets": true, "database": true }, "ok": true }` or run `bun run hosted:check -- <hosted-url>`.
 2. Sign in as the seeded admin after completing the password reset handoff.
 3. Confirm `/admin` lists active seeded users and can create invite/reset tokens.
 4. Sign in as the Game Master and open `/campaigns/rovnost-shadows`.

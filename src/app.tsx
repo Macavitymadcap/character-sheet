@@ -6,7 +6,7 @@ import {
   routeParam,
 } from "@macavitymadcap/hyper-dank-transport";
 import { Hono, type Context } from "hono";
-import { assetStorageRoot } from "./assets";
+import { assetStorageRoot, verifyAssetStorageRoot } from "./assets";
 import {
   convertCampaignImportContent,
   normaliseGoogleDocsReference,
@@ -114,6 +114,24 @@ export const createApp = (dependencies: AppDependencies) => {
   const accountDelivery = dependencies.accountDelivery ?? { mode: "operator" as const };
 
   app.get("/healthz", (context) => context.json({ ok: true }));
+
+  app.get("/readyz", async (context) => {
+    const checks = {
+      assets: false,
+      database: false,
+    };
+
+    try {
+      dependencies.authRepository.countActiveAdmins();
+      checks.database = true;
+      await verifyAssetStorageRoot();
+      checks.assets = true;
+    } catch {
+      return context.json({ checks, ok: false }, 503);
+    }
+
+    return context.json({ checks, ok: true });
+  });
 
   const readSession = (cookieHeader: string | undefined) =>
     dependencies.sessionService.readSession(cookieHeader);

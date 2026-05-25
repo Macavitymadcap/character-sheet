@@ -4,7 +4,7 @@
     "builder": "RAILPACK"
   },
   "deploy": {
-    "healthcheckPath": "/healthz",
+    "healthcheckPath": "/readyz",
     "healthcheckTimeout": 60,
     "restartPolicyMaxRetries": 3,
     "restartPolicyType": "ON_FAILURE",

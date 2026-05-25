@@ -12,11 +12,11 @@ Use these service settings:
 | --- | --- |
 | Build command | Railway default |
 | Start command | `bun run start` |
-| Healthcheck path | `/healthz` |
+| Healthcheck path | `/readyz` |
 | Healthcheck timeout | `60` seconds |
 | Restart policy | `ON_FAILURE`, up to `3` retries |
 
-The app exposes `/healthz` without authentication and returns `200` with `{ "ok": true }` once the Hono app has booted. Railway's healthcheck should use this route before routing traffic to a new deployment.
+The app exposes `/healthz` without authentication as a boot ping and `/readyz` without authentication as the hosted readiness boundary. Railway should use `/readyz`; it returns `200` only when the app can query its SQLite repositories and write to the configured campaign asset root.
 
 ## Environment Variables
 
@@ -55,7 +55,7 @@ For the first rehearsal deploy:
 2. Set the variables above in Railway.
 3. Run `bun run hosted:data -- prepare` once against an empty `DB_PATH` to create the schema, seed the group data, and write seeded campaign asset placeholders under `CAMPAIGN_LEDGER_ASSET_ROOT`.
 4. Deploy the service from GitHub.
-5. Confirm Railway reports `/healthz` as healthy.
+5. Confirm Railway reports `/readyz` as healthy.
 
 Normal app startup does not seed data or rewrite asset files. This prevents a deployment restart from rewriting existing hosted records or uploaded images. Use `bun run hosted:data -- migrate` when you need to apply idempotent schema bootstrap without touching seed rows.
 
@@ -107,14 +107,22 @@ For a quick runtime check, start the app with hosted-style variables and hit the
 
 ```bash
 PORT=3100 HOST=127.0.0.1 DB_PATH=:memory: SESSION_SECRET=local-check bun run start
-curl -s http://127.0.0.1:3100/healthz
+curl -s http://127.0.0.1:3100/readyz
 ```
 
 The response should be:
 
 ```json
-{"ok":true}
+{"checks":{"assets":true,"database":true},"ok":true}
 ```
+
+After a Railway deployment has a public URL, run the operator readiness check:
+
+```bash
+bun run hosted:check -- https://your-railway-domain.example
+```
+
+The script calls `/readyz` by default and fails if either the database or asset-root check is not healthy.
 
 For a local hosted-data rehearsal:
 

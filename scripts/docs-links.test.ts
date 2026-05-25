@@ -65,10 +65,12 @@ describe("documentation references", () => {
     expect(packageJson.scripts["hosted:data"]).toBe("bun scripts/hosted-data.ts");
     expect(packageJson.name).toBe("campaign-ledger");
     expect(railway.deploy.startCommand).toBe("bun run start");
-    expect(railway.deploy.healthcheckPath).toBe("/healthz");
+    expect(railway.deploy.healthcheckPath).toBe("/readyz");
     expect(railway.deploy.healthcheckTimeout).toBe(60);
     expect(railwayDocs).toContain("Start command | `bun run start`");
-    expect(railwayDocs).toContain("Healthcheck path | `/healthz`");
+    expect(packageJson.scripts["hosted:check"]).toBe("bun scripts/hosted-health.ts");
+    expect(railwayDocs).toContain("Healthcheck path | `/readyz`");
+    expect(railwayDocs).toContain("bun run hosted:check");
     expect(railwayDocs).toContain("bun run hosted:data -- prepare");
     expect(railwayDocs).toContain("bun run hosted:data -- backup");
     expect(railwayDocs).toContain("character-sheet-<timestamp>-assets/");
