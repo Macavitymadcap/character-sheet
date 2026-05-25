@@ -2,7 +2,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, test } from "bun:test";
-import { assetStorageRoot, defaultAssetStorageRoot, writeSeedAssetPlaceholders } from "./assets";
+import { assetStorageRoot, defaultAssetStorageRoot, verifyAssetStorageRoot, writeSeedAssetPlaceholders } from "./assets";
 
 describe("assetStorageRoot", () => {
   test("uses the Campaign Ledger asset root when present", () => {
@@ -41,6 +41,17 @@ describe("assetStorageRoot", () => {
       expect(cover.size).toBeGreaterThan(1024);
       expect(await map.exists()).toBe(true);
       expect(map.size).toBeGreaterThan(1024);
+    } finally {
+      await rm(root, { force: true, recursive: true });
+    }
+  });
+
+  test("verifies the asset storage root is writable", async () => {
+    const root = await mkdtemp(join(tmpdir(), "campaign-ledger-asset-health-"));
+
+    try {
+      expect(await verifyAssetStorageRoot(root)).toBe(root);
+      expect(await Bun.file(`${root}/.campaign-ledger-healthcheck`).exists()).toBe(false);
     } finally {
       await rm(root, { force: true, recursive: true });
     }

@@ -73,6 +73,20 @@ describe("createApp", () => {
     expect(await response.json()).toEqual({ ok: true });
   });
 
+  test("serves a hosted readiness check for database and asset storage", async () => {
+    const { app } = createTestApp();
+    const response = await app.request("/readyz");
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      checks: {
+        assets: true,
+        database: true,
+      },
+      ok: true,
+    });
+  });
+
   test("renders the public home page as a full HTML document", async () => {
     const { app } = createTestApp("Campaign Ledger");
     const response = await app.request("/");
