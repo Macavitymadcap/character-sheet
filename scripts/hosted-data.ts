@@ -11,16 +11,22 @@ export interface HostedDataOptions {
   backupDir?: string;
   confirm?: string;
   databasePath?: string;
+  persistenceMode?: string;
   skipSeedAssets?: boolean;
   restoreSource?: string;
   timestamp?: Date;
 }
 
+export const hostedPersistenceMode = "sqlite-volume";
+
 const defaultDatabasePath = () => Bun.env.DB_PATH ?? "character-sheet.sqlite3";
 const defaultBackupDir = () => Bun.env.HOSTED_BACKUP_DIR ?? "data/backups";
+const defaultPersistenceMode = () => Bun.env.HOSTED_PERSISTENCE_MODE ?? hostedPersistenceMode;
 
 export async function migrateHostedData(options: HostedDataOptions = {}) {
+  assertHostedPersistenceMode(options);
   const databasePath = options.databasePath ?? defaultDatabasePath();
+  assertHostedDatabasePath(databasePath);
   await ensureParentDirectory(databasePath);
   const runtime = createSqliteDatabase({ path: databasePath, seed: false });
   runtime.close();
@@ -29,7 +35,9 @@ export async function migrateHostedData(options: HostedDataOptions = {}) {
 }
 
 export async function prepareHostedData(options: HostedDataOptions = {}) {
+  assertHostedPersistenceMode(options);
   const databasePath = options.databasePath ?? defaultDatabasePath();
+  assertHostedDatabasePath(databasePath);
   const confirm = options.confirm ?? Bun.env.HOSTED_DATA_CONFIRM;
   const existingSize = await fileSize(databasePath);
 
@@ -55,7 +63,9 @@ export async function prepareHostedData(options: HostedDataOptions = {}) {
 }
 
 export async function backupHostedData(options: HostedDataOptions = {}) {
+  assertHostedPersistenceMode(options);
   const databasePath = options.databasePath ?? defaultDatabasePath();
+  assertHostedDatabasePath(databasePath);
   const backupDir = options.backupDir ?? defaultBackupDir();
   const existingSize = await fileSize(databasePath);
 
@@ -79,7 +89,9 @@ export async function backupHostedData(options: HostedDataOptions = {}) {
 }
 
 export async function restoreHostedData(options: HostedDataOptions = {}) {
+  assertHostedPersistenceMode(options);
   const databasePath = options.databasePath ?? defaultDatabasePath();
+  assertHostedDatabasePath(databasePath);
   const restoreSource = options.restoreSource ?? Bun.env.HOSTED_RESTORE_SOURCE;
   const confirm = options.confirm ?? Bun.env.HOSTED_DATA_CONFIRM;
 
@@ -97,6 +109,32 @@ export async function restoreHostedData(options: HostedDataOptions = {}) {
   await rename(temporaryPath, databasePath);
 
   return databasePath;
+}
+
+export function describeHostedPersistence(options: HostedDataOptions = {}) {
+  assertHostedPersistenceMode(options);
+
+  return {
+    assetRoot: options.assetRoot ?? assetStorageRoot(),
+    backupDir: options.backupDir ?? defaultBackupDir(),
+    databasePath: options.databasePath ?? defaultDatabasePath(),
+    mode: hostedPersistenceMode,
+  };
+}
+
+function assertHostedPersistenceMode(options: HostedDataOptions) {
+  const mode = options.persistenceMode ?? defaultPersistenceMode();
+  if (mode === hostedPersistenceMode) return;
+
+  throw new Error(
+    `Unsupported hosted persistence mode "${mode}". Campaign Ledger currently accepts only "${hostedPersistenceMode}"; plan a migration before changing storage backends.`,
+  );
+}
+
+function assertHostedDatabasePath(databasePath: string) {
+  if (databasePath !== ":memory:") return;
+
+  throw new Error("Hosted data operations require a file-backed SQLite database, not DB_PATH=:memory:.");
 }
 
 async function ensureParentDirectory(path: string) {
@@ -132,8 +170,14 @@ if (import.meta.main) {
     console.log(`Created hosted SQLite backup at ${await backupHostedData()}`);
   } else if (command === "restore") {
     console.log(`Restored hosted SQLite database at ${await restoreHostedData()}`);
+  } else if (command === "status") {
+    const status = describeHostedPersistence();
+    console.log(`Hosted persistence mode: ${status.mode}`);
+    console.log(`Database path: ${status.databasePath}`);
+    console.log(`Asset root: ${status.assetRoot}`);
+    console.log(`Backup directory: ${status.backupDir}`);
   } else {
-    console.error("Usage: bun scripts/hosted-data.ts <migrate|prepare|backup|restore>");
+    console.error("Usage: bun scripts/hosted-data.ts <migrate|prepare|backup|restore|status>");
     process.exit(1);
   }
 }
