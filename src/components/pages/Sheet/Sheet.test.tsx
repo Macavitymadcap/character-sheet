@@ -68,7 +68,9 @@ describe("SheetPage", () => {
 
     expect(html).toContain("<title>Lynott Magulbisson - Campaign Ledger</title>");
     expect(html).toContain('id="site-header"');
+    expect(html).toContain('<nav class="breadcrumbs" aria-label="Breadcrumb">');
     expect(html).toContain('<a href="/characters">Characters</a>');
+    expect(html).toContain('<a href="/sheet/lynott" aria-current="page">Lynott Magulbisson</a>');
     expect(html).toContain('class="sheet-sticky-stack"');
     expect(html).toContain('id="sheet-header"');
     expect(html).toContain('id="sheet-tab-workspace"');

@@ -4,6 +4,7 @@ import { iconStyles } from "./atoms/Icon/Icon.styles";
 import { panelStyles } from "./atoms/Panel/Panel.styles";
 import { switchStyles } from "./atoms/Switch/Switch.styles";
 import { accordionStyles } from "./molecules/Accordion/Accordion.styles";
+import { breadcrumbsStyles } from "./molecules/Breadcrumbs/Breadcrumbs.styles";
 import { compactListStyles } from "./molecules/CompactList/CompactList.styles";
 import { diceRollerStyles } from "./molecules/DiceRoller/DiceRoller.styles";
 import { formFieldStyles } from "./molecules/FormField/FormField.styles";
@@ -30,6 +31,7 @@ export const appStyles = [
   layoutStyles,
   accordionStyles,
   badgeStyles,
+  breadcrumbsStyles,
   buttonStyles,
   compactListStyles,
   diceRollerStyles,

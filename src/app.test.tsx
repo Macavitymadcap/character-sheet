@@ -285,8 +285,8 @@ describe("createApp", () => {
     });
 
     expect(publicList.status).toBe(200);
-    expect(publicListHtml).toContain("SRD corpus partially imported");
-    expect(publicListHtml).toContain("bun run import:rules:srd");
+    expect(publicListHtml).not.toContain("SRD corpus partially imported");
+    expect(publicListHtml).not.toContain("bun run import:rules:srd");
     expect(publicListHtml).toContain("Bless");
     expect(publicListHtml).toContain("SRD");
     expect(publicListHtml).toContain("Visitor");
@@ -328,7 +328,7 @@ describe("createApp", () => {
     expect(missing.status).toBe(404);
   });
 
-  test("explains partial and full SRD import states on public rules pages", async () => {
+  test("keeps SRD rules pages user-facing when local data is sparse or fully imported", async () => {
     const { app } = createTestApp("Campaign Ledger");
 
     const partial = await app.request("/rules?type=spell&q=bless");
@@ -336,10 +336,10 @@ describe("createApp", () => {
     const partialDetail = await app.request("/rules/spell/bless");
 
     expect(partial.status).toBe(200);
-    expect(partialHtml).toContain("SRD corpus partially imported");
-    expect(partialHtml).toContain("0 searchable SRD entries");
-    expect(partialHtml).toContain("No imported SRD rules match this view yet.");
-    expect(partialHtml).toContain("bun run import:rules:srd");
+    expect(partialHtml).not.toContain("SRD corpus partially imported");
+    expect(partialHtml).not.toContain("searchable SRD entries");
+    expect(partialHtml).toContain("No rules match those filters.");
+    expect(partialHtml).not.toContain("bun run import:rules:srd");
     expect(partialHtml).not.toContain("Spell (8)");
     expect(partialHtml).not.toContain("<h3><a href=\"/rules/spell/bless\">Bless</a></h3>");
     expect(partialDetail.status).toBe(404);
@@ -353,8 +353,8 @@ describe("createApp", () => {
     const readyDetailHtml = await readyDetail.text();
 
     expect(ready.status).toBe(200);
-    expect(readyHtml).toContain("Full corpus imported");
-    expect(readyHtml).toContain("searchable public SRD entries are available");
+    expect(readyHtml).not.toContain("Full corpus imported");
+    expect(readyHtml).not.toContain("searchable public SRD entries are available");
     expect(readyHtml).toContain('<a href="/rules?type=spell">Spells</a>');
     expect(readyHtml).toContain("Grappled");
     expect(readyDetail.status).toBe(200);
@@ -453,6 +453,9 @@ describe("createApp", () => {
     expect(listHtml).toContain("Clockwork Scout");
     expect(listHtml).toContain("Stat Block");
     expect(detail.status).toBe(200);
+    expect(detailHtml).toContain('<nav class="breadcrumbs" aria-label="Breadcrumb">');
+    expect(detailHtml).toContain('<a href="/rules?type=stat_block">Rules</a>');
+    expect(detailHtml).toContain('<a href="/rules/stat_block/clockwork-scout" aria-current="page">Clockwork Scout</a>');
     expect(detailHtml).toContain("<h1 id=\"rule-detail-heading\" class=\"panel-heading\">Clockwork Scout</h1>");
     expect(detailHtml).toContain("<dt>Armour Class</dt>");
     expect(detailHtml).toContain("<dd>14</dd>");
