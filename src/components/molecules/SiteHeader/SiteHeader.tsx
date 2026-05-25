@@ -71,6 +71,11 @@ function getMenuLinks(user: SiteHeaderProps["user"], currentSection: SiteSection
   }
 
   if (hasCampaignRole(user, "player")) {
+    links.push({
+      current: currentSection === "campaign",
+      href: "/campaigns/rovnost-shadows",
+      label: "Campaign",
+    });
     links.push({ current: currentSection === "characters", href: "/characters", label: "Characters" });
   }
 

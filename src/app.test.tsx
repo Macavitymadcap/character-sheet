@@ -897,6 +897,11 @@ describe("createApp", () => {
     expect(html).toContain("Sessions");
     expect(html).toContain("Session Zero");
     expect(playerResponse.status).toBe(200);
+    expect(playerHtml).toContain(
+      '<a class="popover-menu-item" href="/campaigns/rovnost-shadows" role="menuitem" aria-current="page">Campaign</a>',
+    );
+    expect(playerHtml).toContain('<a class="action-link action-link-secondary" href="/campaigns/rovnost-shadows#campaign-wiki-heading">Wiki</a>');
+    expect(playerHtml).toContain("Factions Guide");
     expect(playerHtml).toContain("<dt>Game Master</dt><dd>Campaign GM</dd>");
   });
 
@@ -1597,6 +1602,21 @@ describe("createApp", () => {
     const wikiRead = await app.request("/campaigns/rovnost-shadows/wiki/brass-market", {
       headers: { cookie: playerCookie },
     });
+    const privateWikiCreate = await app.request("/campaigns/rovnost-shadows/wiki", {
+      body: new URLSearchParams({
+        bodyMarkdown: "# Hidden Market\n\nOnly the Game Master sees this.",
+        pageType: "location",
+        tags: "secret",
+        title: "Hidden Market",
+        visibility: "game_master",
+      }),
+      headers: formHeaders(gmCookie),
+      method: "POST",
+    });
+    const playerCampaign = await app.request("/campaigns/rovnost-shadows", {
+      headers: { cookie: playerCookie },
+    });
+    const playerCampaignHtml = await playerCampaign.text();
 
     const imageForm = new FormData();
     imageForm.set("title", "Secret seal");
@@ -1641,6 +1661,10 @@ describe("createApp", () => {
     expect(wikiCreate.status).toBe(303);
     expect(wikiRead.status).toBe(200);
     expect(await wikiRead.text()).toContain("<h2>Brass Market</h2>");
+    expect(privateWikiCreate.status).toBe(303);
+    expect(playerCampaign.status).toBe(200);
+    expect(playerCampaignHtml).toContain('<a href="/campaigns/rovnost-shadows/wiki/brass-market">Brass Market</a>');
+    expect(playerCampaignHtml).not.toContain("Hidden Market");
     expect(upload.status).toBe(303);
     expect(upload.headers.get("location")).toBe(`/campaigns/rovnost-shadows/images/${asset?.id}`);
     expect(asset?.storageKey).not.toContain("seal.png");
@@ -1687,6 +1711,10 @@ describe("createApp", () => {
       headers: { cookie: playerCookie },
     });
     const pageHtml = await page.text();
+    const playerCampaign = await app.request("/campaigns/rovnost-shadows", {
+      headers: { cookie: playerCookie },
+    });
+    const playerCampaignHtml = await playerCampaign.text();
     const imports = await app.request("/campaigns/rovnost-shadows/imports", {
       headers: { cookie: gmCookie },
     });
@@ -1700,6 +1728,8 @@ describe("createApp", () => {
     expect(page.status).toBe(200);
     expect(pageHtml).toContain("The tide bell rings.");
     expect(pageHtml).not.toContain("docs.google.com");
+    expect(playerCampaign.status).toBe(200);
+    expect(playerCampaignHtml).toContain('<a href="/campaigns/rovnost-shadows/wiki/canal-clue">Canal Clue</a>');
     expect(imports.status).toBe(200);
     expect(importsHtml).toContain("Canal Clue");
     expect(importsHtml).toContain("Saved to campaign content.");

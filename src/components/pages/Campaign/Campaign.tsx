@@ -94,6 +94,7 @@ export const CampaignPage = ({ appName, campaign, gameMasterDisplayName, imageAs
               </nav>
             ) : (
               <nav class="campaign-action-row" aria-label="Campaign tools">
+                <a class="action-link action-link-secondary" href={`/campaigns/${campaign.slug}#campaign-wiki-heading`}>Wiki</a>
                 <a class="action-link action-link-secondary" href={`/campaigns/${campaign.slug}/npcs`}>NPCs</a>
               </nav>
             )}
