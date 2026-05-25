@@ -16,10 +16,14 @@ describe("CharactersPage", () => {
     );
 
     expect(html).toContain("Player roster");
+    expect(html).toContain('<a class="action-link action-link-secondary character-create-link" href="/characters">Back to roster</a>');
     expect(html).toContain('action="/characters"');
     expect(html).toContain('name="name"');
     expect(html).toContain('name="hitPointMax"');
     expect(html).toContain("No characters yet.");
+    expect(html.indexOf('<h2 id="roster-heading">Roster</h2>')).toBeLessThan(
+      html.indexOf('<h2 id="create-character-heading">Create character</h2>'),
+    );
   });
 
   test("renders a separate create link when the roster hides the form", () => {
@@ -129,6 +133,10 @@ describe("CharactersPage", () => {
 
   test("switches roster tables to compact cards on mobile", () => {
     expect(charactersStyles).toContain(".character-create-link");
+    expect(charactersStyles).toContain(".characters-heading-copy");
+    expect(charactersStyles).toContain(".character-create-section");
+    expect(charactersStyles).toContain(".character-create-section .form-field input");
+    expect(charactersStyles).toContain("grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));");
     expect(charactersStyles).toContain(".character-create-actions .button");
     expect(charactersStyles).toContain("min-width: 38rem;");
     expect(charactersStyles).toContain("border-collapse: separate;");

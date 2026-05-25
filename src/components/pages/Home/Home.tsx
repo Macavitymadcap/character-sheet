@@ -13,6 +13,8 @@ interface HomePageProps {
 }
 
 export const HomePage = ({ appName, user }: HomePageProps) => {
+  const primaryAction = user ? getDestination(user) : null;
+
   return (
     <Layout title={appName}>
       <div class="shell home-shell">
@@ -36,15 +38,11 @@ export const HomePage = ({ appName, user }: HomePageProps) => {
               <a class="action-link action-link-secondary" href="/local/campaigns">
                 Local campaigns
               </a>
-              {user ? (
-                <a class="action-link action-link-secondary" href={getDestination(user)}>
-                  Continue
+              {primaryAction ? (
+                <a class="action-link action-link-secondary" href={primaryAction.href}>
+                  {primaryAction.label}
                 </a>
-              ) : (
-                <a class="action-link action-link-secondary" href="/login">
-                  Sign in
-                </a>
-              )}
+              ) : null}
             </div>
           </section>
         </main>
@@ -54,10 +52,12 @@ export const HomePage = ({ appName, user }: HomePageProps) => {
 };
 
 function getDestination(user: NonNullable<HomePageProps["user"]>) {
-  if (user.role === "admin" || (user.capabilities ?? []).includes("admin")) return "/admin";
+  if (user.role === "admin" || (user.capabilities ?? []).includes("admin")) {
+    return { href: "/admin", label: "Admin" };
+  }
   if (user.role === "game_master" || (user.campaignRoles ?? []).includes("game_master")) {
-    return "/campaigns/rovnost-shadows";
+    return { href: "/campaigns/rovnost-shadows", label: "Campaign" };
   }
 
-  return "/characters";
+  return { href: "/characters", label: "Characters" };
 }

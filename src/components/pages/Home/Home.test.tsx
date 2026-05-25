@@ -17,7 +17,7 @@ describe("HomePage", () => {
     expect(html).toContain('<a class="action-link" href="/rules">Browse SRD rules</a>');
     expect(html).toContain('<a class="action-link action-link-secondary" href="/local/characters">Local characters</a>');
     expect(html).toContain('<a class="action-link action-link-secondary" href="/local/campaigns">Local campaigns</a>');
-    expect(html).toContain('<a class="action-link action-link-secondary" href="/login">Sign in</a>');
+    expect(html).not.toContain('<a class="action-link action-link-secondary" href="/login">Sign in</a>');
   });
 
   test("drops the scaffold sheet summary and status chips", () => {
@@ -40,9 +40,9 @@ describe("HomePage", () => {
       <HomePage appName="Campaign Ledger" user={{ displayName: "Admin", role: "admin" }} />,
     );
 
-    expect(player).toContain('<a class="action-link action-link-secondary" href="/characters">Continue</a>');
-    expect(gm).toContain('<a class="action-link action-link-secondary" href="/campaigns/rovnost-shadows">Continue</a>');
-    expect(admin).toContain('<a class="action-link action-link-secondary" href="/admin">Continue</a>');
+    expect(player).toContain('<a class="action-link action-link-secondary" href="/characters">Characters</a>');
+    expect(gm).toContain('<a class="action-link action-link-secondary" href="/campaigns/rovnost-shadows">Campaign</a>');
+    expect(admin).toContain('<a class="action-link action-link-secondary" href="/admin">Admin</a>');
   });
 
   test("keeps combined admin users on the admin destination while showing campaign navigation", () => {
@@ -58,7 +58,7 @@ describe("HomePage", () => {
       />,
     );
 
-    expect(html).toContain('<a class="action-link action-link-secondary" href="/admin">Continue</a>');
+    expect(html).toContain('<a class="action-link action-link-secondary" href="/admin">Admin</a>');
     expect(html).toContain("Admin + Game Master");
     expect(html).toContain('href="/campaigns/rovnost-shadows"');
   });
