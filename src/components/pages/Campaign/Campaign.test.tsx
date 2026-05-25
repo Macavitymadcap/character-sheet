@@ -98,6 +98,51 @@ describe("CampaignPage", () => {
     expect(html).toContain('href="/campaigns/rovnost-shadows/images"');
   });
 
+  test("renders player campaign wiki discovery links", () => {
+    const html = render(
+      <CampaignPage
+        appName="Campaign Ledger"
+        campaign={{
+          gmUserId: "user_game_master",
+          id: "campaign_rovnost_shadows",
+          name: "Rovnost Shadows",
+          slug: "rovnost-shadows",
+        }}
+        gameMasterDisplayName="Game Master"
+        imageAssets={[]}
+        members={[{
+          campaignId: "campaign_rovnost_shadows",
+          role: "player",
+          userId: "user_lynott_player",
+        }]}
+        ruleSources={[]}
+        sessions={[]}
+        user={{ campaignRoles: ["player"], displayName: "Lynott Player", role: "player" }}
+        viewerRole="player"
+        wikiPages={[{
+          bodyMarkdown: "# Players Guide",
+          campaignId: "campaign_rovnost_shadows",
+          coverImageAssetId: null,
+          id: "wiki_players_guide",
+          pageType: "campaign",
+          slug: "players-guide",
+          sourcePath: null,
+          sourceTitle: null,
+          tags: ["player-facing"],
+          title: "Players Guide",
+          visibility: "player",
+        }]}
+      />,
+    );
+
+    expect(html).toContain('<a class="popover-menu-item" href="/campaigns/rovnost-shadows" role="menuitem" aria-current="page">Campaign</a>');
+    expect(html).toContain('<a class="action-link action-link-secondary" href="/campaigns/rovnost-shadows#campaign-wiki-heading">Wiki</a>');
+    expect(html).toContain('<h2 id="campaign-wiki-heading" class="panel-heading">Pages</h2>');
+    expect(html).toContain('<a href="/campaigns/rovnost-shadows/wiki/players-guide">Players Guide</a>');
+    expect(html).not.toContain("Prep workspace");
+    expect(html).not.toContain("Add wiki page");
+  });
+
   test("renders image library and detail metadata for Game Masters", () => {
     const campaign = {
       gmUserId: "user_game_master",
