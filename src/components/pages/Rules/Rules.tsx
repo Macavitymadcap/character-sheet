@@ -1,6 +1,7 @@
 import type { AuthUser, RuleDetail, RuleEntityType, RuleEntityTypeCount, RuleSearchFilters, RuleSummary } from "../../../db";
 import { Badge } from "../../atoms/Badge";
 import { Panel } from "../../atoms/Panel";
+import { Breadcrumbs } from "../../molecules/Breadcrumbs";
 import { SiteHeader } from "../../molecules/SiteHeader";
 import { Layout } from "../../templates/Layout";
 
@@ -41,7 +42,7 @@ export const RulesPage = ({ appName, counts, filters, importState, rules, user }
             <p class="rules-kicker">SRD 5.1</p>
             <h1 id="rules-heading" class="panel-heading">Rules</h1>
           </div>
-          <RulesImportSummary importState={importState} />
+          <RulesQuickLinks importState={importState} />
           <RulesFilterForm counts={counts} filters={filters} />
         </Panel>
         <Panel labelledBy="rules-results-heading">
@@ -88,15 +89,14 @@ export const RulesDetailPage = ({ appName, counts, filters, importState, rule, u
             <p class="rules-kicker">SRD 5.1</p>
             <h1 id="rules-filter-heading" class="panel-heading">Rules</h1>
           </div>
-          <RulesImportSummary importState={importState} />
+          <RulesQuickLinks importState={importState} />
           <RulesFilterForm counts={counts} filters={{ ...filters, entityType: filters.entityType ?? rule.entityType }} />
         </Panel>
         <Panel labelledBy="rule-detail-heading">
-          <nav class="breadcrumb-nav" aria-label="Breadcrumb">
-            <a href={`/rules?type=${rule.entityType}`}>Rules</a>
-            <span aria-hidden="true">/</span>
-            <span>{rule.name}</span>
-          </nav>
+          <Breadcrumbs items={[
+            { href: `/rules?type=${rule.entityType}`, label: "Rules" },
+            { current: true, href: `/rules/${rule.entityType}/${rule.slug}`, label: rule.name },
+          ]} />
           <p class="rules-kicker">{rule.sourceName}</p>
           <h1 id="rule-detail-heading" class="panel-heading">{rule.name}</h1>
           <div class="rules-tag-list">
@@ -122,50 +122,18 @@ export const RulesDetailPage = ({ appName, counts, filters, importState, rule, u
   </Layout>
 );
 
-const RulesImportSummary = ({ importState }: { importState: RulesImportState }) => {
-  const isReady = importState.status === "ready";
-  const label = isReady
-    ? "Full corpus imported"
-    : importState.status === "empty"
-      ? "SRD corpus not imported"
-      : "SRD corpus partially imported";
-
-  return (
-    <section class={`rules-import-summary rules-import-summary-${importState.status}`} aria-label="SRD import status">
-      <div>
-        <p class="rules-import-label">{label}</p>
-        <p>
-          {isReady
-            ? `${importState.searchableRules} searchable public SRD entries are available across ${importState.categories} rule categories.`
-            : `Campaign Ledger can read the local SRD corpus at ${importState.sourcePath}, but this database currently has ${importState.searchableRules} searchable SRD entries from ${importState.totalRules} seeded records.`}
-        </p>
-      </div>
-      {isReady ? (
-        <nav class="rules-entry-links" aria-label="SRD quick links">
-          <a href="/rules?type=spell">Spells</a>
-          <a href="/rules?type=equipment">Equipment</a>
-          <a href="/rules?type=condition">Conditions</a>
-          <a href="/rules?type=class">Classes</a>
-        </nav>
-      ) : (
-        <p class="rules-import-command">
-          Run <code>{importState.command}</code> to import and verify the full public SRD 5.1 rules corpus.
-        </p>
-      )}
-    </section>
-  );
-};
+const RulesQuickLinks = ({ importState }: { importState: RulesImportState }) => (
+  importState.searchableRules > 0 ? (
+    <nav class="rules-entry-links" aria-label="SRD quick links">
+      <a href="/rules?type=spell">Spells</a>
+      <a href="/rules?type=equipment">Equipment</a>
+      <a href="/rules?type=condition">Conditions</a>
+      <a href="/rules?type=class">Classes</a>
+    </nav>
+  ) : null
+);
 
 const RulesEmptyState = ({ filters, importState }: { filters: RuleSearchFilters; importState: RulesImportState }) => {
-  if (importState.status !== "ready") {
-    return (
-      <div class="rules-empty-state">
-        <p>No imported SRD rules match this view yet.</p>
-        <p>Run <code>{importState.command}</code>, then return to <code>/rules</code> to browse the full public corpus.</p>
-      </div>
-    );
-  }
-
   return (
     <div class="rules-empty-state">
       <p>No rules match those filters.</p>

@@ -76,6 +76,8 @@ describe("CampaignPage", () => {
 
     expect(html).toContain("<title>Rovnost Shadows - Campaign Ledger</title>");
     expect(html).toContain('<header id="site-header" class="site-header">');
+    expect(html).toContain('<nav class="breadcrumbs" aria-label="Breadcrumb">');
+    expect(html).toContain('<a href="/campaigns/rovnost-shadows" aria-current="page">Rovnost Shadows</a>');
     expect(html).toContain(
       '<a class="popover-menu-item" href="/campaigns/rovnost-shadows" role="menuitem" aria-current="page">Campaign</a>',
     );
@@ -153,6 +155,8 @@ describe("CampaignPage", () => {
     expect(library).toContain("Fallback active");
     expect(library).toContain("2 uses");
     expect(detail).toContain("<title>Campaign cover - Images - Rovnost Shadows - Campaign Ledger</title>");
+    expect(detail).toContain('<a href="/campaigns/rovnost-shadows/images">Images</a>');
+    expect(detail).toContain('<a href="/campaigns/rovnost-shadows/images/asset_rovnost_cover" aria-current="page">Campaign cover</a>');
     expect(detail).toContain("Storage key");
     expect(detail).toContain("campaigns/rovnost-shadows/cover.png");
     expect(detail).toContain("Rovnost Shadows Overview");
@@ -246,10 +250,12 @@ describe("CampaignPage", () => {
     );
 
     expect(list).toContain("<title>NPCs - Rovnost Shadows - Campaign Ledger</title>");
+    expect(list).toContain('<a href="/campaigns/rovnost-shadows/npcs" aria-current="page">NPCs</a>');
     expect(list).toContain('action="/campaigns/rovnost-shadows/npcs"');
     expect(list).toContain('href="/campaigns/rovnost-shadows/npcs/canal-broker"');
     expect(list).toContain("Selected players");
     expect(detail).toContain("Private motive.");
+    expect(detail).toContain('<a href="/campaigns/rovnost-shadows/npcs/canal-broker" aria-current="page">Canal Broker</a>');
     expect(detail).toContain("Portrait: Canal Broker portrait");
     expect(detail).toContain("Works for Tidebound.");
     expect(detail).toContain("Make public");
@@ -349,6 +355,8 @@ describe("CampaignPage", () => {
     );
 
     expect(html).toContain("<title>Player preview - Rovnost Shadows - Campaign Ledger</title>");
+    expect(html).toContain('<a href="/campaigns/rovnost-shadows/prep">Prep workspace</a>');
+    expect(html).toContain('<a href="/campaigns/rovnost-shadows/preview/player" aria-current="page">Player preview</a>');
     expect(html).toContain("Previewing as Lynott Player");
     expect(html).toContain("Visibility audit");
     expect(html).toContain("Visible to Lynott Player");

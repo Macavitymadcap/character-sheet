@@ -1,6 +1,7 @@
 import type { AuthUser, CampaignMember, CampaignSummary, CharacterRosterItem } from "../../../db";
 import { Button } from "../../atoms/Button";
 import { Panel } from "../../atoms/Panel";
+import { Breadcrumbs } from "../../molecules/Breadcrumbs";
 import { FormField } from "../../molecules/FormField";
 import { SiteHeader } from "../../molecules/SiteHeader";
 import { Layout } from "../../templates/Layout";
@@ -35,6 +36,7 @@ export const CharactersPage = ({
       <div class="shell characters-shell">
         <SiteHeader appName={appName} currentSection="characters" user={user} />
         <main class="characters-main" aria-labelledby="characters-heading">
+          <Breadcrumbs items={characterBreadcrumbItems({ campaign, mode, showCreateForm })} />
           <Panel labelledBy="characters-heading">
             <div class="characters-heading">
               <div class="characters-heading-copy">
@@ -150,3 +152,29 @@ export const CharactersPage = ({
     </Layout>
   );
 };
+
+function characterBreadcrumbItems({
+  campaign,
+  mode,
+  showCreateForm,
+}: Pick<CharactersPageProps, "campaign" | "mode" | "showCreateForm">) {
+  const rosterHref = mode === "game_master" && campaign
+    ? `/campaigns/${campaign.slug}/characters`
+    : "/characters";
+  const createHref = mode === "game_master" && campaign
+    ? `/campaigns/${campaign.slug}/characters/new`
+    : "/characters/new";
+  const rosterLabel = mode === "game_master" && campaign ? `${campaign.name} characters` : "Characters";
+  const items = mode === "game_master" && campaign
+    ? [
+      { href: `/campaigns/${campaign.slug}`, label: campaign.name },
+      { current: !showCreateForm, href: rosterHref, label: rosterLabel },
+    ]
+    : [
+      { current: !showCreateForm, href: rosterHref, label: rosterLabel },
+    ];
+
+  return showCreateForm
+    ? [...items, { current: true, href: createHref, label: "Create character" }]
+    : items;
+}

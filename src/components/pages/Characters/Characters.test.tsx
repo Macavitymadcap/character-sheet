@@ -16,6 +16,9 @@ describe("CharactersPage", () => {
     );
 
     expect(html).toContain("Player roster");
+    expect(html).toContain('<nav class="breadcrumbs" aria-label="Breadcrumb">');
+    expect(html).toContain('<a href="/characters">Characters</a>');
+    expect(html).toContain('<a href="/characters/new" aria-current="page">Create character</a>');
     expect(html).toContain('<a class="action-link action-link-secondary character-create-link" href="/characters">Back to roster</a>');
     expect(html).toContain('action="/characters"');
     expect(html).toContain('name="name"');
@@ -38,6 +41,7 @@ describe("CharactersPage", () => {
     );
 
     expect(html).toContain('<a class="action-link character-create-link" href="/characters/new">Create character</a>');
+    expect(html).toContain('<a href="/characters" aria-current="page">Characters</a>');
     expect(html).not.toContain('name="hitPointMax"');
     expect(html).toContain("No characters yet.");
   });
@@ -90,6 +94,8 @@ describe("CharactersPage", () => {
     );
 
     expect(html).toContain("Campaign roster");
+    expect(html).toContain('<a href="/campaigns/rovnost-shadows">Rovnost Shadows</a>');
+    expect(html).toContain('<a href="/campaigns/rovnost-shadows/characters/new" aria-current="page">Create character</a>');
     expect(html).toContain('<table class="sheet-table characters-table">');
     expect(html).toContain('action="/campaigns/rovnost-shadows/characters"');
     expect(html).toContain('<option value="user_mira_player">Mira Player</option>');
