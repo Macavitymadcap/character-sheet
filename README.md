@@ -156,6 +156,7 @@ bun run hosted:data -- backup
 bun run hosted:data -- restore
 bun run hosted:data -- status
 bun run hosted:check -- https://your-railway-domain.example
+bun run hosted:rehearse
 bun run import:rules
 bun run import:rules:srd
 bun run seed
@@ -170,7 +171,7 @@ bun run verify
 
 `bun run verify` runs typecheck, component and route tests, documentation reference checks, accessibility checks, the group-use MVP smoke workflow, and screenshot capture in sequence. It writes verification screenshots to a temporary directory by default so acceptance runs do not churn committed PR evidence images. It is the local acceptance gate for the first hosted rehearsal.
 
-`bun run hosted:data -- migrate` applies the SQLite schema without seed data, which is what normal hosted startup relies on. `prepare`, `backup`, and `restore` are reserved for hosted rehearsal operations and are documented in [Railway Hosted Rehearsal](./docs/deployment/railway.md). `prepare` also imports the full local SRD 5.1 corpus so hosted rehearsal users can browse public rules immediately. `backup` writes the SQLite backup, app-managed asset snapshot, and manifest together; `restore` brings the matching asset snapshot back when one exists. `bun run hosted:check -- <hosted-url>` checks the deployed `/readyz` boundary for database and asset-root readiness.
+`bun run hosted:data -- migrate` applies the SQLite schema without seed data, which is what normal hosted startup relies on. `prepare`, `backup`, and `restore` are reserved for hosted rehearsal operations and are documented in [Railway Hosted Rehearsal](./docs/deployment/railway.md). `prepare` also imports the full local SRD 5.1 corpus so hosted rehearsal users can browse public rules immediately. `backup` writes the SQLite backup, app-managed asset snapshot, and manifest together; `restore` brings the matching asset snapshot back when one exists. `bun run hosted:check -- <hosted-url>` checks the deployed `/readyz` boundary for database and asset-root readiness. `bun run hosted:rehearse` creates a temporary file-backed hosted environment, prepares seed data/assets/rules, smokes the table-ready routes, and creates a backup bundle.
 
 Hosted account setup uses operator delivery mode for this epic. Admin-created invite and password-reset links are copied from the admin UI and shared privately by the operator; `ACCOUNT_DELIVERY_MODE` rejects unsupported email modes until a provider ticket is planned. Set `PUBLIC_BASE_URL` in hosted environments so generated handoff links use the canonical production origin. See [Hosted Account Operator Runbook](./docs/operations/hosted-account-runbook.md).
 

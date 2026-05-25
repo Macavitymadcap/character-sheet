@@ -7,6 +7,7 @@ const docs = [
   "ARCHITECTURE.md",
   "CONTRIBUTING.md",
   "docs/operations/hosted-rehearsal-acceptance.md",
+  "docs/operations/fresh-hosted-deploy-runbook.md",
   "docs/operations/campaign-companion-acceptance.md",
   "docs/operations/hyper-dank-adoption-acceptance.md",
   "docs/operations/game-master-prep-acceptance.md",
@@ -64,6 +65,7 @@ describe("documentation references", () => {
     expect(packageJson.scripts.start).toBe("bun src/index.ts");
     expect(packageJson.scripts["hosted:data"]).toBe("bun scripts/hosted-data.ts");
     expect(packageJson.name).toBe("campaign-ledger");
+    expect(packageJson.scripts["hosted:rehearse"]).toBe("bun scripts/fresh-hosted-rehearsal.ts");
     expect(railway.deploy.startCommand).toBe("bun run start");
     expect(railway.deploy.healthcheckPath).toBe("/readyz");
     expect(railway.deploy.healthcheckTimeout).toBe(60);
@@ -71,6 +73,7 @@ describe("documentation references", () => {
     expect(packageJson.scripts["hosted:check"]).toBe("bun scripts/hosted-health.ts");
     expect(railwayDocs).toContain("Healthcheck path | `/readyz`");
     expect(railwayDocs).toContain("bun run hosted:check");
+    expect(railwayDocs).toContain("bun run hosted:rehearse");
     expect(railwayDocs).toContain("bun run hosted:data -- prepare");
     expect(railwayDocs).toContain("bun run hosted:data -- backup");
     expect(railwayDocs).toContain("character-sheet-<timestamp>-assets/");
@@ -102,12 +105,17 @@ describe("documentation references", () => {
 
   test("hosted rehearsal acceptance documents final verification coverage and follow-ups", async () => {
     const acceptance = await Bun.file("docs/operations/hosted-rehearsal-acceptance.md").text();
+    const freshDeploy = await Bun.file("docs/operations/fresh-hosted-deploy-runbook.md").text();
     const readme = await Bun.file("README.md").text();
     const architecture = await Bun.file("ARCHITECTURE.md").text();
 
     expect(readme).toContain("[Hosted Rehearsal Acceptance](./docs/operations/hosted-rehearsal-acceptance.md)");
     expect(architecture).toContain("[Hosted Rehearsal Acceptance](./docs/operations/hosted-rehearsal-acceptance.md)");
     expect(acceptance).toContain("bun run verify");
+    expect(acceptance).toContain("[Fresh Hosted Deploy Runbook](./fresh-hosted-deploy-runbook.md)");
+    expect(freshDeploy).toContain("bun run hosted:rehearse");
+    expect(freshDeploy).toContain("bun run hosted:check -- <hosted-url>");
+    expect(freshDeploy).toContain("PUBLIC_BASE_URL");
     expect(acceptance).toContain("protected seeded assets");
     expect(acceptance).toContain("Game Master campaign images");
     expect(acceptance).toContain("sheet-0037");

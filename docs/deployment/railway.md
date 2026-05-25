@@ -101,6 +101,7 @@ Before opening a deployment PR, run:
 
 ```bash
 bun run verify
+bun run hosted:rehearse
 ```
 
 For a quick runtime check, start the app with hosted-style variables and hit the health endpoint:
@@ -123,6 +124,8 @@ bun run hosted:check -- https://your-railway-domain.example
 ```
 
 The script calls `/readyz` by default and fails if either the database or asset-root check is not healthy.
+
+For the full empty-environment checklist, see [Fresh Hosted Deploy Runbook](../operations/fresh-hosted-deploy-runbook.md).
 
 For a local hosted-data rehearsal:
 

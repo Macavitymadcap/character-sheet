@@ -5,6 +5,7 @@ This checklist is the final local acceptance gate for the `sheet-0030` Railway r
 ## Preconditions
 
 - Railway runtime setup follows [Railway Hosted Rehearsal](../deployment/railway.md).
+- Fresh hosted deploy rehearsal follows [Fresh Hosted Deploy Runbook](./fresh-hosted-deploy-runbook.md).
 - Hosted account setup follows [Hosted Account Operator Runbook](./hosted-account-runbook.md).
 - Hosted assets use Railway volume storage at `CAMPAIGN_LEDGER_ASSET_ROOT=/data/assets`; existing `CHARACTER_SHEET_ASSET_ROOT` settings remain a compatibility fallback.
 - Email delivery, external identity, Postgres, and Hyper-Dank package adoption remain out of scope for this epic.
@@ -15,6 +16,7 @@ Run the full local gate:
 
 ```bash
 bun run verify
+bun run hosted:rehearse
 ```
 
 That command covers:
