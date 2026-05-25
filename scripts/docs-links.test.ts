@@ -7,6 +7,7 @@ const docs = [
   "ARCHITECTURE.md",
   "CONTRIBUTING.md",
   "docs/operations/hosted-rehearsal-acceptance.md",
+  "docs/operations/hosted-production-readiness-acceptance.md",
   "docs/operations/fresh-hosted-deploy-runbook.md",
   "docs/operations/campaign-companion-acceptance.md",
   "docs/operations/hyper-dank-adoption-acceptance.md",
@@ -105,14 +106,24 @@ describe("documentation references", () => {
 
   test("hosted rehearsal acceptance documents final verification coverage and follow-ups", async () => {
     const acceptance = await Bun.file("docs/operations/hosted-rehearsal-acceptance.md").text();
+    const readiness = await Bun.file("docs/operations/hosted-production-readiness-acceptance.md").text();
     const freshDeploy = await Bun.file("docs/operations/fresh-hosted-deploy-runbook.md").text();
     const readme = await Bun.file("README.md").text();
     const architecture = await Bun.file("ARCHITECTURE.md").text();
 
     expect(readme).toContain("[Hosted Rehearsal Acceptance](./docs/operations/hosted-rehearsal-acceptance.md)");
+    expect(readme).toContain("[Hosted Production Readiness Acceptance](./docs/operations/hosted-production-readiness-acceptance.md)");
     expect(architecture).toContain("[Hosted Rehearsal Acceptance](./docs/operations/hosted-rehearsal-acceptance.md)");
     expect(acceptance).toContain("bun run verify");
     expect(acceptance).toContain("[Fresh Hosted Deploy Runbook](./fresh-hosted-deploy-runbook.md)");
+    expect(readiness).toContain("sheet-0077");
+    expect(readiness).toContain("bun run verify");
+    expect(readiness).toContain("bun run hosted:rehearse");
+    expect(readiness).toContain("bun run hosted:check -- <hosted-url>");
+    expect(readiness).toContain("ACCOUNT_DELIVERY_MODE=operator");
+    expect(readiness).toContain("#106 Production account delivery");
+    expect(readiness).toContain("#107 Managed database migration");
+    expect(readiness).toContain("#108 Hosted asset storage and backup automation");
     expect(freshDeploy).toContain("bun run hosted:rehearse");
     expect(freshDeploy).toContain("bun run hosted:check -- <hosted-url>");
     expect(freshDeploy).toContain("PUBLIC_BASE_URL");
