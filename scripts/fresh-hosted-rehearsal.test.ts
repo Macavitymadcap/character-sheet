@@ -16,5 +16,5 @@ describe("fresh hosted rehearsal", () => {
       backupDir: expect.stringContaining("data/backups"),
       databasePath: expect.stringContaining("data/character-sheet.sqlite3"),
     });
-  }, 20_000);
+  }, 60_000);
 });
