@@ -5,6 +5,7 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { Database } from "bun:sqlite";
 import {
   backupHostedData,
+  describeHostedPersistence,
   migrateHostedData,
   prepareHostedData,
   restoreHostedData,
@@ -62,6 +63,36 @@ describe("hosted data operations", () => {
       .get("user_lynott_player")).toEqual({ displayName: "Hosted Lynott" });
     migrated.close();
   }, hostedDataTimeout);
+
+  test("documents the accepted hosted persistence boundary", async () => {
+    const dir = await createTempDir();
+    const databasePath = join(dir, "character-sheet.sqlite3");
+    const assetRoot = join(dir, "assets");
+    const backupDir = join(dir, "backups");
+
+    expect(describeHostedPersistence({ assetRoot, backupDir, databasePath })).toEqual({
+      assetRoot,
+      backupDir,
+      databasePath,
+      mode: "sqlite-volume",
+    });
+  });
+
+  test("rejects unsupported hosted persistence modes before touching data", async () => {
+    const dir = await createTempDir();
+    const databasePath = join(dir, "character-sheet.sqlite3");
+
+    await expect(migrateHostedData({ databasePath, persistenceMode: "postgres" })).rejects.toThrow(
+      'Unsupported hosted persistence mode "postgres"',
+    );
+    await expect(stat(databasePath)).rejects.toThrow();
+  });
+
+  test("rejects in-memory databases for hosted data operations", async () => {
+    await expect(migrateHostedData({ databasePath: ":memory:" })).rejects.toThrow(
+      "file-backed SQLite database",
+    );
+  });
 
   test("refuses to prepare over an existing hosted database without confirmation", async () => {
     const dir = await createTempDir();

@@ -31,8 +31,11 @@ Set these Railway variables for the rehearsal environment:
 | `CAMPAIGN_LEDGER_ASSET_ROOT` | Required | `/data/assets` | Stores app-managed campaign images on the persistent Railway volume. Keep it under `/data`, separate from `DB_PATH`. |
 | `CHARACTER_SHEET_ASSET_ROOT` | Optional | Existing value only | Compatibility alias for existing deployments; the renamed variable takes precedence when both are set. |
 | `HOSTED_BACKUP_DIR` | Optional | `/data/backups` | Used by the hosted backup command. |
+| `HOSTED_PERSISTENCE_MODE` | Optional | `sqlite-volume` | Documents the accepted hosted storage mode. Other values are rejected until a migration ticket changes the persistence boundary. |
 
 Local development remains unchanged if these variables are omitted: `bun run dev` binds to `0.0.0.0:3000`, uses `character-sheet.sqlite3`, and stores assets under `data/assets`. App startup applies schema bootstrap only; seeding is an explicit operation.
+
+The hosted persistence decision is recorded in [Hosted Persistence Decision](../operations/hosted-persistence.md). `sqlite-volume` remains the accepted production-readiness boundary for this private campaign app; Postgres needs a planned migration and rollback path before it becomes a valid hosted mode.
 
 ## Asset Storage
 
@@ -107,6 +110,7 @@ The response should be:
 For a local hosted-data rehearsal:
 
 ```bash
+DB_PATH=/tmp/character-sheet-hosted.sqlite3 bun run hosted:data -- status
 DB_PATH=/tmp/character-sheet-hosted.sqlite3 bun run hosted:data -- prepare
 DB_PATH=/tmp/character-sheet-hosted.sqlite3 HOSTED_BACKUP_DIR=/tmp/character-sheet-backups bun run hosted:data -- backup
 DB_PATH=/tmp/character-sheet-hosted.sqlite3 bun run hosted:data -- migrate

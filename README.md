@@ -115,10 +115,13 @@ Current environment variables:
 | `SESSION_SECRET` | local development secret | Secret used for signed session cookies. |
 | `CAMPAIGN_LEDGER_ASSET_ROOT` | `data/assets` | Root for app-managed campaign image assets; use `/data/assets` on Railway. |
 | `CHARACTER_SHEET_ASSET_ROOT` | unset | Backwards-compatible alias for existing Railway/local asset configuration. |
+| `HOSTED_PERSISTENCE_MODE` | `sqlite-volume` | Accepted hosted storage boundary. Other values are rejected until a planned migration changes the data layer. |
+| `HOSTED_BACKUP_DIR` | `data/backups` | Backup directory used by hosted data operations. Use `/data/backups` on Railway. |
 
 SQLite database files and sidecar files should remain ignored by Git.
 
 For Railway rehearsal setup, including hosted values for these variables, see [Railway Hosted Rehearsal](./docs/deployment/railway.md).
+For the accepted hosted storage boundary and future Postgres migration trigger, see [Hosted Persistence Decision](./docs/operations/hosted-persistence.md).
 For manual hosted user preparation, invite handoff, and password-reset handoff, see [Hosted Account Operator Runbook](./docs/operations/hosted-account-runbook.md).
 For the final local and hosted browser acceptance checklist, see [Hosted Rehearsal Acceptance](./docs/operations/hosted-rehearsal-acceptance.md). For completed epic acceptance records, see [Campaign Companion Acceptance](./docs/operations/campaign-companion-acceptance.md), [Hyper-Dank Adoption Acceptance](./docs/operations/hyper-dank-adoption-acceptance.md), and [Game Master Prep Acceptance](./docs/operations/game-master-prep-acceptance.md).
 
@@ -149,6 +152,7 @@ bun run hosted:data -- migrate
 bun run hosted:data -- prepare
 bun run hosted:data -- backup
 bun run hosted:data -- restore
+bun run hosted:data -- status
 bun run import:rules
 bun run import:rules:srd
 bun run seed
