@@ -3,10 +3,22 @@ export const charactersStyles = /* css */ `
   max-width: 68rem;
 }
 
-.characters-main,
-.characters-heading {
+.characters-main {
   display: grid;
   gap: 1rem;
+}
+
+.characters-heading {
+  align-items: end;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: space-between;
+}
+
+.characters-heading-copy {
+  display: grid;
+  gap: 0.2rem;
 }
 
 .characters-kicker {
@@ -19,17 +31,51 @@ export const charactersStyles = /* css */ `
 
 .character-create-link {
   inline-size: max-content;
-  justify-self: start;
   min-height: 2.2rem;
   padding: 0.45rem 0.7rem;
   width: max-content;
 }
 
+.character-create-section {
+  border-top: 1px solid var(--border-colour);
+  display: grid;
+  gap: 0.75rem;
+  padding-top: 0.85rem;
+}
+
+.character-create-heading {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: space-between;
+}
+
+.character-create-heading h2 {
+  font-size: 1rem;
+  margin: 0;
+}
+
+.character-create-section .form-field input,
+.character-create-section .form-field select {
+  background: var(--stat-background-colour);
+  border-color: var(--border-colour);
+  color: var(--heading-colour);
+  min-height: 2.45rem;
+}
+
+.character-create-section .form-field input:focus,
+.character-create-section .form-field select:focus {
+  border-color: var(--focus-border-colour);
+  outline: 2px solid color-mix(in srgb, var(--focus-border-colour) 28%, transparent);
+  outline-offset: 1px;
+}
+
 .form-grid {
   align-items: end;
   display: grid;
-  gap: 0.9rem;
-  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 0.65rem;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
 }
 
 .character-create-actions {

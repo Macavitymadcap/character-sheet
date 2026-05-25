@@ -88,9 +88,10 @@ describe("createApp", () => {
     expect(html).toContain('href="/local/campaigns"');
     expect(html).toContain('<a class="popover-menu-item" href="/rules" role="menuitem">Rules</a>');
     expect(html).toContain('<a class="popover-menu-item" href="/login" role="menuitem">Sign in</a>');
+    expect(html).not.toContain('<a class="action-link action-link-secondary" href="/login">Sign in</a>');
   });
 
-  test("renders signed-in home with role continue links", async () => {
+  test("renders signed-in home with role-specific entry links", async () => {
     const { app, sessionService } = createTestApp("Campaign Ledger");
     const playerSession = sessionService.createSession("user_lynott_player");
     const gmSession = sessionService.createSession("user_game_master");
@@ -104,13 +105,13 @@ describe("createApp", () => {
     const adminHtml = await admin.text();
 
     expect(player.status).toBe(200);
-    expect(playerHtml).toContain('<a class="action-link action-link-secondary" href="/characters">Continue</a>');
+    expect(playerHtml).toContain('<a class="action-link action-link-secondary" href="/characters">Characters</a>');
     expect(gm.status).toBe(200);
     expect(gmHtml).toContain(
-      '<a class="action-link action-link-secondary" href="/campaigns/rovnost-shadows">Continue</a>',
+      '<a class="action-link action-link-secondary" href="/campaigns/rovnost-shadows">Campaign</a>',
     );
     expect(admin.status).toBe(200);
-    expect(adminHtml).toContain('<a class="action-link action-link-secondary" href="/admin">Continue</a>');
+    expect(adminHtml).toContain('<a class="action-link action-link-secondary" href="/admin">Admin</a>');
   });
 
   test("serves public local play entry points", async () => {
@@ -950,8 +951,12 @@ describe("createApp", () => {
     });
     const playerCreateHtml = await playerCreate.text();
     expect(playerCreate.status).toBe(200);
+    expect(playerCreateHtml).toContain('<a class="action-link action-link-secondary character-create-link" href="/characters">Back to roster</a>');
     expect(playerCreateHtml).toContain('action="/characters"');
     expect(playerCreateHtml).toContain('name="hitPointMax"');
+    expect(playerCreateHtml.indexOf('<h2 id="roster-heading">Roster</h2>')).toBeLessThan(
+      playerCreateHtml.indexOf('<h2 id="create-character-heading">Create character</h2>'),
+    );
     expect(createdByPlayer.status).toBe(303);
     expect(createdByPlayer.headers.get("location")).toBe("/sheet/ash_vale");
     expect(createdByGm.status).toBe(303);
