@@ -32,10 +32,14 @@ Set these Railway variables for the rehearsal environment:
 | `CHARACTER_SHEET_ASSET_ROOT` | Optional | Existing value only | Compatibility alias for existing deployments; the renamed variable takes precedence when both are set. |
 | `HOSTED_BACKUP_DIR` | Optional | `/data/backups` | Used by the hosted backup command. |
 | `HOSTED_PERSISTENCE_MODE` | Optional | `sqlite-volume` | Documents the accepted hosted storage mode. Other values are rejected until a migration ticket changes the persistence boundary. |
+| `ACCOUNT_DELIVERY_MODE` | Optional | `operator` | Documents the accepted invite and password-reset delivery mode. Other values are rejected until a planned email provider ticket changes the boundary. |
+| `PUBLIC_BASE_URL` | Required for production readiness | Your Railway public URL or custom domain | Used to generate admin invite and password-reset handoff links with the canonical hosted origin. |
 
 Local development remains unchanged if these variables are omitted: `bun run dev` binds to `0.0.0.0:3000`, uses `character-sheet.sqlite3`, and stores assets under `data/assets`. App startup applies schema bootstrap only; seeding is an explicit operation.
 
 The hosted persistence decision is recorded in [Hosted Persistence Decision](../operations/hosted-persistence.md). `sqlite-volume` remains the accepted production-readiness boundary for this private campaign app; Postgres needs a planned migration and rollback path before it becomes a valid hosted mode.
+
+The hosted account delivery decision is recorded in [Hosted Account Operator Runbook](../operations/hosted-account-runbook.md). `operator` remains the accepted production-readiness boundary for this private campaign app; production email delivery needs a planned provider, secret, template, and rollback path before it becomes a valid account delivery mode.
 
 ## Asset Storage
 

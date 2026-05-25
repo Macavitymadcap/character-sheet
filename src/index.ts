@@ -10,6 +10,7 @@ const databaseRuntime = createSqliteDatabase({
 });
 const passwordService = new PasswordService();
 const app = createApp({
+  accountDelivery: runtimeConfig.accountDelivery,
   appName: "Campaign Ledger",
   authService: new AuthService({
     authRepository: databaseRuntime.repositories.authRepository,

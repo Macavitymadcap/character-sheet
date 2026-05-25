@@ -4,6 +4,7 @@ import { Panel } from "../../atoms/Panel";
 import { FormField } from "../../molecules/FormField";
 import { SiteHeader } from "../../molecules/SiteHeader";
 import { Layout } from "../../templates/Layout";
+import type { AccountDeliveryConfig } from "../../../runtime";
 
 interface AdminUserRow {
   campaignCount: number;
@@ -46,6 +47,7 @@ type AdminTokenHandoff =
     };
 
 interface AdminPageProps {
+  accountDelivery?: AccountDeliveryConfig;
   appName: string;
   handoff?: AdminTokenHandoff;
   invites: AdminInviteRow[];
@@ -56,7 +58,15 @@ interface AdminPageProps {
 
 const formatDate = (date: Date | null) => (date ? date.toISOString().slice(0, 10) : "—");
 
-export const AdminPage = ({ appName, handoff, invites, resetTokens, users, user }: AdminPageProps) => {
+export const AdminPage = ({
+  accountDelivery = { mode: "operator" },
+  appName,
+  handoff,
+  invites,
+  resetTokens,
+  users,
+  user,
+}: AdminPageProps) => {
   const userLabels = new Map(users.map((row) => [row.id, `${row.displayName} (${row.email})`]));
 
   return (
@@ -68,7 +78,11 @@ export const AdminPage = ({ appName, handoff, invites, resetTokens, users, user 
             <h1 id="admin-heading" class="panel-heading">
               Admin
             </h1>
-            <p class="admin-copy">Create links here and send them manually. Campaign Ledger does not send email.</p>
+            <p class="admin-copy">
+              Operator delivery mode is active. Create links here and share them privately;
+              Campaign Ledger does not send email.
+              {accountDelivery.publicBaseUrl ? ` Links use ${accountDelivery.publicBaseUrl}.` : null}
+            </p>
 
             {handoff ? (
               <section class="admin-handoff" aria-labelledby="handoff-heading">
@@ -86,7 +100,7 @@ export const AdminPage = ({ appName, handoff, invites, resetTokens, users, user 
                   </p>
                   <p>
                     Expires {formatDate(handoff.expiresAt)}. Copy the full URL and send it through
-                    your table's usual channel.
+                    the private channel agreed for this table.
                   </p>
                 </div>
                 <div class="admin-copy-url">

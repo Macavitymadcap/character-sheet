@@ -309,6 +309,58 @@ describe("admin and sheet guards", () => {
     expect(inviteHtml).toContain("does not send email");
   });
 
+  test("uses the configured public base URL for admin handoff links", async () => {
+    app = createApp({
+      accountDelivery: {
+        mode: "operator",
+        publicBaseUrl: "https://campaign-ledger.example.com",
+      },
+      appName: "Campaign Ledger",
+      authService: new AuthService({
+        authRepository: runtime.repositories.authRepository,
+        passwordService: new PasswordService(),
+      }),
+      sessionService: new SessionService({
+        authRepository: runtime.repositories.authRepository,
+        now: () => new Date("2026-05-16T12:00:00.000Z"),
+        secret: "test-session-secret",
+      }),
+      ...runtime.repositories,
+    });
+    const adminCookie = await login("admin@example.local");
+    const inviteResponse = await postForm(
+      "/admin/invites",
+      { email: "hosted.player@example.local", role: "player" },
+      adminCookie,
+      { Accept: "application/json" },
+    );
+    const resetResponse = await app.request("/admin/users/user_lynott_player/password-reset", {
+      headers: { accept: "application/json", cookie: adminCookie },
+      method: "POST",
+    });
+
+    expect(inviteResponse.status).toBe(201);
+    expect(await inviteResponse.json()).toMatchObject({
+      inviteUrl: expect.stringContaining("https://campaign-ledger.example.com/invites/"),
+    });
+    expect(resetResponse.status).toBe(201);
+    expect(await resetResponse.json()).toMatchObject({
+      resetUrl: expect.stringContaining("https://campaign-ledger.example.com/password-reset/"),
+    });
+
+    const browserInviteResponse = await postForm(
+      "/admin/invites",
+      { email: "browser.hosted@example.local", role: "player" },
+      adminCookie,
+    );
+    const adminPage = await app.request(browserInviteResponse.headers.get("location") ?? "", {
+      headers: { cookie: adminCookie },
+    });
+    const html = await adminPage.text();
+    expect(html).toContain("https://campaign-ledger.example.com/invites/");
+    expect(html).toContain("Operator delivery mode is active");
+  });
+
   test("ignores external admin handoff URLs", async () => {
     const adminCookie = await login("admin@example.local");
 
