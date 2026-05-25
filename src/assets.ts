@@ -1,4 +1,4 @@
-import { mkdir } from "node:fs/promises";
+import { mkdir, rm } from "node:fs/promises";
 
 export const defaultAssetStorageRoot = "data/assets";
 
@@ -44,6 +44,15 @@ export async function writeSeedAssetPlaceholders(root = assetStorageRoot()) {
     await mkdir(path.slice(0, path.lastIndexOf("/")), { recursive: true });
     await Bun.write(path, bytes);
   }
+}
+
+export async function verifyAssetStorageRoot(root = assetStorageRoot()) {
+  await mkdir(root, { recursive: true });
+  const path = `${root}/.campaign-ledger-healthcheck`;
+  await Bun.write(path, "ok");
+  await rm(path, { force: true });
+
+  return root;
 }
 
 function tinyPngBytes() {

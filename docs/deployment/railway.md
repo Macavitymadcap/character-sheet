@@ -12,11 +12,11 @@ Use these service settings:
 | --- | --- |
 | Build command | Railway default |
 | Start command | `bun run start` |
-| Healthcheck path | `/healthz` |
+| Healthcheck path | `/readyz` |
 | Healthcheck timeout | `60` seconds |
 | Restart policy | `ON_FAILURE`, up to `3` retries |
 
-The app exposes `/healthz` without authentication and returns `200` with `{ "ok": true }` once the Hono app has booted. Railway's healthcheck should use this route before routing traffic to a new deployment.
+The app exposes `/healthz` without authentication as a boot ping and `/readyz` without authentication as the hosted readiness boundary. Railway should use `/readyz`; it returns `200` only when the app can query its SQLite repositories and write to the configured campaign asset root.
 
 ## Environment Variables
 
@@ -31,8 +31,15 @@ Set these Railway variables for the rehearsal environment:
 | `CAMPAIGN_LEDGER_ASSET_ROOT` | Required | `/data/assets` | Stores app-managed campaign images on the persistent Railway volume. Keep it under `/data`, separate from `DB_PATH`. |
 | `CHARACTER_SHEET_ASSET_ROOT` | Optional | Existing value only | Compatibility alias for existing deployments; the renamed variable takes precedence when both are set. |
 | `HOSTED_BACKUP_DIR` | Optional | `/data/backups` | Used by the hosted backup command. |
+| `HOSTED_PERSISTENCE_MODE` | Optional | `sqlite-volume` | Documents the accepted hosted storage mode. Other values are rejected until a migration ticket changes the persistence boundary. |
+| `ACCOUNT_DELIVERY_MODE` | Optional | `operator` | Documents the accepted invite and password-reset delivery mode. Other values are rejected until a planned email provider ticket changes the boundary. |
+| `PUBLIC_BASE_URL` | Required for production readiness | Your Railway public URL or custom domain | Used to generate admin invite and password-reset handoff links with the canonical hosted origin. |
 
 Local development remains unchanged if these variables are omitted: `bun run dev` binds to `0.0.0.0:3000`, uses `character-sheet.sqlite3`, and stores assets under `data/assets`. App startup applies schema bootstrap only; seeding is an explicit operation.
+
+The hosted persistence decision is recorded in [Hosted Persistence Decision](../operations/hosted-persistence.md). `sqlite-volume` remains the accepted production-readiness boundary for this private campaign app; Postgres needs a planned migration and rollback path before it becomes a valid hosted mode.
+
+The hosted account delivery decision is recorded in [Hosted Account Operator Runbook](../operations/hosted-account-runbook.md). `operator` remains the accepted production-readiness boundary for this private campaign app; production email delivery needs a planned provider, secret, template, and rollback path before it becomes a valid account delivery mode.
 
 ## Asset Storage
 
@@ -48,7 +55,7 @@ For the first rehearsal deploy:
 2. Set the variables above in Railway.
 3. Run `bun run hosted:data -- prepare` once against an empty `DB_PATH` to create the schema, seed the group data, and write seeded campaign asset placeholders under `CAMPAIGN_LEDGER_ASSET_ROOT`.
 4. Deploy the service from GitHub.
-5. Confirm Railway reports `/healthz` as healthy.
+5. Confirm Railway reports `/readyz` as healthy.
 
 Normal app startup does not seed data or rewrite asset files. This prevents a deployment restart from rewriting existing hosted records or uploaded images. Use `bun run hosted:data -- migrate` when you need to apply idempotent schema bootstrap without touching seed rows.
 
@@ -60,7 +67,11 @@ Create a backup before any hosted seed, import, or manual recovery operation:
 bun run hosted:data -- backup
 ```
 
-By default backups are written under `HOSTED_BACKUP_DIR` or `data/backups` with a timestamped filename. On Railway, set `HOSTED_BACKUP_DIR=/data/backups` so backups stay on the attached volume.
+By default backups are written under `HOSTED_BACKUP_DIR` or `data/backups` with a timestamped filename. On Railway, set `HOSTED_BACKUP_DIR=/data/backups` so backups stay on the attached volume. Each backup creates three operator evidence artifacts:
+
+- `character-sheet-<timestamp>.sqlite3`, created with SQLite `VACUUM INTO`.
+- `character-sheet-<timestamp>-assets/`, a recursive snapshot of `CAMPAIGN_LEDGER_ASSET_ROOT`.
+- `character-sheet-<timestamp>.manifest.json`, recording the database path, asset root, snapshot path, file count, byte count, persistence mode, and timestamp.
 
 Restore from a named backup with an explicit replacement confirmation:
 
@@ -71,6 +82,7 @@ bun run hosted:data -- restore
 ```
 
 The restore command copies the backup to a temporary file and then renames it over `DB_PATH`. It refuses to run without `HOSTED_DATA_CONFIRM=replace`.
+When a matching `-assets` snapshot exists beside the SQLite backup, restore also replaces `CAMPAIGN_LEDGER_ASSET_ROOT` from that snapshot. This keeps uploaded campaign images aligned with the restored database records. Set `CAMPAIGN_LEDGER_ASSET_ROOT` before restoring if the hosted asset root differs from the environment default.
 
 ## Reseeding Or Resetting
 
@@ -89,26 +101,39 @@ Before opening a deployment PR, run:
 
 ```bash
 bun run verify
+bun run hosted:rehearse
 ```
 
 For a quick runtime check, start the app with hosted-style variables and hit the health endpoint:
 
 ```bash
 PORT=3100 HOST=127.0.0.1 DB_PATH=:memory: SESSION_SECRET=local-check bun run start
-curl -s http://127.0.0.1:3100/healthz
+curl -s http://127.0.0.1:3100/readyz
 ```
 
 The response should be:
 
 ```json
-{"ok":true}
+{"checks":{"assets":true,"database":true},"ok":true}
 ```
+
+After a Railway deployment has a public URL, run the operator readiness check:
+
+```bash
+bun run hosted:check -- https://your-railway-domain.example
+```
+
+The script calls `/readyz` by default and fails if either the database or asset-root check is not healthy.
+
+For the full empty-environment checklist, see [Fresh Hosted Deploy Runbook](../operations/fresh-hosted-deploy-runbook.md).
 
 For a local hosted-data rehearsal:
 
 ```bash
+DB_PATH=/tmp/character-sheet-hosted.sqlite3 bun run hosted:data -- status
 DB_PATH=/tmp/character-sheet-hosted.sqlite3 bun run hosted:data -- prepare
 DB_PATH=/tmp/character-sheet-hosted.sqlite3 HOSTED_BACKUP_DIR=/tmp/character-sheet-backups bun run hosted:data -- backup
+HOSTED_RESTORE_SOURCE=/tmp/character-sheet-backups/character-sheet-<timestamp>.sqlite3 HOSTED_DATA_CONFIRM=replace DB_PATH=/tmp/character-sheet-hosted.sqlite3 bun run hosted:data -- restore
 DB_PATH=/tmp/character-sheet-hosted.sqlite3 bun run hosted:data -- migrate
 ```
 

@@ -5,6 +5,7 @@ This checklist is the final local acceptance gate for the `sheet-0030` Railway r
 ## Preconditions
 
 - Railway runtime setup follows [Railway Hosted Rehearsal](../deployment/railway.md).
+- Fresh hosted deploy rehearsal follows [Fresh Hosted Deploy Runbook](./fresh-hosted-deploy-runbook.md).
 - Hosted account setup follows [Hosted Account Operator Runbook](./hosted-account-runbook.md).
 - Hosted assets use Railway volume storage at `CAMPAIGN_LEDGER_ASSET_ROOT=/data/assets`; existing `CHARACTER_SHEET_ASSET_ROOT` settings remain a compatibility fallback.
 - Email delivery, external identity, Postgres, and Hyper-Dank package adoption remain out of scope for this epic.
@@ -15,6 +16,7 @@ Run the full local gate:
 
 ```bash
 bun run verify
+bun run hosted:rehearse
 ```
 
 That command covers:
@@ -30,7 +32,7 @@ That command covers:
 
 After deploying to Railway, run these browser checks with the hosted URL:
 
-1. Confirm `/healthz` returns `{ "ok": true }`.
+1. Confirm `/readyz` returns `{ "checks": { "assets": true, "database": true }, "ok": true }` or run `bun run hosted:check -- <hosted-url>`.
 2. Sign in as the seeded admin after completing the password reset handoff.
 3. Confirm `/admin` lists active seeded users and can create invite/reset tokens.
 4. Sign in as the Game Master and open `/campaigns/rovnost-shadows`.

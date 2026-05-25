@@ -7,6 +7,8 @@ const docs = [
   "ARCHITECTURE.md",
   "CONTRIBUTING.md",
   "docs/operations/hosted-rehearsal-acceptance.md",
+  "docs/operations/hosted-production-readiness-acceptance.md",
+  "docs/operations/fresh-hosted-deploy-runbook.md",
   "docs/operations/campaign-companion-acceptance.md",
   "docs/operations/hyper-dank-adoption-acceptance.md",
   "docs/operations/game-master-prep-acceptance.md",
@@ -64,17 +66,25 @@ describe("documentation references", () => {
     expect(packageJson.scripts.start).toBe("bun src/index.ts");
     expect(packageJson.scripts["hosted:data"]).toBe("bun scripts/hosted-data.ts");
     expect(packageJson.name).toBe("campaign-ledger");
+    expect(packageJson.scripts["hosted:rehearse"]).toBe("bun scripts/fresh-hosted-rehearsal.ts");
     expect(railway.deploy.startCommand).toBe("bun run start");
-    expect(railway.deploy.healthcheckPath).toBe("/healthz");
+    expect(railway.deploy.healthcheckPath).toBe("/readyz");
     expect(railway.deploy.healthcheckTimeout).toBe(60);
     expect(railwayDocs).toContain("Start command | `bun run start`");
-    expect(railwayDocs).toContain("Healthcheck path | `/healthz`");
+    expect(packageJson.scripts["hosted:check"]).toBe("bun scripts/hosted-health.ts");
+    expect(railwayDocs).toContain("Healthcheck path | `/readyz`");
+    expect(railwayDocs).toContain("bun run hosted:check");
+    expect(railwayDocs).toContain("bun run hosted:rehearse");
     expect(railwayDocs).toContain("bun run hosted:data -- prepare");
     expect(railwayDocs).toContain("bun run hosted:data -- backup");
+    expect(railwayDocs).toContain("character-sheet-<timestamp>-assets/");
+    expect(railwayDocs).toContain("character-sheet-<timestamp>.manifest.json");
     expect(railwayDocs).toContain("HOSTED_DATA_CONFIRM=replace");
     expect(railwayDocs).toContain("`DB_PATH`");
     expect(railwayDocs).toContain("`SESSION_SECRET`");
     expect(railwayDocs).toContain("`CAMPAIGN_LEDGER_ASSET_ROOT`");
+    expect(railwayDocs).toContain("`ACCOUNT_DELIVERY_MODE`");
+    expect(railwayDocs).toContain("`PUBLIC_BASE_URL`");
     expect(readme).toContain("# Campaign Ledger");
     expect(readme).toContain("`CAMPAIGN_LEDGER_ASSET_ROOT`");
     expect(readme).toContain("[Railway Hosted Rehearsal](./docs/deployment/railway.md)");
@@ -86,6 +96,8 @@ describe("documentation references", () => {
 
     expect(readme).toContain("[Hosted Account Operator Runbook](./docs/operations/hosted-account-runbook.md)");
     expect(runbook).toContain("The app does not send email.");
+    expect(runbook).toContain("ACCOUNT_DELIVERY_MODE=operator");
+    expect(runbook).toContain("PUBLIC_BASE_URL");
     expect(runbook).toContain("/invites/<token>");
     expect(runbook).toContain("/password-reset/<token>");
     expect(runbook).toContain("The app prevents disabling the last active admin.");
@@ -94,12 +106,27 @@ describe("documentation references", () => {
 
   test("hosted rehearsal acceptance documents final verification coverage and follow-ups", async () => {
     const acceptance = await Bun.file("docs/operations/hosted-rehearsal-acceptance.md").text();
+    const readiness = await Bun.file("docs/operations/hosted-production-readiness-acceptance.md").text();
+    const freshDeploy = await Bun.file("docs/operations/fresh-hosted-deploy-runbook.md").text();
     const readme = await Bun.file("README.md").text();
     const architecture = await Bun.file("ARCHITECTURE.md").text();
 
     expect(readme).toContain("[Hosted Rehearsal Acceptance](./docs/operations/hosted-rehearsal-acceptance.md)");
+    expect(readme).toContain("[Hosted Production Readiness Acceptance](./docs/operations/hosted-production-readiness-acceptance.md)");
     expect(architecture).toContain("[Hosted Rehearsal Acceptance](./docs/operations/hosted-rehearsal-acceptance.md)");
     expect(acceptance).toContain("bun run verify");
+    expect(acceptance).toContain("[Fresh Hosted Deploy Runbook](./fresh-hosted-deploy-runbook.md)");
+    expect(readiness).toContain("sheet-0077");
+    expect(readiness).toContain("bun run verify");
+    expect(readiness).toContain("bun run hosted:rehearse");
+    expect(readiness).toContain("bun run hosted:check -- <hosted-url>");
+    expect(readiness).toContain("ACCOUNT_DELIVERY_MODE=operator");
+    expect(readiness).toContain("#106 Production account delivery");
+    expect(readiness).toContain("#107 Managed database migration");
+    expect(readiness).toContain("#108 Hosted asset storage and backup automation");
+    expect(freshDeploy).toContain("bun run hosted:rehearse");
+    expect(freshDeploy).toContain("bun run hosted:check -- <hosted-url>");
+    expect(freshDeploy).toContain("PUBLIC_BASE_URL");
     expect(acceptance).toContain("protected seeded assets");
     expect(acceptance).toContain("Game Master campaign images");
     expect(acceptance).toContain("sheet-0037");

@@ -8,6 +8,8 @@
     "import:rules": "bun scripts/import-rules.ts",
     "import:rules:srd": "bun scripts/import-rules.ts docs/rules/srd-5.1",
     "hosted:data": "bun scripts/hosted-data.ts",
+    "hosted:check": "bun scripts/hosted-health.ts",
+    "hosted:rehearse": "bun scripts/fresh-hosted-rehearsal.ts",
     "protect:branches": "bun scripts/configure-branch-protection.ts",
     "protect:branches:bootstrap": "bun scripts/configure-branch-protection.ts --bootstrap",
     "screenshots:sheet": "bun -e \"import { captureSheetScreenshots } from './scripts/capture-screenshots'; await captureSheetScreenshots();\"",

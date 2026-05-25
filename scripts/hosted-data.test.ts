@@ -1,10 +1,13 @@
-import { mkdtemp, rm, stat } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, test } from "bun:test";
 import { Database } from "bun:sqlite";
 import {
   backupHostedData,
+  describeHostedPersistence,
+  hostedBackupAssetSnapshotPath,
+  hostedBackupManifestPath,
   migrateHostedData,
   prepareHostedData,
   restoreHostedData,
@@ -49,7 +52,7 @@ describe("hosted data operations", () => {
   test("migrates an existing database without reseeding mutable data", async () => {
     const dir = await createTempDir();
     const databasePath = join(dir, "character-sheet.sqlite3");
-    await prepareHostedData({ databasePath });
+    await prepareHostedData({ databasePath, skipRulesImport: true });
     const database = new Database(databasePath);
     database.run("update users set display_name = ? where id = ?", ["Hosted Lynott", "user_lynott_player"]);
     database.close();
@@ -63,37 +66,87 @@ describe("hosted data operations", () => {
     migrated.close();
   }, hostedDataTimeout);
 
+  test("documents the accepted hosted persistence boundary", async () => {
+    const dir = await createTempDir();
+    const databasePath = join(dir, "character-sheet.sqlite3");
+    const assetRoot = join(dir, "assets");
+    const backupDir = join(dir, "backups");
+
+    expect(describeHostedPersistence({ assetRoot, backupDir, databasePath })).toEqual({
+      assetRoot,
+      backupDir,
+      databasePath,
+      mode: "sqlite-volume",
+    });
+  });
+
+  test("rejects unsupported hosted persistence modes before touching data", async () => {
+    const dir = await createTempDir();
+    const databasePath = join(dir, "character-sheet.sqlite3");
+
+    await expect(migrateHostedData({ databasePath, persistenceMode: "postgres" })).rejects.toThrow(
+      'Unsupported hosted persistence mode "postgres"',
+    );
+    await expect(stat(databasePath)).rejects.toThrow();
+  });
+
+  test("rejects in-memory databases for hosted data operations", async () => {
+    await expect(migrateHostedData({ databasePath: ":memory:" })).rejects.toThrow(
+      "file-backed SQLite database",
+    );
+  });
+
   test("refuses to prepare over an existing hosted database without confirmation", async () => {
     const dir = await createTempDir();
     const databasePath = join(dir, "character-sheet.sqlite3");
-    await prepareHostedData({ databasePath });
+    await prepareHostedData({ databasePath, skipRulesImport: true });
 
     await expect(prepareHostedData({ databasePath })).rejects.toThrow("Refusing to seed existing database");
   }, hostedDataTimeout);
 
-  test("backs up and restores the hosted database with explicit confirmation", async () => {
+  test("backs up and restores the hosted database and asset snapshot with explicit confirmation", async () => {
     const dir = await createTempDir();
+    const assetRoot = join(dir, "assets");
     const databasePath = join(dir, "character-sheet.sqlite3");
     const backupDir = join(dir, "backups");
-    await prepareHostedData({ databasePath });
+    await prepareHostedData({ assetRoot, databasePath, skipRulesImport: true });
+    const uploadPath = join(assetRoot, "campaigns/rovnost-shadows/operator-upload.txt");
+    await mkdir(join(assetRoot, "campaigns/rovnost-shadows"), { recursive: true });
+    await Bun.write(uploadPath, "original upload");
     const backupPath = await backupHostedData({
+      assetRoot,
       backupDir,
       databasePath,
       timestamp: new Date("2026-05-19T19:30:00.000Z"),
     });
+    const assetSnapshotPath = hostedBackupAssetSnapshotPath(backupPath);
+    const manifestPath = hostedBackupManifestPath(backupPath);
     const database = new Database(databasePath);
     database.run("update users set display_name = ? where id = ?", ["Changed Lynott", "user_lynott_player"]);
     database.close();
+    await Bun.write(uploadPath, "mutated upload");
 
-    await expect(restoreHostedData({ databasePath, restoreSource: backupPath })).rejects.toThrow(
+    await expect(restoreHostedData({ assetRoot, databasePath, restoreSource: backupPath })).rejects.toThrow(
       "HOSTED_DATA_CONFIRM=replace",
     );
-    await restoreHostedData({ confirm: "replace", databasePath, restoreSource: backupPath });
+    await restoreHostedData({ assetRoot, confirm: "replace", databasePath, restoreSource: backupPath });
 
     const restored = new Database(databasePath, { readonly: true });
     expect(restored
       .query("select display_name as displayName from users where id = ?")
       .get("user_lynott_player")).toEqual({ displayName: "Lynott Player" });
     restored.close();
+    expect((await stat(assetSnapshotPath)).isDirectory()).toBe(true);
+    expect(await readFile(uploadPath, "utf8")).toBe("original upload");
+    expect(await Bun.file(manifestPath).json()).toMatchObject({
+      assetRoot,
+      assetSnapshotPath,
+      assetTotals: {
+        files: expect.any(Number),
+      },
+      backupPath,
+      databasePath,
+      mode: "sqlite-volume",
+    });
   }, hostedDataTimeout);
 });

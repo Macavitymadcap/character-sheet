@@ -115,12 +115,17 @@ Current environment variables:
 | `SESSION_SECRET` | local development secret | Secret used for signed session cookies. |
 | `CAMPAIGN_LEDGER_ASSET_ROOT` | `data/assets` | Root for app-managed campaign image assets; use `/data/assets` on Railway. |
 | `CHARACTER_SHEET_ASSET_ROOT` | unset | Backwards-compatible alias for existing Railway/local asset configuration. |
+| `HOSTED_PERSISTENCE_MODE` | `sqlite-volume` | Accepted hosted storage boundary. Other values are rejected until a planned migration changes the data layer. |
+| `HOSTED_BACKUP_DIR` | `data/backups` | Backup directory used by hosted data operations. Use `/data/backups` on Railway. |
+| `ACCOUNT_DELIVERY_MODE` | `operator` | Accepted invite and password-reset delivery boundary. Other values are rejected until a planned email ticket adds a provider. |
+| `PUBLIC_BASE_URL` | unset | Canonical hosted origin used when generating admin invite and password-reset links, for example `https://campaign-ledger.example.com`. |
 
 SQLite database files and sidecar files should remain ignored by Git.
 
 For Railway rehearsal setup, including hosted values for these variables, see [Railway Hosted Rehearsal](./docs/deployment/railway.md).
+For the accepted hosted storage boundary and future Postgres migration trigger, see [Hosted Persistence Decision](./docs/operations/hosted-persistence.md).
 For manual hosted user preparation, invite handoff, and password-reset handoff, see [Hosted Account Operator Runbook](./docs/operations/hosted-account-runbook.md).
-For the final local and hosted browser acceptance checklist, see [Hosted Rehearsal Acceptance](./docs/operations/hosted-rehearsal-acceptance.md). For completed epic acceptance records, see [Campaign Companion Acceptance](./docs/operations/campaign-companion-acceptance.md), [Hyper-Dank Adoption Acceptance](./docs/operations/hyper-dank-adoption-acceptance.md), and [Game Master Prep Acceptance](./docs/operations/game-master-prep-acceptance.md).
+For the final local and hosted browser acceptance checklist, see [Hosted Rehearsal Acceptance](./docs/operations/hosted-rehearsal-acceptance.md) and [Hosted Production Readiness Acceptance](./docs/operations/hosted-production-readiness-acceptance.md). For completed epic acceptance records, see [Campaign Companion Acceptance](./docs/operations/campaign-companion-acceptance.md), [Hyper-Dank Adoption Acceptance](./docs/operations/hyper-dank-adoption-acceptance.md), and [Game Master Prep Acceptance](./docs/operations/game-master-prep-acceptance.md).
 
 Local seed users are available for development:
 
@@ -149,6 +154,9 @@ bun run hosted:data -- migrate
 bun run hosted:data -- prepare
 bun run hosted:data -- backup
 bun run hosted:data -- restore
+bun run hosted:data -- status
+bun run hosted:check -- https://your-railway-domain.example
+bun run hosted:rehearse
 bun run import:rules
 bun run import:rules:srd
 bun run seed
@@ -163,9 +171,9 @@ bun run verify
 
 `bun run verify` runs typecheck, component and route tests, documentation reference checks, accessibility checks, the group-use MVP smoke workflow, and screenshot capture in sequence. It writes verification screenshots to a temporary directory by default so acceptance runs do not churn committed PR evidence images. It is the local acceptance gate for the first hosted rehearsal.
 
-`bun run hosted:data -- migrate` applies the SQLite schema without seed data, which is what normal hosted startup relies on. `prepare`, `backup`, and `restore` are reserved for hosted rehearsal operations and are documented in [Railway Hosted Rehearsal](./docs/deployment/railway.md). `prepare` also imports the full local SRD 5.1 corpus so hosted rehearsal users can browse public rules immediately.
+`bun run hosted:data -- migrate` applies the SQLite schema without seed data, which is what normal hosted startup relies on. `prepare`, `backup`, and `restore` are reserved for hosted rehearsal operations and are documented in [Railway Hosted Rehearsal](./docs/deployment/railway.md). `prepare` also imports the full local SRD 5.1 corpus so hosted rehearsal users can browse public rules immediately. `backup` writes the SQLite backup, app-managed asset snapshot, and manifest together; `restore` brings the matching asset snapshot back when one exists. `bun run hosted:check -- <hosted-url>` checks the deployed `/readyz` boundary for database and asset-root readiness. `bun run hosted:rehearse` creates a temporary file-backed hosted environment, prepares seed data/assets/rules, smokes the table-ready routes, and creates a backup bundle.
 
-Hosted account setup stays manual for this epic. Admin-created invite and password-reset links are copied from the admin UI and shared privately by the operator; no email delivery is implied or configured. See [Hosted Account Operator Runbook](./docs/operations/hosted-account-runbook.md).
+Hosted account setup uses operator delivery mode for this epic. Admin-created invite and password-reset links are copied from the admin UI and shared privately by the operator; `ACCOUNT_DELIVERY_MODE` rejects unsupported email modes until a provider ticket is planned. Set `PUBLIC_BASE_URL` in hosted environments so generated handoff links use the canonical production origin. See [Hosted Account Operator Runbook](./docs/operations/hosted-account-runbook.md).
 
 `bun run test:a11y` starts an in-memory app on an available local port and runs Pa11y against public `/`, `/login`, `/local/characters`, `/local/campaigns`, `/rules`, and `/rules/spell/bless`, player `/characters`, `/sheet/lynott`, `/campaigns/rovnost-shadows/wiki/factions-guide`, `/campaigns/rovnost-shadows/npcs`, `/campaigns/rovnost-shadows/images`, and `/logout`, Game Master `/campaigns/rovnost-shadows`, `/campaigns/rovnost-shadows/prep`, `/campaigns/rovnost-shadows/preview/player`, `/campaigns/rovnost-shadows/npcs`, `/campaigns/rovnost-shadows/npcs/magister-vallen`, `/campaigns/rovnost-shadows/images`, `/campaigns/rovnost-shadows/images/asset_magister_vallen`, `/campaigns/rovnost-shadows/imports`, `/campaigns/rovnost-shadows/imports/google-docs`, and `/campaigns/rovnost-shadows/characters`, and admin `/admin`.
 
@@ -197,7 +205,7 @@ Public users can browse SRD rules at `/rules`, filter by type, spell level, equi
 
 ## Deployment Readiness
 
-The current app is ready for fresh local checkout, seed, verification, Railway deployment rehearsal, and table-use rehearsal with SQLite, Railway volume-backed asset storage, manual hosted account handoff, imported SRD 5.1 rules, public browser-local play, campaign-scoped private rules, richer Mira sheet data, compact table-use surfaces, Game Master prep, private NPC dossiers, local campaign images, player preview, staged content import, and manual Google Docs import. `sheet-0020` completed the SRD rules roadmap slice. `sheet-0030` completed the Railway rehearsal path; the first runtime configuration lives in [`railway.json`](./railway.json), with service setup documented in [Railway Hosted Rehearsal](./docs/deployment/railway.md) and final acceptance in [Hosted Rehearsal Acceptance](./docs/operations/hosted-rehearsal-acceptance.md). `sheet-0050` completed the campaign companion, public play, and rules-content product slice. `sheet-0040` completed Hyper-Dank package adoption. `sheet-0061` completes Game Master prep, private NPCs, content import, and Hyper-Dank-style GitHub issue/project workflow; see [Game Master Prep Acceptance](./docs/operations/game-master-prep-acceptance.md).
+The current app is ready for fresh local checkout, seed, verification, Railway deployment rehearsal, and table-use rehearsal with SQLite, Railway volume-backed asset storage, manual hosted account handoff, imported SRD 5.1 rules, public browser-local play, campaign-scoped private rules, richer Mira sheet data, compact table-use surfaces, Game Master prep, private NPC dossiers, local campaign images, player preview, staged content import, and manual Google Docs import. `sheet-0020` completed the SRD rules roadmap slice. `sheet-0030` completed the Railway rehearsal path; the first runtime configuration lives in [`railway.json`](./railway.json), with service setup documented in [Railway Hosted Rehearsal](./docs/deployment/railway.md) and browser acceptance in [Hosted Rehearsal Acceptance](./docs/operations/hosted-rehearsal-acceptance.md). `sheet-0077` records the hosted production readiness boundary and follow-up issues in [Hosted Production Readiness Acceptance](./docs/operations/hosted-production-readiness-acceptance.md). `sheet-0050` completed the campaign companion, public play, and rules-content product slice. `sheet-0040` completed Hyper-Dank package adoption. `sheet-0061` completes Game Master prep, private NPCs, content import, and Hyper-Dank-style GitHub issue/project workflow; see [Game Master Prep Acceptance](./docs/operations/game-master-prep-acceptance.md).
 
 ## TDD Approach
 
