@@ -1,6 +1,7 @@
 import type { AuthUser, CampaignMember, CampaignSummary, CharacterRosterItem } from "../../../db";
 import { Button } from "../../atoms/Button";
 import { Panel } from "../../atoms/Panel";
+import { Breadcrumbs } from "../../molecules/Breadcrumbs";
 import { FormField } from "../../molecules/FormField";
 import { SiteHeader } from "../../molecules/SiteHeader";
 import { Layout } from "../../templates/Layout";
@@ -35,48 +36,31 @@ export const CharactersPage = ({
       <div class="shell characters-shell">
         <SiteHeader appName={appName} currentSection="characters" user={user} />
         <main class="characters-main" aria-labelledby="characters-heading">
+          <Breadcrumbs items={characterBreadcrumbItems({ campaign, mode, showCreateForm })} />
           <Panel labelledBy="characters-heading">
             <div class="characters-heading">
-              <p class="characters-kicker">{mode === "game_master" ? "Campaign roster" : "Player roster"}</p>
-              <h1 id="characters-heading" class="panel-heading">
-                {title}
-              </h1>
-              {!showCreateForm ? (
+              <div class="characters-heading-copy">
+                <p class="characters-kicker">{mode === "game_master" ? "Campaign roster" : "Player roster"}</p>
+                <h1 id="characters-heading" class="panel-heading">
+                  {title}
+                </h1>
+              </div>
+              {showCreateForm ? (
+                <a
+                  class="action-link action-link-secondary character-create-link"
+                  href={mode === "game_master" && campaign ? `/campaigns/${campaign.slug}/characters` : "/characters"}
+                >
+                  Back to roster
+                </a>
+              ) : (
                 <a
                   class="action-link character-create-link"
                   href={mode === "game_master" && campaign ? `/campaigns/${campaign.slug}/characters/new` : "/characters/new"}
                 >
                   Create character
                 </a>
-              ) : null}
+              )}
             </div>
-
-            {showCreateForm ? (
-            <section aria-labelledby="create-character-heading">
-              <h2 id="create-character-heading">Create character</h2>
-              <form class="form-grid" action={action} method="post">
-                {mode === "game_master" ? (
-                  <FormField id="character-owner" label="Owner">
-                    <select id="character-owner" name="ownerUserId">
-                      {ownerChoices.map((member) => (
-                        <option value={member.userId}>{member.displayName}</option>
-                      ))}
-                    </select>
-                  </FormField>
-                ) : null}
-                <FormField id="character-name" label="Name" name="name" required />
-                <FormField id="character-species" label="Species" name="species" required />
-                <FormField id="character-class" label="Class" name="className" required />
-                <FormField id="character-subclass" label="Subclass" name="subclassName" />
-                <FormField id="character-background" label="Background" name="background" required />
-                <FormField id="character-level" label="Level" name="level" required type="number" />
-                <FormField id="character-hit-points" label="Hit point max" name="hitPointMax" required type="number" />
-                <div class="character-create-actions">
-                  <Button type="submit" variant="ghost">Create character</Button>
-                </div>
-              </form>
-            </section>
-            ) : null}
 
             <section aria-labelledby="roster-heading">
               <h2 id="roster-heading">Roster</h2>
@@ -133,9 +117,64 @@ export const CharactersPage = ({
                 </>
               )}
             </section>
+
+            {showCreateForm ? (
+            <section class="character-create-section" aria-labelledby="create-character-heading">
+              <div class="character-create-heading">
+                <h2 id="create-character-heading">Create character</h2>
+              </div>
+              <form class="form-grid" action={action} method="post">
+                {mode === "game_master" ? (
+                  <FormField id="character-owner" label="Owner">
+                    <select id="character-owner" name="ownerUserId">
+                      {ownerChoices.map((member) => (
+                        <option value={member.userId}>{member.displayName}</option>
+                      ))}
+                    </select>
+                  </FormField>
+                ) : null}
+                <FormField id="character-name" label="Name" name="name" required />
+                <FormField id="character-species" label="Species" name="species" required />
+                <FormField id="character-class" label="Class" name="className" required />
+                <FormField id="character-subclass" label="Subclass" name="subclassName" />
+                <FormField id="character-background" label="Background" name="background" required />
+                <FormField id="character-level" label="Level" name="level" required type="number" />
+                <FormField id="character-hit-points" label="Hit point max" name="hitPointMax" required type="number" />
+                <div class="character-create-actions">
+                  <Button type="submit" variant="ghost">Create character</Button>
+                </div>
+              </form>
+            </section>
+            ) : null}
           </Panel>
         </main>
       </div>
     </Layout>
   );
 };
+
+function characterBreadcrumbItems({
+  campaign,
+  mode,
+  showCreateForm,
+}: Pick<CharactersPageProps, "campaign" | "mode" | "showCreateForm">) {
+  const rosterHref = mode === "game_master" && campaign
+    ? `/campaigns/${campaign.slug}/characters`
+    : "/characters";
+  const createHref = mode === "game_master" && campaign
+    ? `/campaigns/${campaign.slug}/characters/new`
+    : "/characters/new";
+  const rosterLabel = mode === "game_master" && campaign ? `${campaign.name} characters` : "Characters";
+  const items = mode === "game_master" && campaign
+    ? [
+      { href: `/campaigns/${campaign.slug}`, label: campaign.name },
+      { current: !showCreateForm, href: rosterHref, label: rosterLabel },
+    ]
+    : [
+      { current: !showCreateForm, href: rosterHref, label: rosterLabel },
+    ];
+
+  return showCreateForm
+    ? [...items, { current: true, href: createHref, label: "Create character" }]
+    : items;
+}

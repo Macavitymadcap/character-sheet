@@ -55,14 +55,20 @@ import {
   SenseEditCard,
   SenseReadCard,
 } from "./components/organisms/CoreTab/CoreTab";
-import { SheetHeader } from "./components/organisms/SheetHeader";
+import { SheetHeader, SheetHeaderEdit } from "./components/organisms/SheetHeader";
 import {
   ProficiencyEditItem,
   ProficiencyReadItem,
   SkillEditRow,
   SkillReadRow,
 } from "./components/organisms/SkillsTrainingTab/SkillsTrainingTab";
-import { SheetTabPanel } from "./components/organisms/SheetTabPanel";
+import {
+  BackgroundEntryEditItem,
+  BackgroundEntryReadItem,
+  EquipmentEditItem,
+  EquipmentReadItem,
+  SheetTabPanel,
+} from "./components/organisms/SheetTabPanel";
 import { SheetTabWorkspace } from "./components/organisms/SheetTabWorkspace";
 import { isSheetTabId } from "./components/organisms/SheetTabs";
 import type {
@@ -81,6 +87,7 @@ import type {
   NpcVisibility,
   RuleSummary,
   RuleEntityType,
+  RuleEntityTypeCount,
   RuleSearchFilters,
   RulesRepository,
   UserRole,
@@ -184,13 +191,18 @@ export const createApp = (dependencies: AppDependencies) => {
     const filters = parseRuleFilters(context);
     const accessFilters = ruleAccessFilters(dependencies, session);
     const rulesFilters = { ...filters, ...accessFilters };
+    const accessibleRules = dependencies.rulesRepository.listRules(accessFilters).filter(isBrowseableRule);
+    const srdCounts = dependencies.rulesRepository.listRuleEntityTypes({ contentCategory: "srd" });
+    const srdRules = dependencies.rulesRepository.listRules({ contentCategory: "srd" });
+    const importState = createSrdImportState(srdCounts, srdRules);
 
     return context.html(
       <RulesPage
         appName={dependencies.appName}
-        counts={dependencies.rulesRepository.listRuleEntityTypes(accessFilters)}
+        counts={createRuleEntityTypeCounts(accessibleRules)}
         filters={filters}
-        rules={dependencies.rulesRepository.listRules(rulesFilters)}
+        importState={importState}
+        rules={dependencies.rulesRepository.listRules(rulesFilters).filter(isBrowseableRule)}
         user={session?.user}
       />,
     );
@@ -205,12 +217,17 @@ export const createApp = (dependencies: AppDependencies) => {
     const accessFilters = ruleAccessFilters(dependencies, session);
     const rule = dependencies.rulesRepository.getRuleDetail(entityType, routeParam(context, "slug"), accessFilters);
     if (!rule) return context.text("Not found", 404);
+    if (rule.contentCategory === "srd" && !isBrowseableRule(rule)) return context.text("Not found", 404);
+    const srdCounts = dependencies.rulesRepository.listRuleEntityTypes({ contentCategory: "srd" });
+    const srdRules = dependencies.rulesRepository.listRules({ contentCategory: "srd" });
+    const accessibleRules = dependencies.rulesRepository.listRules(accessFilters).filter(isBrowseableRule);
 
     return context.html(
       <RulesDetailPage
         appName={dependencies.appName}
-        counts={dependencies.rulesRepository.listRuleEntityTypes(accessFilters)}
+        counts={createRuleEntityTypeCounts(accessibleRules)}
         filters={parseRuleFilters(context)}
+        importState={createSrdImportState(srdCounts, srdRules)}
         rule={rule}
         user={session?.user}
       />,
@@ -1494,6 +1511,51 @@ export const createApp = (dependencies: AppDependencies) => {
     );
   });
 
+  app.get("/sheet/:characterRef/summary", (context) => {
+    const session = readSession(context.req.header("cookie"));
+    if (!session) return context.redirect("/login", 303);
+
+    const sheet = getSheetByRef(context.req.param("characterRef"));
+    if (!sheet) return context.text("Not found", 404);
+
+    const guard = requireSheetAccess({
+      campaignRepository: dependencies.campaignRepository,
+      characterId: sheet.id,
+      characterRepository: dependencies.characterRepository,
+      permission: "write",
+      session,
+    });
+    const guarded = guardResponse(context, guard);
+    if (guarded) return guarded;
+
+    return context.html(
+      <SheetHeader
+        resources={dependencies.characterRepository.listResources(sheet.id)}
+        sheet={sheet}
+      />,
+    );
+  });
+
+  app.get("/sheet/:characterRef/summary/edit", (context) => {
+    const session = readSession(context.req.header("cookie"));
+    if (!session) return context.redirect("/login", 303);
+
+    const sheet = getSheetByRef(context.req.param("characterRef"));
+    if (!sheet) return context.text("Not found", 404);
+
+    const guard = requireSheetAccess({
+      campaignRepository: dependencies.campaignRepository,
+      characterId: sheet.id,
+      characterRepository: dependencies.characterRepository,
+      permission: "write",
+      session,
+    });
+    const guarded = guardResponse(context, guard);
+    if (guarded) return guarded;
+
+    return context.html(<SheetHeaderEdit sheet={sheet} />);
+  });
+
   app.get("/sheet/:characterRef/:tabId", (context) => {
     const session = readSession(context.req.header("cookie"));
     if (!session) return context.redirect("/login", 303);
@@ -2077,19 +2139,90 @@ export const createApp = (dependencies: AppDependencies) => {
     );
   });
 
-  app.patch("/sheet/:characterRef/background/:entryId", async (context) => {
-    const result = await updateSheetRow(context, dependencies, "background", async (sheet, body) => {
-      const title = parseFormText(body.title);
-      if (!title) return false;
+  app.get("/sheet/:characterRef/background/:entryId", (context) => {
+    const session = readSession(context.req.header("cookie"));
+    if (!session) return context.redirect("/login", 303);
 
-      return dependencies.characterRepository.updateBackgroundEntry(
-        sheet.id,
-        context.req.param("entryId"),
-        { body: parseFormString(body.body) ?? "", title },
-      );
+    const sheet = getSheetByRef(context.req.param("characterRef"));
+    if (!sheet) return context.text("Not found", 404);
+
+    const guard = requireSheetAccess({
+      campaignRepository: dependencies.campaignRepository,
+      characterId: sheet.id,
+      characterRepository: dependencies.characterRepository,
+      permission: "write",
+      session,
     });
+    const guarded = guardResponse(context, guard);
+    if (guarded) return guarded;
 
-    return result;
+    const entry = dependencies.characterRepository
+      .listBackgroundEntries(sheet.id)
+      .find((candidate) => candidate.id === context.req.param("entryId"));
+    if (!entry) return context.text("Not found", 404);
+
+    return context.html(<BackgroundEntryReadItem characterSlug={sheet.slug} entry={entry} />);
+  });
+
+  app.get("/sheet/:characterRef/background/:entryId/edit", (context) => {
+    const session = readSession(context.req.header("cookie"));
+    if (!session) return context.redirect("/login", 303);
+
+    const sheet = getSheetByRef(context.req.param("characterRef"));
+    if (!sheet) return context.text("Not found", 404);
+
+    const guard = requireSheetAccess({
+      campaignRepository: dependencies.campaignRepository,
+      characterId: sheet.id,
+      characterRepository: dependencies.characterRepository,
+      permission: "write",
+      session,
+    });
+    const guarded = guardResponse(context, guard);
+    if (guarded) return guarded;
+
+    const entry = dependencies.characterRepository
+      .listBackgroundEntries(sheet.id)
+      .find((candidate) => candidate.id === context.req.param("entryId"));
+    if (!entry) return context.text("Not found", 404);
+
+    return context.html(<BackgroundEntryEditItem characterSlug={sheet.slug} entry={entry} />);
+  });
+
+  app.patch("/sheet/:characterRef/background/:entryId", async (context) => {
+    const session = readSession(context.req.header("cookie"));
+    if (!session) return context.redirect("/login", 303);
+
+    const sheet = getSheetByRef(context.req.param("characterRef"));
+    if (!sheet) return context.text("Not found", 404);
+
+    const guard = requireSheetAccess({
+      campaignRepository: dependencies.campaignRepository,
+      characterId: sheet.id,
+      characterRepository: dependencies.characterRepository,
+      permission: "write",
+      session,
+    });
+    const guarded = guardResponse(context, guard);
+    if (guarded) return guarded;
+
+    const body = await context.req.parseBody();
+    const title = parseFormText(body.title);
+    if (!title) return context.text("Invalid sheet update", 400);
+
+    const updated = dependencies.characterRepository.updateBackgroundEntry(
+      sheet.id,
+      context.req.param("entryId"),
+      { body: parseFormString(body.body) ?? "", title },
+    );
+    if (!updated) return context.text("Not found", 404);
+
+    const entry = dependencies.characterRepository
+      .listBackgroundEntries(sheet.id)
+      .find((candidate) => candidate.id === context.req.param("entryId"));
+    if (!entry) return context.text("Not found", 404);
+
+    return context.html(<BackgroundEntryReadItem characterSlug={sheet.slug} entry={entry} />);
   });
 
   app.patch("/sheet/:characterRef/resources/:resourceId", async (context) => {
@@ -2159,6 +2292,56 @@ export const createApp = (dependencies: AppDependencies) => {
     );
   });
 
+  app.get("/sheet/:characterRef/equipment/:equipmentId", (context) => {
+    const session = readSession(context.req.header("cookie"));
+    if (!session) return context.redirect("/login", 303);
+
+    const sheet = getSheetByRef(context.req.param("characterRef"));
+    if (!sheet) return context.text("Not found", 404);
+
+    const guard = requireSheetAccess({
+      campaignRepository: dependencies.campaignRepository,
+      characterId: sheet.id,
+      characterRepository: dependencies.characterRepository,
+      permission: "write",
+      session,
+    });
+    const guarded = guardResponse(context, guard);
+    if (guarded) return guarded;
+
+    const item = dependencies.characterRepository
+      .listEquipment(sheet.id)
+      .find((candidate) => candidate.id === context.req.param("equipmentId"));
+    if (!item) return context.text("Not found", 404);
+
+    return context.html(<EquipmentReadItem characterSlug={sheet.slug} item={item} />);
+  });
+
+  app.get("/sheet/:characterRef/equipment/:equipmentId/edit", (context) => {
+    const session = readSession(context.req.header("cookie"));
+    if (!session) return context.redirect("/login", 303);
+
+    const sheet = getSheetByRef(context.req.param("characterRef"));
+    if (!sheet) return context.text("Not found", 404);
+
+    const guard = requireSheetAccess({
+      campaignRepository: dependencies.campaignRepository,
+      characterId: sheet.id,
+      characterRepository: dependencies.characterRepository,
+      permission: "write",
+      session,
+    });
+    const guarded = guardResponse(context, guard);
+    if (guarded) return guarded;
+
+    const item = dependencies.characterRepository
+      .listEquipment(sheet.id)
+      .find((candidate) => candidate.id === context.req.param("equipmentId"));
+    if (!item) return context.text("Not found", 404);
+
+    return context.html(<EquipmentEditItem characterSlug={sheet.slug} item={item} />);
+  });
+
   app.patch("/sheet/:characterRef/equipment/:equipmentId", async (context) => {
     const session = readSession(context.req.header("cookie"));
     if (!session) return context.redirect("/login", 303);
@@ -2214,22 +2397,12 @@ export const createApp = (dependencies: AppDependencies) => {
     });
     if (!updated) return context.text("Not found", 404);
 
-    const updatedSheet = dependencies.characterRepository.getSheetById(sheet.id);
-    if (!updatedSheet) return context.text("Not found", 404);
+    const item = dependencies.characterRepository
+      .listEquipment(sheet.id)
+      .find((candidate) => candidate.id === equipmentId);
+    if (!item) return context.text("Not found", 404);
 
-    return context.html(
-      <SheetTabPanel
-        backgroundEntries={dependencies.characterRepository.listBackgroundEntries(sheet.id)}
-        campaignFactions={campaignFactionsForSheet(dependencies, sheet.id)}
-        equipment={dependencies.characterRepository.listEquipment(sheet.id)}
-        factionChoice={dependencies.campaignContentRepository.getCharacterFactionChoice(sheet.id)}
-        notes={dependencies.notesRepository.listNotesForCharacter(sheet.id, sheetViewerRole(sheet.id, session))}
-        resources={dependencies.characterRepository.listResources(sheet.id)}
-        ruleLinks={dependencies.rulesRepository.listRuleLinksForCharacter(sheet.id)}
-        sheet={updatedSheet}
-        tabId="equipment"
-      />,
-    );
+    return context.html(<EquipmentReadItem characterSlug={sheet.slug} item={item} />);
   });
 
   app.patch("/sheet/:characterRef/notes/:noteId", async (context) => {
@@ -2640,6 +2813,35 @@ function statBlockRulesForCampaign(dependencies: AppDependencies, campaignId: st
     campaignIds: [campaignId],
     entityType: "stat_block",
   });
+}
+
+function createSrdImportState(counts: RuleEntityTypeCount[], rules: RuleSummary[]) {
+  const totalRules = counts.reduce((total, count) => total + count.count, 0);
+  const searchableRules = rules.filter(isBrowseableRule).length;
+
+  return {
+    categories: counts.length,
+    command: "bun run import:rules:srd",
+    searchableRules,
+    sourcePath: "docs/rules/srd-5.1",
+    status: totalRules === 0 ? "empty" : searchableRules >= 100 ? "ready" : "partial",
+    totalRules,
+  } as const;
+}
+
+function createRuleEntityTypeCounts(rules: RuleSummary[]): RuleEntityTypeCount[] {
+  const counts = new Map<RuleEntityType, number>();
+  for (const rule of rules) {
+    counts.set(rule.entityType, (counts.get(rule.entityType) ?? 0) + 1);
+  }
+
+  return Array.from(counts.entries())
+    .map(([entityType, count]) => ({ count, entityType }))
+    .sort((left, right) => left.entityType.localeCompare(right.entityType));
+}
+
+function isBrowseableRule(rule: RuleSummary) {
+  return rule.contentCategory !== "srd" || rule.description.trim() !== "" || rule.tags.length > 0;
 }
 
 function campaignFactionsForSheet(dependencies: AppDependencies, characterId: string) {

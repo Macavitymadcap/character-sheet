@@ -18,6 +18,7 @@ import type {
   RulesSourceSummary,
 } from "../../../db";
 import { Panel } from "../../atoms/Panel";
+import { Breadcrumbs, type BreadcrumbItem } from "../../molecules/Breadcrumbs";
 import { SiteHeader } from "../../molecules/SiteHeader";
 import { Layout } from "../../templates/Layout";
 
@@ -66,6 +67,7 @@ export const CampaignPage = ({ appName, campaign, gameMasterDisplayName, imageAs
       <div class="shell campaign-shell">
         <SiteHeader appName={appName} currentSection="campaign" user={user} />
         <main class="campaign-main" aria-labelledby="campaign-heading">
+          <CampaignBreadcrumbs campaign={campaign} />
           <Panel labelledBy="campaign-heading">
             <div class="campaign-heading">
               <p class="campaign-kicker">Campaign</p>
@@ -92,6 +94,7 @@ export const CampaignPage = ({ appName, campaign, gameMasterDisplayName, imageAs
               </nav>
             ) : (
               <nav class="campaign-action-row" aria-label="Campaign tools">
+                <a class="action-link action-link-secondary" href={`/campaigns/${campaign.slug}#campaign-wiki-heading`}>Wiki</a>
                 <a class="action-link action-link-secondary" href={`/campaigns/${campaign.slug}/npcs`}>NPCs</a>
               </nav>
             )}
@@ -294,6 +297,10 @@ export const CampaignPrepPage = ({ appName, campaign, npcCount, privateNpcCount,
     <div class="shell campaign-shell">
       <SiteHeader appName={appName} currentSection="campaign" user={user} />
       <main class="campaign-main" aria-labelledby="campaign-prep-heading">
+        <CampaignBreadcrumbs
+          campaign={campaign}
+          items={[{ current: true, href: `/campaigns/${campaign.slug}/prep`, label: "Prep workspace" }]}
+        />
         <Panel labelledBy="campaign-prep-heading">
           <div class="campaign-heading">
             <p class="campaign-kicker">Game Master</p>
@@ -366,6 +373,13 @@ export const CampaignPlayerPreviewPage = ({
     <div class="shell campaign-shell">
       <SiteHeader appName={appName} currentSection="campaign" user={user} />
       <main class="campaign-main" aria-labelledby="campaign-preview-heading">
+        <CampaignBreadcrumbs
+          campaign={campaign}
+          items={[
+            { href: `/campaigns/${campaign.slug}/prep`, label: "Prep workspace" },
+            { current: true, href: `/campaigns/${campaign.slug}/preview/player`, label: "Player preview" },
+          ]}
+        />
         <Panel labelledBy="campaign-preview-heading">
           <div class="campaign-heading">
             <p class="campaign-kicker">Game Master tool</p>
@@ -508,6 +522,23 @@ function previewText(value: string, maxLength = 160) {
   return text.length > maxLength ? `${text.slice(0, maxLength - 1).trim()}...` : text;
 }
 
+function CampaignBreadcrumbs({
+  campaign,
+  items = [],
+}: {
+  campaign: CampaignSummary;
+  items?: BreadcrumbItem[];
+}) {
+  return (
+    <Breadcrumbs
+      items={[
+        { current: items.length === 0, href: `/campaigns/${campaign.slug}`, label: campaign.name },
+        ...items,
+      ]}
+    />
+  );
+}
+
 interface NpcListPageProps {
   appName: string;
   campaign: CampaignSummary;
@@ -525,6 +556,10 @@ export const NpcListPage = ({ appName, campaign, imageAssets, npcs, playerMember
     <div class="shell campaign-shell">
       <SiteHeader appName={appName} currentSection="campaign" user={user} />
       <main class="campaign-main" aria-labelledby="campaign-npcs-heading">
+        <CampaignBreadcrumbs
+          campaign={campaign}
+          items={[{ current: true, href: `/campaigns/${campaign.slug}/npcs`, label: "NPCs" }]}
+        />
         <Panel labelledBy="campaign-npcs-heading">
           <div class="campaign-heading">
             <p class="campaign-kicker">{viewerRole === "game_master" ? "Game Master" : "Campaign"}</p>
@@ -571,6 +606,10 @@ export const CampaignImageLibraryPage = ({ appName, campaign, imageAssets, user,
       <div class="shell campaign-shell">
         <SiteHeader appName={appName} currentSection="campaign" user={user} />
         <main class="campaign-main" aria-labelledby="campaign-images-heading">
+          <CampaignBreadcrumbs
+            campaign={campaign}
+            items={[{ current: true, href: `/campaigns/${campaign.slug}/images`, label: "Images" }]}
+          />
           <Panel labelledBy="campaign-images-heading">
             <a class="action-link" href={`/campaigns/${campaign.slug}`}>Back to campaign</a>
             <div class="campaign-heading">
@@ -612,6 +651,13 @@ export const CampaignImageDetailPage = ({ appName, asset, campaign, user, viewer
       <div class="shell campaign-shell">
         <SiteHeader appName={appName} currentSection="campaign" user={user} />
         <main class="campaign-main" aria-labelledby="campaign-image-detail-heading">
+          <CampaignBreadcrumbs
+            campaign={campaign}
+            items={[
+              { href: `/campaigns/${campaign.slug}/images`, label: "Images" },
+              { current: true, href: `/campaigns/${campaign.slug}/images/${asset.id}`, label: asset.title },
+            ]}
+          />
           <Panel labelledBy="campaign-image-detail-heading">
             <a class="action-link" href={`/campaigns/${campaign.slug}/images`}>Back to images</a>
             <figure class="campaign-image-detail-figure">
@@ -709,6 +755,13 @@ export const CampaignImportPage = ({ appName, campaign, imports, user }: Campaig
     <div class="shell campaign-shell">
       <SiteHeader appName={appName} currentSection="campaign" user={user} />
       <main class="campaign-main" aria-labelledby="campaign-import-heading">
+        <CampaignBreadcrumbs
+          campaign={campaign}
+          items={[
+            { href: `/campaigns/${campaign.slug}/prep`, label: "Prep workspace" },
+            { current: true, href: `/campaigns/${campaign.slug}/imports`, label: "Imports" },
+          ]}
+        />
         <Panel labelledBy="campaign-import-heading">
           <a class="action-link" href={`/campaigns/${campaign.slug}/prep`}>Back to prep</a>
           <div class="campaign-heading">
@@ -750,6 +803,14 @@ export const GoogleDocsManualImportPage = ({ appName, campaign, user }: Campaign
     <div class="shell campaign-shell">
       <SiteHeader appName={appName} currentSection="campaign" user={user} />
       <main class="campaign-main" aria-labelledby="campaign-google-docs-import-heading">
+        <CampaignBreadcrumbs
+          campaign={campaign}
+          items={[
+            { href: `/campaigns/${campaign.slug}/prep`, label: "Prep workspace" },
+            { href: `/campaigns/${campaign.slug}/imports`, label: "Imports" },
+            { current: true, href: `/campaigns/${campaign.slug}/imports/google-docs`, label: "Google Docs import" },
+          ]}
+        />
         <Panel labelledBy="campaign-google-docs-import-heading">
           <a class="action-link" href={`/campaigns/${campaign.slug}/imports`}>Back to imports</a>
           <div class="campaign-heading">
@@ -787,6 +848,14 @@ export const CampaignImportPreviewPage = ({ appName, campaign, preview, user }: 
     <div class="shell campaign-shell">
       <SiteHeader appName={appName} currentSection="campaign" user={user} />
       <main class="campaign-main" aria-labelledby="campaign-import-preview-heading">
+        <CampaignBreadcrumbs
+          campaign={campaign}
+          items={[
+            { href: `/campaigns/${campaign.slug}/prep`, label: "Prep workspace" },
+            { href: `/campaigns/${campaign.slug}/imports`, label: "Imports" },
+            { current: true, href: `/campaigns/${campaign.slug}/imports/preview`, label: "Import preview" },
+          ]}
+        />
         <Panel labelledBy="campaign-import-preview-heading">
           <a class="action-link" href={`/campaigns/${campaign.slug}/imports`}>Back to import</a>
           <div class="campaign-heading">
@@ -902,6 +971,13 @@ export const NpcDetailPage = ({ appName, campaign, imageAssets, npc, playerMembe
       <div class="shell campaign-shell">
         <SiteHeader appName={appName} currentSection="campaign" user={user} />
         <main class="campaign-main" aria-labelledby="campaign-npc-heading">
+          <CampaignBreadcrumbs
+            campaign={campaign}
+            items={[
+              { href: `/campaigns/${campaign.slug}/npcs`, label: "NPCs" },
+              { current: true, href: `/campaigns/${campaign.slug}/npcs/${npc.slug}`, label: npc.name },
+            ]}
+          />
           <Panel labelledBy="campaign-npc-heading">
             <div class="campaign-heading">
               <p class="campaign-kicker">{npcVisibilityLabel(npc.visibility)}</p>
@@ -1063,6 +1139,10 @@ export const CampaignWikiDetailPage = ({ appName, campaign, cover, galleryAssets
     <div class="shell campaign-shell">
       <SiteHeader appName={appName} currentSection="campaign" user={user} />
       <main class="campaign-main" aria-labelledby="campaign-wiki-detail-heading">
+        <CampaignBreadcrumbs
+          campaign={campaign}
+          items={[{ current: true, href: `/campaigns/${campaign.slug}/wiki/${page.slug}`, label: page.title }]}
+        />
         <Panel labelledBy="campaign-wiki-detail-heading">
           <a class="action-link" href={`/campaigns/${campaign.slug}`}>Back to campaign</a>
           {cover ? <img alt={cover.altText} class="campaign-wiki-hero" src={`/campaigns/${campaign.slug}/assets/${cover.id}`} /> : null}

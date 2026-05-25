@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { SheetHeader } from "./SheetHeader";
+import { SheetHeader, SheetHeaderEdit } from "./SheetHeader";
 import type { CharacterResource, CharacterSheetReadModel } from "../../../db";
 
 const render = (node: unknown): string => String(node);
@@ -71,6 +71,9 @@ describe("SheetHeader", () => {
     expect(html).toContain('<section id="sheet-header" class="sheet-header" aria-labelledby="sheet-heading">');
     expect(html).toContain('<h1 id="sheet-heading" class="sheet-heading">Lynott Magulbisson</h1>');
     expect(html).toContain("Hobgoblin · Level 4 Artillerist Artificer");
+    expect(html).toContain('hx-get="/sheet/lynott/summary/edit"');
+    expect(html).toContain('hx-target="#sheet-header"');
+    expect(html).not.toContain("sheet-edit-disclosure");
     expect(html).toContain("<dt>AC</dt>");
     expect(html).toContain("<dd>17</dd>");
     expect(html).toContain("<dt>HP</dt>");
@@ -120,5 +123,20 @@ describe("SheetHeader", () => {
     expect(html).toContain('hx-patch="/sheet/lynott/resources/condition_poisoned"');
     expect(html).toContain('aria-checked="true"');
     expect(html).toContain('checked=""');
+  });
+
+  test("renders summary editing as a swappable header form", () => {
+    const html = render(<SheetHeaderEdit sheet={sheet} />);
+
+    expect(html).toContain('<section id="sheet-header" class="sheet-header sheet-header-edit"');
+    expect(html).toContain("Edit sheet summary");
+    expect(html).toContain('hx-patch="/sheet/lynott/summary"');
+    expect(html).toContain('hx-get="/sheet/lynott/summary"');
+    expect(html).toContain('hx-target="#sheet-header"');
+    expect(html).toContain('<button type="submit">Save summary</button>');
+    expect(html).toContain(">Cancel</button>");
+    expect(html).not.toContain("<details");
+    expect(html).not.toContain("<summary");
+    expect(html).not.toContain("sheet-edit-disclosure");
   });
 });

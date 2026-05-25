@@ -32,27 +32,15 @@ export const SheetHeader = ({ resources, sheet }: SheetHeaderProps) => {
         <p class="sheet-subtitle">
           {sheet.species} · Level {sheet.level} {formatClassSummary(sheet)}
         </p>
-        <details class="sheet-edit-disclosure">
-          <summary>Edit summary</summary>
-          <form
-            class="sheet-edit-form sheet-summary-edit-form"
-            hx-patch={`/sheet/${sheet.slug}/summary`}
-            hx-target="#sheet-header"
-            hx-swap="outerHTML"
-          >
-            <label>Name <input name="name" type="text" value={sheet.name} /></label>
-            <label>Species <input name="species" type="text" value={sheet.species} /></label>
-            <label>Class <input name="className" type="text" value={sheet.classes[0]?.className ?? ""} /></label>
-            <label>Subclass <input name="subclassName" type="text" value={sheet.classes[0]?.subclassName ?? ""} /></label>
-            <label>Background <input name="background" type="text" value={sheet.background} /></label>
-            <label>Level <input min="1" name="level" type="number" value={sheet.level} /></label>
-            <label>Initiative <input name="initiative" type="number" value={sheet.initiative} /></label>
-            <label>Speed <input min="0" name="speedFeet" type="number" value={sheet.speedFeet} /></label>
-            <label>Max HP <input min="1" name="hitPointMax" type="number" value={sheet.hitPoints.max} /></label>
-            <label>Proficiency <input min="0" name="proficiencyBonus" type="number" value={sheet.proficiencyBonus} /></label>
-            <button type="submit">Save summary</button>
-          </form>
-        </details>
+        <button
+          class="sheet-summary-edit-button"
+          type="button"
+          hx-get={`/sheet/${sheet.slug}/summary/edit`}
+          hx-target="#sheet-header"
+          hx-swap="outerHTML"
+        >
+          Edit summary
+        </button>
       </div>
       <dl class="sheet-header-grid" aria-label="Sheet summary">
         <div class="sheet-metric">
@@ -150,6 +138,47 @@ export const SheetHeader = ({ resources, sheet }: SheetHeaderProps) => {
     </section>
   );
 };
+
+export const SheetHeaderEdit = ({ sheet }: { sheet: CharacterSheetReadModel }) => (
+  <section id="sheet-header" class="sheet-header sheet-header-edit" aria-labelledby="sheet-summary-edit-heading">
+    <div class="sheet-title-block">
+      <h1 id="sheet-summary-edit-heading" class="sheet-heading">
+        Edit sheet summary
+      </h1>
+      <p class="sheet-subtitle">
+        {sheet.name}
+      </p>
+    </div>
+    <form
+      class="sheet-edit-form sheet-summary-edit-form"
+      hx-patch={`/sheet/${sheet.slug}/summary`}
+      hx-target="#sheet-header"
+      hx-swap="outerHTML"
+    >
+      <label>Name <input name="name" type="text" value={sheet.name} /></label>
+      <label>Species <input name="species" type="text" value={sheet.species} /></label>
+      <label>Class <input name="className" type="text" value={sheet.classes[0]?.className ?? ""} /></label>
+      <label>Subclass <input name="subclassName" type="text" value={sheet.classes[0]?.subclassName ?? ""} /></label>
+      <label>Background <input name="background" type="text" value={sheet.background} /></label>
+      <label>Level <input min="1" name="level" type="number" value={sheet.level} /></label>
+      <label>Initiative <input name="initiative" type="number" value={sheet.initiative} /></label>
+      <label>Speed <input min="0" name="speedFeet" type="number" value={sheet.speedFeet} /></label>
+      <label>Max HP <input min="1" name="hitPointMax" type="number" value={sheet.hitPoints.max} /></label>
+      <label>Proficiency <input min="0" name="proficiencyBonus" type="number" value={sheet.proficiencyBonus} /></label>
+      <div class="sheet-summary-edit-actions">
+        <button type="submit">Save summary</button>
+        <button
+          type="button"
+          hx-get={`/sheet/${sheet.slug}/summary`}
+          hx-target="#sheet-header"
+          hx-swap="outerHTML"
+        >
+          Cancel
+        </button>
+      </div>
+    </form>
+  </section>
+);
 
 function findResource(resources: CharacterResource[], key: string) {
   return resources.find((resource) => resource.key === key);

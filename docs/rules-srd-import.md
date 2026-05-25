@@ -88,5 +88,8 @@ The SRD source is stored as:
 - `skippedFiles`: unsupported files discovered while walking the source tree.
 - `sourceCounts`: imported entity counts grouped by source slug.
 
-`bun run import:rules -- <path>` remains the command-line entry point. Live fetching from external
-rules sites is out of scope for this epic.
+`bun run import:rules:srd` imports the full committed SRD corpus from `docs/rules/srd-5.1/` and is
+the preferred operator command for restoring a fresh local database from the partial seeded rule
+state to the full searchable public rules browser. `bun run import:rules -- <path>` remains the
+generic command-line entry point for targeted imports. Live fetching from external rules sites is
+out of scope for this epic.

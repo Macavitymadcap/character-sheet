@@ -88,9 +88,10 @@ describe("createApp", () => {
     expect(html).toContain('href="/local/campaigns"');
     expect(html).toContain('<a class="popover-menu-item" href="/rules" role="menuitem">Rules</a>');
     expect(html).toContain('<a class="popover-menu-item" href="/login" role="menuitem">Sign in</a>');
+    expect(html).not.toContain('<a class="action-link action-link-secondary" href="/login">Sign in</a>');
   });
 
-  test("renders signed-in home with role continue links", async () => {
+  test("renders signed-in home with role-specific entry links", async () => {
     const { app, sessionService } = createTestApp("Campaign Ledger");
     const playerSession = sessionService.createSession("user_lynott_player");
     const gmSession = sessionService.createSession("user_game_master");
@@ -104,13 +105,13 @@ describe("createApp", () => {
     const adminHtml = await admin.text();
 
     expect(player.status).toBe(200);
-    expect(playerHtml).toContain('<a class="action-link action-link-secondary" href="/characters">Continue</a>');
+    expect(playerHtml).toContain('<a class="action-link action-link-secondary" href="/characters">Characters</a>');
     expect(gm.status).toBe(200);
     expect(gmHtml).toContain(
-      '<a class="action-link action-link-secondary" href="/campaigns/rovnost-shadows">Continue</a>',
+      '<a class="action-link action-link-secondary" href="/campaigns/rovnost-shadows">Campaign</a>',
     );
     expect(admin.status).toBe(200);
-    expect(adminHtml).toContain('<a class="action-link action-link-secondary" href="/admin">Continue</a>');
+    expect(adminHtml).toContain('<a class="action-link action-link-secondary" href="/admin">Admin</a>');
   });
 
   test("serves public local play entry points", async () => {
@@ -284,6 +285,8 @@ describe("createApp", () => {
     });
 
     expect(publicList.status).toBe(200);
+    expect(publicListHtml).not.toContain("SRD corpus partially imported");
+    expect(publicListHtml).not.toContain("bun run import:rules:srd");
     expect(publicListHtml).toContain("Bless");
     expect(publicListHtml).toContain("SRD");
     expect(publicListHtml).toContain("Visitor");
@@ -323,6 +326,40 @@ describe("createApp", () => {
     expect(typeRedirect.status).toBe(303);
     expect(typeRedirect.headers.get("location")).toBe("/rules?type=spell");
     expect(missing.status).toBe(404);
+  });
+
+  test("keeps SRD rules pages user-facing when local data is sparse or fully imported", async () => {
+    const { app } = createTestApp("Campaign Ledger");
+
+    const partial = await app.request("/rules?type=spell&q=bless");
+    const partialHtml = await partial.text();
+    const partialDetail = await app.request("/rules/spell/bless");
+
+    expect(partial.status).toBe(200);
+    expect(partialHtml).not.toContain("SRD corpus partially imported");
+    expect(partialHtml).not.toContain("searchable SRD entries");
+    expect(partialHtml).toContain("No rules match those filters.");
+    expect(partialHtml).not.toContain("bun run import:rules:srd");
+    expect(partialHtml).not.toContain("Spell (8)");
+    expect(partialHtml).not.toContain("<h3><a href=\"/rules/spell/bless\">Bless</a></h3>");
+    expect(partialDetail.status).toBe(404);
+
+    const importer = new RulesImportService(runtime!.repositories.rulesSeedRepository);
+    await importer.importFromLocalSource("docs/rules/srd-5.1");
+
+    const ready = await app.request("/rules?type=condition&q=grappled");
+    const readyHtml = await ready.text();
+    const readyDetail = await app.request("/rules/spell/bless");
+    const readyDetailHtml = await readyDetail.text();
+
+    expect(ready.status).toBe(200);
+    expect(readyHtml).not.toContain("Full corpus imported");
+    expect(readyHtml).not.toContain("searchable public SRD entries are available");
+    expect(readyHtml).toContain('<a href="/rules?type=spell">Spells</a>');
+    expect(readyHtml).toContain("Grappled");
+    expect(readyDetail.status).toBe(200);
+    expect(readyDetailHtml).toContain("<dt>Classes</dt>");
+    expect(readyDetailHtml).toContain("<dd>Cleric, Paladin</dd>");
   });
 
   test("serves campaign-scoped private rules only to campaign members", async () => {
@@ -416,6 +453,9 @@ describe("createApp", () => {
     expect(listHtml).toContain("Clockwork Scout");
     expect(listHtml).toContain("Stat Block");
     expect(detail.status).toBe(200);
+    expect(detailHtml).toContain('<nav class="breadcrumbs" aria-label="Breadcrumb">');
+    expect(detailHtml).toContain('<a href="/rules?type=stat_block">Rules</a>');
+    expect(detailHtml).toContain('<a href="/rules/stat_block/clockwork-scout" aria-current="page">Clockwork Scout</a>');
     expect(detailHtml).toContain("<h1 id=\"rule-detail-heading\" class=\"panel-heading\">Clockwork Scout</h1>");
     expect(detailHtml).toContain("<dt>Armour Class</dt>");
     expect(detailHtml).toContain("<dd>14</dd>");
@@ -475,6 +515,12 @@ describe("createApp", () => {
     const cookie = sessionService.createSession("user_lynott_player").cookie;
     const headers = formHeaders(cookie);
 
+    const summaryEdit = await app.request("/sheet/lynott/summary/edit", {
+      headers: { Cookie: cookie },
+    });
+    const summaryCancel = await app.request("/sheet/lynott/summary", {
+      headers: { Cookie: cookie },
+    });
     const summary = await app.request("/sheet/lynott/summary", {
       body: new URLSearchParams({
         background: "Field Agent",
@@ -513,6 +559,16 @@ describe("createApp", () => {
       method: "PATCH",
     });
 
+    const summaryEditHtml = await summaryEdit.text();
+    const summaryCancelHtml = await summaryCancel.text();
+
+    expect(summaryEdit.status).toBe(200);
+    expect(summaryEditHtml).toContain('hx-patch="/sheet/lynott/summary"');
+    expect(summaryEditHtml).toContain('hx-get="/sheet/lynott/summary"');
+    expect(summaryEditHtml).not.toContain("sheet-edit-disclosure");
+    expect(summaryCancel.status).toBe(200);
+    expect(summaryCancelHtml).toContain('hx-get="/sheet/lynott/summary/edit"');
+    expect(summaryCancelHtml).not.toContain("sheet-edit-disclosure");
     expect(summary.status).toBe(200);
     expect(await summary.text()).toContain("Lynott Undercover");
     expect(ability.status).toBe(200);
@@ -607,6 +663,52 @@ describe("createApp", () => {
     expect(await armourEdit.text()).toContain('hx-patch="/sheet/lynott/armour/ac_lynott_breastplate"');
     expect(defenceEdit.status).toBe(200);
     expect(await defenceEdit.text()).toContain('hx-patch="/sheet/lynott/defences/defence_lynott_resistances"');
+  });
+
+  test("serves focused equipment and background edit fragments", async () => {
+    const { app, sessionService } = createTestApp("Campaign Ledger");
+    const cookie = sessionService.createSession("user_lynott_player").cookie;
+    const headers = { Cookie: cookie };
+
+    const equipmentEdit = await app.request("/sheet/lynott/equipment/equipment_lynott_pistol/edit", { headers });
+    const equipmentCancel = await app.request("/sheet/lynott/equipment/equipment_lynott_pistol", { headers });
+    const backgroundEdit = await app.request("/sheet/lynott/background/background_lynott_identity_jonas/edit", { headers });
+    const backgroundCancel = await app.request("/sheet/lynott/background/background_lynott_identity_jonas", { headers });
+    const backgroundSave = await app.request("/sheet/lynott/background/background_lynott_identity_jonas", {
+      body: new URLSearchParams({
+        body: "Independent locksmith with fresh Rovnost papers.",
+        title: "Jonas Locksmith",
+      }),
+      headers: {
+        Cookie: cookie,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      method: "PATCH",
+    });
+
+    const equipmentEditHtml = await equipmentEdit.text();
+    const equipmentCancelHtml = await equipmentCancel.text();
+    const backgroundEditHtml = await backgroundEdit.text();
+    const backgroundCancelHtml = await backgroundCancel.text();
+    const backgroundSaveHtml = await backgroundSave.text();
+
+    expect(equipmentEdit.status).toBe(200);
+    expect(equipmentEditHtml).toContain('id="equipment-item-equipment-lynott-pistol"');
+    expect(equipmentEditHtml).toContain('hx-patch="/sheet/lynott/equipment/equipment_lynott_pistol"');
+    expect(equipmentEditHtml).toContain('hx-get="/sheet/lynott/equipment/equipment_lynott_pistol"');
+    expect(equipmentEditHtml).not.toContain("row-edit-disclosure");
+    expect(equipmentCancel.status).toBe(200);
+    expect(equipmentCancelHtml).toContain('hx-get="/sheet/lynott/equipment/equipment_lynott_pistol/edit"');
+    expect(backgroundEdit.status).toBe(200);
+    expect(backgroundEditHtml).toContain('id="background-entry-background-lynott-identity-jonas"');
+    expect(backgroundEditHtml).toContain('hx-patch="/sheet/lynott/background/background_lynott_identity_jonas"');
+    expect(backgroundEditHtml).toContain('hx-get="/sheet/lynott/background/background_lynott_identity_jonas"');
+    expect(backgroundEditHtml).not.toContain("row-edit-disclosure");
+    expect(backgroundCancel.status).toBe(200);
+    expect(backgroundCancelHtml).toContain("Jonas Blarendon");
+    expect(backgroundSave.status).toBe(200);
+    expect(backgroundSaveHtml).toContain("Jonas Locksmith");
+    expect(backgroundSaveHtml).toContain("Independent locksmith");
   });
 
   test("adds custom conditions and returns dice roll fragments", async () => {
@@ -795,6 +897,11 @@ describe("createApp", () => {
     expect(html).toContain("Sessions");
     expect(html).toContain("Session Zero");
     expect(playerResponse.status).toBe(200);
+    expect(playerHtml).toContain(
+      '<a class="popover-menu-item" href="/campaigns/rovnost-shadows" role="menuitem" aria-current="page">Campaign</a>',
+    );
+    expect(playerHtml).toContain('<a class="action-link action-link-secondary" href="/campaigns/rovnost-shadows#campaign-wiki-heading">Wiki</a>');
+    expect(playerHtml).toContain("Factions Guide");
     expect(playerHtml).toContain("<dt>Game Master</dt><dd>Campaign GM</dd>");
   });
 
@@ -852,8 +959,12 @@ describe("createApp", () => {
     });
     const playerCreateHtml = await playerCreate.text();
     expect(playerCreate.status).toBe(200);
+    expect(playerCreateHtml).toContain('<a class="action-link action-link-secondary character-create-link" href="/characters">Back to roster</a>');
     expect(playerCreateHtml).toContain('action="/characters"');
     expect(playerCreateHtml).toContain('name="hitPointMax"');
+    expect(playerCreateHtml.indexOf('<h2 id="roster-heading">Roster</h2>')).toBeLessThan(
+      playerCreateHtml.indexOf('<h2 id="create-character-heading">Create character</h2>'),
+    );
     expect(createdByPlayer.status).toBe(303);
     expect(createdByPlayer.headers.get("location")).toBe("/sheet/ash_vale");
     expect(createdByGm.status).toBe(303);
@@ -1491,6 +1602,21 @@ describe("createApp", () => {
     const wikiRead = await app.request("/campaigns/rovnost-shadows/wiki/brass-market", {
       headers: { cookie: playerCookie },
     });
+    const privateWikiCreate = await app.request("/campaigns/rovnost-shadows/wiki", {
+      body: new URLSearchParams({
+        bodyMarkdown: "# Hidden Market\n\nOnly the Game Master sees this.",
+        pageType: "location",
+        tags: "secret",
+        title: "Hidden Market",
+        visibility: "game_master",
+      }),
+      headers: formHeaders(gmCookie),
+      method: "POST",
+    });
+    const playerCampaign = await app.request("/campaigns/rovnost-shadows", {
+      headers: { cookie: playerCookie },
+    });
+    const playerCampaignHtml = await playerCampaign.text();
 
     const imageForm = new FormData();
     imageForm.set("title", "Secret seal");
@@ -1535,6 +1661,10 @@ describe("createApp", () => {
     expect(wikiCreate.status).toBe(303);
     expect(wikiRead.status).toBe(200);
     expect(await wikiRead.text()).toContain("<h2>Brass Market</h2>");
+    expect(privateWikiCreate.status).toBe(303);
+    expect(playerCampaign.status).toBe(200);
+    expect(playerCampaignHtml).toContain('<a href="/campaigns/rovnost-shadows/wiki/brass-market">Brass Market</a>');
+    expect(playerCampaignHtml).not.toContain("Hidden Market");
     expect(upload.status).toBe(303);
     expect(upload.headers.get("location")).toBe(`/campaigns/rovnost-shadows/images/${asset?.id}`);
     expect(asset?.storageKey).not.toContain("seal.png");
@@ -1581,6 +1711,10 @@ describe("createApp", () => {
       headers: { cookie: playerCookie },
     });
     const pageHtml = await page.text();
+    const playerCampaign = await app.request("/campaigns/rovnost-shadows", {
+      headers: { cookie: playerCookie },
+    });
+    const playerCampaignHtml = await playerCampaign.text();
     const imports = await app.request("/campaigns/rovnost-shadows/imports", {
       headers: { cookie: gmCookie },
     });
@@ -1594,6 +1728,8 @@ describe("createApp", () => {
     expect(page.status).toBe(200);
     expect(pageHtml).toContain("The tide bell rings.");
     expect(pageHtml).not.toContain("docs.google.com");
+    expect(playerCampaign.status).toBe(200);
+    expect(playerCampaignHtml).toContain('<a href="/campaigns/rovnost-shadows/wiki/canal-clue">Canal Clue</a>');
     expect(imports.status).toBe(200);
     expect(importsHtml).toContain("Canal Clue");
     expect(importsHtml).toContain("Saved to campaign content.");

@@ -9,6 +9,7 @@ import type {
   CharacterSheetReadModel,
   CampaignFaction,
 } from "../../../db";
+import { Breadcrumbs } from "../../molecules/Breadcrumbs";
 import { SiteHeader } from "../../molecules/SiteHeader";
 import { SheetHeader } from "../../organisms/SheetHeader";
 import { type SheetTabId } from "../../organisms/SheetTabs";
@@ -47,11 +48,10 @@ export const SheetPage = ({
       <div class="shell sheet-shell">
         <SiteHeader appName={appName} currentSection="sheet" user={user} />
         <main class="sheet-main" aria-labelledby="sheet-heading">
-          <nav class="breadcrumb-nav" aria-label="Breadcrumb">
-            <a href="/characters">Characters</a>
-            <span aria-hidden="true">/</span>
-            <span>{sheet.name}</span>
-          </nav>
+          <Breadcrumbs items={[
+            { href: "/characters", label: "Characters" },
+            { current: true, href: `/sheet/${sheet.slug}`, label: sheet.name },
+          ]} />
           <SheetTabWorkspace
             activeTab={activeTab}
             backgroundEntries={backgroundEntries}

@@ -18,6 +18,7 @@ describe("SiteHeader", () => {
     expect(html).toContain('<a class="site-brand" href="/">');
     expect(html).toContain('popovertarget="site-menu-panel"');
     expect(html).toContain('<a class="popover-menu-item" href="/" role="menuitem">Home</a>');
+    expect(html).toContain('<a class="popover-menu-item" href="/campaigns/rovnost-shadows" role="menuitem">Campaign</a>');
     expect(html).toContain(
       '<a class="popover-menu-item" href="/characters" role="menuitem" aria-current="page">Characters</a>',
     );
@@ -97,6 +98,7 @@ describe("SiteHeader", () => {
     expect(html).toContain(
       '<a class="popover-menu-item" href="/admin" role="menuitem" aria-current="page">Admin</a>',
     );
+    expect(html).toContain('<a class="popover-menu-item" href="/campaigns/rovnost-shadows" role="menuitem">Campaign</a>');
     expect(html).toContain('<a class="popover-menu-item" href="/characters" role="menuitem">Characters</a>');
   });
 });

@@ -76,6 +76,8 @@ describe("CampaignPage", () => {
 
     expect(html).toContain("<title>Rovnost Shadows - Campaign Ledger</title>");
     expect(html).toContain('<header id="site-header" class="site-header">');
+    expect(html).toContain('<nav class="breadcrumbs" aria-label="Breadcrumb">');
+    expect(html).toContain('<a href="/campaigns/rovnost-shadows" aria-current="page">Rovnost Shadows</a>');
     expect(html).toContain(
       '<a class="popover-menu-item" href="/campaigns/rovnost-shadows" role="menuitem" aria-current="page">Campaign</a>',
     );
@@ -94,6 +96,51 @@ describe("CampaignPage", () => {
     expect(html).toContain('href="/campaigns/rovnost-shadows/prep"');
     expect(html).toContain('href="/campaigns/rovnost-shadows/npcs"');
     expect(html).toContain('href="/campaigns/rovnost-shadows/images"');
+  });
+
+  test("renders player campaign wiki discovery links", () => {
+    const html = render(
+      <CampaignPage
+        appName="Campaign Ledger"
+        campaign={{
+          gmUserId: "user_game_master",
+          id: "campaign_rovnost_shadows",
+          name: "Rovnost Shadows",
+          slug: "rovnost-shadows",
+        }}
+        gameMasterDisplayName="Game Master"
+        imageAssets={[]}
+        members={[{
+          campaignId: "campaign_rovnost_shadows",
+          role: "player",
+          userId: "user_lynott_player",
+        }]}
+        ruleSources={[]}
+        sessions={[]}
+        user={{ campaignRoles: ["player"], displayName: "Lynott Player", role: "player" }}
+        viewerRole="player"
+        wikiPages={[{
+          bodyMarkdown: "# Players Guide",
+          campaignId: "campaign_rovnost_shadows",
+          coverImageAssetId: null,
+          id: "wiki_players_guide",
+          pageType: "campaign",
+          slug: "players-guide",
+          sourcePath: null,
+          sourceTitle: null,
+          tags: ["player-facing"],
+          title: "Players Guide",
+          visibility: "player",
+        }]}
+      />,
+    );
+
+    expect(html).toContain('<a class="popover-menu-item" href="/campaigns/rovnost-shadows" role="menuitem" aria-current="page">Campaign</a>');
+    expect(html).toContain('<a class="action-link action-link-secondary" href="/campaigns/rovnost-shadows#campaign-wiki-heading">Wiki</a>');
+    expect(html).toContain('<h2 id="campaign-wiki-heading" class="panel-heading">Pages</h2>');
+    expect(html).toContain('<a href="/campaigns/rovnost-shadows/wiki/players-guide">Players Guide</a>');
+    expect(html).not.toContain("Prep workspace");
+    expect(html).not.toContain("Add wiki page");
   });
 
   test("renders image library and detail metadata for Game Masters", () => {
@@ -153,6 +200,8 @@ describe("CampaignPage", () => {
     expect(library).toContain("Fallback active");
     expect(library).toContain("2 uses");
     expect(detail).toContain("<title>Campaign cover - Images - Rovnost Shadows - Campaign Ledger</title>");
+    expect(detail).toContain('<a href="/campaigns/rovnost-shadows/images">Images</a>');
+    expect(detail).toContain('<a href="/campaigns/rovnost-shadows/images/asset_rovnost_cover" aria-current="page">Campaign cover</a>');
     expect(detail).toContain("Storage key");
     expect(detail).toContain("campaigns/rovnost-shadows/cover.png");
     expect(detail).toContain("Rovnost Shadows Overview");
@@ -246,10 +295,12 @@ describe("CampaignPage", () => {
     );
 
     expect(list).toContain("<title>NPCs - Rovnost Shadows - Campaign Ledger</title>");
+    expect(list).toContain('<a href="/campaigns/rovnost-shadows/npcs" aria-current="page">NPCs</a>');
     expect(list).toContain('action="/campaigns/rovnost-shadows/npcs"');
     expect(list).toContain('href="/campaigns/rovnost-shadows/npcs/canal-broker"');
     expect(list).toContain("Selected players");
     expect(detail).toContain("Private motive.");
+    expect(detail).toContain('<a href="/campaigns/rovnost-shadows/npcs/canal-broker" aria-current="page">Canal Broker</a>');
     expect(detail).toContain("Portrait: Canal Broker portrait");
     expect(detail).toContain("Works for Tidebound.");
     expect(detail).toContain("Make public");
@@ -349,6 +400,8 @@ describe("CampaignPage", () => {
     );
 
     expect(html).toContain("<title>Player preview - Rovnost Shadows - Campaign Ledger</title>");
+    expect(html).toContain('<a href="/campaigns/rovnost-shadows/prep">Prep workspace</a>');
+    expect(html).toContain('<a href="/campaigns/rovnost-shadows/preview/player" aria-current="page">Player preview</a>');
     expect(html).toContain("Previewing as Lynott Player");
     expect(html).toContain("Visibility audit");
     expect(html).toContain("Visible to Lynott Player");
