@@ -15,7 +15,7 @@ sources:
     visibility: campaign
     precedence: 20
   - code: MPMM
-    title: Mordenkainen Presents: Monsters of the Multiverse
+    title: "Mordenkainen Presents: Monsters of the Multiverse"
     abbreviation: MPMM
     visibility: campaign
     precedence: 30

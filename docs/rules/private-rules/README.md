@@ -13,6 +13,7 @@ The schema is split into small files so later importer work can validate one con
   point-buy ability-score models.
 - [subclass-mechanics.yml](./subclass-mechanics.yml) documents prerequisites, grants, choices, and
   reusable mechanics records.
+- [importer.md](./importer.md) documents the Railway shell import command and hosted backup guard.
 
 Use [private-rules.example.yaml](../private-rules.example.yaml) as a safe shape reference. It uses
 dummy names and short synthetic descriptions only; do not copy proprietary rules text into git.
