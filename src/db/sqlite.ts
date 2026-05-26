@@ -2811,9 +2811,10 @@ class SqliteRulesRepository implements RulesRepository {
         ${clause}
         group by entities.id, mechanics.id
         order by entities.entity_type,
-          entities.name,
+          entities.slug,
           case when sources.visibility = 'campaign' then 1 else 0 end desc,
           sources.precedence desc,
+          entities.name,
           mechanics.id`,
       )
       .all(...values);

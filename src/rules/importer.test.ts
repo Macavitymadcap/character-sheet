@@ -249,7 +249,7 @@ describe("rules importer", () => {
         "  - id: private_bless",
         "    slug: bless",
         "    type: spell",
-        "    name: Bless",
+        "    name: Zzz Bless",
         "    source:",
         "      sourceCode: PHB",
         "      page: 219",
@@ -314,6 +314,7 @@ describe("rules importer", () => {
       ).toMatchObject({
         contentCategory: "third_party",
         description: expect.stringContaining("Synthetic private spell text only."),
+        name: "Zzz Bless",
         sourceAbbreviation: "PHB",
         sourceVisibility: "campaign",
       });
