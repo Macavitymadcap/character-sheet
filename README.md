@@ -201,6 +201,8 @@ bun run protect:branches
 
 The SRD import contract is documented in [SRD 5.1 Rules Import Contract](./docs/rules-srd-import.md). The full local SRD corpus lives under `docs/rules/srd-5.1/`; `docs/rules/srd-5.1-fixtures/` contains small parser-contract fixtures only. Existing Lynott rules from non-SRD sources remain supported as local or third-party rule-source categories.
 
+The private rules v1 operator contract is documented in [Private Rules YAML Schema](./docs/rules/private-rules/README.md), with a safe dummy fixture at [private-rules.example.yaml](./docs/rules/private-rules.example.yaml). Real owned-book YAML must stay outside git, normally on the Railway volume at `/data/private-rules`, and remain campaign-scoped unless a source is explicitly SRD/licensed.
+
 Public users can browse SRD rules at `/rules`, filter by type, spell level, equipment category, and search text, and open public detail pages such as `/rules/spell/bless`. Signed-in campaign members can also see permitted local or campaign-scoped private sources. Sheet spell and feature entries link back to their rule detail pages where imported rule links exist.
 
 ## Deployment Readiness

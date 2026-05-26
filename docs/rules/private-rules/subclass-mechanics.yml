@@ -1,0 +1,82 @@
+schemaVersion: 1
+prerequisiteKinds:
+  - class_level
+  - character_level
+  - ability_score
+  - species
+  - subclass
+  - feature
+  - spellcasting
+  - pact_boon
+  - proficiency
+  - equipment
+  - manual
+grantTargets:
+  - ability_score
+  - armour_class_modifier
+  - condition
+  - equipment
+  - feature
+  - hit_die
+  - hit_points
+  - language
+  - proficiency
+  - resource
+  - senses
+  - speed
+  - spell
+choiceKinds:
+  - ability_score
+  - equipment
+  - feature_option
+  - language
+  - proficiency
+  - spell
+  - tool
+mechanicKinds:
+  - action_timing
+  - armour_class
+  - attack
+  - charges
+  - condition
+  - damage
+  - defence
+  - duration
+  - healing
+  - range
+  - reset_cadence
+  - resource
+  - saving_throw
+  - scaling
+  - senses
+  - speed
+  - spellcasting
+records:
+  prerequisite:
+    fields:
+      kind: Value from prerequisiteKinds.
+      target: Rule slug, class name, ability name, or manual label.
+      minimum: Optional numeric threshold.
+      note: Optional operator note.
+  grant:
+    fields:
+      target: Value from grantTargets.
+      value: Granted value, rule slug, or structured object.
+      amount: Optional numeric amount.
+      duration: Optional duration.
+      sourceLevel: Optional class, subclass, or character level.
+      auditLabel: Human-readable audit label.
+  choice:
+    fields:
+      kind: Value from choiceKinds.
+      choose: Number of choices.
+      from: List, all, or rule-filter object.
+      grants: Grants applied by each selected choice.
+      optional: Whether the choice can be skipped.
+      auditLabel: Human-readable audit label.
+  mechanic:
+    fields:
+      kind: Value from mechanicKinds.
+      data: Structured data for the rule renderer and later automation.
+      display: Short table-use display label.
+      sourceLevel: Optional class, subclass, or character level.

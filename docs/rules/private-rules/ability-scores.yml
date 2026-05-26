@@ -1,0 +1,78 @@
+schemaVersion: 1
+abilityNames:
+  - strength
+  - dexterity
+  - constitution
+  - intelligence
+  - wisdom
+  - charisma
+models:
+  - mode: fixed
+    description: PHB-style fixed species or legacy race bonuses.
+    fields:
+      bonuses: Map of ability name to numeric bonus.
+    example:
+      mode: fixed
+      bonuses:
+        constitution: 2
+        wisdom: 1
+  - mode: flexible_plus_two_plus_one
+    description: Choose one +2 and a different +1.
+    fields:
+      plusTwo: Choice definition for the +2 ability.
+      plusOne: Choice definition for the +1 ability.
+      disallowSameAbility: true
+    example:
+      mode: flexible_plus_two_plus_one
+      plusTwo:
+        choose: 1
+        from: all
+      plusOne:
+        choose: 1
+        from: all
+      disallowSameAbility: true
+  - mode: flexible_three_plus_one
+    description: Choose three different +1 bonuses.
+    fields:
+      plusOne:
+        choose: 3
+        from: all
+      disallowSameAbility: true
+    example:
+      mode: flexible_three_plus_one
+      plusOne:
+        choose: 3
+        from: all
+      disallowSameAbility: true
+  - mode: feat_choice
+    description: Feat grants an ability increase chosen from a constrained list.
+    fields:
+      bonus: Numeric bonus.
+      choose: Number of abilities to choose.
+      from: Ability list or all.
+    example:
+      mode: feat_choice
+      bonus: 1
+      choose: 1
+      from:
+        - intelligence
+        - wisdom
+        - charisma
+  - mode: manual
+    description: Manual fallback for table-specific or incomplete automation.
+    fields:
+      note: Required operator explanation.
+    example:
+      mode: manual
+      note: Operator will enter final scores on the sheet.
+  - mode: point_buy
+    description: Character creation point-buy metadata for later creator work.
+    fields:
+      budget: Point budget.
+      minimum: Minimum score before bonuses.
+      maximum: Maximum score before bonuses.
+    example:
+      mode: point_buy
+      budget: 27
+      minimum: 8
+      maximum: 15

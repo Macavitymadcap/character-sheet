@@ -345,6 +345,9 @@ The importer lives behind `RulesImportService` and `RulesSeedRepository`. The SR
 contract in `docs/rules-srd-import.md` keeps the epic offline and local-first: full corpus files
 belong under `docs/rules/srd-5.1/`, contract fixtures live under
 `docs/rules/srd-5.1-fixtures/`, and unsupported files are reported without failing the import.
+The private-rules v1 contract in `docs/rules/private-rules/` documents operator-supplied YAML for
+owned PHB, DMG, MM, Tasha's, Xanathar's, and Mordenkainen data; the repository only stores the
+schema and safe fixtures, while real private YAML remains outside git on `/data/private-rules`.
 Rule sources are categorised as `srd`, `local`, `third_party`, or campaign-scoped private material
 so the app can import SRD data without deleting or mislabelling existing non-SRD rules.
 Runtime rules reads stay behind `RulesRepository`, which exposes type counts, filtered/searchable
@@ -447,7 +450,7 @@ flowchart LR
     I -- "No" --> J["Epic PR into main"]
 ```
 
-Release automation can be added after the MVP scaffold exists. The group-use MVP is ready for local checkout, seed, verification, table rehearsal, public SRD browsing, browser-local play, campaign private rules, imported SRD 5.1 rules, Game Master prep, private NPC dossiers, local campaign images, player preview, staged content import, and manual Google Docs import. `sheet-0020` completed the full SRD rules roadmap slice. `sheet-0030` completed the Railway rehearsal path. `sheet-0050` completed the campaign companion, public play, and rules-content product slice. `sheet-0040` completed Hyper-Dank package adoption. `sheet-0061` completes Game Master prep, private NPCs, content import, and GitHub Project workflow on top of the adopted shared UI, transport, data, and automation primitives.
+Release automation can be added after the MVP scaffold exists. The group-use MVP is ready for local checkout, seed, verification, table rehearsal, public SRD browsing, browser-local play, campaign private rules, imported SRD 5.1 rules, Game Master prep, private NPC dossiers, local campaign images, player preview, staged content import, and manual Google Docs import. `sheet-0020` completed the full SRD rules roadmap slice. `sheet-0030` completed the Railway rehearsal path. `sheet-0050` completed the campaign companion, public play, and rules-content product slice. `sheet-0040` completed Hyper-Dank package adoption. `sheet-0061` completes Game Master prep, private NPCs, content import, and GitHub Project workflow on top of the adopted shared UI, transport, data, and automation primitives. `sheet-0084` starts the Rovnost Friday table-readiness path with a private-rules YAML schema before importer and coverage work.
 
 ## Design Decisions
 
