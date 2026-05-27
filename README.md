@@ -193,6 +193,14 @@ bun run import:rules -- docs/rules/spells/level-1/cure-wounds.md
 
 `bun run import:rules:private` imports operator-supplied private YAML into the Rovnost campaign. It defaults to `/data/private-rules`, requires a hosted backup confirmation for that production volume, keeps imported owned-book sources campaign-scoped, and reports skipped, failed, duplicate, and SRD-shadowed entries. See [Private Rules Importer](./docs/rules/private-rules/importer.md).
 
+`bun run import:rules:ocr` converts operator-owned OCR Markdown into Campaign Ledger private-rules
+YAML/JSON before import. It defaults to reading `/data/private-rules/ocr-markdown`, writing
+`/data/private-rules`, and excluding incomplete OCR spell and monster entries:
+
+```bash
+bun run import:rules:ocr -- --input-dir /data/private-rules/ocr-markdown --output-dir /data/private-rules
+```
+
 `bun run rules:coverage:rovnost` reports the Friday-required private source coverage and Lynott's private rule links after an import. Run it against `/data/private-rules` before the Friday acceptance check:
 
 ```bash

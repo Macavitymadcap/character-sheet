@@ -148,6 +148,9 @@ describe("documentation references", () => {
     expect(importer).toContain("[Rovnost Friday Readiness Acceptance](../../operations/rovnost-friday-readiness-acceptance.md)");
     expect(projectTracking).toContain("[Rovnost Friday Readiness Acceptance](./operations/rovnost-friday-readiness-acceptance.md)");
     expect(readme).toContain("bun run rules:coverage:rovnost");
+    expect(readme).toContain("bun run import:rules:ocr");
+    expect(importer).toContain("bun run import:rules:ocr");
+    expect(acceptance).toContain("bun run import:rules:ocr -- --input-dir /data/private-rules/ocr-markdown --output-dir /data/private-rules");
     expect(acceptance).toContain("Friday, 29 May 2026");
     expect(acceptance).toContain("PRIVATE_RULES_BACKUP_CONFIRMED=1 bun run import:rules:private -- /data/private-rules");
     expect(acceptance).toContain("bun run hosted:data -- backup");

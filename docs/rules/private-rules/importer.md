@@ -14,6 +14,35 @@ For local fixture checks, pass a local directory or file:
 bun run import:rules:private -- docs/rules/private-rules.example.yaml
 ```
 
+## OCR Markdown Export
+
+`bun run import:rules:ocr` converts operator-owned OCR Markdown into Campaign Ledger private-rules
+YAML and JSON before the private import step. It defaults to Railway-friendly paths:
+
+```bash
+bun run import:rules:ocr
+```
+
+The default input directory is `/data/private-rules/ocr-markdown`; the default output directory is
+`/data/private-rules`. Override both for local checks:
+
+```bash
+bun run import:rules:ocr -- --input-dir ./private-ocr-markdown --output-dir ./private-rules
+```
+
+The exporter recognises `phb.md`, `dmg.md`, `mm.md`, `xgte.md`, `tcoe.md`, and `mpmm.md`, plus the
+OCR filenames used by the source scans. Spells and monster stat blocks are excluded by default
+because those OCR sections are incomplete; provide them through a dedicated spell/statblock source
+or deliberately override the exclusion list:
+
+```bash
+bun run import:rules:ocr -- --exclude-types spell,monster
+PRIVATE_RULES_OCR_EXCLUDE_TYPES=monster bun run import:rules:ocr
+```
+
+Generated files follow the v1 private-rules contract: `schemaVersion: 1`, `campaign`, `sources`,
+`entities`, and `importNotes`.
+
 ## Hosted Runbook
 
 Before importing private production data, create a hosted backup:
