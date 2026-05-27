@@ -208,9 +208,20 @@ export interface CharacterSheetReadModel {
 
 export interface CharacterRepository {
   createCharacter(input: CreateCharacterInput): CharacterSheetReadModel;
+  recordRuleChoice(input: {
+    auditEvent: CharacterRuleChoice["auditEvent"];
+    auditLabel: string;
+    characterId: string;
+    choiceKey: string;
+    chosenValues: string[];
+    notes?: string;
+    rulesEntityId?: string | null;
+    sourceLevel?: number | null;
+  }): CharacterRuleChoice;
   getAccessContext(characterId: string): CharacterAccessContext | null;
   getSheetById(id: string): CharacterSheetReadModel | null;
   getSheetBySlug(slug: string): CharacterSheetReadModel | null;
+  listRuleChoices(characterId: string): CharacterRuleChoice[];
   listCharactersForCampaign(campaignId: string): CharacterRosterItem[];
   listCharactersForPlayer(userId: string): CharacterRosterItem[];
   listBackgroundEntries(characterId: string): CharacterBackgroundEntry[];
@@ -641,6 +652,20 @@ export interface CharacterRuleLink {
   sourceSlug: string;
 }
 
+export interface CharacterRuleChoice {
+  auditEvent: "character_creation" | "level_up" | "manual_adjustment";
+  auditLabel: string;
+  characterId: string;
+  choiceKey: string;
+  chosenValues: string[];
+  createdAt?: string;
+  id: string;
+  notes: string;
+  sourceLevel: number | null;
+  rulesEntityId: string | null;
+  updatedAt?: string;
+}
+
 export interface RulesRepository {
   getRuleDetail(entityType: RuleEntityType, slug: string, filters?: RuleAccessFilters): RuleDetail | null;
   listRuleEntityTypes(filters?: RuleAccessFilters): RuleEntityTypeCount[];
@@ -720,6 +745,110 @@ export interface RulesSeedRepository {
     filters?: RuleAccessFilters,
   ): RuleEntityReference | null;
   upsertRuleEntity(entity: RuleEntitySeedInput): UpsertedRuleEntity;
+}
+
+export type RuleAbilityScoreModel =
+  | {
+    bonuses: Partial<Record<AbilityName, number>>;
+    mode: "fixed";
+  }
+  | {
+    disallowSameAbility: boolean;
+    mode: "flexible_plus_two_plus_one";
+    plusOne: RuleChoiceDefinition;
+    plusTwo: RuleChoiceDefinition;
+  }
+  | {
+    disallowSameAbility: boolean;
+    mode: "flexible_three_plus_one";
+    plusOne: RuleChoiceDefinition;
+  }
+  | {
+    bonus: number;
+    choose: number;
+    from: RuleChoiceSource;
+    mode: "feat_choice";
+  }
+  | {
+    mode: "manual";
+    note: string;
+  }
+  | {
+    budget: number;
+    maximum: number;
+    minimum: number;
+    mode: "point_buy";
+  };
+
+export type RuleChoiceKind =
+  | "ability_score"
+  | "equipment"
+  | "feature_option"
+  | "language"
+  | "proficiency"
+  | "spell"
+  | "tool";
+
+export type RuleEffectTarget =
+  | "ability_score"
+  | "armour_class_modifier"
+  | "condition"
+  | "equipment"
+  | "feature"
+  | "hit_die"
+  | "hit_points"
+  | "language"
+  | "proficiency"
+  | "resource"
+  | "senses"
+  | "speed"
+  | "spell";
+
+export type RulePrerequisiteKind =
+  | "ability_score"
+  | "character_level"
+  | "class_level"
+  | "equipment"
+  | "feature"
+  | "manual"
+  | "pact_boon"
+  | "proficiency"
+  | "species"
+  | "spellcasting"
+  | "subclass";
+
+export type RuleChoiceSource = "all" | string[] | {
+  entityType?: RuleEntityType | RuleChoiceKind | RuleEffectTarget;
+  sourceSlug?: string;
+  tag?: string;
+};
+
+export interface RuleChoiceDefinition {
+  choose: number;
+  from: RuleChoiceSource;
+}
+
+export interface RuleEffectGrant {
+  amount?: number;
+  auditLabel: string;
+  duration?: string;
+  sourceLevel?: number;
+  target: RuleEffectTarget;
+  value: unknown;
+}
+
+export interface RuleChoiceRecord extends RuleChoiceDefinition {
+  auditLabel: string;
+  grants: RuleEffectGrant[];
+  kind: RuleChoiceKind;
+  optional: boolean;
+}
+
+export interface RulePrerequisiteRecord {
+  kind: RulePrerequisiteKind;
+  minimum?: number;
+  note?: string;
+  target: string;
 }
 
 export interface RuleEntityReference {

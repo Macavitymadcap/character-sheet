@@ -1053,6 +1053,46 @@ describe("SQLite repositories", () => {
       .toContain("ash_vale");
   });
 
+  test("records auditable character rule choices separately from final sheet values", () => {
+    runtime = createSqliteDatabase({ path: ":memory:" });
+    const characters = runtime.repositories.characterRepository;
+    const first = characters.recordRuleChoice({
+      auditEvent: "character_creation",
+      auditLabel: "Flexible +2 ability",
+      characterId: "character_lynott_magulbisson",
+      choiceKey: "species.synthetic-lineage.plus-two",
+      chosenValues: ["dexterity"],
+      notes: "Chosen during private species import rehearsal.",
+      rulesEntityId: "rule_fey_gift",
+    });
+    const updated = characters.recordRuleChoice({
+      auditEvent: "character_creation",
+      auditLabel: "Flexible +2 ability",
+      characterId: "character_lynott_magulbisson",
+      choiceKey: "species.synthetic-lineage.plus-two",
+      chosenValues: ["constitution"],
+      rulesEntityId: "rule_fey_gift",
+      sourceLevel: 1,
+    });
+
+    expect(updated.id).toBe(first.id);
+    expect(characters.listRuleChoices("character_lynott_magulbisson")).toEqual([
+      expect.objectContaining({
+        auditEvent: "character_creation",
+        auditLabel: "Flexible +2 ability",
+        choiceKey: "species.synthetic-lineage.plus-two",
+        chosenValues: ["constitution"],
+        notes: "",
+        rulesEntityId: "rule_fey_gift",
+        sourceLevel: 1,
+      }),
+    ]);
+    expect(characters.getSheetById("character_lynott_magulbisson")).toMatchObject({
+      name: "Lynott Magulbisson",
+      species: "Hobgoblin",
+    });
+  });
+
   test("filters seeded wiki pages, image assets, sessions, and factions by campaign visibility", () => {
     runtime = createSqliteDatabase({ path: ":memory:" });
     const content = runtime.repositories.campaignContentRepository;

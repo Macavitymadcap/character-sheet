@@ -42,6 +42,7 @@ import type {
   CharacterProficiency,
   CharacterRepository,
   CharacterResource,
+  CharacterRuleChoice,
   CharacterRuleLink,
   CharacterRosterItem,
   CharacterSense,
@@ -209,6 +210,20 @@ interface CharacterResourceRow {
   max_value: number | null;
   resource_key: string;
   resource_type: string;
+}
+
+interface CharacterRuleChoiceRow {
+  audit_event: CharacterRuleChoice["auditEvent"];
+  audit_label: string;
+  character_id: string;
+  choice_key: string;
+  chosen_values_json: string;
+  created_at: string;
+  id: string;
+  notes: string;
+  rules_entity_id: string | null;
+  source_level: number | null;
+  updated_at: string;
 }
 
 interface CharacterEquipmentRow {
@@ -960,6 +975,56 @@ class SqliteCharacterRepository implements CharacterRepository {
     return this.getSheetById(characterId)!;
   }
 
+  recordRuleChoice(input: {
+    auditEvent: CharacterRuleChoice["auditEvent"];
+    auditLabel: string;
+    characterId: string;
+    choiceKey: string;
+    chosenValues: string[];
+    notes?: string;
+    rulesEntityId?: string | null;
+    sourceLevel?: number | null;
+  }): CharacterRuleChoice {
+    const id = randomUUID();
+    const chosenValues = input.chosenValues
+      .map((value) => value.trim())
+      .filter(Boolean);
+    const existing = this.database
+      .query<{ id: string }, [string, string, CharacterRuleChoice["auditEvent"]]>(
+        `select id from character_rule_choices
+         where character_id = ? and choice_key = ? and audit_event = ?`,
+      )
+      .get(input.characterId, input.choiceKey, input.auditEvent);
+    const choiceId = existing?.id ?? id;
+
+    this.database.run(
+      `insert into character_rule_choices (
+        id, character_id, rules_entity_id, choice_key, chosen_values_json, audit_event,
+        audit_label, source_level, notes, updated_at
+      ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+      on conflict(character_id, choice_key, audit_event) do update set
+        rules_entity_id = excluded.rules_entity_id,
+        chosen_values_json = excluded.chosen_values_json,
+        audit_label = excluded.audit_label,
+        source_level = excluded.source_level,
+        notes = excluded.notes,
+        updated_at = CURRENT_TIMESTAMP`,
+      [
+        choiceId,
+        input.characterId,
+        input.rulesEntityId ?? null,
+        input.choiceKey,
+        JSON.stringify(chosenValues),
+        input.auditEvent,
+        input.auditLabel.trim(),
+        input.sourceLevel ?? null,
+        input.notes?.trim() ?? "",
+      ],
+    );
+
+    return this.listRuleChoices(input.characterId).find((choice) => choice.id === choiceId)!;
+  }
+
   getAccessContext(characterId: string): CharacterAccessContext | null {
     const row = this.database
       .query<CharacterAccessRow, [string]>(
@@ -982,6 +1047,19 @@ class SqliteCharacterRepository implements CharacterRepository {
 
   getSheetBySlug(slug: string): CharacterSheetReadModel | null {
     return this.getSheetBy("slug", slug);
+  }
+
+  listRuleChoices(characterId: string): CharacterRuleChoice[] {
+    return this.database
+      .query<CharacterRuleChoiceRow, [string]>(
+        `select id, character_id, rules_entity_id, choice_key, chosen_values_json, audit_event,
+          audit_label, source_level, notes, created_at, updated_at
+         from character_rule_choices
+         where character_id = ?
+         order by created_at, choice_key`,
+      )
+      .all(characterId)
+      .map(toCharacterRuleChoice);
   }
 
   listCharactersForPlayer(userId: string): CharacterRosterItem[] {
@@ -3093,6 +3171,22 @@ function toCharacterResource(row: CharacterResourceRow): CharacterResource {
     label: row.label,
     max: row.max_value,
     type: row.resource_type,
+  };
+}
+
+function toCharacterRuleChoice(row: CharacterRuleChoiceRow): CharacterRuleChoice {
+  return {
+    auditEvent: row.audit_event,
+    auditLabel: row.audit_label,
+    characterId: row.character_id,
+    choiceKey: row.choice_key,
+    chosenValues: parseStringArray(row.chosen_values_json),
+    createdAt: row.created_at,
+    id: row.id,
+    notes: row.notes,
+    rulesEntityId: row.rules_entity_id,
+    sourceLevel: row.source_level,
+    updatedAt: row.updated_at,
   };
 }
 

@@ -2,9 +2,18 @@ import { readdir, readFile, stat } from "node:fs/promises";
 import { basename, join } from "node:path";
 import { parse as parseYaml } from "yaml";
 import type {
+  AbilityName,
   RuleEntitySeedInput,
   RuleEntityType,
+  RuleAbilityScoreModel,
+  RuleChoiceKind,
+  RuleChoiceRecord,
+  RuleChoiceSource,
+  RuleEffectGrant,
+  RuleEffectTarget,
   RuleMechanicSeedInput,
+  RulePrerequisiteKind,
+  RulePrerequisiteRecord,
   RulesSeedRepository,
   RulesSourceSeedInput,
   UpsertedRuleEntity,
@@ -254,14 +263,18 @@ function privateEntityFromYaml(
     source: source.abbreviation,
     sourceReference,
   };
+  const abilityScores = normaliseAbilityScoreModel(entity.abilityScores, `entities[${index}].abilityScores`);
+  const prerequisites = normalisePrerequisites(entity.prerequisites, `entities[${index}].prerequisites`);
+  const grants = normaliseGrants(entity.grants, `entities[${index}].grants`);
+  const choices = normaliseChoices(entity.choices, `entities[${index}].choices`);
   const baseData = {
-    abilityScores: entity.abilityScores ?? null,
-    choices: entity.choices ?? [],
+    abilityScores,
+    choices,
     description: normaliseRuleText(bodyMarkdown || summary),
-    grants: entity.grants ?? [],
+    grants,
     links: entity.links ?? [],
     metadata: entity.metadata ?? {},
-    prerequisites: entity.prerequisites ?? [],
+    prerequisites,
     privateRules: true,
     provenance,
     searchableText: normaliseRuleText(stripMarkdown(`${summary}\n${bodyMarkdown}`)),
@@ -309,6 +322,140 @@ function privateMechanics(mechanics: unknown, provenance: Record<string, unknown
   });
 }
 
+function normaliseAbilityScoreModel(value: unknown, label: string): RuleAbilityScoreModel | null {
+  if (value === undefined || value === null) return null;
+  const record = requiredRecord(value, label);
+  const mode = requiredString(record.mode, `${label}.mode`);
+
+  if (mode === "fixed") {
+    const bonuses = requiredRecord(record.bonuses, `${label}.bonuses`);
+    const normalised: Partial<Record<AbilityName, number>> = {};
+    for (const [ability, bonus] of Object.entries(bonuses)) {
+      normalised[normaliseAbilityName(ability, `${label}.bonuses`)] = requiredNumber(bonus, `${label}.bonuses.${ability}`);
+    }
+
+    return { bonuses: normalised, mode };
+  }
+  if (mode === "flexible_plus_two_plus_one") {
+    return {
+      disallowSameAbility: optionalBoolean(record.disallowSameAbility, true),
+      mode,
+      plusOne: normaliseChoiceDefinition(record.plusOne, `${label}.plusOne`),
+      plusTwo: normaliseChoiceDefinition(record.plusTwo, `${label}.plusTwo`),
+    };
+  }
+  if (mode === "flexible_three_plus_one") {
+    return {
+      disallowSameAbility: optionalBoolean(record.disallowSameAbility, true),
+      mode,
+      plusOne: normaliseChoiceDefinition(record.plusOne, `${label}.plusOne`),
+    };
+  }
+  if (mode === "feat_choice") {
+    return {
+      bonus: requiredNumber(record.bonus, `${label}.bonus`),
+      choose: requiredPositiveInteger(record.choose, `${label}.choose`),
+      from: normaliseChoiceSource(record.from, `${label}.from`),
+      mode,
+    };
+  }
+  if (mode === "manual") {
+    return {
+      mode,
+      note: requiredString(record.note, `${label}.note`),
+    };
+  }
+  if (mode === "point_buy") {
+    return {
+      budget: requiredPositiveInteger(record.budget, `${label}.budget`),
+      maximum: requiredPositiveInteger(record.maximum, `${label}.maximum`),
+      minimum: requiredPositiveInteger(record.minimum, `${label}.minimum`),
+      mode,
+    };
+  }
+
+  throw new Error(`${label}.mode must be one of ${abilityScoreModes.join(", ")}.`);
+}
+
+function normalisePrerequisites(value: unknown, label: string): RulePrerequisiteRecord[] {
+  if (value === undefined || value === null) return [];
+  return requiredArray(value, label).map((item, index) => {
+    const record = requiredRecord(item, `${label}[${index}]`);
+    const kind = normalisePrerequisiteKind(requiredString(record.kind, `${label}[${index}].kind`), `${label}[${index}].kind`);
+
+    return {
+      kind,
+      minimum: optionalNumber(record.minimum, `${label}[${index}].minimum`),
+      note: optionalTrimmedString(record.note),
+      target: requiredString(record.target, `${label}[${index}].target`),
+    };
+  });
+}
+
+function normaliseGrants(value: unknown, label: string): RuleEffectGrant[] {
+  if (value === undefined || value === null) return [];
+  return requiredArray(value, label).map((item, index) => normaliseGrant(item, `${label}[${index}]`));
+}
+
+function normaliseChoices(value: unknown, label: string): RuleChoiceRecord[] {
+  if (value === undefined || value === null) return [];
+  return requiredArray(value, label).map((item, index) => {
+    const record = requiredRecord(item, `${label}[${index}]`);
+    const kind = normaliseChoiceKind(requiredString(record.kind, `${label}[${index}].kind`), `${label}[${index}].kind`);
+
+    return {
+      auditLabel: requiredString(record.auditLabel, `${label}[${index}].auditLabel`),
+      choose: requiredPositiveInteger(record.choose, `${label}[${index}].choose`),
+      from: normaliseChoiceSource(record.from, `${label}[${index}].from`),
+      grants: normaliseGrants(record.grants, `${label}[${index}].grants`),
+      kind,
+      optional: optionalBoolean(record.optional, false),
+    };
+  });
+}
+
+function normaliseGrant(value: unknown, label: string): RuleEffectGrant {
+  const record = requiredRecord(value, label);
+
+  return {
+    amount: optionalNumber(record.amount, `${label}.amount`),
+    auditLabel: requiredString(record.auditLabel, `${label}.auditLabel`),
+    duration: optionalTrimmedString(record.duration),
+    sourceLevel: optionalNumber(record.sourceLevel, `${label}.sourceLevel`),
+    target: normaliseGrantTarget(requiredString(record.target, `${label}.target`), `${label}.target`),
+    value: record.value ?? null,
+  };
+}
+
+function normaliseChoiceDefinition(value: unknown, label: string) {
+  const record = requiredRecord(value, label);
+
+  return {
+    choose: requiredPositiveInteger(record.choose, `${label}.choose`),
+    from: normaliseChoiceSource(record.from, `${label}.from`),
+  };
+}
+
+function normaliseChoiceSource(value: unknown, label: string): RuleChoiceSource {
+  if (value === "all") return "all";
+  if (Array.isArray(value)) {
+    const values = value.map((item, index) => requiredString(item, `${label}[${index}]`));
+    if (values.length === 0) throw new Error(`${label} must not be empty.`);
+
+    return values;
+  }
+  const record = requiredRecord(value, label);
+  const source: Exclude<RuleChoiceSource, "all" | string[]> = {};
+  if (record.entityType !== undefined) source.entityType = requiredString(record.entityType, `${label}.entityType`) as RuleEntityType;
+  if (record.sourceSlug !== undefined) source.sourceSlug = requiredString(record.sourceSlug, `${label}.sourceSlug`);
+  if (record.tag !== undefined) source.tag = requiredString(record.tag, `${label}.tag`);
+  if (!source.entityType && !source.sourceSlug && !source.tag) {
+    throw new Error(`${label} must include entityType, sourceSlug, or tag.`);
+  }
+
+  return source;
+}
+
 function sourceCode(source: PrivateRulesSourceDocument) {
   return requiredString(source.code, "source.code");
 }
@@ -329,10 +476,69 @@ function requiredNumber(value: unknown, label: string) {
   return value;
 }
 
+function optionalNumber(value: unknown, label: string) {
+  if (value === undefined || value === null) return undefined;
+
+  return requiredNumber(value, label);
+}
+
+function requiredPositiveInteger(value: unknown, label: string) {
+  const number = requiredNumber(value, label);
+  if (!Number.isInteger(number) || number < 1) throw new Error(`${label} must be a positive integer.`);
+
+  return number;
+}
+
+function requiredArray(value: unknown, label: string) {
+  if (!Array.isArray(value)) throw new Error(`${label} must be an array.`);
+
+  return value;
+}
+
+function requiredRecord(value: unknown, label: string) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error(`${label} must be an object.`);
+  }
+
+  return value as Record<string, unknown>;
+}
+
+function optionalBoolean(value: unknown, fallback: boolean) {
+  return typeof value === "boolean" ? value : fallback;
+}
+
+function optionalTrimmedString(value: unknown) {
+  return typeof value === "string" && value.trim() !== "" ? value.trim() : undefined;
+}
+
 function stringArray(value: unknown) {
   return Array.isArray(value)
     ? value.filter((item): item is string => typeof item === "string" && item.trim() !== "").map((item) => item.trim())
     : [];
+}
+
+function normaliseAbilityName(value: string, label: string): AbilityName {
+  if (abilityNames.includes(value as AbilityName)) return value as AbilityName;
+
+  throw new Error(`${label} must use one of ${abilityNames.join(", ")}.`);
+}
+
+function normaliseChoiceKind(value: string, label: string): RuleChoiceKind {
+  if (choiceKinds.includes(value as RuleChoiceKind)) return value as RuleChoiceKind;
+
+  throw new Error(`${label} must use one of ${choiceKinds.join(", ")}.`);
+}
+
+function normaliseGrantTarget(value: string, label: string): RuleEffectTarget {
+  if (grantTargets.includes(value as RuleEffectTarget)) return value as RuleEffectTarget;
+
+  throw new Error(`${label} must use one of ${grantTargets.join(", ")}.`);
+}
+
+function normalisePrerequisiteKind(value: string, label: string): RulePrerequisiteKind {
+  if (prerequisiteKinds.includes(value as RulePrerequisiteKind)) return value as RulePrerequisiteKind;
+
+  throw new Error(`${label} must use one of ${prerequisiteKinds.join(", ")}.`);
 }
 
 function mapPrivateEntityType(type: string): RuleEntityType {
@@ -367,6 +573,64 @@ const privateEntityTypeMap: Record<string, RuleEntityType> = {
   subclass: "subclass",
   subclass_feature: "subclass_feature",
 };
+
+const abilityNames: AbilityName[] = [
+  "charisma",
+  "constitution",
+  "dexterity",
+  "intelligence",
+  "strength",
+  "wisdom",
+];
+
+const abilityScoreModes = [
+  "feat_choice",
+  "fixed",
+  "flexible_plus_two_plus_one",
+  "flexible_three_plus_one",
+  "manual",
+  "point_buy",
+];
+
+const choiceKinds: RuleChoiceKind[] = [
+  "ability_score",
+  "equipment",
+  "feature_option",
+  "language",
+  "proficiency",
+  "spell",
+  "tool",
+];
+
+const grantTargets: RuleEffectTarget[] = [
+  "ability_score",
+  "armour_class_modifier",
+  "condition",
+  "equipment",
+  "feature",
+  "hit_die",
+  "hit_points",
+  "language",
+  "proficiency",
+  "resource",
+  "senses",
+  "speed",
+  "spell",
+];
+
+const prerequisiteKinds: RulePrerequisiteKind[] = [
+  "ability_score",
+  "character_level",
+  "class_level",
+  "equipment",
+  "feature",
+  "manual",
+  "pact_boon",
+  "proficiency",
+  "species",
+  "spellcasting",
+  "subclass",
+];
 
 function withImportOptions(
   entity: RuleEntitySeedInput,

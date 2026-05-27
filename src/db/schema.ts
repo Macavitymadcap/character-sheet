@@ -377,6 +377,21 @@ CREATE TABLE IF NOT EXISTS character_rule_links (
   sort_order INTEGER NOT NULL DEFAULT 0,
   UNIQUE (character_id, rules_entity_id, selection_type)
 );
+
+CREATE TABLE IF NOT EXISTS character_rule_choices (
+  id TEXT PRIMARY KEY,
+  character_id TEXT NOT NULL REFERENCES characters(id) ON DELETE CASCADE,
+  rules_entity_id TEXT REFERENCES rules_entities(id) ON DELETE SET NULL,
+  choice_key TEXT NOT NULL,
+  chosen_values_json TEXT NOT NULL DEFAULT '[]',
+  audit_event TEXT NOT NULL CHECK (audit_event IN ('character_creation', 'level_up', 'manual_adjustment')),
+  audit_label TEXT NOT NULL,
+  source_level INTEGER CHECK (source_level IS NULL OR source_level >= 1),
+  notes TEXT NOT NULL DEFAULT '',
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (character_id, choice_key, audit_event)
+);
 `;
 
 const migrationStatements = [
@@ -417,6 +432,20 @@ const migrationStatements = [
     conversion_notes TEXT NOT NULL DEFAULT '',
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  )`,
+  `CREATE TABLE IF NOT EXISTS character_rule_choices (
+    id TEXT PRIMARY KEY,
+    character_id TEXT NOT NULL REFERENCES characters(id) ON DELETE CASCADE,
+    rules_entity_id TEXT REFERENCES rules_entities(id) ON DELETE SET NULL,
+    choice_key TEXT NOT NULL,
+    chosen_values_json TEXT NOT NULL DEFAULT '[]',
+    audit_event TEXT NOT NULL CHECK (audit_event IN ('character_creation', 'level_up', 'manual_adjustment')),
+    audit_label TEXT NOT NULL,
+    source_level INTEGER CHECK (source_level IS NULL OR source_level >= 1),
+    notes TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (character_id, choice_key, audit_event)
   )`,
 ];
 

@@ -26,6 +26,14 @@ link source records to the intended campaign. Inside that campaign, private sour
 shadow SRD entries with the same slug. Public `/rules` views must continue to show SRD-safe entries
 only.
 
+## Choice And Effect Boundary
+
+`sheet-0087` treats rule choices and grants as structured data, not prose-only notes. Private YAML
+may define fixed PHB-style ability bonuses, flexible ability-score choices, prerequisites, grants,
+and optional player choices. The importer normalises those records into rule mechanic JSON, while
+the application stores later character selections in `character_rule_choices` so character creation
+and levelling decisions remain auditable apart from the final sheet totals.
+
 ## Versioning
 
 The root field `schemaVersion: 1` identifies this contract. Backwards-compatible additions may add
