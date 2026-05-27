@@ -49,6 +49,10 @@ The command reports:
 - duplicate entries inside the import batch
 - SRD entries shadowed by campaign-private duplicates
 - imported counts grouped by source slug
+- Lynott private rule links relinked to campaign-scoped private entities where matching entries are
+  available
+- Rovnost coverage summary, including required source coverage, Lynott missing links, and missing
+  source files
 
 Private source entries are linked to `campaign_rovnost_shadows` by default. Override this only for a
 deliberate campaign migration:
@@ -59,3 +63,12 @@ PRIVATE_RULES_CAMPAIGN_ID=campaign_other_table bun run import:rules:private -- .
 
 Owned-book sources must stay campaign-scoped. Public visibility is rejected unless the source is
 explicitly marked as SRD or licensed public material in the YAML.
+
+For a report without importing new files, run:
+
+```bash
+bun run rules:coverage:rovnost -- /data/private-rules
+```
+
+Use `ROVNOST_RULES_APPLY_LINKS=1` or `--apply-links` with the report script to relink Lynott's
+sheet to already-imported private entries.

@@ -14,6 +14,8 @@ The schema is split into small files so later importer work can validate one con
 - [subclass-mechanics.yml](./subclass-mechanics.yml) documents prerequisites, grants, choices, and
   reusable mechanics records.
 - [importer.md](./importer.md) documents the Railway shell import command and hosted backup guard.
+- [rovnost-operator-checklist.md](./rovnost-operator-checklist.md) lists the Friday-required source
+  files and Lynott coverage checks.
 
 Use [private-rules.example.yaml](../private-rules.example.yaml) as a safe shape reference. It uses
 dummy names and short synthetic descriptions only; do not copy proprietary rules text into git.
