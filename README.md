@@ -158,6 +158,7 @@ bun run hosted:data -- status
 bun run hosted:check -- https://your-railway-domain.example
 bun run hosted:rehearse
 bun run import:rules
+bun run import:rules:private
 bun run import:rules:srd
 bun run seed
 bun run screenshots:sheet
@@ -189,6 +190,8 @@ Hosted account setup uses operator delivery mode for this epic. Admin-created in
 bun run import:rules:srd
 bun run import:rules -- docs/rules/spells/level-1/cure-wounds.md
 ```
+
+`bun run import:rules:private` imports operator-supplied private YAML into the Rovnost campaign. It defaults to `/data/private-rules`, requires a hosted backup confirmation for that production volume, keeps imported owned-book sources campaign-scoped, and reports skipped, failed, duplicate, and SRD-shadowed entries. See [Private Rules Importer](./docs/rules/private-rules/importer.md).
 
 Repository maintenance scripts:
 

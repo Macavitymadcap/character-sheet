@@ -1,5 +1,6 @@
 import { readdir, readFile, stat } from "node:fs/promises";
 import { basename, join } from "node:path";
+import { parse as parseYaml } from "yaml";
 import type {
   RuleEntitySeedInput,
   RuleEntityType,
@@ -16,11 +17,26 @@ export interface RulesImportResult {
   sourceCounts: Record<string, number>;
 }
 
+export interface PrivateRulesImportResult extends RulesImportResult {
+  backupConfirmed: boolean;
+  backupReference: string | null;
+  duplicateEntries: string[];
+  failedFiles: Array<{ filePath: string; message: string }>;
+  shadowedSrdEntries: string[];
+}
+
 export interface RulesImportOptions {
   campaignId?: string;
   publicExportEligible?: boolean;
   source?: Partial<RulesSourceSeedInput>;
   visibility?: RulesSourceSeedInput["visibility"];
+}
+
+export interface PrivateRulesImportOptions {
+  backupConfirmed?: boolean;
+  backupReference?: string | null;
+  campaignId: string;
+  importedAt?: Date;
 }
 
 export class RulesImportService {
@@ -48,7 +64,309 @@ export class RulesImportService {
       sourceCounts,
     };
   }
+
+  async importPrivateYaml(sourcePath: string, options: PrivateRulesImportOptions): Promise<PrivateRulesImportResult> {
+    const { files, skippedFiles } = await collectPrivateRuleFiles(sourcePath);
+    const entities: UpsertedRuleEntity[] = [];
+    const sourceCounts: Record<string, number> = {};
+    const duplicateEntries = new Set<string>();
+    const failedFiles: PrivateRulesImportResult["failedFiles"] = [];
+    const seenEntries = new Set<string>();
+    const shadowedSrdEntries = new Set<string>();
+    const importedAt = options.importedAt ?? new Date();
+
+    for (const filePath of files) {
+      let parsedEntities: RuleEntitySeedInput[];
+      try {
+        parsedEntities = parsePrivateRuleYaml(
+          await readFile(filePath, "utf8"),
+          filePath,
+          options.campaignId,
+          importedAt,
+        );
+      } catch (error) {
+        failedFiles.push({
+          filePath,
+          message: error instanceof Error ? error.message : String(error),
+        });
+        continue;
+      }
+
+      for (const entity of parsedEntities) {
+        const naturalKey = `${entity.source.slug}:${entity.entityType}:${entity.slug}`;
+        const campaignKey = `${entity.entityType}:${entity.slug}`;
+        if (seenEntries.has(naturalKey)) {
+          duplicateEntries.add(naturalKey);
+          continue;
+        }
+        seenEntries.add(naturalKey);
+        if (
+          this.repository.findRuleEntityReference(entity.entityType, entity.slug, {
+            contentCategory: "srd",
+          })
+        ) {
+          shadowedSrdEntries.add(campaignKey);
+        }
+
+        const upserted = this.repository.upsertRuleEntity(entity);
+        entities.push(upserted);
+        sourceCounts[upserted.source.slug] = (sourceCounts[upserted.source.slug] ?? 0) + 1;
+      }
+    }
+
+    return {
+      backupConfirmed: options.backupConfirmed ?? false,
+      backupReference: options.backupReference ?? null,
+      duplicateEntries: [...duplicateEntries].sort(),
+      entities,
+      failedFiles,
+      imported: entities.length,
+      shadowedSrdEntries: [...shadowedSrdEntries].sort(),
+      skippedFiles,
+      sourceCounts,
+    };
+  }
 }
+
+interface PrivateRulesDocument {
+  campaign?: {
+    id?: unknown;
+    name?: unknown;
+    slug?: unknown;
+  };
+  entities?: unknown;
+  schemaVersion?: unknown;
+  sources?: unknown;
+}
+
+interface PrivateRulesSourceDocument {
+  abbreviation?: unknown;
+  category?: unknown;
+  code?: unknown;
+  precedence?: unknown;
+  title?: unknown;
+  visibility?: unknown;
+}
+
+interface PrivateRulesEntityDocument {
+  abilityScores?: unknown;
+  bodyMarkdown?: unknown;
+  choices?: unknown;
+  grants?: unknown;
+  id?: unknown;
+  links?: unknown;
+  mechanics?: unknown;
+  metadata?: unknown;
+  name?: unknown;
+  prerequisites?: unknown;
+  slug?: unknown;
+  source?: {
+    note?: unknown;
+    page?: unknown;
+    section?: unknown;
+    sourceCode?: unknown;
+  };
+  summary?: unknown;
+  tags?: unknown;
+  type?: unknown;
+}
+
+function parsePrivateRuleYaml(
+  content: string,
+  filePath: string,
+  campaignId: string,
+  importedAt: Date,
+): RuleEntitySeedInput[] {
+  const parsed = parseYaml(content) as PrivateRulesDocument;
+  if (!parsed || typeof parsed !== "object") throw new Error("Private rules YAML must be an object.");
+  if (parsed.schemaVersion !== 1) throw new Error("Private rules YAML must use schemaVersion: 1.");
+  if (parsed.campaign?.id !== campaignId) {
+    throw new Error(`Private rules YAML campaign.id must be ${campaignId}.`);
+  }
+  if (!Array.isArray(parsed.sources) || parsed.sources.length === 0) {
+    throw new Error("Private rules YAML must include at least one source.");
+  }
+  if (!Array.isArray(parsed.entities) || parsed.entities.length === 0) {
+    throw new Error("Private rules YAML must include at least one entity.");
+  }
+
+  const sourcesByCode = new Map<string, RulesSourceSeedInput>();
+  for (const source of parsed.sources as PrivateRulesSourceDocument[]) {
+    const seedSource = privateSourceFromYaml(source, campaignId);
+    sourcesByCode.set(sourceCode(source), seedSource);
+  }
+
+  return (parsed.entities as PrivateRulesEntityDocument[]).map((entity, index) =>
+    privateEntityFromYaml(entity, index, sourcesByCode, filePath, importedAt),
+  );
+}
+
+function privateSourceFromYaml(source: PrivateRulesSourceDocument, campaignId: string): RulesSourceSeedInput {
+  const code = sourceCode(source);
+  const name = requiredString(source.title, `source ${code}.title`);
+  const category = optionalString(source.category, "official_2014");
+  const visibility = optionalString(source.visibility, "campaign");
+  if (visibility === "public" && !["srd", "licensed", "operator_public"].includes(category)) {
+    throw new Error(`Private source ${code} cannot use public visibility without SRD/licensed category.`);
+  }
+
+  return {
+    abbreviation: requiredString(source.abbreviation, `source ${code}.abbreviation`),
+    campaignIds: visibility === "campaign" ? [campaignId] : [],
+    contentCategory: category === "srd" ? "srd" : "third_party",
+    id: `rules_source_private_${slugify(campaignId)}_${slugify(code)}`,
+    name,
+    precedence: requiredNumber(source.precedence, `source ${code}.precedence`),
+    publicExportEligible: category === "srd",
+    slug: `${slugify(campaignId)}-${slugify(name)}`,
+    visibility: visibility === "public" ? "public" : "campaign",
+  };
+}
+
+function privateEntityFromYaml(
+  entity: PrivateRulesEntityDocument,
+  index: number,
+  sourcesByCode: Map<string, RulesSourceSeedInput>,
+  filePath: string,
+  importedAt: Date,
+): RuleEntitySeedInput {
+  const type = requiredString(entity.type, `entities[${index}].type`);
+  const entityType = mapPrivateEntityType(type);
+  const sourceCode = requiredString(entity.source?.sourceCode, `entities[${index}].source.sourceCode`);
+  const source = sourcesByCode.get(sourceCode);
+  if (!source) throw new Error(`entities[${index}] references unknown sourceCode ${sourceCode}.`);
+  const name = requiredString(entity.name, `entities[${index}].name`);
+  const slug = optionalString(entity.slug, slugify(name));
+  const tags = stringArray(entity.tags);
+  const bodyMarkdown = optionalString(entity.bodyMarkdown, "");
+  const summary = optionalString(entity.summary, "");
+  const sourceReference = {
+    note: optionalString(entity.source?.note, ""),
+    page: entity.source?.page ?? null,
+    section: optionalString(entity.source?.section, ""),
+    sourceCode,
+  };
+  const provenance = {
+    importSourcePath: normalisePath(filePath),
+    importTimestamp: importedAt.toISOString(),
+    originalPath: normalisePath(filePath),
+    ruleType: entityType,
+    source: source.abbreviation,
+    sourceReference,
+  };
+  const baseData = {
+    abilityScores: entity.abilityScores ?? null,
+    choices: entity.choices ?? [],
+    description: normaliseRuleText(bodyMarkdown || summary),
+    grants: entity.grants ?? [],
+    links: entity.links ?? [],
+    metadata: entity.metadata ?? {},
+    prerequisites: entity.prerequisites ?? [],
+    privateRules: true,
+    provenance,
+    searchableText: normaliseRuleText(stripMarkdown(`${summary}\n${bodyMarkdown}`)),
+    sourceReference,
+    summary: normaliseRuleText(summary),
+    tags: [...new Set([entityType, type, ...tags].map(slugify))].sort(),
+  };
+  const mechanics = [
+    {
+      data: baseData,
+      mechanicType: entityType,
+    },
+    ...privateMechanics(entity.mechanics, provenance),
+  ];
+
+  return {
+    entityType,
+    id: typeof entity.id === "string" && entity.id.trim() ? entity.id.trim() : undefined,
+    mechanics,
+    name,
+    slug,
+    source,
+  };
+}
+
+function privateMechanics(mechanics: unknown, provenance: Record<string, unknown>): RuleMechanicSeedInput[] {
+  if (!Array.isArray(mechanics)) return [];
+
+  return mechanics.map((mechanic, index) => {
+    if (!mechanic || typeof mechanic !== "object") {
+      throw new Error(`mechanics[${index}] must be an object.`);
+    }
+    const record = mechanic as { data?: unknown; display?: unknown; kind?: unknown; sourceLevel?: unknown };
+    const kind = requiredString(record.kind, `mechanics[${index}].kind`);
+
+    return {
+      data: {
+        data: record.data ?? {},
+        display: optionalString(record.display, ""),
+        provenance,
+        sourceLevel: record.sourceLevel ?? null,
+      },
+      mechanicType: kind,
+    };
+  });
+}
+
+function sourceCode(source: PrivateRulesSourceDocument) {
+  return requiredString(source.code, "source.code");
+}
+
+function requiredString(value: unknown, label: string) {
+  if (typeof value !== "string" || value.trim() === "") throw new Error(`${label} is required.`);
+
+  return value.trim();
+}
+
+function optionalString(value: unknown, fallback: string) {
+  return typeof value === "string" && value.trim() !== "" ? value.trim() : fallback;
+}
+
+function requiredNumber(value: unknown, label: string) {
+  if (typeof value !== "number" || !Number.isFinite(value)) throw new Error(`${label} must be a number.`);
+
+  return value;
+}
+
+function stringArray(value: unknown) {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string" && item.trim() !== "").map((item) => item.trim())
+    : [];
+}
+
+function mapPrivateEntityType(type: string): RuleEntityType {
+  const mapped = privateEntityTypeMap[type];
+  if (!mapped) throw new Error(`Unsupported private rules entity type: ${type}.`);
+
+  return mapped;
+}
+
+const privateEntityTypeMap: Record<string, RuleEntityType> = {
+  background: "background",
+  class: "class",
+  class_feature: "class_feature",
+  condition: "condition",
+  equipment: "equipment",
+  feat: "feat",
+  fighting_style: "class_feature",
+  infusion: "infusion",
+  invocation: "class_feature",
+  language: "proficiency",
+  magic_item: "equipment",
+  manoeuvre: "class_feature",
+  metamagic: "class_feature",
+  monster: "stat_block",
+  optional_rule: "core_rule",
+  pact_boon: "class_feature",
+  proficiency: "proficiency",
+  rule: "core_rule",
+  species: "species",
+  species_trait: "species_trait",
+  spell: "spell",
+  subclass: "subclass",
+  subclass_feature: "subclass_feature",
+};
 
 function withImportOptions(
   entity: RuleEntitySeedInput,
@@ -657,8 +975,41 @@ async function collectRuleFiles(sourcePath: string): Promise<CollectedRuleFiles>
   };
 }
 
+async function collectPrivateRuleFiles(sourcePath: string): Promise<CollectedRuleFiles> {
+  const sourceStats = await stat(sourcePath);
+  if (sourceStats.isFile()) {
+    return isPrivateRuleFile(sourcePath)
+      ? { files: [sourcePath], skippedFiles: [] }
+      : { files: [], skippedFiles: [sourcePath] };
+  }
+
+  const entries = await readdir(sourcePath, { withFileTypes: true });
+  const files: string[] = [];
+  const skippedFiles: string[] = [];
+
+  for (const entry of entries) {
+    const childPath = join(sourcePath, entry.name);
+    if (entry.isDirectory()) {
+      const childFiles = await collectPrivateRuleFiles(childPath);
+      files.push(...childFiles.files);
+      skippedFiles.push(...childFiles.skippedFiles);
+    }
+    if (entry.isFile() && isPrivateRuleFile(childPath)) files.push(childPath);
+    if (entry.isFile() && !isPrivateRuleFile(childPath)) skippedFiles.push(childPath);
+  }
+
+  return {
+    files: files.sort(),
+    skippedFiles: skippedFiles.sort(),
+  };
+}
+
 function isRuleFile(filePath: string) {
   return filePath.endsWith(".md") || filePath.endsWith(".json");
+}
+
+function isPrivateRuleFile(filePath: string) {
+  return filePath.endsWith(".yaml") || filePath.endsWith(".yml");
 }
 
 function splitCsv(value: string | undefined) {

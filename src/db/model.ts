@@ -714,7 +714,20 @@ export interface RulesSourceSummary {
 }
 
 export interface RulesSeedRepository {
+  findRuleEntityReference(
+    entityType: RuleEntityType,
+    slug: string,
+    filters?: RuleAccessFilters,
+  ): RuleEntityReference | null;
   upsertRuleEntity(entity: RuleEntitySeedInput): UpsertedRuleEntity;
+}
+
+export interface RuleEntityReference {
+  entityType: RuleEntityType;
+  id: string;
+  name: string;
+  slug: string;
+  source: RulesSourceSummary & { precedence: number };
 }
 
 export interface RuleSearchFilters {

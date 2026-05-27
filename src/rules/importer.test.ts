@@ -226,6 +226,155 @@ describe("rules importer", () => {
     }
   });
 
+  test("imports private YAML with campaign scope, validation reporting, and SRD shadow evidence", async () => {
+    let runtime: SqliteDatabaseRuntime | undefined;
+    const root = mkdtempSync(join(tmpdir(), "rules-private-yaml-"));
+    mkdirSync(root, { recursive: true });
+    writeFileSync(
+      join(root, "rovnost-private.yaml"),
+      [
+        "schemaVersion: 1",
+        "campaign:",
+        "  id: campaign_rovnost_shadows",
+        "  slug: rovnost-shadows",
+        "  name: Rovnost Shadows",
+        "sources:",
+        "  - code: PHB",
+        "    title: Player's Handbook",
+        "    abbreviation: PHB",
+        "    category: official_2014",
+        "    visibility: campaign",
+        "    precedence: 50",
+        "entities:",
+        "  - id: private_bless",
+        "    slug: bless",
+        "    type: spell",
+        "    name: Zzz Bless",
+        "    source:",
+        "      sourceCode: PHB",
+        "      page: 219",
+        "      section: Example Spell",
+        "    tags:",
+        "      - friday",
+        "    summary: Synthetic private duplicate.",
+        "    bodyMarkdown: Synthetic private spell text only.",
+        "    mechanics:",
+        "      - kind: spellcasting",
+        "        display: Action, 30 feet",
+        "        data:",
+        "          level: 1",
+        "          school: Enchantment",
+        "  - id: private_bless_duplicate",
+        "    slug: bless",
+        "    type: spell",
+        "    name: Bless Duplicate",
+        "    source:",
+        "      sourceCode: PHB",
+        "    summary: Duplicate should be reported and skipped.",
+        "    bodyMarkdown: Synthetic duplicate text.",
+      ].join("\n"),
+    );
+    writeFileSync(join(root, "broken.yaml"), "schemaVersion: 1\ncampaign:\n  id: wrong_campaign\nsources: []\nentities: []\n");
+    writeFileSync(join(root, "notes.txt"), "Not YAML.");
+
+    try {
+      runtime = createSqliteDatabase({ path: ":memory:" });
+      const importer = new RulesImportService(runtime.repositories.rulesSeedRepository);
+      await importer.importFromLocalSource("docs/rules/srd-5.1-fixtures/spells/level-1/bless.md");
+      const result = await importer.importPrivateYaml(root, {
+        backupConfirmed: true,
+        backupReference: "/data/backups/test.manifest.json",
+        campaignId: "campaign_rovnost_shadows",
+        importedAt: new Date("2026-05-26T12:00:00.000Z"),
+      });
+
+      expect(result.imported).toBe(1);
+      expect(result.backupConfirmed).toBe(true);
+      expect(result.backupReference).toBe("/data/backups/test.manifest.json");
+      expect(result.skippedFiles.map((filePath) => filePath.replace(root, ""))).toEqual(["/notes.txt"]);
+      expect(result.failedFiles).toEqual([
+        expect.objectContaining({
+          filePath: join(root, "broken.yaml"),
+          message: "Private rules YAML campaign.id must be campaign_rovnost_shadows.",
+        }),
+      ]);
+      expect(result.duplicateEntries).toEqual([
+        "campaign-rovnost-shadows-player-s-handbook:spell:bless",
+      ]);
+      expect(result.shadowedSrdEntries).toEqual(["spell:bless"]);
+      expect(result.sourceCounts).toEqual({ "campaign-rovnost-shadows-player-s-handbook": 1 });
+      expect(runtime.repositories.rulesRepository.getRuleDetail("spell", "bless")).toMatchObject({
+        contentCategory: "srd",
+        sourceAbbreviation: "SRD 5.1",
+      });
+      expect(
+        runtime.repositories.rulesRepository.getRuleDetail("spell", "bless", {
+          campaignIds: ["campaign_rovnost_shadows"],
+        }),
+      ).toMatchObject({
+        contentCategory: "third_party",
+        description: expect.stringContaining("Synthetic private spell text only."),
+        name: "Zzz Bless",
+        sourceAbbreviation: "PHB",
+        sourceVisibility: "campaign",
+      });
+      expect(
+        runtime.repositories.rulesRepository.listRules({
+          campaignIds: ["campaign_rovnost_shadows"],
+          query: "bless",
+        }).map((rule) => `${rule.sourceAbbreviation}:${rule.slug}`),
+      ).toEqual(["PHB:bless"]);
+      expect(
+        runtime.repositories.rulesRepository.listRules({
+          campaignIds: ["campaign_rovnost_shadows"],
+          query: "bless",
+          sourceSlug: "srd-5-1",
+        }).map((rule) => `${rule.sourceAbbreviation}:${rule.slug}`),
+      ).toEqual(["SRD 5.1:bless"]);
+    } finally {
+      runtime?.close();
+    }
+  });
+
+  test("rejects public visibility for private owned-book YAML sources", async () => {
+    const yaml = [
+      "schemaVersion: 1",
+      "campaign:",
+      "  id: campaign_rovnost_shadows",
+      "sources:",
+      "  - code: PHB",
+      "    title: Player's Handbook",
+      "    abbreviation: PHB",
+      "    category: official_2014",
+      "    visibility: public",
+      "    precedence: 50",
+      "entities:",
+      "  - slug: synthetic",
+      "    type: rule",
+      "    name: Synthetic",
+      "    source:",
+      "      sourceCode: PHB",
+      "    bodyMarkdown: Synthetic.",
+    ].join("\n");
+    const root = mkdtempSync(join(tmpdir(), "rules-private-public-"));
+    writeFileSync(join(root, "public.yaml"), yaml);
+    const runtime = createSqliteDatabase({ path: ":memory:" });
+
+    try {
+      const importer = new RulesImportService(runtime.repositories.rulesSeedRepository);
+      const result = await importer.importPrivateYaml(root, {
+        campaignId: "campaign_rovnost_shadows",
+      });
+
+      expect(result.imported).toBe(0);
+      expect(result.failedFiles[0]?.message).toBe(
+        "Private source PHB cannot use public visibility without SRD/licensed category.",
+      );
+    } finally {
+      runtime.close();
+    }
+  });
+
   test("imports every markdown file from a local directory", async () => {
     let runtime: SqliteDatabaseRuntime | undefined;
     const root = mkdtempSync(join(tmpdir(), "rules-importer-"));
