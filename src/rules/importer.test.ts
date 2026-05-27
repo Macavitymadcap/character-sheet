@@ -460,6 +460,49 @@ describe("rules importer", () => {
     }
   });
 
+  test("rejects invalid private choice-source entity filters", async () => {
+    const yaml = [
+      "schemaVersion: 1",
+      "campaign:",
+      "  id: campaign_rovnost_shadows",
+      "sources:",
+      "  - code: PHB",
+      "    title: Player's Handbook",
+      "    abbreviation: PHB",
+      "    category: official_2014",
+      "    visibility: campaign",
+      "    precedence: 50",
+      "entities:",
+      "  - slug: synthetic",
+      "    type: species",
+      "    name: Synthetic",
+      "    source:",
+      "      sourceCode: PHB",
+      "    bodyMarkdown: Synthetic.",
+      "    choices:",
+      "      - kind: spell",
+      "        choose: 1",
+      "        from:",
+      "          entityType: nonsense",
+      "        auditLabel: Synthetic spell choice",
+    ].join("\n");
+    const root = mkdtempSync(join(tmpdir(), "rules-private-invalid-choice-"));
+    writeFileSync(join(root, "invalid-choice.yaml"), yaml);
+    const runtime = createSqliteDatabase({ path: ":memory:" });
+
+    try {
+      const importer = new RulesImportService(runtime.repositories.rulesSeedRepository);
+      const result = await importer.importPrivateYaml(root, {
+        campaignId: "campaign_rovnost_shadows",
+      });
+
+      expect(result.imported).toBe(0);
+      expect(result.failedFiles[0]?.message).toContain("entities[0].choices[0].from.entityType must use one of");
+    } finally {
+      runtime.close();
+    }
+  });
+
   test("imports every markdown file from a local directory", async () => {
     let runtime: SqliteDatabaseRuntime | undefined;
     const root = mkdtempSync(join(tmpdir(), "rules-importer-"));

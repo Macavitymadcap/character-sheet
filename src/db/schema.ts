@@ -386,11 +386,11 @@ CREATE TABLE IF NOT EXISTS character_rule_choices (
   chosen_values_json TEXT NOT NULL DEFAULT '[]',
   audit_event TEXT NOT NULL CHECK (audit_event IN ('character_creation', 'level_up', 'manual_adjustment')),
   audit_label TEXT NOT NULL,
-  source_level INTEGER CHECK (source_level IS NULL OR source_level >= 1),
+  source_level INTEGER NOT NULL DEFAULT 0 CHECK (source_level >= 0),
   notes TEXT NOT NULL DEFAULT '',
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE (character_id, choice_key, audit_event)
+  UNIQUE (character_id, choice_key, audit_event, source_level)
 );
 `;
 
@@ -441,11 +441,11 @@ const migrationStatements = [
     chosen_values_json TEXT NOT NULL DEFAULT '[]',
     audit_event TEXT NOT NULL CHECK (audit_event IN ('character_creation', 'level_up', 'manual_adjustment')),
     audit_label TEXT NOT NULL,
-    source_level INTEGER CHECK (source_level IS NULL OR source_level >= 1),
+    source_level INTEGER NOT NULL DEFAULT 0 CHECK (source_level >= 0),
     notes TEXT NOT NULL DEFAULT '',
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE (character_id, choice_key, audit_event)
+    UNIQUE (character_id, choice_key, audit_event, source_level)
   )`,
 ];
 

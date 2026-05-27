@@ -445,8 +445,14 @@ function normaliseChoiceSource(value: unknown, label: string): RuleChoiceSource 
     return values;
   }
   const record = requiredRecord(value, label);
-  const source: Exclude<RuleChoiceSource, "all" | string[]> = {};
-  if (record.entityType !== undefined) source.entityType = requiredString(record.entityType, `${label}.entityType`) as RuleEntityType;
+  const source: {
+    entityType?: RuleChoiceSourceEntityType;
+    sourceSlug?: string;
+    tag?: string;
+  } = {};
+  if (record.entityType !== undefined) {
+    source.entityType = normaliseChoiceSourceEntityType(requiredString(record.entityType, `${label}.entityType`), `${label}.entityType`);
+  }
   if (record.sourceSlug !== undefined) source.sourceSlug = requiredString(record.sourceSlug, `${label}.sourceSlug`);
   if (record.tag !== undefined) source.tag = requiredString(record.tag, `${label}.tag`);
   if (!source.entityType && !source.sourceSlug && !source.tag) {
@@ -541,6 +547,15 @@ function normalisePrerequisiteKind(value: string, label: string): RulePrerequisi
   throw new Error(`${label} must use one of ${prerequisiteKinds.join(", ")}.`);
 }
 
+type RuleChoiceSourceEntityType = RuleEntityType | RuleChoiceKind | RuleEffectTarget;
+
+function normaliseChoiceSourceEntityType(value: string, label: string): RuleChoiceSourceEntityType {
+  const supported = [...ruleEntityTypes, ...choiceKinds, ...grantTargets];
+  if ((supported as readonly string[]).includes(value)) return value as RuleChoiceSourceEntityType;
+
+  throw new Error(`${label} must use one of ${supported.join(", ")}.`);
+}
+
 function mapPrivateEntityType(type: string): RuleEntityType {
   const mapped = privateEntityTypeMap[type];
   if (!mapped) throw new Error(`Unsupported private rules entity type: ${type}.`);
@@ -590,6 +605,26 @@ const abilityScoreModes = [
   "flexible_three_plus_one",
   "manual",
   "point_buy",
+];
+
+const ruleEntityTypes: RuleEntityType[] = [
+  "action",
+  "background",
+  "class",
+  "class_feature",
+  "condition",
+  "core_rule",
+  "equipment",
+  "feat",
+  "infusion",
+  "proficiency",
+  "sense",
+  "species",
+  "species_trait",
+  "stat_block",
+  "subclass",
+  "subclass_feature",
+  "spell",
 ];
 
 const choiceKinds: RuleChoiceKind[] = [

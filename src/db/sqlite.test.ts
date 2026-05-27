@@ -1072,11 +1072,29 @@ describe("SQLite repositories", () => {
       choiceKey: "species.synthetic-lineage.plus-two",
       chosenValues: ["constitution"],
       rulesEntityId: "rule_fey_gift",
-      sourceLevel: 1,
+    });
+    const levelFourChoice = characters.recordRuleChoice({
+      auditEvent: "level_up",
+      auditLabel: "Feat ability increase",
+      characterId: "character_lynott_magulbisson",
+      choiceKey: "feat.synthetic.ability-increase",
+      chosenValues: ["intelligence"],
+      rulesEntityId: "rule_repeating_shot",
+      sourceLevel: 4,
+    });
+    const levelEightChoice = characters.recordRuleChoice({
+      auditEvent: "level_up",
+      auditLabel: "Feat ability increase",
+      characterId: "character_lynott_magulbisson",
+      choiceKey: "feat.synthetic.ability-increase",
+      chosenValues: ["wisdom"],
+      rulesEntityId: "rule_repeating_shot",
+      sourceLevel: 8,
     });
 
     expect(updated.id).toBe(first.id);
-    expect(characters.listRuleChoices("character_lynott_magulbisson")).toEqual([
+    expect(levelEightChoice.id).not.toBe(levelFourChoice.id);
+    expect(characters.listRuleChoices("character_lynott_magulbisson")).toEqual(expect.arrayContaining([
       expect.objectContaining({
         auditEvent: "character_creation",
         auditLabel: "Flexible +2 ability",
@@ -1084,9 +1102,30 @@ describe("SQLite repositories", () => {
         chosenValues: ["constitution"],
         notes: "",
         rulesEntityId: "rule_fey_gift",
-        sourceLevel: 1,
+        sourceLevel: null,
       }),
-    ]);
+      expect.objectContaining({
+        auditEvent: "level_up",
+        choiceKey: "feat.synthetic.ability-increase",
+        chosenValues: ["intelligence"],
+        sourceLevel: 4,
+      }),
+      expect.objectContaining({
+        auditEvent: "level_up",
+        choiceKey: "feat.synthetic.ability-increase",
+        chosenValues: ["wisdom"],
+        sourceLevel: 8,
+      }),
+    ]));
+    expect(() =>
+      characters.recordRuleChoice({
+        auditEvent: "level_up",
+        auditLabel: "Missing level",
+        characterId: "character_lynott_magulbisson",
+        choiceKey: "feat.synthetic.missing-level",
+        chosenValues: ["charisma"],
+      }),
+    ).toThrow("Level-up rule choices must include sourceLevel.");
     expect(characters.getSheetById("character_lynott_magulbisson")).toMatchObject({
       name: "Lynott Magulbisson",
       species: "Hobgoblin",

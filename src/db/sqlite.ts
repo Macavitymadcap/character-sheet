@@ -986,15 +986,19 @@ class SqliteCharacterRepository implements CharacterRepository {
     sourceLevel?: number | null;
   }): CharacterRuleChoice {
     const id = randomUUID();
+    const sourceLevel = input.sourceLevel ?? 0;
+    if (input.auditEvent === "level_up" && sourceLevel < 1) {
+      throw new Error("Level-up rule choices must include sourceLevel.");
+    }
     const chosenValues = input.chosenValues
       .map((value) => value.trim())
       .filter(Boolean);
     const existing = this.database
-      .query<{ id: string }, [string, string, CharacterRuleChoice["auditEvent"]]>(
+      .query<{ id: string }, [string, string, CharacterRuleChoice["auditEvent"], number]>(
         `select id from character_rule_choices
-         where character_id = ? and choice_key = ? and audit_event = ?`,
+         where character_id = ? and choice_key = ? and audit_event = ? and source_level = ?`,
       )
-      .get(input.characterId, input.choiceKey, input.auditEvent);
+      .get(input.characterId, input.choiceKey, input.auditEvent, sourceLevel);
     const choiceId = existing?.id ?? id;
 
     this.database.run(
@@ -1002,11 +1006,10 @@ class SqliteCharacterRepository implements CharacterRepository {
         id, character_id, rules_entity_id, choice_key, chosen_values_json, audit_event,
         audit_label, source_level, notes, updated_at
       ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-      on conflict(character_id, choice_key, audit_event) do update set
+      on conflict(character_id, choice_key, audit_event, source_level) do update set
         rules_entity_id = excluded.rules_entity_id,
         chosen_values_json = excluded.chosen_values_json,
         audit_label = excluded.audit_label,
-        source_level = excluded.source_level,
         notes = excluded.notes,
         updated_at = CURRENT_TIMESTAMP`,
       [
@@ -1017,7 +1020,7 @@ class SqliteCharacterRepository implements CharacterRepository {
         JSON.stringify(chosenValues),
         input.auditEvent,
         input.auditLabel.trim(),
-        input.sourceLevel ?? null,
+        sourceLevel,
         input.notes?.trim() ?? "",
       ],
     );
@@ -3185,7 +3188,7 @@ function toCharacterRuleChoice(row: CharacterRuleChoiceRow): CharacterRuleChoice
     id: row.id,
     notes: row.notes,
     rulesEntityId: row.rules_entity_id,
-    sourceLevel: row.source_level,
+    sourceLevel: row.source_level === 0 ? null : row.source_level,
     updatedAt: row.updated_at,
   };
 }
