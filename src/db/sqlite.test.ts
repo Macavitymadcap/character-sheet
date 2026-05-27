@@ -1053,6 +1053,85 @@ describe("SQLite repositories", () => {
       .toContain("ash_vale");
   });
 
+  test("records auditable character rule choices separately from final sheet values", () => {
+    runtime = createSqliteDatabase({ path: ":memory:" });
+    const characters = runtime.repositories.characterRepository;
+    const first = characters.recordRuleChoice({
+      auditEvent: "character_creation",
+      auditLabel: "Flexible +2 ability",
+      characterId: "character_lynott_magulbisson",
+      choiceKey: "species.synthetic-lineage.plus-two",
+      chosenValues: ["dexterity"],
+      notes: "Chosen during private species import rehearsal.",
+      rulesEntityId: "rule_fey_gift",
+    });
+    const updated = characters.recordRuleChoice({
+      auditEvent: "character_creation",
+      auditLabel: "Flexible +2 ability",
+      characterId: "character_lynott_magulbisson",
+      choiceKey: "species.synthetic-lineage.plus-two",
+      chosenValues: ["constitution"],
+      rulesEntityId: "rule_fey_gift",
+    });
+    const levelFourChoice = characters.recordRuleChoice({
+      auditEvent: "level_up",
+      auditLabel: "Feat ability increase",
+      characterId: "character_lynott_magulbisson",
+      choiceKey: "feat.synthetic.ability-increase",
+      chosenValues: ["intelligence"],
+      rulesEntityId: "rule_repeating_shot",
+      sourceLevel: 4,
+    });
+    const levelEightChoice = characters.recordRuleChoice({
+      auditEvent: "level_up",
+      auditLabel: "Feat ability increase",
+      characterId: "character_lynott_magulbisson",
+      choiceKey: "feat.synthetic.ability-increase",
+      chosenValues: ["wisdom"],
+      rulesEntityId: "rule_repeating_shot",
+      sourceLevel: 8,
+    });
+
+    expect(updated.id).toBe(first.id);
+    expect(levelEightChoice.id).not.toBe(levelFourChoice.id);
+    expect(characters.listRuleChoices("character_lynott_magulbisson")).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        auditEvent: "character_creation",
+        auditLabel: "Flexible +2 ability",
+        choiceKey: "species.synthetic-lineage.plus-two",
+        chosenValues: ["constitution"],
+        notes: "",
+        rulesEntityId: "rule_fey_gift",
+        sourceLevel: null,
+      }),
+      expect.objectContaining({
+        auditEvent: "level_up",
+        choiceKey: "feat.synthetic.ability-increase",
+        chosenValues: ["intelligence"],
+        sourceLevel: 4,
+      }),
+      expect.objectContaining({
+        auditEvent: "level_up",
+        choiceKey: "feat.synthetic.ability-increase",
+        chosenValues: ["wisdom"],
+        sourceLevel: 8,
+      }),
+    ]));
+    expect(() =>
+      characters.recordRuleChoice({
+        auditEvent: "level_up",
+        auditLabel: "Missing level",
+        characterId: "character_lynott_magulbisson",
+        choiceKey: "feat.synthetic.missing-level",
+        chosenValues: ["charisma"],
+      }),
+    ).toThrow("Level-up rule choices must include sourceLevel.");
+    expect(characters.getSheetById("character_lynott_magulbisson")).toMatchObject({
+      name: "Lynott Magulbisson",
+      species: "Hobgoblin",
+    });
+  });
+
   test("filters seeded wiki pages, image assets, sessions, and factions by campaign visibility", () => {
     runtime = createSqliteDatabase({ path: ":memory:" });
     const content = runtime.repositories.campaignContentRepository;

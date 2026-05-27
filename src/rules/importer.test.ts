@@ -264,6 +264,41 @@ describe("rules importer", () => {
         "        data:",
         "          level: 1",
         "          school: Enchantment",
+        "  - id: private_synthetic_species",
+        "    slug: synthetic-lineage",
+        "    type: species",
+        "    name: Synthetic Lineage",
+        "    source:",
+        "      sourceCode: PHB",
+        "    summary: Synthetic species text only.",
+        "    abilityScores:",
+        "      mode: flexible_plus_two_plus_one",
+        "      plusTwo:",
+        "        choose: 1",
+        "        from: all",
+        "      plusOne:",
+        "        choose: 1",
+        "        from: all",
+        "      disallowSameAbility: true",
+        "    prerequisites:",
+        "      - kind: character_level",
+        "        target: character",
+        "        minimum: 1",
+        "    grants:",
+        "      - target: speed",
+        "        value: walking",
+        "        amount: 30",
+        "        auditLabel: Walking speed",
+        "    choices:",
+        "      - kind: ability_score",
+        "        choose: 1",
+        "        from: all",
+        "        auditLabel: Flexible +2 ability",
+        "        grants:",
+        "          - target: ability_score",
+        "            value: selected",
+        "            amount: 2",
+        "            auditLabel: Apply +2",
         "  - id: private_bless_duplicate",
         "    slug: bless",
         "    type: spell",
@@ -288,7 +323,7 @@ describe("rules importer", () => {
         importedAt: new Date("2026-05-26T12:00:00.000Z"),
       });
 
-      expect(result.imported).toBe(1);
+      expect(result.imported).toBe(2);
       expect(result.backupConfirmed).toBe(true);
       expect(result.backupReference).toBe("/data/backups/test.manifest.json");
       expect(result.skippedFiles.map((filePath) => filePath.replace(root, ""))).toEqual(["/notes.txt"]);
@@ -302,7 +337,7 @@ describe("rules importer", () => {
         "campaign-rovnost-shadows-player-s-handbook:spell:bless",
       ]);
       expect(result.shadowedSrdEntries).toEqual(["spell:bless"]);
-      expect(result.sourceCounts).toEqual({ "campaign-rovnost-shadows-player-s-handbook": 1 });
+      expect(result.sourceCounts).toEqual({ "campaign-rovnost-shadows-player-s-handbook": 2 });
       expect(runtime.repositories.rulesRepository.getRuleDetail("spell", "bless")).toMatchObject({
         contentCategory: "srd",
         sourceAbbreviation: "SRD 5.1",
@@ -331,6 +366,56 @@ describe("rules importer", () => {
           sourceSlug: "srd-5-1",
         }).map((rule) => `${rule.sourceAbbreviation}:${rule.slug}`),
       ).toEqual(["SRD 5.1:bless"]);
+      expect(
+        runtime.repositories.rulesRepository.getRuleDetail("species", "synthetic-lineage", {
+          campaignIds: ["campaign_rovnost_shadows"],
+        }),
+      ).toMatchObject({
+        mechanics: [
+          expect.objectContaining({
+            data: expect.objectContaining({
+              abilityScores: {
+                disallowSameAbility: true,
+                mode: "flexible_plus_two_plus_one",
+                plusOne: { choose: 1, from: "all" },
+                plusTwo: { choose: 1, from: "all" },
+              },
+              choices: [
+                {
+                  auditLabel: "Flexible +2 ability",
+                  choose: 1,
+                  from: "all",
+                  grants: [
+                    {
+                      amount: 2,
+                      auditLabel: "Apply +2",
+                      target: "ability_score",
+                      value: "selected",
+                    },
+                  ],
+                  kind: "ability_score",
+                  optional: false,
+                },
+              ],
+              grants: [
+                {
+                  amount: 30,
+                  auditLabel: "Walking speed",
+                  target: "speed",
+                  value: "walking",
+                },
+              ],
+              prerequisites: [
+                {
+                  kind: "character_level",
+                  minimum: 1,
+                  target: "character",
+                },
+              ],
+            }),
+          }),
+        ],
+      });
     } finally {
       runtime?.close();
     }
@@ -370,6 +455,49 @@ describe("rules importer", () => {
       expect(result.failedFiles[0]?.message).toBe(
         "Private source PHB cannot use public visibility without SRD/licensed category.",
       );
+    } finally {
+      runtime.close();
+    }
+  });
+
+  test("rejects invalid private choice-source entity filters", async () => {
+    const yaml = [
+      "schemaVersion: 1",
+      "campaign:",
+      "  id: campaign_rovnost_shadows",
+      "sources:",
+      "  - code: PHB",
+      "    title: Player's Handbook",
+      "    abbreviation: PHB",
+      "    category: official_2014",
+      "    visibility: campaign",
+      "    precedence: 50",
+      "entities:",
+      "  - slug: synthetic",
+      "    type: species",
+      "    name: Synthetic",
+      "    source:",
+      "      sourceCode: PHB",
+      "    bodyMarkdown: Synthetic.",
+      "    choices:",
+      "      - kind: spell",
+      "        choose: 1",
+      "        from:",
+      "          entityType: nonsense",
+      "        auditLabel: Synthetic spell choice",
+    ].join("\n");
+    const root = mkdtempSync(join(tmpdir(), "rules-private-invalid-choice-"));
+    writeFileSync(join(root, "invalid-choice.yaml"), yaml);
+    const runtime = createSqliteDatabase({ path: ":memory:" });
+
+    try {
+      const importer = new RulesImportService(runtime.repositories.rulesSeedRepository);
+      const result = await importer.importPrivateYaml(root, {
+        campaignId: "campaign_rovnost_shadows",
+      });
+
+      expect(result.imported).toBe(0);
+      expect(result.failedFiles[0]?.message).toContain("entities[0].choices[0].from.entityType must use one of");
     } finally {
       runtime.close();
     }
