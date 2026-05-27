@@ -72,3 +72,5 @@ bun run rules:coverage:rovnost -- /data/private-rules
 
 Use `ROVNOST_RULES_APPLY_LINKS=1` or `--apply-links` with the report script to relink Lynott's
 sheet to already-imported private entries.
+
+For the final Friday operator sequence, see [Rovnost Friday Readiness Acceptance](../../operations/rovnost-friday-readiness-acceptance.md). The sequence is backup first, import private YAML second, coverage report third, and hosted readiness check last.

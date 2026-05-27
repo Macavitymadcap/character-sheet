@@ -127,6 +127,8 @@ The script calls `/readyz` by default and fails if either the database or asset-
 
 For the full empty-environment checklist, see [Fresh Hosted Deploy Runbook](../operations/fresh-hosted-deploy-runbook.md).
 
+For the Rovnost Friday private-rules readiness sequence, see [Rovnost Friday Readiness Acceptance](../operations/rovnost-friday-readiness-acceptance.md). That sequence requires a hosted backup, operator-owned YAML under `/data/private-rules`, `PRIVATE_RULES_BACKUP_CONFIRMED=1 bun run import:rules:private -- /data/private-rules`, `bun run rules:coverage:rovnost -- /data/private-rules`, and `bun run hosted:check -- <hosted-url>`.
+
 For a local hosted-data rehearsal:
 
 ```bash
