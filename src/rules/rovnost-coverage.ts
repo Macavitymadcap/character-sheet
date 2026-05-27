@@ -49,6 +49,7 @@ export interface RovnostCoverageReport {
   lynottRules: LynottRuleCoverage[];
   privateRulesVisiblePublicly: number;
   sourceFilesPath: string | null;
+  sourceFileReadErrors: string[];
   sources: RovnostSourceCoverage[];
 }
 
@@ -91,15 +92,16 @@ export function buildRovnostCoverageReport(
 ): RovnostCoverageReport {
   const campaignId = options.campaignId ?? rovnostCampaignId;
   const characterId = options.characterId ?? lynottCharacterId;
-  const codesInSourceFiles = options.sourceFilesPath ? readPrivateYamlSourceCodes(options.sourceFilesPath) : null;
+  const sourceFileCodes = options.sourceFilesPath ? readPrivateYamlSourceCodes(options.sourceFilesPath) : null;
 
   return {
     campaignId,
     characterId,
     lynottRules: lynottRequiredRules.map((rule) => getLynottRuleCoverage(database, rule, campaignId, characterId)),
     privateRulesVisiblePublicly: countPubliclyVisiblePrivateRovnostRules(database, campaignId),
+    sourceFileReadErrors: sourceFileCodes?.readErrors ?? [],
     sourceFilesPath: options.sourceFilesPath ?? null,
-    sources: rovnostRequiredSources.map((source) => getSourceCoverage(database, source, campaignId, codesInSourceFiles)),
+    sources: rovnostRequiredSources.map((source) => getSourceCoverage(database, source, campaignId, sourceFileCodes?.codes ?? null)),
   };
 }
 
@@ -159,6 +161,7 @@ export function formatRovnostCoverageReport(report: RovnostCoverageReport) {
     `Lynott private links: ${linked}/${report.lynottRules.length}`,
     `Lynott private rules available: ${available}/${report.lynottRules.length}`,
     `Private rules visible without campaign access: ${report.privateRulesVisiblePublicly}`,
+    `Unreadable source files: ${report.sourceFileReadErrors.length}`,
     "",
     "Sources",
     ...report.sources.map((source) =>
@@ -175,6 +178,9 @@ export function formatRovnostCoverageReport(report: RovnostCoverageReport) {
       name: source.title,
       sourceCode: source.code,
     }))),
+    "",
+    "Unreadable source files",
+    ...fileErrorLines(report.sourceFileReadErrors),
   ];
 
   return `${lines.join("\n")}\n`;
@@ -266,22 +272,29 @@ function countPubliclyVisiblePrivateRovnostRules(database: Database, campaignId:
 }
 
 function readPrivateYamlSourceCodes(path: string) {
-  if (!existsSync(path)) return new Set<string>();
+  if (!existsSync(path)) return { codes: new Set<string>(), readErrors: [] };
   const files = statSync(path).isDirectory()
     ? readdirSync(path, { recursive: true })
       .map((entry) => join(path, String(entry)))
       .filter((entry) => /\.(ya?ml)$/i.test(entry) && statSync(entry).isFile())
     : [path].filter((entry) => /\.(ya?ml)$/i.test(entry));
   const codes = new Set<string>();
+  const readErrors: string[] = [];
 
   for (const file of files) {
-    const parsed = parseYaml(readFileSync(file, "utf8")) as { sources?: Array<{ code?: unknown }> } | null;
+    let parsed: { sources?: Array<{ code?: unknown }> } | null;
+    try {
+      parsed = parseYaml(readFileSync(file, "utf8")) as { sources?: Array<{ code?: unknown }> } | null;
+    } catch {
+      readErrors.push(file);
+      continue;
+    }
     for (const source of parsed?.sources ?? []) {
       if (typeof source.code === "string" && source.code.trim()) codes.add(source.code.trim());
     }
   }
 
-  return codes;
+  return { codes, readErrors };
 }
 
 function privateSourceSlugForCode(campaignId: string, code: string) {
@@ -297,4 +310,8 @@ function missingLines(items: Array<{ name: string; sourceCode: string }>) {
   return items.length
     ? items.map((item) => `- ${item.sourceCode}: ${item.name}`)
     : ["- None"];
+}
+
+function fileErrorLines(paths: string[]) {
+  return paths.length ? paths.map((path) => `- ${path}`) : ["- None"];
 }

@@ -23,7 +23,8 @@ try {
   const hasMissingSource = report.sources.some((source) => source.importedCount === 0);
   const hasMissingLink = report.lynottRules.some((rule) => !rule.usesPrivateLink);
   const hasPublicLeak = report.privateRulesVisiblePublicly > 0;
-  if (hasMissingSource || hasMissingLink || hasPublicLeak) process.exitCode = 1;
+  const hasUnreadableSourceFile = report.sourceFileReadErrors.length > 0;
+  if (hasMissingSource || hasMissingLink || hasPublicLeak || hasUnreadableSourceFile) process.exitCode = 1;
 } finally {
   runtime.close();
 }

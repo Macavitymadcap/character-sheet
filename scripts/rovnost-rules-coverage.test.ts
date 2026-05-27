@@ -84,6 +84,32 @@ describe("Rovnost private rules coverage", () => {
       runtime.close();
     }
   });
+
+  test("reports unreadable YAML source files without crashing", () => {
+    const root = mkdtempSync(join(tmpdir(), "rovnost-coverage-broken-"));
+    const brokenPath = join(root, "broken.yaml");
+    writeFileSync(brokenPath, [
+      "schemaVersion: 1",
+      "campaign:",
+      "  id: campaign_rovnost_shadows",
+      "sources:",
+      "  - code: MPMM",
+      "    title: Mordenkainen Presents: Monsters of the Multiverse",
+    ].join("\n"));
+    const runtime = createSqliteDatabase({ path: ":memory:" });
+
+    try {
+      const report = buildRovnostCoverageReport(runtime.database, { sourceFilesPath: root });
+      const text = formatRovnostCoverageReport(report);
+
+      expect(report.sourceFileReadErrors).toEqual([brokenPath]);
+      expect(text).toContain("Unreadable source files: 1");
+      expect(text).toContain(brokenPath);
+      expect(text).toContain("- MPMM: Mordenkainen Presents: Monsters of the Multiverse");
+    } finally {
+      runtime.close();
+    }
+  });
 });
 
 function privateRulesYaml() {
