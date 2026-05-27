@@ -11,6 +11,7 @@
     "hosted:check": "bun scripts/hosted-health.ts",
     "hosted:rehearse": "bun scripts/fresh-hosted-rehearsal.ts",
     "import:rules:private": "bun scripts/import-private-rules.ts",
+    "rules:coverage:rovnost": "bun scripts/rovnost-rules-coverage.ts",
     "protect:branches": "bun scripts/configure-branch-protection.ts",
     "protect:branches:bootstrap": "bun scripts/configure-branch-protection.ts --bootstrap",
     "screenshots:sheet": "bun -e \"import { captureSheetScreenshots } from './scripts/capture-screenshots'; await captureSheetScreenshots();\"",

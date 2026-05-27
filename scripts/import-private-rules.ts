@@ -1,5 +1,10 @@
 import { createSqliteDatabase } from "../src/db";
 import { RulesImportService } from "../src/rules";
+import {
+  buildRovnostCoverageReport,
+  formatRovnostCoverageReport,
+  relinkLynottPrivateRuleLinks,
+} from "../src/rules/rovnost-coverage";
 
 const databasePath = process.env.DB_PATH ?? "character-sheet.sqlite3";
 const sourcePath = process.argv[2] ?? "/data/private-rules";
@@ -39,6 +44,12 @@ try {
   }
   for (const entry of result.duplicateEntries) console.log(`Duplicate ${entry}`);
   for (const entry of result.shadowedSrdEntries) console.log(`Shadowed SRD ${entry}`);
+  const relinkResult = relinkLynottPrivateRuleLinks(runtime.database, { campaignId });
+  console.log(`Relinked Lynott private rule links: ${relinkResult.updated}`);
+  console.log(formatRovnostCoverageReport(buildRovnostCoverageReport(runtime.database, {
+    campaignId,
+    sourceFilesPath: sourcePath,
+  })));
 } finally {
   runtime.close();
 }
