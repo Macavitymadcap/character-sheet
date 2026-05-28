@@ -45,6 +45,10 @@ After the admin password is changed, the operator should create an invite for a 
 
 Invite acceptance creates the account locally and redirects the user to `/login`. It does not send email and does not automatically add campaign membership beyond what the current invite role supports.
 
+For Friday table handoff, create and accept the real player invites first, then use
+[Hosted Friday Player Runbook](./hosted-friday-player-runbook.md) to add Rovnost campaign
+membership, disable rehearsal accounts, and load level-5 character shells.
+
 ## Reset A Password
 
 1. Sign in as an active admin.

@@ -9,6 +9,7 @@
     "import:rules:ocr": "bun scripts/private-rules-ocr.ts",
     "import:rules:srd": "bun scripts/import-rules.ts docs/rules/srd-5.1",
     "hosted:data": "bun scripts/hosted-data.ts",
+    "hosted:players": "bun scripts/hosted-players.ts",
     "hosted:check": "bun scripts/hosted-health.ts",
     "hosted:rehearse": "bun scripts/fresh-hosted-rehearsal.ts",
     "import:rules:private": "bun scripts/import-private-rules.ts",

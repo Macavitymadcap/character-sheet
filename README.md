@@ -125,6 +125,7 @@ SQLite database files and sidecar files should remain ignored by Git.
 For Railway rehearsal setup, including hosted values for these variables, see [Railway Hosted Rehearsal](./docs/deployment/railway.md).
 For the accepted hosted storage boundary and future Postgres migration trigger, see [Hosted Persistence Decision](./docs/operations/hosted-persistence.md).
 For manual hosted user preparation, invite handoff, and password-reset handoff, see [Hosted Account Operator Runbook](./docs/operations/hosted-account-runbook.md).
+For replacing rehearsal players and loading Friday character shells, see [Hosted Friday Player Runbook](./docs/operations/hosted-friday-player-runbook.md).
 For the final local and hosted browser acceptance checklist, see [Hosted Rehearsal Acceptance](./docs/operations/hosted-rehearsal-acceptance.md), [Hosted Production Readiness Acceptance](./docs/operations/hosted-production-readiness-acceptance.md), and [Rovnost Friday Readiness Acceptance](./docs/operations/rovnost-friday-readiness-acceptance.md). For completed epic acceptance records, see [Campaign Companion Acceptance](./docs/operations/campaign-companion-acceptance.md), [Hyper-Dank Adoption Acceptance](./docs/operations/hyper-dank-adoption-acceptance.md), and [Game Master Prep Acceptance](./docs/operations/game-master-prep-acceptance.md).
 
 Local seed users are available for development:
@@ -199,6 +200,13 @@ YAML/JSON before import. It defaults to reading `/data/private-rules/ocr-markdow
 
 ```bash
 bun run import:rules:ocr -- --input-dir /data/private-rules/ocr-markdown --output-dir /data/private-rules
+```
+
+`bun run hosted:players` applies the private Friday player/character handoff file after account
+invites have been accepted and a hosted backup has been created:
+
+```bash
+HOSTED_PLAYERS_BACKUP_CONFIRMED=1 bun run hosted:players
 ```
 
 `bun run rules:coverage:rovnost` reports the Friday-required private source coverage and Lynott's private rule links after an import. Run it against `/data/private-rules` before the Friday acceptance check:

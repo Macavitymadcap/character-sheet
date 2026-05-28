@@ -14,6 +14,7 @@ const docs = [
   "docs/operations/hyper-dank-adoption-acceptance.md",
   "docs/operations/game-master-prep-acceptance.md",
   "docs/operations/hosted-account-runbook.md",
+  "docs/operations/hosted-friday-player-runbook.md",
   "docs/operations/google-docs-manual-import.md",
   "docs/project-tracking.md",
   "docs/deployment/railway.md",
@@ -93,10 +94,16 @@ describe("documentation references", () => {
 
   test("hosted account runbook documents manual token handoff", async () => {
     const runbook = await Bun.file("docs/operations/hosted-account-runbook.md").text();
+    const fridayPlayers = await Bun.file("docs/operations/hosted-friday-player-runbook.md").text();
     const readme = await Bun.file("README.md").text();
 
     expect(readme).toContain("[Hosted Account Operator Runbook](./docs/operations/hosted-account-runbook.md)");
+    expect(readme).toContain("[Hosted Friday Player Runbook](./docs/operations/hosted-friday-player-runbook.md)");
     expect(runbook).toContain("The app does not send email.");
+    expect(runbook).toContain("[Hosted Friday Player Runbook](./hosted-friday-player-runbook.md)");
+    expect(fridayPlayers).toContain("bun run hosted:players");
+    expect(fridayPlayers).toContain("HOSTED_PLAYERS_BACKUP_CONFIRMED=1");
+    expect(fridayPlayers).toContain("removeCharacterSlugs");
     expect(runbook).toContain("ACCOUNT_DELIVERY_MODE=operator");
     expect(runbook).toContain("PUBLIC_BASE_URL");
     expect(runbook).toContain("/invites/<token>");
@@ -151,6 +158,7 @@ describe("documentation references", () => {
     expect(readme).toContain("bun run import:rules:ocr");
     expect(importer).toContain("bun run import:rules:ocr");
     expect(acceptance).toContain("bun run import:rules:ocr -- --input-dir /data/private-rules/ocr-markdown --output-dir /data/private-rules");
+    expect(acceptance).toContain("HOSTED_PLAYERS_BACKUP_CONFIRMED=1 bun run hosted:players");
     expect(acceptance).toContain("Friday, 29 May 2026");
     expect(acceptance).toContain("PRIVATE_RULES_BACKUP_CONFIRMED=1 bun run import:rules:private -- /data/private-rules");
     expect(acceptance).toContain("bun run hosted:data -- backup");

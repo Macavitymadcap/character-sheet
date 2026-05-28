@@ -32,7 +32,14 @@ bun run hosted:data -- backup
 ```
 
 4. Upload or verify the operator-owned private YAML files under `/data/private-rules`.
-5. If the operator source is OCR Markdown, convert it to private-rules YAML:
+5. Replace rehearsal player records and load Friday character shells as described in
+   [Hosted Friday Player Runbook](./hosted-friday-player-runbook.md):
+
+```bash
+HOSTED_PLAYERS_BACKUP_CONFIRMED=1 bun run hosted:players
+```
+
+6. If the operator source is OCR Markdown, convert it to private-rules YAML:
 
 ```bash
 bun run import:rules:ocr -- --input-dir /data/private-rules/ocr-markdown --output-dir /data/private-rules
@@ -41,25 +48,25 @@ bun run import:rules:ocr -- --input-dir /data/private-rules/ocr-markdown --outpu
 The OCR exporter excludes incomplete spell and monster stat-block entries by default; import those
 from the dedicated spell/statblock source when ready.
 
-6. Import the private rules with the backup confirmation:
+7. Import the private rules with the backup confirmation:
 
 ```bash
 PRIVATE_RULES_BACKUP_CONFIRMED=1 bun run import:rules:private -- /data/private-rules
 ```
 
-7. Run the coverage report after import:
+8. Run the coverage report after import:
 
 ```bash
 bun run rules:coverage:rovnost -- /data/private-rules
 ```
 
-8. Check the hosted readiness endpoint:
+9. Check the hosted readiness endpoint:
 
 ```bash
 bun run hosted:check -- <hosted-url>
 ```
 
-9. Sign in as the Game Master and Lynott player, open `/sheet/lynott`, and spot-check private rule
+10. Sign in as the Game Master and Lynott player, open `/sheet/lynott`, and spot-check private rule
    links from the action, spellcasting, and feature surfaces.
 
 ## Acceptance Evidence
