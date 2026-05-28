@@ -239,6 +239,7 @@ function applyCharacterDetails(database: ReturnType<typeof createSqliteDatabase>
       [proficiencyLevel, abilityModifierValue + proficiencyBonus * proficiencyLevel, characterId, skill],
     );
   }
+  recalculateSkillModifiers(database, characterId);
 
   replaceCollection(database, characterId, "character_equipment", record.equipment, (item, index) => [
     `equipment_${characterId}_${index + 1}`,
@@ -337,6 +338,36 @@ function applyCharacterDetails(database: ReturnType<typeof createSqliteDatabase>
       .query<{ total: number }, [string]>("select coalesce(sum(value), 0) as total from character_armour_class_sources where character_id = ?")
       .get(characterId)?.total ?? 0;
     database.run("update characters set armour_class = ? where id = ?", [armourClass, characterId]);
+  }
+}
+
+function recalculateSkillModifiers(
+  database: ReturnType<typeof createSqliteDatabase>["database"],
+  characterId: string,
+) {
+  const proficiencyBonus = database
+    .query<{ proficiency_bonus: number }, [string]>("select proficiency_bonus from characters where id = ?")
+    .get(characterId)?.proficiency_bonus ?? 2;
+  const skills = database
+    .query<{ modifier: number | null; proficiency_level: number; skill: string }, [string]>(
+      `select character_skills.skill, character_skills.proficiency_level, character_abilities.modifier
+       from character_skills
+       left join character_abilities
+         on character_abilities.character_id = character_skills.character_id
+        and character_abilities.ability = character_skills.ability
+       where character_skills.character_id = ?`,
+    )
+    .all(characterId);
+
+  for (const skill of skills) {
+    database.run(
+      "update character_skills set modifier = ? where character_id = ? and skill = ?",
+      [
+        (skill.modifier ?? 0) + proficiencyBonus * skill.proficiency_level,
+        characterId,
+        skill.skill,
+      ],
+    );
   }
 }
 

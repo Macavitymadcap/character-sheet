@@ -110,6 +110,9 @@ players:
       expect(created?.skills).toContainEqual(
         expect.objectContaining({ modifier: 10, proficiencyLevel: 2, skill: "stealth" }),
       );
+      expect(created?.skills).toContainEqual(
+        expect.objectContaining({ modifier: 4, proficiencyLevel: 0, skill: "acrobatics" }),
+      );
     } finally {
       check.close();
     }
