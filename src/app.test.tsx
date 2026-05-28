@@ -616,6 +616,11 @@ describe("createApp", () => {
         method: "PATCH",
       },
     );
+    const proficiencyCreate = await app.request("/sheet/lynott/proficiencies", {
+      body: new URLSearchParams({ category: "language", detail: "Rovnost cant.", name: "Rovnost street cant" }),
+      headers: formHeaders(cookie),
+      method: "POST",
+    });
 
     expect(skillEdit.status).toBe(200);
     expect(await skillEdit.text()).toContain('hx-patch="/sheet/lynott/skills/arcana"');
@@ -629,6 +634,8 @@ describe("createApp", () => {
     expect(await proficiencyCancel.text()).toContain("Disguise kit");
     expect(proficiencySave.status).toBe(200);
     expect(await proficiencySave.text()).toContain("Fresh cover credentials.");
+    expect(proficiencyCreate.status).toBe(200);
+    expect(await proficiencyCreate.text()).toContain("Rovnost street cant");
   });
 
   test("serves focused ability edit fragments", async () => {
@@ -699,12 +706,34 @@ describe("createApp", () => {
       },
       method: "PATCH",
     });
+    const equipmentCreate = await app.request("/sheet/lynott/equipment", {
+      body: new URLSearchParams({
+        category: "gear",
+        equipped: "0",
+        name: "Rovnost street map",
+        notes: "Marked with safehouses.",
+        quantity: "1",
+      }),
+      headers: formHeaders(cookie),
+      method: "POST",
+    });
+    const backgroundCreate = await app.request("/sheet/lynott/background", {
+      body: new URLSearchParams({
+        body: "Knows the bell codes used around the old foundry.",
+        category: "backstory",
+        title: "Foundry bell codes",
+      }),
+      headers: formHeaders(cookie),
+      method: "POST",
+    });
 
     const equipmentEditHtml = await equipmentEdit.text();
     const equipmentCancelHtml = await equipmentCancel.text();
     const backgroundEditHtml = await backgroundEdit.text();
     const backgroundCancelHtml = await backgroundCancel.text();
     const backgroundSaveHtml = await backgroundSave.text();
+    const equipmentCreateHtml = await equipmentCreate.text();
+    const backgroundCreateHtml = await backgroundCreate.text();
 
     expect(equipmentEdit.status).toBe(200);
     expect(equipmentEditHtml).toContain('id="equipment-item-equipment-lynott-pistol"');
@@ -723,6 +752,10 @@ describe("createApp", () => {
     expect(backgroundSave.status).toBe(200);
     expect(backgroundSaveHtml).toContain("Jonas Locksmith");
     expect(backgroundSaveHtml).toContain("Independent locksmith");
+    expect(equipmentCreate.status).toBe(200);
+    expect(equipmentCreateHtml).toContain("Rovnost street map");
+    expect(backgroundCreate.status).toBe(200);
+    expect(backgroundCreateHtml).toContain("Foundry bell codes");
   });
 
   test("adds custom conditions and returns dice roll fragments", async () => {

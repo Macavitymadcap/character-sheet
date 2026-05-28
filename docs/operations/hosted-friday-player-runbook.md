@@ -29,9 +29,9 @@ Record the manifest path if available. Production `/data` imports are refused un
 ## Input File
 
 Create `/data/private-rules/friday-players.yml` in the hosted shell or upload it to the Railway
-volume. Use each player's username exactly as it appears in `/admin`; email-shaped account names
-still work, but are not required. Minimum character fields are `name`, `species`, `background`,
-`className`, `level`, and `hitPointMax`.
+volume. Use each player's lowercase username from `/admin`; email-shaped account names still work,
+but are not required. Minimum character fields are `name`, `species`, `background`, `className`,
+`level`, and `hitPointMax`.
 
 ```yaml
 campaignId: campaign_rovnost_shadows
@@ -121,6 +121,9 @@ After applying:
 3. Confirm each real player has one level-5 character.
 4. Open each sheet and spot-check HP, AC, abilities, skills, equipment, resources, and notes.
 5. Ask each player to sign in and open their own sheet before the session starts.
+6. Ask players to add missing table details from their sheet tabs: equipment on the Equipment tab,
+   languages/tools/weapons/armour on the Skills tab, background details on the Background tab, and
+   free-form player notes on the Notes tab.
 
 Run the private-rules coverage check separately if rule links matter for the session:
 

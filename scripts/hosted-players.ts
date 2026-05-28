@@ -82,7 +82,7 @@ export async function applyHostedPlayers(options: HostedPlayersOptions = {}): Pr
       usersDisabled: [],
     };
 
-    for (const username of stringArray(parsed.disableUsers ?? parsed.disableUserEmails)) {
+    for (const username of stringArray(parsed.disableUsers ?? parsed.disableUserEmails).map(normaliseUsername)) {
       const user = runtime.repositories.authRepository.findUserByEmail(username);
       if (!user) throw new Error(`Cannot disable missing user ${username}.`);
       runtime.repositories.authRepository.updateUserStatus(user.id, "disabled");
@@ -101,7 +101,7 @@ export async function applyHostedPlayers(options: HostedPlayersOptions = {}): Pr
     }
 
     for (const player of playerRecords(parsed.players)) {
-      const username = requiredString(player.username ?? player.email, "players[].username").toLowerCase();
+      const username = normaliseUsername(requiredString(player.username ?? player.email, "players[].username"));
       const user = runtime.repositories.authRepository.findUserByEmail(username);
       if (!user) {
         throw new Error(`User ${username} does not exist. Create/accept the invite first, then rerun hosted:players.`);
@@ -465,6 +465,10 @@ function integerValue(value: unknown, fallback: number) {
 
 function booleanValue(value: unknown, fallback: boolean) {
   return typeof value === "boolean" ? value : fallback;
+}
+
+function normaliseUsername(value: string) {
+  return value.trim().toLowerCase();
 }
 
 function asAbilityName(value: string): AbilityName {

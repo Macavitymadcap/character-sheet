@@ -24,11 +24,11 @@ describe("hosted players operator import", () => {
       `
 campaignId: campaign_rovnost_shadows
 disableUsers:
-  - mira@example.local
+  - MIRA@example.local
 removeCharacterSlugs:
   - mira-voss
 players:
-  - username: new-player
+  - username: New-Player
     character:
       name: Vessa Rook
       slug: vessa-rook

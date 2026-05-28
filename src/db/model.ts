@@ -207,7 +207,19 @@ export interface CharacterSheetReadModel {
 }
 
 export interface CharacterRepository {
+  addBackgroundEntry(
+    characterId: string,
+    input: { body: string; category: CharacterBackgroundCategory; title: string },
+  ): CharacterBackgroundEntry;
   createCharacter(input: CreateCharacterInput): CharacterSheetReadModel;
+  addEquipmentItem(
+    characterId: string,
+    input: { category: string; equipped: boolean; name: string; notes: string; quantity: number },
+  ): CharacterEquipment;
+  addProficiency(
+    characterId: string,
+    input: { category: CharacterProficiency["category"]; detail: string; name: string },
+  ): CharacterProficiency;
   recordRuleChoice(input: {
     auditEvent: CharacterRuleChoice["auditEvent"];
     auditLabel: string;

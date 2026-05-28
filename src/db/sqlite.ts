@@ -975,6 +975,58 @@ class SqliteCharacterRepository implements CharacterRepository {
     return this.getSheetById(characterId)!;
   }
 
+  addEquipmentItem(
+    characterId: string,
+    input: { category: string; equipped: boolean; name: string; notes: string; quantity: number },
+  ): CharacterEquipment {
+    const id = randomUUID();
+    this.database.run(
+      `insert into character_equipment (id, character_id, name, category, quantity, equipped, notes)
+       values (?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id,
+        characterId,
+        input.name.trim(),
+        input.category.trim(),
+        Math.max(0, Math.floor(input.quantity)),
+        input.equipped ? 1 : 0,
+        input.notes.trim(),
+      ],
+    );
+
+    return this.getEquipment(characterId, id)!;
+  }
+
+  addBackgroundEntry(
+    characterId: string,
+    input: { body: string; category: CharacterBackgroundEntry["category"]; title: string },
+  ): CharacterBackgroundEntry {
+    const id = randomUUID();
+    const sortOrder = this.listBackgroundEntries(characterId).length + 10;
+    this.database.run(
+      `insert into character_background_entries (id, character_id, category, title, body, sort_order)
+       values (?, ?, ?, ?, ?, ?)`,
+      [id, characterId, input.category, input.title.trim(), input.body.trim(), sortOrder],
+    );
+
+    return this.listBackgroundEntries(characterId).find((entry) => entry.id === id)!;
+  }
+
+  addProficiency(
+    characterId: string,
+    input: { category: CharacterProficiency["category"]; detail: string; name: string },
+  ): CharacterProficiency {
+    const id = randomUUID();
+    const sortOrder = this.listProficiencies(characterId).length + 10;
+    this.database.run(
+      `insert into character_proficiencies (id, character_id, category, name, detail, sort_order)
+       values (?, ?, ?, ?, ?, ?)`,
+      [id, characterId, input.category, input.name.trim(), input.detail.trim(), sortOrder],
+    );
+
+    return this.listProficiencies(characterId).find((proficiency) => proficiency.id === id)!;
+  }
+
   recordRuleChoice(input: {
     auditEvent: CharacterRuleChoice["auditEvent"];
     auditLabel: string;
