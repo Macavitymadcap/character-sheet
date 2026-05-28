@@ -29,17 +29,18 @@ Record the manifest path if available. Production `/data` imports are refused un
 ## Input File
 
 Create `/data/private-rules/friday-players.yml` in the hosted shell or upload it to the Railway
-volume. Minimum character fields are `name`, `species`, `background`, `className`, `level`, and
-`hitPointMax`.
+volume. Use each player's username exactly as it appears in `/admin`; email-shaped account names
+still work, but are not required. Minimum character fields are `name`, `species`, `background`,
+`className`, `level`, and `hitPointMax`.
 
 ```yaml
 campaignId: campaign_rovnost_shadows
-disableUserEmails:
+disableUsers:
   - mira@example.local
 removeCharacterSlugs:
   - mira-voss
 players:
-  - email: player.one@example.com
+  - username: player-one
     character:
       name: Vessa Rook
       slug: vessa-rook

@@ -55,6 +55,9 @@ describe("AdminPage", () => {
     expect(html).toContain('<form class="form-stack" action="/admin/invites" method="post">');
     expect(html).toContain('action="/admin/invites"');
     expect(html).toContain('name="email"');
+    expect(html).toContain("<span>Username</span>");
+    expect(html).toContain('autocomplete="username"');
+    expect(html).toContain('type="text"');
     expect(html).toContain('name="role"');
     expect(html).toContain('type="submit"');
     expect(html).toContain('data-variant="primary"');

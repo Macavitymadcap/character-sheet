@@ -274,7 +274,7 @@ export const createApp = (dependencies: AppDependencies) => {
     if (!user) {
       context.status(401);
       return context.html(
-        <LoginPage appName={dependencies.appName} error="Invalid email or password." />,
+        <LoginPage appName={dependencies.appName} error="Invalid username or password." />,
       );
     }
 

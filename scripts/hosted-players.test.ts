@@ -14,7 +14,7 @@ describe("hosted players operator import", () => {
     try {
       runtime.database.run(
         `insert into users (id, email, display_name, role, password_hash)
-         values ('user_new_player', 'new.player@example.local', 'New Player', 'player', 'hash')`,
+         values ('user_new_player', 'new-player', 'New Player', 'player', 'hash')`,
       );
     } finally {
       runtime.close();
@@ -23,12 +23,12 @@ describe("hosted players operator import", () => {
       sourcePath,
       `
 campaignId: campaign_rovnost_shadows
-disableUserEmails:
+disableUsers:
   - mira@example.local
 removeCharacterSlugs:
   - mira-voss
 players:
-  - email: new.player@example.local
+  - username: new-player
     character:
       name: Vessa Rook
       slug: vessa-rook
@@ -88,7 +88,7 @@ players:
 
       expect(result.usersDisabled).toEqual(["mira@example.local"]);
       expect(result.charactersRemoved).toEqual(["mira-voss"]);
-      expect(result.membershipsEnsured).toEqual(["new.player@example.local"]);
+      expect(result.membershipsEnsured).toEqual(["new-player"]);
       expect(result.charactersUpserted).toEqual(["vessa-rook"]);
       expect(user?.status).toBe("disabled");
       expect(mira).toBeNull();
@@ -127,7 +127,7 @@ players:
       sourcePath,
       `
 players:
-  - email: missing@example.local
+  - username: missing-player
     character:
       name: Missing Hero
       species: Human

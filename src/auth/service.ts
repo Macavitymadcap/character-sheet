@@ -102,7 +102,7 @@ export class AuthService {
     }
 
     const existing = this.dependencies.authRepository.findUserByEmail(invite.email);
-    if (existing) throw new Error("Email already exists.");
+    if (existing) throw new Error("Username already exists.");
 
     const userId = randomUUID();
     const passwordHash = this.dependencies.passwordService.hashPassword(

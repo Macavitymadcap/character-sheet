@@ -16,6 +16,7 @@ interface HostedPlayersDocument {
   backupReference?: unknown;
   campaignId?: unknown;
   disableUserEmails?: unknown;
+  disableUsers?: unknown;
   removeCharacterSlugs?: unknown;
   players?: unknown;
 }
@@ -24,6 +25,7 @@ interface HostedPlayerRecord {
   character?: unknown;
   displayName?: unknown;
   email?: unknown;
+  username?: unknown;
 }
 
 interface HostedCharacterRecord {
@@ -80,11 +82,11 @@ export async function applyHostedPlayers(options: HostedPlayersOptions = {}): Pr
       usersDisabled: [],
     };
 
-    for (const email of stringArray(parsed.disableUserEmails)) {
-      const user = runtime.repositories.authRepository.findUserByEmail(email);
-      if (!user) throw new Error(`Cannot disable missing user ${email}.`);
+    for (const username of stringArray(parsed.disableUsers ?? parsed.disableUserEmails)) {
+      const user = runtime.repositories.authRepository.findUserByEmail(username);
+      if (!user) throw new Error(`Cannot disable missing user ${username}.`);
       runtime.repositories.authRepository.updateUserStatus(user.id, "disabled");
-      result.usersDisabled.push(email);
+      result.usersDisabled.push(username);
     }
 
     for (const slug of stringArray(parsed.removeCharacterSlugs)) {
@@ -99,14 +101,14 @@ export async function applyHostedPlayers(options: HostedPlayersOptions = {}): Pr
     }
 
     for (const player of playerRecords(parsed.players)) {
-      const email = requiredString(player.email, "players[].email").toLowerCase();
-      const user = runtime.repositories.authRepository.findUserByEmail(email);
+      const username = requiredString(player.username ?? player.email, "players[].username").toLowerCase();
+      const user = runtime.repositories.authRepository.findUserByEmail(username);
       if (!user) {
-        throw new Error(`User ${email} does not exist. Create/accept the invite first, then rerun hosted:players.`);
+        throw new Error(`User ${username} does not exist. Create/accept the invite first, then rerun hosted:players.`);
       }
-      if (user.status !== "active") throw new Error(`User ${email} is not active.`);
+      if (user.status !== "active") throw new Error(`User ${username} is not active.`);
       if (user.role !== "player" && !user.campaignRoles.includes("player")) {
-        throw new Error(`User ${email} must be a player account or campaign player.`);
+        throw new Error(`User ${username} must be a player account or campaign player.`);
       }
       runtime.database.run(
         `insert into campaign_members (campaign_id, user_id, role)
@@ -114,7 +116,7 @@ export async function applyHostedPlayers(options: HostedPlayersOptions = {}): Pr
          on conflict(campaign_id, user_id) do update set role = 'player'`,
         [campaignId, user.id],
       );
-      result.membershipsEnsured.push(email);
+      result.membershipsEnsured.push(username);
 
       const character = characterRecord(player.character);
       const sheet = upsertCharacter(runtime, campaignId, user.id, character);
