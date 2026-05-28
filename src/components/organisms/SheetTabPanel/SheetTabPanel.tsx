@@ -194,6 +194,27 @@ const EquipmentTab = ({ data }: { data: TabContentData }) => {
 
   return (
     <div class="tab-compact-stack">
+      <form
+        class="sheet-edit-form row-edit-form row-edit-form-inline tab-row-edit-form"
+        hx-post={`/sheet/${data.sheet.slug}/equipment`}
+        hx-target="#sheet-tab-panel"
+        hx-swap="outerHTML"
+      >
+        <label>Name <input name="name" required type="text" /></label>
+        <label>Category <input name="category" required type="text" value="gear" /></label>
+        <label>Quantity <input min="0" name="quantity" required type="number" value="1" /></label>
+        <label>
+          Equipped
+          <select name="equipped">
+            <option value="0">No</option>
+            <option value="1">Yes</option>
+          </select>
+        </label>
+        <label class="tab-row-edit-field-wide">Notes <input name="notes" type="text" /></label>
+        <div class="row-edit-actions">
+          <button type="submit">Add equipment</button>
+        </div>
+      </form>
       {renderEditableCompactSection(
         "equipment-list-heading",
         "Equipment",
@@ -299,6 +320,34 @@ const BackgroundTab = ({ data }: { data: TabContentData }) => {
           value: faction.playerPrompt,
         })),
       )}
+      <section class="tab-compact-section" aria-labelledby="background-add-entry-heading">
+        <h3 id="background-add-entry-heading">Add background detail</h3>
+        <form
+          class="sheet-edit-form row-edit-form row-edit-form-inline tab-row-edit-form"
+          hx-post={`/sheet/${data.sheet.slug}/background`}
+          hx-target="#sheet-tab-panel"
+          hx-swap="outerHTML"
+        >
+          <label>Title <input name="title" required type="text" /></label>
+          <label>
+            Category
+            <select name="category">
+              <option value="backstory">Backstory</option>
+              <option value="personality">Personality</option>
+              <option value="ideal">Ideal</option>
+              <option value="bond">Bond</option>
+              <option value="flaw">Flaw</option>
+              <option value="false_identity">False identity</option>
+              <option value="npc">NPC</option>
+              <option value="rank">Rank</option>
+            </select>
+          </label>
+          <label class="tab-row-edit-field-wide">Body <textarea name="body" rows={3}></textarea></label>
+          <div class="row-edit-actions">
+            <button type="submit">Add detail</button>
+          </div>
+        </form>
+      </section>
       {renderEditableCompactSection("background-profile-heading", "Profile", profileItems)}
       {renderEditableCompactSection("background-story-heading", "Backstory", backstoryItems)}
       {renderEditableCompactSection("background-identities-heading", "False identities", identityItems)}

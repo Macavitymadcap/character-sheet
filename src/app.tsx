@@ -81,6 +81,8 @@ import type {
   CampaignImportSourceFormat,
   CampaignImportTargetType,
   CampaignRepository,
+  CharacterBackgroundCategory,
+  CharacterProficiency,
   CharacterRepository,
   CreateCharacterInput,
   NotesRepository,
@@ -274,7 +276,7 @@ export const createApp = (dependencies: AppDependencies) => {
     if (!user) {
       context.status(401);
       return context.html(
-        <LoginPage appName={dependencies.appName} error="Invalid email or password." />,
+        <LoginPage appName={dependencies.appName} error="Invalid username or password." />,
       );
     }
 
@@ -1297,6 +1299,7 @@ export const createApp = (dependencies: AppDependencies) => {
     const form = await FormValues.from(context);
     const email = form.string("email");
     const role = form.string("role");
+    if (!email.trim()) return context.text("Invalid username", 400);
     if (!isUserRole(role)) return context.text("Invalid role", 400);
 
     const invite = dependencies.authService.createInvite({
@@ -2162,6 +2165,38 @@ export const createApp = (dependencies: AppDependencies) => {
     );
   });
 
+  app.post("/sheet/:characterRef/proficiencies", async (context) => {
+    const session = readSession(context.req.header("cookie"));
+    if (!session) return context.redirect("/login", 303);
+
+    const sheet = getSheetByRef(context.req.param("characterRef"));
+    if (!sheet) return context.text("Not found", 404);
+    const guard = requireSheetAccess({
+      campaignRepository: dependencies.campaignRepository,
+      characterId: sheet.id,
+      characterRepository: dependencies.characterRepository,
+      permission: "write",
+      session,
+    });
+    const guarded = guardResponse(context, guard);
+    if (guarded) return guarded;
+
+    const body = await context.req.parseBody();
+    const name = parseFormText(body.name);
+    const category = parseProficiencyCategory(body.category);
+    if (!name || !category) return context.text("Invalid proficiency", 400);
+
+    dependencies.characterRepository.addProficiency(sheet.id, {
+      category,
+      detail: parseFormString(body.detail) ?? "",
+      name,
+    });
+    const updatedSheet = dependencies.characterRepository.getSheetById(sheet.id);
+    if (!updatedSheet) return context.text("Not found", 404);
+
+    return renderSheetTabPanel(context, dependencies, updatedSheet, sheetViewerRole(updatedSheet.id, session), "skills");
+  });
+
   app.get("/sheet/:characterRef/background/:entryId", (context) => {
     const session = readSession(context.req.header("cookie"));
     if (!session) return context.redirect("/login", 303);
@@ -2246,6 +2281,39 @@ export const createApp = (dependencies: AppDependencies) => {
     if (!entry) return context.text("Not found", 404);
 
     return context.html(<BackgroundEntryReadItem characterSlug={sheet.slug} entry={entry} />);
+  });
+
+  app.post("/sheet/:characterRef/background", async (context) => {
+    const session = readSession(context.req.header("cookie"));
+    if (!session) return context.redirect("/login", 303);
+
+    const sheet = getSheetByRef(context.req.param("characterRef"));
+    if (!sheet) return context.text("Not found", 404);
+
+    const guard = requireSheetAccess({
+      campaignRepository: dependencies.campaignRepository,
+      characterId: sheet.id,
+      characterRepository: dependencies.characterRepository,
+      permission: "write",
+      session,
+    });
+    const guarded = guardResponse(context, guard);
+    if (guarded) return guarded;
+
+    const body = await context.req.parseBody();
+    const title = parseFormText(body.title);
+    const category = parseBackgroundCategory(body.category);
+    if (!title || !category) return context.text("Invalid background entry", 400);
+
+    dependencies.characterRepository.addBackgroundEntry(sheet.id, {
+      body: parseFormString(body.body) ?? "",
+      category,
+      title,
+    });
+    const updatedSheet = dependencies.characterRepository.getSheetById(sheet.id);
+    if (!updatedSheet) return context.text("Not found", 404);
+
+    return renderSheetTabPanel(context, dependencies, updatedSheet, sheetViewerRole(updatedSheet.id, session), "background");
   });
 
   app.patch("/sheet/:characterRef/resources/:resourceId", async (context) => {
@@ -2363,6 +2431,44 @@ export const createApp = (dependencies: AppDependencies) => {
     if (!item) return context.text("Not found", 404);
 
     return context.html(<EquipmentEditItem characterSlug={sheet.slug} item={item} />);
+  });
+
+  app.post("/sheet/:characterRef/equipment", async (context) => {
+    const session = readSession(context.req.header("cookie"));
+    if (!session) return context.redirect("/login", 303);
+
+    const sheet = getSheetByRef(context.req.param("characterRef"));
+    if (!sheet) return context.text("Not found", 404);
+
+    const guard = requireSheetAccess({
+      campaignRepository: dependencies.campaignRepository,
+      characterId: sheet.id,
+      characterRepository: dependencies.characterRepository,
+      permission: "write",
+      session,
+    });
+    const guarded = guardResponse(context, guard);
+    if (guarded) return guarded;
+
+    const body = await context.req.parseBody();
+    const name = parseFormText(body.name);
+    const category = parseFormText(body.category);
+    const quantity = parseFormNumber(body.quantity);
+    if (!name || !category || quantity === null || quantity < 0) {
+      return context.text("Invalid equipment", 400);
+    }
+
+    dependencies.characterRepository.addEquipmentItem(sheet.id, {
+      category,
+      equipped: parseFormBoolean(body.equipped) ?? false,
+      name,
+      notes: parseFormString(body.notes) ?? "",
+      quantity,
+    });
+    const updatedSheet = dependencies.characterRepository.getSheetById(sheet.id);
+    if (!updatedSheet) return context.text("Not found", 404);
+
+    return renderSheetTabPanel(context, dependencies, updatedSheet, sheetViewerRole(updatedSheet.id, session), "equipment");
   });
 
   app.patch("/sheet/:characterRef/equipment/:equipmentId", async (context) => {
@@ -3094,6 +3200,31 @@ function parseFormString(value: unknown) {
 
 function parseNoteVisibility(value: unknown) {
   return value === "player" || value === "game_master" ? value : null;
+}
+
+function parseBackgroundCategory(value: unknown): CharacterBackgroundCategory | null {
+  const categories: CharacterBackgroundCategory[] = [
+    "backstory",
+    "bond",
+    "false_identity",
+    "flaw",
+    "ideal",
+    "npc",
+    "personality",
+    "rank",
+  ];
+
+  return typeof value === "string" && categories.includes(value as CharacterBackgroundCategory)
+    ? value as CharacterBackgroundCategory
+    : null;
+}
+
+function parseProficiencyCategory(value: unknown): CharacterProficiency["category"] | null {
+  const categories: Array<CharacterProficiency["category"]> = ["armour", "language", "tool", "weapon"];
+
+  return typeof value === "string" && categories.includes(value as CharacterProficiency["category"])
+    ? value as CharacterProficiency["category"]
+    : null;
 }
 
 function parseNpcVisibility(value: unknown): NpcVisibility | null {

@@ -126,7 +126,14 @@ export const AdminPage = ({
             <section aria-labelledby="invite-heading">
               <h2 id="invite-heading">Create invite</h2>
               <form class="form-stack" action="/admin/invites" method="post">
-                <FormField id="invite-email" label="Email" name="email" required type="email" />
+                <FormField
+                  autocomplete="username"
+                  id="invite-email"
+                  label="Username"
+                  name="email"
+                  required
+                  type="text"
+                />
                 <FormField id="invite-role" label="Role">
                   <select id="invite-role" name="role">
                     <option value="player">Player</option>
@@ -182,7 +189,7 @@ export const AdminPage = ({
                   <thead>
                     <tr>
                       <th scope="col">Display name</th>
-                      <th scope="col">Email</th>
+                      <th scope="col">Username</th>
                       <th scope="col">Role</th>
                       <th scope="col">Status</th>
                       <th scope="col">Campaigns</th>
@@ -248,7 +255,7 @@ export const AdminPage = ({
                 <table class="sheet-table admin-invites-table">
                   <thead>
                     <tr>
-                      <th scope="col">Email</th>
+                      <th scope="col">Username</th>
                       <th scope="col">Role</th>
                       <th scope="col">Expires</th>
                       <th scope="col">Accepted</th>

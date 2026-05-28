@@ -45,6 +45,9 @@ describe("AuthService", () => {
       id: "user_lynott_player",
       role: "player",
     });
+    expect(authService.verifyCredentials("LYNOTT@EXAMPLE.LOCAL", "password123")).toMatchObject({
+      email: "lynott@example.local",
+    });
   });
 
   test("rejects missing users and wrong passwords", () => {
@@ -55,14 +58,14 @@ describe("AuthService", () => {
   test("creates and reads invite tokens locally", () => {
     const invite = authService.createInvite({
       createdByUserId: "user_site_admin",
-      email: "new.player@example.local",
+      email: "New.Player",
       role: "player",
     });
 
     expect(invite.token).not.toBe("");
     expect(authService.readInvite(invite.token)).toMatchObject({
       createdByUserId: "user_site_admin",
-      email: "new.player@example.local",
+      email: "new.player",
       role: "player",
     });
   });

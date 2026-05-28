@@ -22,7 +22,7 @@ export const InviteAcceptPage = ({ appName, email, error, role, token }: InviteA
               Accept invite
             </h1>
             <p class="login-lede">
-              {email} ({role.replace("_", " ")})
+              Username: {email} ({role.replace("_", " ")})
             </p>
             {error ? (
               <p class="form-error" role="alert">
