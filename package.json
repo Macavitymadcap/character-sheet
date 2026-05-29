@@ -6,10 +6,14 @@
     "db:bootstrap": "bun scripts/db-bootstrap.ts",
     "dev": "bun run --hot src/index.ts",
     "import:rules": "bun scripts/import-rules.ts",
+    "import:rules:ocr": "bun scripts/private-rules-ocr.ts",
     "import:rules:srd": "bun scripts/import-rules.ts docs/rules/srd-5.1",
     "hosted:data": "bun scripts/hosted-data.ts",
+    "hosted:players": "bun scripts/hosted-players.ts",
     "hosted:check": "bun scripts/hosted-health.ts",
     "hosted:rehearse": "bun scripts/fresh-hosted-rehearsal.ts",
+    "import:rules:private": "bun scripts/import-private-rules.ts",
+    "rules:coverage:rovnost": "bun scripts/rovnost-rules-coverage.ts",
     "protect:branches": "bun scripts/configure-branch-protection.ts",
     "protect:branches:bootstrap": "bun scripts/configure-branch-protection.ts --bootstrap",
     "screenshots:sheet": "bun -e \"import { captureSheetScreenshots } from './scripts/capture-screenshots'; await captureSheetScreenshots();\"",
@@ -29,7 +33,8 @@
     "@macavitymadcap/hyper-dank-data": "^0.2.0",
     "@macavitymadcap/hyper-dank-transport": "^0.2.0",
     "@macavitymadcap/hyper-dank-ui": "^0.2.0",
-    "hono": "^4.0.0"
+    "hono": "^4.0.0",
+    "yaml": "^2.9.0"
   },
   "devDependencies": {
     "@types/bun": "latest",

@@ -90,7 +90,7 @@ describe("auth routes", () => {
     });
 
     expect(response.status).toBe(401);
-    expect(await response.text()).toContain("Invalid email or password.");
+    expect(await response.text()).toContain("Invalid username or password.");
   });
 
   test("renders the home page for authenticated users and logs out", async () => {

@@ -56,6 +56,8 @@ describe("SkillsTrainingTab", () => {
     expect(html).toContain('<span class="skill-name-with-roll"><span>Arcana</span>');
     expect(html).toContain('aria-label="Untrained"');
     expect(html).toContain("<h4 id=\"proficiency-tool\">Tools</h4>");
+    expect(html).toContain('hx-post="/sheet/lynott/proficiencies"');
+    expect(html).toContain("Add proficiency</button>");
     expect(html).toContain("<strong>Thieves&#39; tools</strong>");
     expect(html).toContain('aria-label="Roll Thieves&#39; tools"');
     expect(html).toContain('hx-get="/sheet/lynott/proficiencies/proficiency_lynott_thieves_tools/edit"');

@@ -1,0 +1,107 @@
+schemaVersion: 1
+campaign:
+  id: campaign_rovnost_shadows
+  slug: rovnost-shadows
+  name: Rovnost Shadows
+sources:
+  - code: PHB
+    title: Player's Handbook
+    abbreviation: PHB
+    visibility: campaign
+    precedence: 10
+  - code: TCOE
+    title: Tasha's Cauldron of Everything
+    abbreviation: TCoE
+    visibility: campaign
+    precedence: 20
+  - code: MPMM
+    title: "Mordenkainen Presents: Monsters of the Multiverse"
+    abbreviation: MPMM
+    visibility: campaign
+    precedence: 30
+entities:
+  - id: private_species_clockwork_kin
+    slug: clockwork-kin
+    type: species
+    name: Clockwork Kin
+    source:
+      sourceCode: MPMM
+      page: 101
+      section: Example Species
+    tags:
+      - synthetic
+      - friday-fixture
+    summary: Safe dummy species for private schema tests.
+    bodyMarkdown: "Synthetic fixture text only. Replace outside git with operator-owned notes."
+    abilityScores:
+      mode: flexible_plus_two_plus_one
+      plusTwo:
+        choose: 1
+        from: all
+      plusOne:
+        choose: 1
+        from: all
+      disallowSameAbility: true
+    choices:
+      - kind: language
+        choose: 1
+        from:
+          - Common
+          - Dwarvish
+        auditLabel: Clockwork Kin language
+    grants:
+      - target: speed
+        value:
+          walkingFeet: 30
+        auditLabel: Clockwork Kin speed
+  - id: private_feat_careful_tinkerer
+    slug: careful-tinkerer
+    type: feat
+    name: Careful Tinkerer
+    source:
+      sourceCode: TCOE
+      page: 12
+      section: Example Feats
+    summary: Safe dummy feat for ability-score choice coverage.
+    bodyMarkdown: "Synthetic fixture text only."
+    abilityScores:
+      mode: feat_choice
+      bonus: 1
+      choose: 1
+      from:
+        - intelligence
+        - wisdom
+        - charisma
+    grants:
+      - target: proficiency
+        value:
+          category: tool
+          name: Tinker's Tools
+        auditLabel: Careful Tinkerer tool training
+  - id: private_spell_lantern_spark
+    slug: lantern-spark
+    type: spell
+    name: Lantern Spark
+    source:
+      sourceCode: PHB
+      page: 200
+      section: Example Spells
+    summary: Safe dummy spell for spell mechanics coverage.
+    bodyMarkdown: "Synthetic fixture text only."
+    mechanics:
+      - kind: spellcasting
+        display: Action, 60 feet
+        data:
+          level: 1
+          school: Evocation
+          castingTime: Action
+          range: 60 feet
+          components:
+            - V
+            - S
+          duration: Instantaneous
+links:
+  - from: private_species_clockwork_kin
+    to: private_feat_careful_tinkerer
+    relationship: example_related_option
+importNotes: Safe fixture content only; operator-owned files belong on /data/private-rules.

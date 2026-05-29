@@ -12,7 +12,7 @@ Set `PUBLIC_BASE_URL` to the public Railway service URL or custom domain, for ex
 
 The hosted database is prepared from the same seed data as local development:
 
-| Role | Email | First password expectation |
+| Role | Username | First password expectation |
 | --- | --- | --- |
 | Player | `lynott@example.local` | Set a hosted password with an admin reset token before sharing the site. |
 | Player | `mira@example.local` | Set a hosted password with an admin reset token before sharing the site. |
@@ -37,13 +37,21 @@ After the admin password is changed, the operator should create an invite for a 
 
 1. Sign in as an active admin.
 2. Open `/admin`.
-3. In "Create invite", enter the user's email and choose `Player`, `Game Master`, or `Admin`.
+3. In "Create invite", enter the user's username and choose `Player`, `Game Master`, or `Admin`.
 4. Submit the form.
 5. Copy the returned invite URL from the admin handoff panel. It should be shaped like `https://your-hosted-origin.example/invites/<token>` when `PUBLIC_BASE_URL` is set.
 6. Send that link privately to the user through the agreed table channel.
 7. Ask the user to enter their display name and password on the invite page.
 
-Invite acceptance creates the account locally and redirects the user to `/login`. It does not send email and does not automatically add campaign membership beyond what the current invite role supports.
+Invite acceptance creates the account locally and redirects the user to `/login`. It does not send
+email and does not automatically add campaign membership beyond what the current invite role
+supports. Usernames can be short handles such as `player-one`; the app stores them lowercase so
+players can sign in without matching case. Email-shaped names such as `player.one@example.local`
+remain supported for existing seeded accounts.
+
+For Friday table handoff, create and accept the real player invites first, then use
+[Hosted Friday Player Runbook](./hosted-friday-player-runbook.md) to add Rovnost campaign
+membership, disable rehearsal accounts, and load level-5 character shells.
 
 ## Reset A Password
 

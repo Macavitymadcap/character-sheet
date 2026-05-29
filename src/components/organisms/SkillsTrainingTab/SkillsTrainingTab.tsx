@@ -42,6 +42,27 @@ export const SkillsTrainingTab = ({ sheet }: SkillsTrainingTabProps) => {
 
       <section class="sheet-data-section" aria-labelledby="proficiencies-heading">
         <h3 id="proficiencies-heading">Proficiencies</h3>
+        <form
+          class="sheet-edit-form row-edit-form row-edit-form-inline tab-row-edit-form"
+          hx-post={`/sheet/${sheet.slug}/proficiencies`}
+          hx-target="#sheet-tab-panel"
+          hx-swap="outerHTML"
+        >
+          <label>Name <input name="name" required type="text" /></label>
+          <label>
+            Category
+            <select name="category">
+              <option value="tool">Tool</option>
+              <option value="language">Language</option>
+              <option value="weapon">Weapon</option>
+              <option value="armour">Armour</option>
+            </select>
+          </label>
+          <label class="tab-row-edit-field-wide">Detail <input name="detail" type="text" /></label>
+          <div class="row-edit-actions">
+            <button type="submit">Add proficiency</button>
+          </div>
+        </form>
         <div class="proficiency-grid">
           {proficiencyGroups.map((group) => (
             <section class="proficiency-group" aria-labelledby={`proficiency-${group.category}`}>

@@ -1,0 +1,104 @@
+schemaVersion: 1
+supportedSources:
+  - code: PHB
+    title: Player's Handbook
+    abbreviation: PHB
+    category: official_2014
+    visibility: campaign
+  - code: DMG
+    title: Dungeon Master's Guide
+    abbreviation: DMG
+    category: official_2014
+    visibility: campaign
+  - code: MM
+    title: Monster Manual
+    abbreviation: MM
+    category: official_2014
+    visibility: campaign
+  - code: TCOE
+    title: Tasha's Cauldron of Everything
+    abbreviation: TCoE
+    category: official_2014
+    visibility: campaign
+  - code: XGTE
+    title: Xanathar's Guide to Everything
+    abbreviation: XGtE
+    category: official_2014
+    visibility: campaign
+  - code: MPMM
+    title: "Mordenkainen Presents: Monsters of the Multiverse"
+    abbreviation: MPMM
+    category: official_2014
+    visibility: campaign
+entityTypes:
+  - id: class
+    runtimeMapping: class
+    description: Character class definition.
+  - id: subclass
+    runtimeMapping: subclass
+    description: Class specialisation or archetype.
+  - id: class_feature
+    runtimeMapping: class_feature
+    description: Feature granted by a class level.
+  - id: subclass_feature
+    runtimeMapping: subclass_feature
+    description: Feature granted by a subclass level.
+  - id: species
+    runtimeMapping: species
+    aliases:
+      - race
+    description: Species or legacy race option.
+  - id: species_trait
+    runtimeMapping: species_trait
+    description: Trait granted by a species.
+  - id: feat
+    runtimeMapping: feat
+    description: Feat or optional feat-like choice.
+  - id: background
+    runtimeMapping: background
+    description: Character background.
+  - id: spell
+    runtimeMapping: spell
+    description: Spell entry and casting metadata.
+  - id: monster
+    runtimeMapping: stat_block
+    description: Monster or NPC stat block.
+  - id: equipment
+    runtimeMapping: equipment
+    description: Mundane equipment, armour, weapons, tools, or adventuring gear.
+  - id: magic_item
+    runtimeMapping: equipment
+    description: Magic item with rarity, attunement, and item mechanics.
+  - id: condition
+    runtimeMapping: condition
+    description: Condition or condition-like state.
+  - id: optional_rule
+    runtimeMapping: core_rule
+    description: Optional rule, subsystem, or variant rule.
+  - id: invocation
+    runtimeMapping: class_feature
+    description: Invocation option.
+  - id: infusion
+    runtimeMapping: infusion
+    description: Artificer infusion option.
+  - id: fighting_style
+    runtimeMapping: class_feature
+    description: Fighting style option.
+  - id: manoeuvre
+    runtimeMapping: class_feature
+    description: Battle manoeuvre option.
+  - id: metamagic
+    runtimeMapping: class_feature
+    description: Metamagic option.
+  - id: pact_boon
+    runtimeMapping: class_feature
+    description: Pact boon option.
+  - id: language
+    runtimeMapping: proficiency
+    description: Language proficiency option.
+  - id: proficiency
+    runtimeMapping: proficiency
+    description: Armour, weapon, tool, language, save, or skill proficiency.
+  - id: rule
+    runtimeMapping: core_rule
+    description: General rule text or rules reference.

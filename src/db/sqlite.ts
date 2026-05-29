@@ -42,6 +42,7 @@ import type {
   CharacterProficiency,
   CharacterRepository,
   CharacterResource,
+  CharacterRuleChoice,
   CharacterRuleLink,
   CharacterRosterItem,
   CharacterSense,
@@ -209,6 +210,20 @@ interface CharacterResourceRow {
   max_value: number | null;
   resource_key: string;
   resource_type: string;
+}
+
+interface CharacterRuleChoiceRow {
+  audit_event: CharacterRuleChoice["auditEvent"];
+  audit_label: string;
+  character_id: string;
+  choice_key: string;
+  chosen_values_json: string;
+  created_at: string;
+  id: string;
+  notes: string;
+  rules_entity_id: string | null;
+  source_level: number | null;
+  updated_at: string;
 }
 
 interface CharacterEquipmentRow {
@@ -401,7 +416,9 @@ interface RuleSummaryRow {
   public_export_eligible: number;
   slug: string;
   source_abbreviation: string;
+  source_id: string;
   source_name: string;
+  source_precedence: number;
   source_slug: string;
   source_visibility: RulesSourceVisibility;
 }
@@ -958,6 +975,111 @@ class SqliteCharacterRepository implements CharacterRepository {
     return this.getSheetById(characterId)!;
   }
 
+  addEquipmentItem(
+    characterId: string,
+    input: { category: string; equipped: boolean; name: string; notes: string; quantity: number },
+  ): CharacterEquipment {
+    const id = randomUUID();
+    this.database.run(
+      `insert into character_equipment (id, character_id, name, category, quantity, equipped, notes)
+       values (?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id,
+        characterId,
+        input.name.trim(),
+        input.category.trim(),
+        Math.max(0, Math.floor(input.quantity)),
+        input.equipped ? 1 : 0,
+        input.notes.trim(),
+      ],
+    );
+
+    return this.getEquipment(characterId, id)!;
+  }
+
+  addBackgroundEntry(
+    characterId: string,
+    input: { body: string; category: CharacterBackgroundEntry["category"]; title: string },
+  ): CharacterBackgroundEntry {
+    const id = randomUUID();
+    const sortOrder = this.listBackgroundEntries(characterId).length + 10;
+    this.database.run(
+      `insert into character_background_entries (id, character_id, category, title, body, sort_order)
+       values (?, ?, ?, ?, ?, ?)`,
+      [id, characterId, input.category, input.title.trim(), input.body.trim(), sortOrder],
+    );
+
+    return this.listBackgroundEntries(characterId).find((entry) => entry.id === id)!;
+  }
+
+  addProficiency(
+    characterId: string,
+    input: { category: CharacterProficiency["category"]; detail: string; name: string },
+  ): CharacterProficiency {
+    const id = randomUUID();
+    const sortOrder = this.listProficiencies(characterId).length + 10;
+    this.database.run(
+      `insert into character_proficiencies (id, character_id, category, name, detail, sort_order)
+       values (?, ?, ?, ?, ?, ?)`,
+      [id, characterId, input.category, input.name.trim(), input.detail.trim(), sortOrder],
+    );
+
+    return this.listProficiencies(characterId).find((proficiency) => proficiency.id === id)!;
+  }
+
+  recordRuleChoice(input: {
+    auditEvent: CharacterRuleChoice["auditEvent"];
+    auditLabel: string;
+    characterId: string;
+    choiceKey: string;
+    chosenValues: string[];
+    notes?: string;
+    rulesEntityId?: string | null;
+    sourceLevel?: number | null;
+  }): CharacterRuleChoice {
+    const id = randomUUID();
+    const sourceLevel = input.sourceLevel ?? 0;
+    if (input.auditEvent === "level_up" && sourceLevel < 1) {
+      throw new Error("Level-up rule choices must include sourceLevel.");
+    }
+    const chosenValues = input.chosenValues
+      .map((value) => value.trim())
+      .filter(Boolean);
+    const existing = this.database
+      .query<{ id: string }, [string, string, CharacterRuleChoice["auditEvent"], number]>(
+        `select id from character_rule_choices
+         where character_id = ? and choice_key = ? and audit_event = ? and source_level = ?`,
+      )
+      .get(input.characterId, input.choiceKey, input.auditEvent, sourceLevel);
+    const choiceId = existing?.id ?? id;
+
+    this.database.run(
+      `insert into character_rule_choices (
+        id, character_id, rules_entity_id, choice_key, chosen_values_json, audit_event,
+        audit_label, source_level, notes, updated_at
+      ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+      on conflict(character_id, choice_key, audit_event, source_level) do update set
+        rules_entity_id = excluded.rules_entity_id,
+        chosen_values_json = excluded.chosen_values_json,
+        audit_label = excluded.audit_label,
+        notes = excluded.notes,
+        updated_at = CURRENT_TIMESTAMP`,
+      [
+        choiceId,
+        input.characterId,
+        input.rulesEntityId ?? null,
+        input.choiceKey,
+        JSON.stringify(chosenValues),
+        input.auditEvent,
+        input.auditLabel.trim(),
+        sourceLevel,
+        input.notes?.trim() ?? "",
+      ],
+    );
+
+    return this.listRuleChoices(input.characterId).find((choice) => choice.id === choiceId)!;
+  }
+
   getAccessContext(characterId: string): CharacterAccessContext | null {
     const row = this.database
       .query<CharacterAccessRow, [string]>(
@@ -980,6 +1102,19 @@ class SqliteCharacterRepository implements CharacterRepository {
 
   getSheetBySlug(slug: string): CharacterSheetReadModel | null {
     return this.getSheetBy("slug", slug);
+  }
+
+  listRuleChoices(characterId: string): CharacterRuleChoice[] {
+    return this.database
+      .query<CharacterRuleChoiceRow, [string]>(
+        `select id, character_id, rules_entity_id, choice_key, chosen_values_json, audit_event,
+          audit_label, source_level, notes, created_at, updated_at
+         from character_rule_choices
+         where character_id = ?
+         order by created_at, choice_key`,
+      )
+      .all(characterId)
+      .map(toCharacterRuleChoice);
   }
 
   listCharactersForPlayer(userId: string): CharacterRosterItem[] {
@@ -2643,6 +2778,7 @@ class SqliteRulesRepository implements RulesRepository {
     if (!summary) return null;
 
     const mechanics = rows
+      .filter((row) => row.id === summary.id)
       .filter((row) => row.mechanic_type && row.data_json)
       .map((row) => ({
         data: parseRuleData(row.data_json ?? "{}"),
@@ -2735,9 +2871,6 @@ class SqliteRulesRepository implements RulesRepository {
     return this.ruleRows(filters)
       .map(toRuleSummary)
       .filter((rule) => {
-        if (seen.has(rule.id)) return false;
-        seen.add(rule.id);
-
         if (filters.entityType && rule.entityType !== filters.entityType) return false;
         if (filters.sourceSlug && rule.sourceSlug !== filters.sourceSlug) return false;
         if (filters.spellLevel !== undefined && !rule.tags.includes(`level-${filters.spellLevel}`)) {
@@ -2751,6 +2884,10 @@ class SqliteRulesRepository implements RulesRepository {
           const haystack = `${rule.name} ${rule.description} ${rule.tags.join(" ")}`.toLowerCase();
           if (!haystack.includes(query)) return false;
         }
+
+        const naturalKey = `${rule.entityType}:${rule.slug}`;
+        if (seen.has(naturalKey)) return false;
+        seen.add(naturalKey);
 
         return true;
       });
@@ -2790,11 +2927,13 @@ class SqliteRulesRepository implements RulesRepository {
           entities.entity_type,
           entities.name,
           sources.slug as source_slug,
+          sources.id as source_id,
           sources.name as source_name,
           sources.abbreviation as source_abbreviation,
           sources.content_category,
           sources.visibility as source_visibility,
           sources.public_export_eligible,
+          sources.precedence as source_precedence,
           group_concat(distinct campaign_sources.campaign_id) as campaign_ids,
           mechanics.mechanic_type,
           mechanics.data_json
@@ -2804,7 +2943,12 @@ class SqliteRulesRepository implements RulesRepository {
         left join rule_mechanics mechanics on mechanics.rules_entity_id = entities.id
         ${clause}
         group by entities.id, mechanics.id
-        order by entities.entity_type, entities.name, mechanics.id`,
+        order by entities.entity_type,
+          entities.slug,
+          case when sources.visibility = 'campaign' then 1 else 0 end desc,
+          sources.precedence desc,
+          entities.name,
+          mechanics.id`,
       )
       .all(...values);
   }
@@ -2911,6 +3055,62 @@ function slugForFilter(value: string) {
 
 class SqliteRulesSeedRepository implements RulesSeedRepository {
   constructor(private readonly database: Database) {}
+
+  findRuleEntityReference(
+    entityType: RuleEntityType,
+    slug: string,
+    filters: RuleAccessFilters = {},
+  ) {
+    const { clause, values } = ruleAccessWhereClause(filters);
+    const row = this.database
+      .query<RuleSummaryRow, Array<RulesContentCategory | string>>(
+        `select entities.id,
+          entities.slug,
+          entities.entity_type,
+          entities.name,
+          sources.slug as source_slug,
+          sources.id as source_id,
+          sources.name as source_name,
+          sources.abbreviation as source_abbreviation,
+          sources.content_category,
+          sources.visibility as source_visibility,
+          sources.public_export_eligible,
+          sources.precedence as source_precedence,
+          group_concat(distinct campaign_sources.campaign_id) as campaign_ids,
+          null as mechanic_type,
+          null as data_json
+        from rules_entities entities
+        inner join rules_sources sources on sources.id = entities.source_id
+        left join campaign_rules_sources campaign_sources on campaign_sources.source_id = sources.id
+        ${clause}
+        ${clause ? "and" : "where"} entities.entity_type = ? and entities.slug = ?
+        group by entities.id
+        order by case when sources.visibility = 'campaign' then 1 else 0 end desc,
+          sources.precedence desc
+        limit 1`,
+      )
+      .get(...values, entityType, slug);
+
+    return row
+      ? {
+        entityType: row.entity_type,
+        id: row.id,
+        name: row.name,
+        slug: row.slug,
+        source: toRuleSourceSummary({
+          abbreviation: row.source_abbreviation,
+          campaign_ids: row.campaign_ids,
+          content_category: row.content_category,
+          id: row.source_id,
+          name: row.source_name,
+          precedence: row.source_precedence,
+          public_export_eligible: row.public_export_eligible,
+          slug: row.source_slug,
+          visibility: row.source_visibility,
+        }),
+      }
+      : null;
+  }
 
   upsertRuleEntity(entity: RuleEntitySeedInput): UpsertedRuleEntity {
     const source = this.upsertSource(entity.source);
@@ -3026,6 +3226,22 @@ function toCharacterResource(row: CharacterResourceRow): CharacterResource {
     label: row.label,
     max: row.max_value,
     type: row.resource_type,
+  };
+}
+
+function toCharacterRuleChoice(row: CharacterRuleChoiceRow): CharacterRuleChoice {
+  return {
+    auditEvent: row.audit_event,
+    auditLabel: row.audit_label,
+    characterId: row.character_id,
+    choiceKey: row.choice_key,
+    chosenValues: parseStringArray(row.chosen_values_json),
+    createdAt: row.created_at,
+    id: row.id,
+    notes: row.notes,
+    rulesEntityId: row.rules_entity_id,
+    sourceLevel: row.source_level === 0 ? null : row.source_level,
+    updatedAt: row.updated_at,
   };
 }
 

@@ -52,7 +52,7 @@ export class AuthService {
   }
 
   verifyCredentials(email: string, password: string): AuthUser | null {
-    const user = this.dependencies.authRepository.findUserWithPasswordByEmail(email);
+    const user = this.dependencies.authRepository.findUserWithPasswordByEmail(normaliseUsername(email));
     if (!user || user.status !== "active") return null;
 
     const verified = this.dependencies.passwordService.verifyPassword(password, user.passwordHash);
@@ -74,7 +74,7 @@ export class AuthService {
     const invite: LocalInvite = {
       acceptedAt: null,
       createdByUserId: input.createdByUserId,
-      email: input.email,
+      email: normaliseUsername(input.email),
       expiresAt: addDays(this.now(), 7),
       id: randomUUID(),
       role: input.role,
@@ -102,7 +102,7 @@ export class AuthService {
     }
 
     const existing = this.dependencies.authRepository.findUserByEmail(invite.email);
-    if (existing) throw new Error("Email already exists.");
+    if (existing) throw new Error("Username already exists.");
 
     const userId = randomUUID();
     const passwordHash = this.dependencies.passwordService.hashPassword(
@@ -176,6 +176,10 @@ export class AuthService {
 
 export function hashToken(token: string) {
   return createHash("sha256").update(token).digest("base64url");
+}
+
+function normaliseUsername(value: string) {
+  return value.trim().toLowerCase();
 }
 
 function createToken() {

@@ -1,0 +1,51 @@
+schemaVersion: 1
+schemaName: campaign-ledger-private-rules
+purpose: >
+  Operator-supplied campaign-scoped YAML for owned 2014-compatible rule books.
+  The real files live outside git and are imported from the Railway volume.
+visibility:
+  default: campaign
+  allowed:
+    - campaign
+    - public
+  publicRule: >
+    Public visibility is only allowed for explicitly licensed SRD or operator-authored public
+    material. Owned-book sources such as PHB, DMG, MM, TCoE, XGtE, and MPMM must remain campaign
+    scoped.
+campaign:
+  required: true
+  fields:
+    id: Campaign id such as campaign_rovnost_shadows.
+    slug: Human-readable campaign slug.
+    name: Campaign display name.
+provenance:
+  importTimestamp: ISO-8601 timestamp written by the importer.
+  importSourcePath: Absolute or volume-relative path, such as /data/private-rules/phb.yml.
+  fileChecksum: Optional checksum for operator audit logs.
+sourceReference:
+  sourceCode: Required source code from entry-types.yml.
+  page: Optional page number or page range.
+  section: Optional book section heading.
+  note: Optional private operator note.
+rootFields:
+  schemaVersion: Required integer, currently 1.
+  campaign: Required campaign scope block.
+  sources: Required list of source book records.
+  entities: Required list of rule entity records.
+  importNotes: Optional operator-facing notes.
+entityFields:
+  id: Stable operator id, unique within the import set.
+  slug: Stable URL/import slug.
+  type: Supported entity type from entry-types.yml.
+  name: Display name.
+  source: Source reference.
+  tags: Optional search/filter tags.
+  summary: Short synthetic or operator-owned summary.
+  bodyMarkdown: Private body text. Do not commit real owned-book text.
+  prerequisites: Optional prerequisite records from subclass-mechanics.yml.
+  grants: Optional grant records from subclass-mechanics.yml.
+  choices: Optional choice records from subclass-mechanics.yml.
+  mechanics: Optional mechanics records from subclass-mechanics.yml.
+  links: Optional related entity/source links.
+  abilityScores: Optional ability score model from ability-scores.yml.
+  metadata: Optional importer-specific metadata.

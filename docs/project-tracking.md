@@ -19,6 +19,10 @@ Historical `docs/epics/sheet-*.md` and `docs/tickets/sheet-*.md` files remain in
 how the project got here and are still valid implementation records. New work should start in
 GitHub unless the maintainer explicitly asks for a Markdown planning brief.
 
+Durable acceptance notes such as [Rovnost Friday Readiness Acceptance](./operations/rovnost-friday-readiness-acceptance.md)
+record final operator boundaries after an epic lands; they complement GitHub issue status rather
+than replacing the active project board.
+
 ## Identifier Convention
 
 Campaign Ledger keeps the `sheet-*` identifier sequence for GitHub-managed work.

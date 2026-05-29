@@ -125,7 +125,8 @@ SQLite database files and sidecar files should remain ignored by Git.
 For Railway rehearsal setup, including hosted values for these variables, see [Railway Hosted Rehearsal](./docs/deployment/railway.md).
 For the accepted hosted storage boundary and future Postgres migration trigger, see [Hosted Persistence Decision](./docs/operations/hosted-persistence.md).
 For manual hosted user preparation, invite handoff, and password-reset handoff, see [Hosted Account Operator Runbook](./docs/operations/hosted-account-runbook.md).
-For the final local and hosted browser acceptance checklist, see [Hosted Rehearsal Acceptance](./docs/operations/hosted-rehearsal-acceptance.md) and [Hosted Production Readiness Acceptance](./docs/operations/hosted-production-readiness-acceptance.md). For completed epic acceptance records, see [Campaign Companion Acceptance](./docs/operations/campaign-companion-acceptance.md), [Hyper-Dank Adoption Acceptance](./docs/operations/hyper-dank-adoption-acceptance.md), and [Game Master Prep Acceptance](./docs/operations/game-master-prep-acceptance.md).
+For replacing rehearsal players and loading Friday character shells, see [Hosted Friday Player Runbook](./docs/operations/hosted-friday-player-runbook.md).
+For the final local and hosted browser acceptance checklist, see [Hosted Rehearsal Acceptance](./docs/operations/hosted-rehearsal-acceptance.md), [Hosted Production Readiness Acceptance](./docs/operations/hosted-production-readiness-acceptance.md), and [Rovnost Friday Readiness Acceptance](./docs/operations/rovnost-friday-readiness-acceptance.md). For completed epic acceptance records, see [Campaign Companion Acceptance](./docs/operations/campaign-companion-acceptance.md), [Hyper-Dank Adoption Acceptance](./docs/operations/hyper-dank-adoption-acceptance.md), and [Game Master Prep Acceptance](./docs/operations/game-master-prep-acceptance.md).
 
 Local seed users are available for development:
 
@@ -158,6 +159,7 @@ bun run hosted:data -- status
 bun run hosted:check -- https://your-railway-domain.example
 bun run hosted:rehearse
 bun run import:rules
+bun run import:rules:private
 bun run import:rules:srd
 bun run seed
 bun run screenshots:sheet
@@ -190,6 +192,29 @@ bun run import:rules:srd
 bun run import:rules -- docs/rules/spells/level-1/cure-wounds.md
 ```
 
+`bun run import:rules:private` imports operator-supplied private YAML into the Rovnost campaign. It defaults to `/data/private-rules`, requires a hosted backup confirmation for that production volume, keeps imported owned-book sources campaign-scoped, and reports skipped, failed, duplicate, and SRD-shadowed entries. See [Private Rules Importer](./docs/rules/private-rules/importer.md).
+
+`bun run import:rules:ocr` converts operator-owned OCR Markdown into Campaign Ledger private-rules
+YAML/JSON before import. It defaults to reading `/data/private-rules/ocr-markdown`, writing
+`/data/private-rules`, and excluding incomplete OCR spell and monster entries:
+
+```bash
+bun run import:rules:ocr -- --input-dir /data/private-rules/ocr-markdown --output-dir /data/private-rules
+```
+
+`bun run hosted:players` applies the private Friday player/character handoff file after account
+invites have been accepted and a hosted backup has been created:
+
+```bash
+HOSTED_PLAYERS_BACKUP_CONFIRMED=1 bun run hosted:players
+```
+
+`bun run rules:coverage:rovnost` reports the Friday-required private source coverage and Lynott's private rule links after an import. Run it against `/data/private-rules` before the Friday acceptance check:
+
+```bash
+bun run rules:coverage:rovnost -- /data/private-rules
+```
+
 Repository maintenance scripts:
 
 ```bash
@@ -201,11 +226,13 @@ bun run protect:branches
 
 The SRD import contract is documented in [SRD 5.1 Rules Import Contract](./docs/rules-srd-import.md). The full local SRD corpus lives under `docs/rules/srd-5.1/`; `docs/rules/srd-5.1-fixtures/` contains small parser-contract fixtures only. Existing Lynott rules from non-SRD sources remain supported as local or third-party rule-source categories.
 
+The private rules v1 operator contract is documented in [Private Rules YAML Schema](./docs/rules/private-rules/README.md), with a safe dummy fixture at [private-rules.example.yaml](./docs/rules/private-rules.example.yaml). Real owned-book YAML must stay outside git, normally on the Railway volume at `/data/private-rules`, and remain campaign-scoped unless a source is explicitly SRD/licensed.
+
 Public users can browse SRD rules at `/rules`, filter by type, spell level, equipment category, and search text, and open public detail pages such as `/rules/spell/bless`. Signed-in campaign members can also see permitted local or campaign-scoped private sources. Sheet spell and feature entries link back to their rule detail pages where imported rule links exist.
 
 ## Deployment Readiness
 
-The current app is ready for fresh local checkout, seed, verification, Railway deployment rehearsal, and table-use rehearsal with SQLite, Railway volume-backed asset storage, manual hosted account handoff, imported SRD 5.1 rules, public browser-local play, campaign-scoped private rules, richer Mira sheet data, compact table-use surfaces, Game Master prep, private NPC dossiers, local campaign images, player preview, staged content import, and manual Google Docs import. `sheet-0020` completed the SRD rules roadmap slice. `sheet-0030` completed the Railway rehearsal path; the first runtime configuration lives in [`railway.json`](./railway.json), with service setup documented in [Railway Hosted Rehearsal](./docs/deployment/railway.md) and browser acceptance in [Hosted Rehearsal Acceptance](./docs/operations/hosted-rehearsal-acceptance.md). `sheet-0077` records the hosted production readiness boundary and follow-up issues in [Hosted Production Readiness Acceptance](./docs/operations/hosted-production-readiness-acceptance.md). `sheet-0050` completed the campaign companion, public play, and rules-content product slice. `sheet-0040` completed Hyper-Dank package adoption. `sheet-0061` completes Game Master prep, private NPCs, content import, and Hyper-Dank-style GitHub issue/project workflow; see [Game Master Prep Acceptance](./docs/operations/game-master-prep-acceptance.md).
+The current app is ready for fresh local checkout, seed, verification, Railway deployment rehearsal, and table-use rehearsal with SQLite, Railway volume-backed asset storage, manual hosted account handoff, imported SRD 5.1 rules, public browser-local play, campaign-scoped private rules, richer Mira sheet data, compact table-use surfaces, Game Master prep, private NPC dossiers, local campaign images, player preview, staged content import, and manual Google Docs import. `sheet-0020` completed the SRD rules roadmap slice. `sheet-0030` completed the Railway rehearsal path; the first runtime configuration lives in [`railway.json`](./railway.json), with service setup documented in [Railway Hosted Rehearsal](./docs/deployment/railway.md) and browser acceptance in [Hosted Rehearsal Acceptance](./docs/operations/hosted-rehearsal-acceptance.md). `sheet-0077` records the hosted production readiness boundary and follow-up issues in [Hosted Production Readiness Acceptance](./docs/operations/hosted-production-readiness-acceptance.md). `sheet-0084` records the Friday private-rules table-readiness boundary in [Rovnost Friday Readiness Acceptance](./docs/operations/rovnost-friday-readiness-acceptance.md). `sheet-0050` completed the campaign companion, public play, and rules-content product slice. `sheet-0040` completed Hyper-Dank package adoption. `sheet-0061` completes Game Master prep, private NPCs, content import, and Hyper-Dank-style GitHub issue/project workflow; see [Game Master Prep Acceptance](./docs/operations/game-master-prep-acceptance.md).
 
 ## TDD Approach
 

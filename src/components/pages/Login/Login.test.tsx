@@ -16,6 +16,9 @@ describe("LoginPage", () => {
     expect(html).toContain('method="post"');
     expect(html).toContain('action="/login"');
     expect(html).toContain('name="email"');
+    expect(html).toContain("<span>Username</span>");
+    expect(html).toContain('type="text"');
+    expect(html).toContain('autocomplete="username"');
     expect(html).toContain('name="password"');
     expect(html).toContain("data-password-toggle");
     expect(html).toContain('aria-controls="password"');
@@ -25,9 +28,9 @@ describe("LoginPage", () => {
   });
 
   test("renders authentication errors", () => {
-    const html = render(<LoginPage appName="Campaign Ledger" error="Invalid email or password." />);
+    const html = render(<LoginPage appName="Campaign Ledger" error="Invalid username or password." />);
 
     expect(html).toContain('role="alert"');
-    expect(html).toContain("Invalid email or password.");
+    expect(html).toContain("Invalid username or password.");
   });
 });

@@ -47,6 +47,7 @@ describe("bootstrapDatabase", () => {
       "character_notes",
       "character_proficiencies",
       "character_resources",
+      "character_rule_choices",
       "character_rule_links",
       "character_senses",
       "character_skills",

@@ -8,11 +8,13 @@ const docs = [
   "CONTRIBUTING.md",
   "docs/operations/hosted-rehearsal-acceptance.md",
   "docs/operations/hosted-production-readiness-acceptance.md",
+  "docs/operations/rovnost-friday-readiness-acceptance.md",
   "docs/operations/fresh-hosted-deploy-runbook.md",
   "docs/operations/campaign-companion-acceptance.md",
   "docs/operations/hyper-dank-adoption-acceptance.md",
   "docs/operations/game-master-prep-acceptance.md",
   "docs/operations/hosted-account-runbook.md",
+  "docs/operations/hosted-friday-player-runbook.md",
   "docs/operations/google-docs-manual-import.md",
   "docs/project-tracking.md",
   "docs/deployment/railway.md",
@@ -92,10 +94,16 @@ describe("documentation references", () => {
 
   test("hosted account runbook documents manual token handoff", async () => {
     const runbook = await Bun.file("docs/operations/hosted-account-runbook.md").text();
+    const fridayPlayers = await Bun.file("docs/operations/hosted-friday-player-runbook.md").text();
     const readme = await Bun.file("README.md").text();
 
     expect(readme).toContain("[Hosted Account Operator Runbook](./docs/operations/hosted-account-runbook.md)");
+    expect(readme).toContain("[Hosted Friday Player Runbook](./docs/operations/hosted-friday-player-runbook.md)");
     expect(runbook).toContain("The app does not send email.");
+    expect(runbook).toContain("[Hosted Friday Player Runbook](./hosted-friday-player-runbook.md)");
+    expect(fridayPlayers).toContain("bun run hosted:players");
+    expect(fridayPlayers).toContain("HOSTED_PLAYERS_BACKUP_CONFIRMED=1");
+    expect(fridayPlayers).toContain("removeCharacterSlugs");
     expect(runbook).toContain("ACCOUNT_DELIVERY_MODE=operator");
     expect(runbook).toContain("PUBLIC_BASE_URL");
     expect(runbook).toContain("/invites/<token>");
@@ -131,6 +139,37 @@ describe("documentation references", () => {
     expect(acceptance).toContain("Game Master campaign images");
     expect(acceptance).toContain("sheet-0037");
     expect(acceptance).toContain("Campaign Density Decision");
+  });
+
+  test("Rovnost Friday readiness acceptance documents private rules and deferred scope", async () => {
+    const acceptance = await Bun.file("docs/operations/rovnost-friday-readiness-acceptance.md").text();
+    const readme = await Bun.file("README.md").text();
+    const architecture = await Bun.file("ARCHITECTURE.md").text();
+    const railway = await Bun.file("docs/deployment/railway.md").text();
+    const importer = await Bun.file("docs/rules/private-rules/importer.md").text();
+    const projectTracking = await Bun.file("docs/project-tracking.md").text();
+
+    expect(readme).toContain("[Rovnost Friday Readiness Acceptance](./docs/operations/rovnost-friday-readiness-acceptance.md)");
+    expect(architecture).toContain("[Rovnost Friday Readiness Acceptance](./docs/operations/rovnost-friday-readiness-acceptance.md)");
+    expect(railway).toContain("[Rovnost Friday Readiness Acceptance](../operations/rovnost-friday-readiness-acceptance.md)");
+    expect(importer).toContain("[Rovnost Friday Readiness Acceptance](../../operations/rovnost-friday-readiness-acceptance.md)");
+    expect(projectTracking).toContain("[Rovnost Friday Readiness Acceptance](./operations/rovnost-friday-readiness-acceptance.md)");
+    expect(readme).toContain("bun run rules:coverage:rovnost");
+    expect(readme).toContain("bun run import:rules:ocr");
+    expect(importer).toContain("bun run import:rules:ocr");
+    expect(acceptance).toContain("bun run import:rules:ocr -- --input-dir /data/private-rules/ocr-markdown --output-dir /data/private-rules");
+    expect(acceptance).toContain("HOSTED_PLAYERS_BACKUP_CONFIRMED=1 bun run hosted:players");
+    expect(acceptance).toContain("Friday, 29 May 2026");
+    expect(acceptance).toContain("PRIVATE_RULES_BACKUP_CONFIRMED=1 bun run import:rules:private -- /data/private-rules");
+    expect(acceptance).toContain("bun run hosted:data -- backup");
+    expect(acceptance).toContain("bun run rules:coverage:rovnost -- /data/private-rules");
+    expect(acceptance).toContain("bun run hosted:check -- <hosted-url>");
+    expect(acceptance).toContain("all Friday characters start at level 5");
+    expect(acceptance).toContain("#116 sheet-0089: Multi-Stage Character Creator MVP");
+    expect(acceptance).toContain("#117 sheet-0090: Levelling Workflow MVP");
+    expect(acceptance).toContain("#118 sheet-0091: Encounter And Combat Tracker MVP");
+    expect(acceptance).toContain("#120 sheet-0093: Qor'thos Campaign Wiki Seed");
+    expect(acceptance).toContain("#121 sheet-0094: Post-Friday Hyper-Dank Package Refresh And Component Adoption Audit");
   });
 
   test("campaign companion acceptance documents delivered scope and follow-ups", async () => {

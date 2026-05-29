@@ -250,12 +250,16 @@ describe("SheetTabPanel", () => {
     expect(features).toContain('<details class="accordion-item" name="feature-list">');
     expect(features).not.toContain("Armor");
     expect(equipmentTab).toContain("Range 30/90 ft.");
+    expect(equipmentTab).toContain('hx-post="/sheet/lynott/equipment"');
+    expect(equipmentTab).toContain("Add equipment</button>");
     expect(equipmentTab).toContain('id="equipment-item-equipment-lynott-pistol"');
     expect(equipmentTab).toContain('hx-get="/sheet/lynott/equipment/equipment_lynott_pistol/edit"');
     expect(equipmentTab).toContain('hx-target="#equipment-item-equipment-lynott-pistol"');
     expect(equipmentTab).toContain("Equipment rules");
     expect(equipmentTab).toContain("The Armor table collects");
     expect(backgroundTab).toContain("Jonas Blarendon");
+    expect(backgroundTab).toContain('hx-post="/sheet/lynott/background"');
+    expect(backgroundTab).toContain("Add detail</button>");
     expect(backgroundTab).toContain('id="background-entry-background-lynott-identity-jonas"');
     expect(backgroundTab).toContain('hx-get="/sheet/lynott/background/background_lynott_identity_jonas/edit"');
     expect(backgroundTab).toContain('hx-target="#background-entry-background-lynott-identity-jonas"');
