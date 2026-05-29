@@ -21,11 +21,39 @@ describe("private rules OCR export", () => {
   test("writes Campaign Ledger private-rules YAML and excludes incomplete spells and monsters by default", () => {
     const entries = parseOcrMarkdown(
       [
-        "- *Mage Hand*",
-        "- **Goblin**",
+        "Invented Spark",
+        "Level 1 Evocation",
+        "• Casting Time: Action",
+        "• Range: 30 feet",
+        "• Components: V, S",
+        "• Duration: Instantaneous",
+        "A harmless synthetic spell for parser tests.",
+        "Classes: Wizard",
+        "Training Construct",
+        "Medium Construct, Unaligned",
+        "• Armor Class 12",
+        "• Hit Points 22 (4d8 + 4)",
+        "• Speed 30 ft.",
+        "STR",
+        "DEX",
+        "CON",
+        "INT",
+        "WIS",
+        "CHA",
+        "12 (+1)",
+        "10 (+0)",
+        "12 (+1)",
+        "6 (-2)",
+        "10 (+0)",
+        "5 (-3)",
+        "• Challenge 1/2 (XP 100; PB +2)",
+        "Actions",
+        "Practice Slam. Melee Weapon Attack: +3 to hit. Hit: 4 bludgeoning damage.",
         "## Wizard",
         "# Feats",
         "### Alert",
+        "You gain the following benefits:",
+        "• You are hard to surprise.",
         "| Longsword | 15 gp | 1d8 slashing | 3 lb. |",
         "| Longsword | duplicate row |",
       ].join("\n"),
@@ -54,12 +82,107 @@ describe("private rules OCR export", () => {
   });
 
   test("can include spells when the operator overrides the exclusion list", () => {
-    const entries = parseOcrMarkdown("- *Mage Hand*", "PHB");
+    const entries = parseOcrMarkdown(
+      [
+        "Invented Spark",
+        "Level 1 Evocation",
+        "• Casting Time: Action",
+        "• Range: 30 feet",
+        "• Components: V, S",
+        "• Duration: Instantaneous",
+        "A harmless synthetic spell for parser tests.",
+        "Classes: Wizard",
+      ].join("\n"),
+      "PHB",
+    );
     const document = createPrivateRulesDocument(entries, defaultOcrBooks[0]!, campaign, new Set());
 
     expect(document.entities).toHaveLength(1);
     expect(document.entities[0]?.type).toBe("spell");
     expect(document.entities[0]?.mechanics[0]?.kind).toBe("spell");
+    expect(document.entities[0]?.mechanics[0]?.data).toMatchObject({
+      castingTime: "Action",
+      classes: ["Wizard"],
+      components: ["V", "S"],
+      level: 1,
+      range: "30 feet",
+      school: "Evocation",
+    });
+  });
+
+  test("extracts OCR-shaped stat blocks, magic items, species, backgrounds, feats, and tables", () => {
+    const entries = parseOcrMarkdown(
+      [
+        "Training Construct",
+        "Medium Construct, Unaligned",
+        "• Armor Class 12",
+        "• Hit Points 22 (4d8 + 4)",
+        "• Speed 30 ft.",
+        "STR",
+        "DEX",
+        "CON",
+        "INT",
+        "WIS",
+        "CHA",
+        "12 (+1)",
+        "10 (+0)",
+        "12 (+1)",
+        "6 (-2)",
+        "10 (+0)",
+        "5 (-3)",
+        "• Senses Passive Perception 10",
+        "• Languages understands Common",
+        "• Challenge 1/2 (XP 100; PB +2)",
+        "Patient. The construct waits for instructions.",
+        "Actions",
+        "Practice Slam. Melee Weapon Attack: +3 to hit. Hit: 4 bludgeoning damage.",
+        "Invented Hammer",
+        "Weapon (Warhammer), Rare (Requires Attunement), Martial Weapon, Melee Weapon, 2 lb.",
+        "1d8 Bludgeoning",
+        "This synthetic hammer exists only in tests.",
+        "Aarakocra",
+        "• Ability Scores: Choose any +2",
+        "• Creature Type: Humanoid",
+        "• Size: Medium",
+        "• Speed: 30 feet",
+        "Bright Eyes. You can see well in dim light.",
+        "Acolyte",
+        "• Skill Proficiencies: Insight, Religion",
+        "• Languages: Two of your choice",
+        "• Equipment: Robes, a token, and 10 gp",
+        "Feature: Quiet Shelter",
+        "Temples offer you aid in this synthetic example.",
+        "Invented Adept",
+        "Prerequisite: Aarakocra",
+        "You gain the following benefits:",
+        "• Increase one ability score by 1.",
+        "Synthetic Results",
+        "d6",
+        "Result",
+        "1",
+        "First synthetic result",
+        "2",
+        "Second synthetic result",
+      ].join("\n"),
+      "PHB",
+    );
+
+    expect(entries.map((entry) => entry.type)).toContain("monster");
+    expect(entries.map((entry) => entry.type)).toContain("magic_item");
+    expect(entries.map((entry) => entry.type)).toContain("species");
+    expect(entries.map((entry) => entry.type)).toContain("background");
+    expect(entries.map((entry) => entry.type)).toContain("feat");
+    expect(entries.map((entry) => entry.type)).toContain("rule");
+    expect(entries.find((entry) => entry.type === "monster")?.mechanics.stat_block).toMatchObject({
+      armourClass: { value: 12 },
+      challenge: { proficiencyBonus: 2, rating: "1/2", xp: 100 },
+      hitPoints: { average: 22, formula: "4d8 + 4" },
+    });
+    expect(entries.find((entry) => entry.type === "magic_item")?.mechanics.equipment).toMatchObject({
+      category: "magic_item",
+      rarity: "Rare",
+      requiresAttunement: true,
+    });
   });
 
   test("exports book and combined files from an OCR markdown directory", async () => {
@@ -71,6 +194,7 @@ describe("private rules OCR export", () => {
         "## Wizard",
         "# Feats",
         "### Alert",
+        "• You react quickly.",
         "| Longsword | 15 gp | 1d8 slashing | 3 lb. |",
       ].join("\n"),
     );

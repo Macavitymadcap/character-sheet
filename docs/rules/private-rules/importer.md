@@ -17,7 +17,9 @@ bun run import:rules:private -- docs/rules/private-rules.example.yaml
 ## OCR Markdown Export
 
 `bun run import:rules:ocr` converts operator-owned OCR Markdown into Campaign Ledger private-rules
-YAML and JSON before the private import step. It defaults to Railway-friendly paths:
+YAML and JSON before the private import step. The source files should be plain `.md`; Google Drive
+or editor `.docx` wrappers are only a transfer format and should be exported back to Markdown before
+running the parser. The command defaults to Railway-friendly paths:
 
 ```bash
 bun run import:rules:ocr
@@ -31,9 +33,11 @@ bun run import:rules:ocr -- --input-dir ./private-ocr-markdown --output-dir ./pr
 ```
 
 The exporter recognises `phb.md`, `dmg.md`, `mm.md`, `xgte.md`, `tcoe.md`, and `mpmm.md`, plus the
-OCR filenames used by the source scans. Spells and monster stat blocks are excluded by default
-because those OCR sections are incomplete; provide them through a dedicated spell/statblock source
-or deliberately override the exclusion list:
+OCR filenames used by the source scans. It understands the plain-text OCR shapes used for spells,
+monster stat blocks, magic items, species, backgrounds, feats, equipment rows, and loose reference
+tables. Spells and monster stat blocks are still excluded by default because those sections need the
+most review before table use; provide them through dedicated spell/statblock YAML, or deliberately
+override the exclusion list when the Markdown has been cleaned:
 
 ```bash
 # Default: excludes both spells and monster stat blocks.

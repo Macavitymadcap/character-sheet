@@ -191,15 +191,18 @@ export async function writePrivateRulesOcrExport(
 }
 
 export function parseOcrMarkdown(markdown: string, sourceCode: string): ParsedOcrEntry[] {
+  const normalised = normaliseOcrMarkdown(markdown);
   return [
-    ...parseSpells(markdown, sourceCode),
-    ...parseMonsters(markdown, sourceCode),
-    ...parseClasses(markdown, sourceCode),
-    ...parseSubclasses(markdown, sourceCode),
-    ...parseSpecies(markdown, sourceCode),
-    ...parseFeats(markdown, sourceCode),
-    ...parseBackgrounds(markdown, sourceCode),
-    ...parseEquipment(markdown, sourceCode),
+    ...parseSpells(normalised, sourceCode),
+    ...parseMonsters(normalised, sourceCode),
+    ...parseMagicItems(normalised, sourceCode),
+    ...parseClasses(normalised, sourceCode),
+    ...parseSubclasses(normalised, sourceCode),
+    ...parseSpecies(normalised, sourceCode),
+    ...parseFeats(normalised, sourceCode),
+    ...parseBackgrounds(normalised, sourceCode),
+    ...parseEquipment(normalised, sourceCode),
+    ...parseReferenceTables(normalised, sourceCode),
   ];
 }
 
@@ -383,73 +386,144 @@ function importNotes(excludedTypes: Set<string>) {
 }
 
 function parseSpells(markdown: string, sourceCode: string): ParsedOcrEntry[] {
-  return markdown.split("\n").flatMap((line) => {
-    const match = line.match(/^[\s]*[-*]\s+\*(.+?)\*/);
-    if (!match?.[1] || !isValidName(match[1])) return [];
-    const name = match[1].trim();
+  const lines = ocrLines(markdown);
+  const blocks = splitBlocks(lines, (index) => {
+    const name = cleanMarkdown(lines[index] ?? "");
+    const subtitle = nonEmptyLineAfter(lines, index);
 
-    return [{
-      bodyMarkdown: "",
+    return isValidName(name) && Boolean(parseSpellSubtitleText(subtitle));
+  });
+
+  return blocks.map(({ lines: blockLines, start }) => {
+    const name = cleanMarkdown(blockLines[0] ?? "");
+    const spell = parseSpellSubtitleText(nonEmptyLineAfter(blockLines, 0))!;
+    const metadata = parseBulletMetadata(blockLines);
+    const duration = metadata.Duration ?? "Instantaneous";
+    const components = metadata.Components ? metadata.Components.split(",").map((item) => item.trim()).filter(Boolean) : [];
+    const classes = uniqueStrings(
+      blockLines
+        .filter((line) => line.startsWith("Classes:"))
+        .flatMap((line) => line.replace(/^Classes:\s*/, "").split(",").map((item) => item.trim())),
+    );
+    const bodyMarkdown = blockLines
+      .filter((line, index) =>
+        index > 1 &&
+        !isBlank(line) &&
+        !isBulletLine(line) &&
+        !line.startsWith("Classes:"),
+      )
+      .join("\n\n");
+
+    return {
+      bodyMarkdown,
       id: `${sourceCode.toLowerCase()}-spell-${slugify(name)}`,
       mechanics: {
         spell: {
-          classes: [],
-          components: { material: false, somatic: false, verbal: false },
-          concentration: false,
-          duration: "Instantaneous",
-          level: 0,
-          range: "Self",
-          ritual: false,
-          school: "evocation",
+          castingTime: metadata["Casting Time"] ?? "Action",
+          classes,
+          components,
+          concentration: /^concentration\b/i.test(duration),
+          duration,
+          level: spell.level,
+          range: metadata.Range ?? "Self",
+          ritual: /\britual\b/i.test(blockLines.join(" ")),
+          school: spell.school,
         },
       },
       name,
-      page: null,
+      page: start,
       slug: slugify(name),
       type: "spell",
-    }];
+    };
   });
 }
 
 function parseMonsters(markdown: string, sourceCode: string): ParsedOcrEntry[] {
-  return markdown.split("\n").flatMap((line) => {
-    const match = line.match(/^[\s]*[-*]\s+\*\*(.+?)\*\*/);
-    if (!match?.[1] || !isValidName(match[1])) return [];
-    const name = match[1].trim();
+  const lines = ocrLines(markdown);
+  const blocks = splitBlocks(lines, (index) => {
+    const name = cleanMarkdown(lines[index] ?? "");
+    const subtitle = nonEmptyLineAfter(lines, index);
 
-    return [{
-      bodyMarkdown: "",
+    return isValidName(name) && isMonsterSubtitle(subtitle);
+  });
+
+  return blocks.map(({ lines: blockLines, start }) => {
+    const name = cleanMarkdown(blockLines[0] ?? "");
+    const subtitle = nonEmptyLineAfter(blockLines, 0);
+    const metadata = parseBulletMetadata(blockLines);
+    const abilityScores = parseMonsterAbilities(blockLines);
+    const sections = parseNamedTextSections(blockLines);
+    const challenge = parseChallenge(metadata.Challenge ?? "");
+    const armourClass = parseFirstInteger(metadata["Armor Class"] ?? metadata["Armour Class"] ?? "");
+    const hitPoints = parseHitPoints(metadata["Hit Points"] ?? "");
+    const speed = metadata.Speed ?? "";
+    const senses = metadata.Senses ?? "";
+    const languages = splitList(metadata.Languages ?? "");
+    const [size, typeAndAlignment] = subtitle.split(/\s+/, 2);
+    const typeAlignment = subtitle.replace(new RegExp(`^${size}\\s+`, "i"), "");
+    const typeParts = typeAlignment.split(",").map((item) => item.trim());
+    const type = typeParts[0] ?? "Creature";
+    const alignment = typeParts.slice(1).join(", ") || "Unaligned";
+
+    return {
+      bodyMarkdown: blockLines.join("\n"),
       id: `${sourceCode.toLowerCase()}-monster-${slugify(name)}`,
       mechanics: {
-        monster: {
-          abilities: {
-            charisma: 10,
-            constitution: 10,
-            dexterity: 10,
-            intelligence: 10,
-            strength: 10,
-            wisdom: 10,
-          },
-          actions: [],
-          alignment: "unaligned",
-          armourClass: { value: 10 },
-          challenge: { rating: "0", xp: 10 },
-          hitPoints: { average: 10, formula: "2d8" },
-          languages: [],
-          legendaryActions: [],
-          reactions: [],
-          senses: { passivePerception: 10 },
-          size: "medium",
-          speed: { walking: 30 },
-          traits: [],
-          type: "humanoid",
+        stat_block: {
+          abilities: abilityScores,
+          actions: sections.Actions,
+          alignment,
+          armourClass: { raw: metadata["Armor Class"] ?? metadata["Armour Class"] ?? "", value: armourClass },
+          challenge,
+          hitPoints,
+          languages,
+          legendaryActions: sections["Legendary Actions"],
+          reactions: sections.Reactions,
+          senses: { passivePerception: parsePassivePerception(senses), raw: senses },
+          size,
+          speed: { raw: speed },
+          traits: sections.Traits,
+          type,
         },
       },
       name,
-      page: null,
+      page: start,
       slug: slugify(name),
       type: "monster",
-    }];
+    };
+  });
+}
+
+function parseMagicItems(markdown: string, sourceCode: string): ParsedOcrEntry[] {
+  const lines = ocrLines(markdown);
+  const blocks = splitBlocks(lines, (index) => {
+    const name = cleanMarkdown(lines[index] ?? "");
+    const metadata = nonEmptyLineAfter(lines, index);
+
+    return isValidName(name) && !name.includes("\t") && isMagicItemMetadata(metadata);
+  });
+
+  return blocks.map(({ lines: blockLines, start }) => {
+    const name = cleanMarkdown(blockLines[0] ?? "");
+    const metadata = nonEmptyLineAfter(blockLines, 0);
+    const rarity = metadata.match(/\b(Artifact|Legendary|Very Rare|Rare|Uncommon|Common)\b/i)?.[1] ?? "";
+
+    return {
+      bodyMarkdown: blockLines.join("\n"),
+      id: `${sourceCode.toLowerCase()}-magic-item-${slugify(name)}`,
+      mechanics: {
+        equipment: {
+          category: "magic_item",
+          itemType: metadata.split(",")[0]?.trim() ?? "Magic Item",
+          rarity,
+          requiresAttunement: /\brequires attunement\b/i.test(metadata),
+        },
+      },
+      name,
+      page: start,
+      slug: slugify(name),
+      type: "magic_item",
+    };
   });
 }
 
@@ -470,12 +544,15 @@ function parseClasses(markdown: string, sourceCode: string): ParsedOcrEntry[] {
     "Wizard",
   ]);
 
-  return markdown.split("\n").flatMap((line, index) => {
-    const name = cleanMarkdown(line.match(/^##\s+(.+)$/)?.[1] ?? "");
+  const lines = ocrLines(markdown);
+
+  return lines.flatMap((line, index) => {
+    const name = cleanMarkdown(line.match(/^#{1,3}\s+(.+)$/)?.[1] ?? line);
     if (!classNames.has(name)) return [];
+    const body = lines.slice(index, nextLikelyTopLevelIndex(lines, index + 1)).join("\n");
 
     return [{
-      bodyMarkdown: "",
+      bodyMarkdown: body,
       id: `${sourceCode.toLowerCase()}-class-${slugify(name)}`,
       mechanics: {
         class: {
@@ -549,53 +626,79 @@ function parseSpecies(markdown: string, sourceCode: string): ParsedOcrEntry[] {
     "Yuan-ti",
   ];
 
-  return markdown.split("\n").flatMap((line, index) => {
-    const name = cleanMarkdown(line.match(/^##\s+(.+)$/)?.[1] ?? "");
-    if (!names.some((speciesName) => name.includes(speciesName))) return [];
+  const lines = ocrLines(markdown);
+  const blocks = splitBlocks(lines, (index) => {
+    const name = cleanMarkdown(lines[index] ?? "");
+    const bodyPreview = lines.slice(index + 1, index + 8).join("\n");
 
-    return [{
-      bodyMarkdown: "",
+    return names.some((speciesName) => name === speciesName || name.startsWith(`${speciesName} `)) &&
+      /Ability Scores:|Creature Type:|Speed:/i.test(bodyPreview);
+  });
+
+  return blocks.map(({ lines: blockLines, start }) => {
+    const name = cleanMarkdown(blockLines[0] ?? "");
+    const metadata = parseBulletMetadata(blockLines);
+
+    return {
+      bodyMarkdown: blockLines.join("\n"),
       id: `${sourceCode.toLowerCase()}-species-${slugify(name)}`,
       mechanics: {
         species: {
-          abilityScore: { mode: "flexible" },
-          creatureType: "humanoid",
-          languages: { fixed: ["Common"] },
-          size: ["medium"],
-          speed: { walking: 30 },
-          traits: [],
+          abilityScore: metadata["Ability Scores"] ?? "",
+          creatureType: metadata["Creature Type"] ?? "Humanoid",
+          languages: parseInlineLanguages(blockLines),
+          size: splitList(metadata.Size ?? "Medium"),
+          speed: metadata.Speed ?? "",
+          traits: parseNamedParagraphs(blockLines),
         },
       },
       name,
-      page: index,
+      page: start,
       slug: slugify(name),
       type: "species",
-    }];
+    };
   });
 }
 
 function parseFeats(markdown: string, sourceCode: string): ParsedOcrEntry[] {
-  const entries: ParsedOcrEntry[] = [];
-  let inFeatSection = false;
-  for (const [index, line] of markdown.split("\n").entries()) {
-    if (line.match(/^#\s+.*feat/i)) {
-      inFeatSection = true;
-      continue;
+  const lines = ocrLines(markdown);
+  const blocks = splitBlocks(lines, (index) => {
+    const name = cleanMarkdown(lines[index]?.match(/^#{1,3}\s+(.+)$/)?.[1] ?? lines[index] ?? "");
+    const next = nonEmptyLineAfter(lines, index);
+    const nextLines = lines.slice(index + 1).filter((line) => !isBlank(line)).slice(0, 5);
+    const preview = nextLines.join("\n");
+    if (
+      !isLikelyTitleLine(name) ||
+      /^feats?$/i.test(name) ||
+      /^(Fast|Normal|Slow)$/i.test(name) ||
+      /^(Actions|Reactions|Legendary Actions)$/i.test(name) ||
+      parseSpellSubtitleText(next) ||
+      isMagicItemMetadata(next) ||
+      isMonsterSubtitle(next) ||
+      /^[•*-]\s*(Ability Scores|Skill Proficiencies|Casting Time|Armor Class|Armour Class|Hit Points|Speed|Challenge)(:|\s)/i.test(next) ||
+      (nextLines[0] !== undefined && isLikelyTitleLine(nextLines[0]))
+    ) {
+      return false;
     }
-    const name = cleanMarkdown(line.match(/^###\s+(.+)$/)?.[1] ?? "");
-    if (!inFeatSection || !name || name.length >= 50) continue;
-    entries.push({
-      bodyMarkdown: "",
-      id: `${sourceCode.toLowerCase()}-feat-${slugify(name)}`,
-      mechanics: { feat: { repeatable: false } },
-      name,
-      page: index,
-      slug: slugify(name),
-      type: "feat",
-    });
-  }
 
-  return entries;
+    return /Prerequisite:|benefits:|^\s*(?:[•*]\s+|-\s+)/im.test(preview);
+  });
+
+  return blocks.map(({ lines: blockLines, start }) => {
+    const name = cleanMarkdown(blockLines[0]?.match(/^#{1,3}\s+(.+)$/)?.[1] ?? blockLines[0] ?? "");
+    const prerequisite = blockLines.find((line) => line.startsWith("Prerequisite:"))?.replace(/^Prerequisite:\s*/, "") ?? "";
+    const type = classifyReferenceType(blockLines.find((line) => line.startsWith("Type:"))?.replace(/^Type:\s*/, "") ?? "");
+
+    return {
+      bodyMarkdown: blockLines.join("\n"),
+      id: `${sourceCode.toLowerCase()}-${type}-${slugify(name)}`,
+      mechanics: { [type]: { prerequisite, repeatable: false } },
+      name,
+      page: start,
+      slug: slugify(name),
+      type,
+    };
+  });
 }
 
 function parseBackgrounds(markdown: string, sourceCode: string): ParsedOcrEntry[] {
@@ -615,47 +718,76 @@ function parseBackgrounds(markdown: string, sourceCode: string): ParsedOcrEntry[
     "Urchin",
   ]);
 
-  return markdown.split("\n").flatMap((line, index) => {
-    const name = cleanMarkdown(line.match(/^##\s+(.+)$/)?.[1] ?? "");
-    if (!backgroundNames.has(name)) return [];
+  const lines = ocrLines(markdown);
+  const blocks = splitBlocks(lines, (index) => {
+    const name = cleanMarkdown(lines[index] ?? "");
+    const bodyPreview = lines.slice(index + 1, index + 8).join("\n");
 
-    return [{
-      bodyMarkdown: "",
+    return backgroundNames.has(name) && /Skill Proficiencies:|Equipment:|Feature:/i.test(bodyPreview);
+  });
+
+  return blocks.map(({ lines: blockLines, start }) => {
+    const name = cleanMarkdown(blockLines[0] ?? "");
+    const metadata = parseBulletMetadata(blockLines);
+    const feature = blockLines.find((line) => line.startsWith("Feature:"))?.replace(/^Feature:\s*/, "").trim() ?? slugify(`${name}-feature`);
+
+    return {
+      bodyMarkdown: blockLines.join("\n"),
       id: `${sourceCode.toLowerCase()}-background-${slugify(name)}`,
       mechanics: {
         background: {
-          equipment: [],
-          feature: slugify(`${name}-feature`),
-          languages: {},
-          skillProficiencies: [],
-          toolProficiencies: [],
+          equipment: splitList(metadata.Equipment ?? ""),
+          feature,
+          languages: metadata.Languages ?? metadata["Languages and Tool Proficiencies"] ?? "",
+          skillProficiencies: splitList(metadata["Skill Proficiencies"] ?? ""),
+          toolProficiencies: splitList(metadata["Tool Proficiencies"] ?? ""),
         },
       },
       name,
-      page: index,
+      page: start,
       slug: slugify(name),
       type: "background",
-    }];
+    };
   });
 }
 
 function parseEquipment(markdown: string, sourceCode: string): ParsedOcrEntry[] {
-  return markdown.split("\n").flatMap((line, index) => {
-    if (!line.includes("|") || line.toLowerCase().includes("name") || line.includes("---")) return [];
-    const cells = line.split("|").map((cell) => cell.trim()).filter(Boolean);
-    const name = cleanMarkdown(cells[0] ?? "");
-    if (cells.length < 2 || !isValidName(name)) return [];
+  const lines = ocrLines(markdown);
+
+  return lines.flatMap((line, index) => {
+    if (line.includes("|")) {
+      if (line.toLowerCase().includes("name") || line.includes("---")) return [];
+      const cells = line.split("|").map((cell) => cell.trim()).filter(Boolean);
+      const name = cleanMarkdown(cells[0] ?? "");
+      if (cells.length < 2 || !isValidName(name)) return [];
+
+      return [{
+        bodyMarkdown: line,
+        id: `${sourceCode.toLowerCase()}-equipment-${slugify(name)}`,
+        mechanics: {
+          equipment: {
+            category: inferEquipmentCategory(name, line),
+            row: cells,
+          },
+        },
+        name,
+        page: index,
+        slug: slugify(name),
+        type: "equipment",
+      }];
+    }
+
+    const next = nonEmptyLineAfter(lines, index);
+    const following = lines.slice(index + 1, index + 6).join(" ");
+    const name = cleanMarkdown(line);
+    if (!isValidName(name) || !/^(Weight|Damage|Properties|Category):/i.test(following)) return [];
 
     return [{
-      bodyMarkdown: line,
+      bodyMarkdown: lines.slice(index, nextLikelyTopLevelIndex(lines, index + 1)).join("\n"),
       id: `${sourceCode.toLowerCase()}-equipment-${slugify(name)}`,
       mechanics: {
         equipment: {
-          category: "weapon",
-          weapon: {
-            range: "melee",
-            type: "simple",
-          },
+          category: inferEquipmentCategory(name, next),
         },
       },
       name,
@@ -664,6 +796,281 @@ function parseEquipment(markdown: string, sourceCode: string): ParsedOcrEntry[] 
       type: "equipment",
     }];
   });
+}
+
+function parseReferenceTables(markdown: string, sourceCode: string): ParsedOcrEntry[] {
+  const lines = ocrLines(markdown);
+  const entries: ParsedOcrEntry[] = [];
+  for (let index = 0; index < lines.length; index += 1) {
+    const name = cleanMarkdown(lines[index] ?? "");
+    const firstColumn = nonEmptyLineAfter(lines, index);
+    const secondColumn = nonEmptyLineAfter(lines, index + 1);
+    if (!isValidName(name) || !isTableDieColumn(firstColumn) || !secondColumn) continue;
+    const end = nextLikelyTopLevelIndex(lines, index + 1);
+    const bodyMarkdown = toMarkdownTable(lines.slice(index + 1, end));
+    entries.push({
+      bodyMarkdown,
+      id: `${sourceCode.toLowerCase()}-rule-${slugify(name)}`,
+      mechanics: {
+        table: {
+          columns: [firstColumn, secondColumn],
+        },
+      },
+      name,
+      page: index,
+      slug: slugify(name),
+      type: "rule",
+    });
+    index = end - 1;
+  }
+
+  return entries;
+}
+
+function normaliseOcrMarkdown(markdown: string) {
+  return markdown
+    .replace(/\r\n?/g, "\n")
+    .replace(/\u2028/g, "\n")
+    .replace(/\u00a0/g, " ")
+    .replace(/^\t+[•*-]\t?/gm, "• ")
+    .replace(/^\s+[•*-]\s+/gm, "• ");
+}
+
+function ocrLines(markdown: string) {
+  return normaliseOcrMarkdown(markdown).split("\n").map((line) => line.trimEnd());
+}
+
+function isBlank(line: string | undefined) {
+  return !line || line.trim() === "";
+}
+
+function nonEmptyLineAfter(lines: string[], index: number) {
+  for (let cursor = index + 1; cursor < lines.length; cursor += 1) {
+    if (!isBlank(lines[cursor])) return cleanMarkdown(lines[cursor]!.trim());
+  }
+
+  return "";
+}
+
+function splitBlocks(lines: string[], isStart: (index: number) => boolean) {
+  const starts = lines.map((_, index) => index).filter(isStart);
+
+  return starts.map((start, index) => ({
+    lines: lines.slice(start, Math.min(starts[index + 1] ?? lines.length, nextLikelyTopLevelIndex(lines, start + 1))).filter((line) => !isBlank(line)),
+    start,
+  }));
+}
+
+function parseSpellSubtitleText(subtitle: string) {
+  if (subtitle.includes(":")) return null;
+  const levelMatch = subtitle.match(/^Level\s+(\d+)\s+(.+)$/i);
+  if (levelMatch) return { level: Number(levelMatch[1]), school: cleanMarkdown(levelMatch[2] ?? "") };
+  const cantripMatch = subtitle.match(/^(.+?)\s+Cantrip$/i) ?? subtitle.match(/^Cantrip\s+(.+)$/i);
+  if (cantripMatch) return { level: 0, school: cleanMarkdown(cantripMatch[1] ?? cantripMatch[2] ?? "") };
+
+  return null;
+}
+
+function parseBulletMetadata(lines: string[]) {
+  const metadata: Record<string, string> = {};
+  for (const line of lines) {
+    const colonMatch = line.match(/^[•*-]\s*([^:]+):\s*(.+)$/);
+    if (colonMatch?.[1] && colonMatch[2]) {
+      metadata[cleanMarkdown(colonMatch[1])] = cleanMarkdown(colonMatch[2]);
+      continue;
+    }
+    const labelMatch = line.match(/^[•*-]\s*(Armor Class|Armour Class|Hit Points|Speed|Initiative|Saving Throws|Skills|Gear|Senses|Languages|Challenge|Proficiency Bonus|Immunities|Resistances|Vulnerabilities)\s+(.+)$/i);
+    if (labelMatch?.[1] && labelMatch[2]) metadata[toTitleCase(labelMatch[1])] = cleanMarkdown(labelMatch[2]);
+  }
+
+  return metadata;
+}
+
+function isBulletLine(line: string) {
+  return /^[•*-]\s+/.test(line);
+}
+
+function uniqueStrings(values: string[]) {
+  return [...new Set(values.map((value) => value.trim()).filter(Boolean))];
+}
+
+function isMonsterSubtitle(value: string) {
+  return /^(Tiny|Small|Medium|Large|Huge|Gargantuan)\b.+,\s*.+/i.test(value);
+}
+
+function isLikelyTitleLine(value: string) {
+  const text = cleanMarkdown(value.match(/^#{1,4}\s+(.+)$/)?.[1] ?? value);
+
+  return isValidName(text) &&
+    !text.includes(":") &&
+    !text.includes("\t") &&
+    !/[.!?]$/.test(text) &&
+    !/^Suggested Characteristics$/i.test(text) &&
+    !/^[A-Z]{2,5}$/.test(text) &&
+    text.split(/\s+/).length <= 8;
+}
+
+function isMagicItemMetadata(value: string) {
+  return /\b(Common|Uncommon|Rare|Very Rare|Legendary|Artifact)\b/i.test(value) &&
+    /\b(Wondrous Item|Weapon|Armor|Armour|Potion|Ring|Rod|Staff|Wand|Ammunition|Scroll|Item)\b/i.test(value);
+}
+
+function parseMonsterAbilities(lines: string[]) {
+  const abilities = {
+    charisma: 10,
+    constitution: 10,
+    dexterity: 10,
+    intelligence: 10,
+    strength: 10,
+    wisdom: 10,
+  };
+  const labelsIndex = lines.findIndex((line, index) =>
+    line.trim() === "STR" &&
+    lines[index + 1]?.trim() === "DEX" &&
+    lines[index + 2]?.trim() === "CON",
+  );
+  if (labelsIndex === -1) return abilities;
+  const scores = lines.slice(labelsIndex + 6, labelsIndex + 12).map((line) => Number(line.match(/-?\d+/)?.[0] ?? Number.NaN));
+  if (scores.length === 6 && scores.every((score) => Number.isFinite(score))) {
+    abilities.strength = scores[0]!;
+    abilities.dexterity = scores[1]!;
+    abilities.constitution = scores[2]!;
+    abilities.intelligence = scores[3]!;
+    abilities.wisdom = scores[4]!;
+    abilities.charisma = scores[5]!;
+  }
+
+  return abilities;
+}
+
+function parseNamedTextSections(lines: string[]) {
+  const sections: Record<string, Array<{ name: string; text: string }>> = {
+    Actions: [],
+    "Legendary Actions": [],
+    Reactions: [],
+    Traits: [],
+  };
+  let active: keyof typeof sections = "Traits";
+  for (const line of lines) {
+    if (line === "Actions" || line === "Reactions" || line === "Legendary Actions") {
+      active = line;
+      continue;
+    }
+    const match = line.match(/^([^.!?]{2,80})\.\s+(.+)$/);
+    if (match?.[1] && match[2] && !isBulletLine(line)) {
+      sections[active]!.push({ name: cleanMarkdown(match[1]), text: cleanMarkdown(match[2]) });
+    }
+  }
+
+  return sections;
+}
+
+function parseNamedParagraphs(lines: string[]) {
+  return lines.flatMap((line) => {
+    const match = line.match(/^([^.!?]{2,80})\.\s+(.+)$/);
+    return match?.[1] && match[2] ? [{ name: cleanMarkdown(match[1]), text: cleanMarkdown(match[2]) }] : [];
+  });
+}
+
+function parseFirstInteger(value: string) {
+  const parsed = Number(value.match(/\d+/)?.[0] ?? Number.NaN);
+
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function parseHitPoints(value: string) {
+  const match = value.match(/(\d+)(?:\s*\((.+?)\))?/);
+
+  return {
+    average: match?.[1] ? Number(match[1]) : null,
+    formula: match?.[2] ?? "",
+    raw: value,
+  };
+}
+
+function parseChallenge(value: string) {
+  const rating = value.match(/^([^\s(]+)/)?.[1] ?? "0";
+  const xp = Number(value.match(/XP\s+([\d,]+)/i)?.[1]?.replaceAll(",", "") ?? 0);
+  const proficiencyBonus = Number(value.match(/PB\s*\+?(\d+)/i)?.[1] ?? 0);
+
+  return { proficiencyBonus, rating, xp };
+}
+
+function parsePassivePerception(value: string) {
+  return Number(value.match(/Passive Perception\s+(\d+)/i)?.[1] ?? 10);
+}
+
+function splitList(value: string) {
+  return value.split(/,|;|\bor\b/i).map((item) => cleanMarkdown(item.trim())).filter(Boolean);
+}
+
+function parseInlineLanguages(lines: string[]) {
+  const languageLine = lines.find((line) => /^Languages\./.test(line));
+  if (!languageLine) return {};
+
+  return { text: cleanMarkdown(languageLine.replace(/^Languages\.\s*/, "")) };
+}
+
+function nextLikelyTopLevelIndex(lines: string[], start: number) {
+  for (let index = start; index < lines.length; index += 1) {
+    const line = cleanMarkdown(lines[index] ?? "");
+    const next = nonEmptyLineAfter(lines, index);
+    if (parseSpellSubtitleText(line)) continue;
+    if (isLikelyTitleLine(line) && (
+      parseSpellSubtitleText(next) ||
+      isMonsterSubtitle(next) ||
+      isMagicItemMetadata(next) ||
+      /^[•*-]\s*(Ability Scores|Skill Proficiencies|Casting Time):/i.test(next) ||
+      /^Prerequisite:/.test(next)
+    )) {
+      return index;
+    }
+  }
+
+  return lines.length;
+}
+
+function inferEquipmentCategory(name: string, context: string) {
+  const text = `${name} ${context}`.toLowerCase();
+  if (text.includes("armor") || text.includes("armour") || text.includes("shield")) return "armour";
+  if (text.includes("weapon") || /\b(damage|melee|ranged|ammunition)\b/.test(text)) return "weapon";
+  if (text.includes("tool")) return "tool";
+
+  return "gear";
+}
+
+function isTableDieColumn(value: string) {
+  return /^d\d+|^d%|^d100|^\d+d\d+/i.test(value);
+}
+
+function toMarkdownTable(lines: string[]) {
+  const cleaned = lines.map(cleanMarkdown).filter(Boolean);
+  if (cleaned.length < 2) return cleaned.join("\n");
+  const [leftHeader, rightHeader, ...cells] = cleaned;
+  const rows = [];
+  for (let index = 0; index < cells.length; index += 2) {
+    rows.push(`| ${cells[index] ?? ""} | ${cells[index + 1] ?? ""} |`);
+  }
+
+  return [`| ${leftHeader} | ${rightHeader} |`, "| --- | --- |", ...rows].join("\n");
+}
+
+function classifyReferenceType(typeText: string) {
+  const value = typeText.toLowerCase();
+  if (value.includes("invocation")) return "invocation";
+  if (value.includes("infusion")) return "infusion";
+  if (value.includes("fighting style")) return "fighting_style";
+  if (value.includes("manoeuvre") || value.includes("maneuver")) return "manoeuvre";
+  if (value.includes("metamagic")) return "metamagic";
+  if (value.includes("arcane shot")) return "class_feature";
+
+  return "feat";
+}
+
+function toTitleCase(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/\b\w/g, (character) => character.toUpperCase());
 }
 
 function classHitDie(name: string) {
