@@ -185,7 +185,6 @@ export async function writePrivateRulesOcrExport(
     await writePrivateRulesDocument(join(outputDir, `${book.code.toLowerCase()}.yml`), document);
     await writeFile(join(outputDir, `${book.code.toLowerCase()}.json`), `${JSON.stringify(document, null, 2)}\n`);
   }
-  await writePrivateRulesDocument(join(outputDir, "combined.yml"), result.combined);
   await writeFile(join(outputDir, "combined.json"), `${JSON.stringify(result.combined, null, 2)}\n`);
 
   return outputDir;

@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, readdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { describe, expect, test } from "bun:test";
@@ -77,10 +77,14 @@ describe("private rules OCR export", () => {
 
     const result = await exportPrivateRulesFromOcr({ campaign, inputDir });
     const writtenDir = await writePrivateRulesOcrExport(result, { outputDir });
+    const writtenFiles = await readdir(writtenDir);
     const phb = parseYaml(await readFile(join(writtenDir, "phb.yml"), "utf8"));
     const combined = JSON.parse(await readFile(join(writtenDir, "combined.json"), "utf8"));
 
     expect(result.documents).toHaveLength(1);
+    expect(writtenFiles).toContain("phb.yml");
+    expect(writtenFiles).toContain("combined.json");
+    expect(writtenFiles).not.toContain("combined.yml");
     expect(phb.schemaVersion).toBe(1);
     expect(phb.sources[0].code).toBe("PHB");
     expect(phb.entities).toHaveLength(3);

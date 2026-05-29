@@ -47,14 +47,17 @@ PRIVATE_RULES_OCR_EXCLUDE_TYPES= bun run import:rules:ocr
 ```
 
 Generated files follow the v1 private-rules contract: `schemaVersion: 1`, `campaign`, `sources`,
-`entities`, and `importNotes`.
+`entities`, and `importNotes`. The exporter writes per-book `.yml` files for import and
+`combined.json` for operator inspection. It deliberately does not write `combined.yml`, so importing
+the output directory does not double-import the same OCR entries and produce noisy duplicate
+warnings.
 
 ## Filling In Incomplete OCR Sections
 
 Prefer dedicated YAML files for any section where the OCR exporter produced placeholders or skipped
 entries. Keep these files beside the generated OCR output under `/data/private-rules`; the private
 importer reads every `.yml` or `.yaml` file in that directory and reports duplicates, failed files,
-and SRD-shadowed entries.
+and SRD-shadowed entries. Treat `combined.json` as a review aid only; it is not imported.
 
 Useful file split:
 
